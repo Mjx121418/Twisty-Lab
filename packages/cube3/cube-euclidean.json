@@ -1,0 +1,10 @@
+{
+  "compatibleDefinitionDigest": "883bd24d0115e6262058b31938613866a04137ac5387f76aef0a4699799a5de9",
+  "id": "cube3-cube-euclidean-v1",
+  "kind": "cube-euclidean",
+  "requiredCapabilities": [
+    "triangle-meshes",
+    "rigid-transforms"
+  ],
+  "schemaVersion": 1
+}

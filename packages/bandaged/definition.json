@@ -1,0 +1,4712 @@
+{
+  "cells": [
+    "B",
+    "BL",
+    "BR",
+    "D",
+    "DB",
+    "DBL",
+    "DBR",
+    "DF",
+    "DFL",
+    "DFR",
+    "DL",
+    "DR",
+    "F",
+    "FL",
+    "FR",
+    "L",
+    "R",
+    "U",
+    "UB",
+    "UBL",
+    "UBR",
+    "UF",
+    "UFL",
+    "UFR",
+    "UL",
+    "UR"
+  ],
+  "definitionDigest": "3049956cd3afa29ec7a380660aaba3a8997794ee71de5ae13c6dd950d3e7d698",
+  "goal": {
+    "kind": "home"
+  },
+  "initialState": {
+    "mechanism": {},
+    "placementOf": {
+      "bandage/UF-UFR": "bandage:U-F-U-R-F",
+      "center/B": "center:B",
+      "center/D": "center:D",
+      "center/F": "center:F",
+      "center/L": "center:L",
+      "center/R": "center:R",
+      "center/U": "center:U",
+      "corner/DBL": "corner:D-B-L",
+      "corner/DBR": "corner:D-R-B",
+      "corner/DFL": "corner:D-L-F",
+      "corner/DFR": "corner:D-F-R",
+      "corner/UBL": "corner:U-L-B",
+      "corner/UBR": "corner:U-B-R",
+      "corner/UFL": "corner:U-F-L",
+      "edge/BL": "edge:B-L",
+      "edge/BR": "edge:B-R",
+      "edge/DB": "edge:D-B",
+      "edge/DF": "edge:D-F",
+      "edge/DL": "edge:D-L",
+      "edge/DR": "edge:D-R",
+      "edge/FL": "edge:F-L",
+      "edge/FR": "edge:F-R",
+      "edge/UB": "edge:U-B",
+      "edge/UL": "edge:U-L",
+      "edge/UR": "edge:U-R"
+    }
+  },
+  "kind": "finite-definition",
+  "operations": [
+    {
+      "facePermutation": [
+        4,
+        0,
+        2,
+        1,
+        3,
+        5
+      ],
+      "family": "B",
+      "id": "B",
+      "inverse": "B'",
+      "selectedCells": [
+        "B",
+        "BL",
+        "BR",
+        "DB",
+        "DBL",
+        "DBR",
+        "UB",
+        "UBL",
+        "UBR"
+      ],
+      "transport": "B.clockwise",
+      "transports": {
+        "bandage": {
+          "bandage:B-D-B-L-D": "bandage:B-R-B-D-R",
+          "bandage:B-L-B-U-L": "bandage:B-D-B-L-D",
+          "bandage:B-R-B-D-R": "bandage:B-U-B-R-U",
+          "bandage:B-U-B-R-U": "bandage:B-L-B-U-L",
+          "bandage:D-B-D-R-B": "bandage:R-B-R-U-B",
+          "bandage:D-F-D-L-F": "bandage:R-F-R-D-F",
+          "bandage:D-L-D-B-L": "bandage:R-D-R-B-D",
+          "bandage:D-R-D-F-R": "bandage:R-U-R-F-U",
+          "bandage:F-D-F-R-D": "bandage:F-R-F-U-R",
+          "bandage:F-L-F-D-L": "bandage:F-D-F-R-D",
+          "bandage:F-R-F-U-R": "bandage:F-U-F-L-U",
+          "bandage:F-U-F-L-U": "bandage:F-L-F-D-L",
+          "bandage:L-B-L-D-B": "bandage:D-B-D-R-B",
+          "bandage:L-D-L-F-D": "bandage:D-R-D-F-R",
+          "bandage:L-F-L-U-F": "bandage:D-F-D-L-F",
+          "bandage:L-U-L-B-U": "bandage:D-L-D-B-L",
+          "bandage:R-B-R-U-B": "bandage:U-B-U-L-B",
+          "bandage:R-D-R-B-D": "bandage:U-R-U-B-R",
+          "bandage:R-F-R-D-F": "bandage:U-F-U-R-F",
+          "bandage:R-U-R-F-U": "bandage:U-L-U-F-L",
+          "bandage:U-B-U-L-B": "bandage:L-B-L-D-B",
+          "bandage:U-F-U-R-F": "bandage:L-F-L-U-F",
+          "bandage:U-L-U-F-L": "bandage:L-D-L-F-D",
+          "bandage:U-R-U-B-R": "bandage:L-U-L-B-U"
+        },
+        "center": {
+          "center:B": "center:B",
+          "center:D": "center:R",
+          "center:F": "center:F",
+          "center:L": "center:D",
+          "center:R": "center:U",
+          "center:U": "center:L"
+        },
+        "corner": {
+          "corner:B-D-R": "corner:B-R-U",
+          "corner:B-L-D": "corner:B-D-R",
+          "corner:B-R-U": "corner:B-U-L",
+          "corner:B-U-L": "corner:B-L-D",
+          "corner:D-B-L": "corner:R-B-D",
+          "corner:D-F-R": "corner:R-F-U",
+          "corner:D-L-F": "corner:R-D-F",
+          "corner:D-R-B": "corner:R-U-B",
+          "corner:F-D-L": "corner:F-R-D",
+          "corner:F-L-U": "corner:F-D-L",
+          "corner:F-R-D": "corner:F-U-R",
+          "corner:F-U-R": "corner:F-L-U",
+          "corner:L-B-U": "corner:D-B-L",
+          "corner:L-D-B": "corner:D-R-B",
+          "corner:L-F-D": "corner:D-F-R",
+          "corner:L-U-F": "corner:D-L-F",
+          "corner:R-B-D": "corner:U-B-R",
+          "corner:R-D-F": "corner:U-R-F",
+          "corner:R-F-U": "corner:U-F-L",
+          "corner:R-U-B": "corner:U-L-B",
+          "corner:U-B-R": "corner:L-B-U",
+          "corner:U-F-L": "corner:L-F-D",
+          "corner:U-L-B": "corner:L-D-B",
+          "corner:U-R-F": "corner:L-U-F"
+        },
+        "edge": {
+          "edge:B-D": "edge:B-R",
+          "edge:B-L": "edge:B-D",
+          "edge:B-R": "edge:B-U",
+          "edge:B-U": "edge:B-L",
+          "edge:D-B": "edge:R-B",
+          "edge:D-F": "edge:R-F",
+          "edge:D-L": "edge:R-D",
+          "edge:D-R": "edge:R-U",
+          "edge:F-D": "edge:F-R",
+          "edge:F-L": "edge:F-D",
+          "edge:F-R": "edge:F-U",
+          "edge:F-U": "edge:F-L",
+          "edge:L-B": "edge:D-B",
+          "edge:L-D": "edge:D-R",
+          "edge:L-F": "edge:D-F",
+          "edge:L-U": "edge:D-L",
+          "edge:R-B": "edge:U-B",
+          "edge:R-D": "edge:U-R",
+          "edge:R-F": "edge:U-F",
+          "edge:R-U": "edge:U-L",
+          "edge:U-B": "edge:L-B",
+          "edge:U-F": "edge:L-F",
+          "edge:U-L": "edge:L-D",
+          "edge:U-R": "edge:L-U"
+        }
+      }
+    },
+    {
+      "facePermutation": [
+        1,
+        3,
+        2,
+        4,
+        0,
+        5
+      ],
+      "family": "B",
+      "id": "B'",
+      "inverse": "B",
+      "selectedCells": [
+        "B",
+        "BL",
+        "BR",
+        "DB",
+        "DBL",
+        "DBR",
+        "UB",
+        "UBL",
+        "UBR"
+      ],
+      "transport": "B.counterclockwise",
+      "transports": {
+        "bandage": {
+          "bandage:B-D-B-L-D": "bandage:B-L-B-U-L",
+          "bandage:B-L-B-U-L": "bandage:B-U-B-R-U",
+          "bandage:B-R-B-D-R": "bandage:B-D-B-L-D",
+          "bandage:B-U-B-R-U": "bandage:B-R-B-D-R",
+          "bandage:D-B-D-R-B": "bandage:L-B-L-D-B",
+          "bandage:D-F-D-L-F": "bandage:L-F-L-U-F",
+          "bandage:D-L-D-B-L": "bandage:L-U-L-B-U",
+          "bandage:D-R-D-F-R": "bandage:L-D-L-F-D",
+          "bandage:F-D-F-R-D": "bandage:F-L-F-D-L",
+          "bandage:F-L-F-D-L": "bandage:F-U-F-L-U",
+          "bandage:F-R-F-U-R": "bandage:F-D-F-R-D",
+          "bandage:F-U-F-L-U": "bandage:F-R-F-U-R",
+          "bandage:L-B-L-D-B": "bandage:U-B-U-L-B",
+          "bandage:L-D-L-F-D": "bandage:U-L-U-F-L",
+          "bandage:L-F-L-U-F": "bandage:U-F-U-R-F",
+          "bandage:L-U-L-B-U": "bandage:U-R-U-B-R",
+          "bandage:R-B-R-U-B": "bandage:D-B-D-R-B",
+          "bandage:R-D-R-B-D": "bandage:D-L-D-B-L",
+          "bandage:R-F-R-D-F": "bandage:D-F-D-L-F",
+          "bandage:R-U-R-F-U": "bandage:D-R-D-F-R",
+          "bandage:U-B-U-L-B": "bandage:R-B-R-U-B",
+          "bandage:U-F-U-R-F": "bandage:R-F-R-D-F",
+          "bandage:U-L-U-F-L": "bandage:R-U-R-F-U",
+          "bandage:U-R-U-B-R": "bandage:R-D-R-B-D"
+        },
+        "center": {
+          "center:B": "center:B",
+          "center:D": "center:L",
+          "center:F": "center:F",
+          "center:L": "center:U",
+          "center:R": "center:D",
+          "center:U": "center:R"
+        },
+        "corner": {
+          "corner:B-D-R": "corner:B-L-D",
+          "corner:B-L-D": "corner:B-U-L",
+          "corner:B-R-U": "corner:B-D-R",
+          "corner:B-U-L": "corner:B-R-U",
+          "corner:D-B-L": "corner:L-B-U",
+          "corner:D-F-R": "corner:L-F-D",
+          "corner:D-L-F": "corner:L-U-F",
+          "corner:D-R-B": "corner:L-D-B",
+          "corner:F-D-L": "corner:F-L-U",
+          "corner:F-L-U": "corner:F-U-R",
+          "corner:F-R-D": "corner:F-D-L",
+          "corner:F-U-R": "corner:F-R-D",
+          "corner:L-B-U": "corner:U-B-R",
+          "corner:L-D-B": "corner:U-L-B",
+          "corner:L-F-D": "corner:U-F-L",
+          "corner:L-U-F": "corner:U-R-F",
+          "corner:R-B-D": "corner:D-B-L",
+          "corner:R-D-F": "corner:D-L-F",
+          "corner:R-F-U": "corner:D-F-R",
+          "corner:R-U-B": "corner:D-R-B",
+          "corner:U-B-R": "corner:R-B-D",
+          "corner:U-F-L": "corner:R-F-U",
+          "corner:U-L-B": "corner:R-U-B",
+          "corner:U-R-F": "corner:R-D-F"
+        },
+        "edge": {
+          "edge:B-D": "edge:B-L",
+          "edge:B-L": "edge:B-U",
+          "edge:B-R": "edge:B-D",
+          "edge:B-U": "edge:B-R",
+          "edge:D-B": "edge:L-B",
+          "edge:D-F": "edge:L-F",
+          "edge:D-L": "edge:L-U",
+          "edge:D-R": "edge:L-D",
+          "edge:F-D": "edge:F-L",
+          "edge:F-L": "edge:F-U",
+          "edge:F-R": "edge:F-D",
+          "edge:F-U": "edge:F-R",
+          "edge:L-B": "edge:U-B",
+          "edge:L-D": "edge:U-L",
+          "edge:L-F": "edge:U-F",
+          "edge:L-U": "edge:U-R",
+          "edge:R-B": "edge:D-B",
+          "edge:R-D": "edge:D-L",
+          "edge:R-F": "edge:D-F",
+          "edge:R-U": "edge:D-R",
+          "edge:U-B": "edge:R-B",
+          "edge:U-F": "edge:R-F",
+          "edge:U-L": "edge:R-U",
+          "edge:U-R": "edge:R-D"
+        }
+      }
+    },
+    {
+      "facePermutation": [
+        0,
+        5,
+        1,
+        3,
+        2,
+        4
+      ],
+      "family": "D",
+      "id": "D",
+      "inverse": "D'",
+      "selectedCells": [
+        "D",
+        "DB",
+        "DBL",
+        "DBR",
+        "DF",
+        "DFL",
+        "DFR",
+        "DL",
+        "DR"
+      ],
+      "transport": "D.clockwise",
+      "transports": {
+        "bandage": {
+          "bandage:B-D-B-L-D": "bandage:L-D-L-F-D",
+          "bandage:B-L-B-U-L": "bandage:L-F-L-U-F",
+          "bandage:B-R-B-D-R": "bandage:L-B-L-D-B",
+          "bandage:B-U-B-R-U": "bandage:L-U-L-B-U",
+          "bandage:D-B-D-R-B": "bandage:D-L-D-B-L",
+          "bandage:D-F-D-L-F": "bandage:D-R-D-F-R",
+          "bandage:D-L-D-B-L": "bandage:D-F-D-L-F",
+          "bandage:D-R-D-F-R": "bandage:D-B-D-R-B",
+          "bandage:F-D-F-R-D": "bandage:R-D-R-B-D",
+          "bandage:F-L-F-D-L": "bandage:R-F-R-D-F",
+          "bandage:F-R-F-U-R": "bandage:R-B-R-U-B",
+          "bandage:F-U-F-L-U": "bandage:R-U-R-F-U",
+          "bandage:L-B-L-D-B": "bandage:F-L-F-D-L",
+          "bandage:L-D-L-F-D": "bandage:F-D-F-R-D",
+          "bandage:L-F-L-U-F": "bandage:F-R-F-U-R",
+          "bandage:L-U-L-B-U": "bandage:F-U-F-L-U",
+          "bandage:R-B-R-U-B": "bandage:B-L-B-U-L",
+          "bandage:R-D-R-B-D": "bandage:B-D-B-L-D",
+          "bandage:R-F-R-D-F": "bandage:B-R-B-D-R",
+          "bandage:R-U-R-F-U": "bandage:B-U-B-R-U",
+          "bandage:U-B-U-L-B": "bandage:U-L-U-F-L",
+          "bandage:U-F-U-R-F": "bandage:U-R-U-B-R",
+          "bandage:U-L-U-F-L": "bandage:U-F-U-R-F",
+          "bandage:U-R-U-B-R": "bandage:U-B-U-L-B"
+        },
+        "center": {
+          "center:B": "center:L",
+          "center:D": "center:D",
+          "center:F": "center:R",
+          "center:L": "center:F",
+          "center:R": "center:B",
+          "center:U": "center:U"
+        },
+        "corner": {
+          "corner:B-D-R": "corner:L-D-B",
+          "corner:B-L-D": "corner:L-F-D",
+          "corner:B-R-U": "corner:L-B-U",
+          "corner:B-U-L": "corner:L-U-F",
+          "corner:D-B-L": "corner:D-L-F",
+          "corner:D-F-R": "corner:D-R-B",
+          "corner:D-L-F": "corner:D-F-R",
+          "corner:D-R-B": "corner:D-B-L",
+          "corner:F-D-L": "corner:R-D-F",
+          "corner:F-L-U": "corner:R-F-U",
+          "corner:F-R-D": "corner:R-B-D",
+          "corner:F-U-R": "corner:R-U-B",
+          "corner:L-B-U": "corner:F-L-U",
+          "corner:L-D-B": "corner:F-D-L",
+          "corner:L-F-D": "corner:F-R-D",
+          "corner:L-U-F": "corner:F-U-R",
+          "corner:R-B-D": "corner:B-L-D",
+          "corner:R-D-F": "corner:B-D-R",
+          "corner:R-F-U": "corner:B-R-U",
+          "corner:R-U-B": "corner:B-U-L",
+          "corner:U-B-R": "corner:U-L-B",
+          "corner:U-F-L": "corner:U-R-F",
+          "corner:U-L-B": "corner:U-F-L",
+          "corner:U-R-F": "corner:U-B-R"
+        },
+        "edge": {
+          "edge:B-D": "edge:L-D",
+          "edge:B-L": "edge:L-F",
+          "edge:B-R": "edge:L-B",
+          "edge:B-U": "edge:L-U",
+          "edge:D-B": "edge:D-L",
+          "edge:D-F": "edge:D-R",
+          "edge:D-L": "edge:D-F",
+          "edge:D-R": "edge:D-B",
+          "edge:F-D": "edge:R-D",
+          "edge:F-L": "edge:R-F",
+          "edge:F-R": "edge:R-B",
+          "edge:F-U": "edge:R-U",
+          "edge:L-B": "edge:F-L",
+          "edge:L-D": "edge:F-D",
+          "edge:L-F": "edge:F-R",
+          "edge:L-U": "edge:F-U",
+          "edge:R-B": "edge:B-L",
+          "edge:R-D": "edge:B-D",
+          "edge:R-F": "edge:B-R",
+          "edge:R-U": "edge:B-U",
+          "edge:U-B": "edge:U-L",
+          "edge:U-F": "edge:U-R",
+          "edge:U-L": "edge:U-F",
+          "edge:U-R": "edge:U-B"
+        }
+      }
+    },
+    {
+      "facePermutation": [
+        0,
+        2,
+        4,
+        3,
+        5,
+        1
+      ],
+      "family": "D",
+      "id": "D'",
+      "inverse": "D",
+      "selectedCells": [
+        "D",
+        "DB",
+        "DBL",
+        "DBR",
+        "DF",
+        "DFL",
+        "DFR",
+        "DL",
+        "DR"
+      ],
+      "transport": "D.counterclockwise",
+      "transports": {
+        "bandage": {
+          "bandage:B-D-B-L-D": "bandage:R-D-R-B-D",
+          "bandage:B-L-B-U-L": "bandage:R-B-R-U-B",
+          "bandage:B-R-B-D-R": "bandage:R-F-R-D-F",
+          "bandage:B-U-B-R-U": "bandage:R-U-R-F-U",
+          "bandage:D-B-D-R-B": "bandage:D-R-D-F-R",
+          "bandage:D-F-D-L-F": "bandage:D-L-D-B-L",
+          "bandage:D-L-D-B-L": "bandage:D-B-D-R-B",
+          "bandage:D-R-D-F-R": "bandage:D-F-D-L-F",
+          "bandage:F-D-F-R-D": "bandage:L-D-L-F-D",
+          "bandage:F-L-F-D-L": "bandage:L-B-L-D-B",
+          "bandage:F-R-F-U-R": "bandage:L-F-L-U-F",
+          "bandage:F-U-F-L-U": "bandage:L-U-L-B-U",
+          "bandage:L-B-L-D-B": "bandage:B-R-B-D-R",
+          "bandage:L-D-L-F-D": "bandage:B-D-B-L-D",
+          "bandage:L-F-L-U-F": "bandage:B-L-B-U-L",
+          "bandage:L-U-L-B-U": "bandage:B-U-B-R-U",
+          "bandage:R-B-R-U-B": "bandage:F-R-F-U-R",
+          "bandage:R-D-R-B-D": "bandage:F-D-F-R-D",
+          "bandage:R-F-R-D-F": "bandage:F-L-F-D-L",
+          "bandage:R-U-R-F-U": "bandage:F-U-F-L-U",
+          "bandage:U-B-U-L-B": "bandage:U-R-U-B-R",
+          "bandage:U-F-U-R-F": "bandage:U-L-U-F-L",
+          "bandage:U-L-U-F-L": "bandage:U-B-U-L-B",
+          "bandage:U-R-U-B-R": "bandage:U-F-U-R-F"
+        },
+        "center": {
+          "center:B": "center:R",
+          "center:D": "center:D",
+          "center:F": "center:L",
+          "center:L": "center:B",
+          "center:R": "center:F",
+          "center:U": "center:U"
+        },
+        "corner": {
+          "corner:B-D-R": "corner:R-D-F",
+          "corner:B-L-D": "corner:R-B-D",
+          "corner:B-R-U": "corner:R-F-U",
+          "corner:B-U-L": "corner:R-U-B",
+          "corner:D-B-L": "corner:D-R-B",
+          "corner:D-F-R": "corner:D-L-F",
+          "corner:D-L-F": "corner:D-B-L",
+          "corner:D-R-B": "corner:D-F-R",
+          "corner:F-D-L": "corner:L-D-B",
+          "corner:F-L-U": "corner:L-B-U",
+          "corner:F-R-D": "corner:L-F-D",
+          "corner:F-U-R": "corner:L-U-F",
+          "corner:L-B-U": "corner:B-R-U",
+          "corner:L-D-B": "corner:B-D-R",
+          "corner:L-F-D": "corner:B-L-D",
+          "corner:L-U-F": "corner:B-U-L",
+          "corner:R-B-D": "corner:F-R-D",
+          "corner:R-D-F": "corner:F-D-L",
+          "corner:R-F-U": "corner:F-L-U",
+          "corner:R-U-B": "corner:F-U-R",
+          "corner:U-B-R": "corner:U-R-F",
+          "corner:U-F-L": "corner:U-L-B",
+          "corner:U-L-B": "corner:U-B-R",
+          "corner:U-R-F": "corner:U-F-L"
+        },
+        "edge": {
+          "edge:B-D": "edge:R-D",
+          "edge:B-L": "edge:R-B",
+          "edge:B-R": "edge:R-F",
+          "edge:B-U": "edge:R-U",
+          "edge:D-B": "edge:D-R",
+          "edge:D-F": "edge:D-L",
+          "edge:D-L": "edge:D-B",
+          "edge:D-R": "edge:D-F",
+          "edge:F-D": "edge:L-D",
+          "edge:F-L": "edge:L-B",
+          "edge:F-R": "edge:L-F",
+          "edge:F-U": "edge:L-U",
+          "edge:L-B": "edge:B-R",
+          "edge:L-D": "edge:B-D",
+          "edge:L-F": "edge:B-L",
+          "edge:L-U": "edge:B-U",
+          "edge:R-B": "edge:F-R",
+          "edge:R-D": "edge:F-D",
+          "edge:R-F": "edge:F-L",
+          "edge:R-U": "edge:F-U",
+          "edge:U-B": "edge:U-R",
+          "edge:U-F": "edge:U-L",
+          "edge:U-L": "edge:U-B",
+          "edge:U-R": "edge:U-F"
+        }
+      }
+    },
+    {
+      "facePermutation": [
+        1,
+        3,
+        2,
+        4,
+        0,
+        5
+      ],
+      "family": "F",
+      "id": "F",
+      "inverse": "F'",
+      "selectedCells": [
+        "DF",
+        "DFL",
+        "DFR",
+        "F",
+        "FL",
+        "FR",
+        "UF",
+        "UFL",
+        "UFR"
+      ],
+      "transport": "F.clockwise",
+      "transports": {
+        "bandage": {
+          "bandage:B-D-B-L-D": "bandage:B-L-B-U-L",
+          "bandage:B-L-B-U-L": "bandage:B-U-B-R-U",
+          "bandage:B-R-B-D-R": "bandage:B-D-B-L-D",
+          "bandage:B-U-B-R-U": "bandage:B-R-B-D-R",
+          "bandage:D-B-D-R-B": "bandage:L-B-L-D-B",
+          "bandage:D-F-D-L-F": "bandage:L-F-L-U-F",
+          "bandage:D-L-D-B-L": "bandage:L-U-L-B-U",
+          "bandage:D-R-D-F-R": "bandage:L-D-L-F-D",
+          "bandage:F-D-F-R-D": "bandage:F-L-F-D-L",
+          "bandage:F-L-F-D-L": "bandage:F-U-F-L-U",
+          "bandage:F-R-F-U-R": "bandage:F-D-F-R-D",
+          "bandage:F-U-F-L-U": "bandage:F-R-F-U-R",
+          "bandage:L-B-L-D-B": "bandage:U-B-U-L-B",
+          "bandage:L-D-L-F-D": "bandage:U-L-U-F-L",
+          "bandage:L-F-L-U-F": "bandage:U-F-U-R-F",
+          "bandage:L-U-L-B-U": "bandage:U-R-U-B-R",
+          "bandage:R-B-R-U-B": "bandage:D-B-D-R-B",
+          "bandage:R-D-R-B-D": "bandage:D-L-D-B-L",
+          "bandage:R-F-R-D-F": "bandage:D-F-D-L-F",
+          "bandage:R-U-R-F-U": "bandage:D-R-D-F-R",
+          "bandage:U-B-U-L-B": "bandage:R-B-R-U-B",
+          "bandage:U-F-U-R-F": "bandage:R-F-R-D-F",
+          "bandage:U-L-U-F-L": "bandage:R-U-R-F-U",
+          "bandage:U-R-U-B-R": "bandage:R-D-R-B-D"
+        },
+        "center": {
+          "center:B": "center:B",
+          "center:D": "center:L",
+          "center:F": "center:F",
+          "center:L": "center:U",
+          "center:R": "center:D",
+          "center:U": "center:R"
+        },
+        "corner": {
+          "corner:B-D-R": "corner:B-L-D",
+          "corner:B-L-D": "corner:B-U-L",
+          "corner:B-R-U": "corner:B-D-R",
+          "corner:B-U-L": "corner:B-R-U",
+          "corner:D-B-L": "corner:L-B-U",
+          "corner:D-F-R": "corner:L-F-D",
+          "corner:D-L-F": "corner:L-U-F",
+          "corner:D-R-B": "corner:L-D-B",
+          "corner:F-D-L": "corner:F-L-U",
+          "corner:F-L-U": "corner:F-U-R",
+          "corner:F-R-D": "corner:F-D-L",
+          "corner:F-U-R": "corner:F-R-D",
+          "corner:L-B-U": "corner:U-B-R",
+          "corner:L-D-B": "corner:U-L-B",
+          "corner:L-F-D": "corner:U-F-L",
+          "corner:L-U-F": "corner:U-R-F",
+          "corner:R-B-D": "corner:D-B-L",
+          "corner:R-D-F": "corner:D-L-F",
+          "corner:R-F-U": "corner:D-F-R",
+          "corner:R-U-B": "corner:D-R-B",
+          "corner:U-B-R": "corner:R-B-D",
+          "corner:U-F-L": "corner:R-F-U",
+          "corner:U-L-B": "corner:R-U-B",
+          "corner:U-R-F": "corner:R-D-F"
+        },
+        "edge": {
+          "edge:B-D": "edge:B-L",
+          "edge:B-L": "edge:B-U",
+          "edge:B-R": "edge:B-D",
+          "edge:B-U": "edge:B-R",
+          "edge:D-B": "edge:L-B",
+          "edge:D-F": "edge:L-F",
+          "edge:D-L": "edge:L-U",
+          "edge:D-R": "edge:L-D",
+          "edge:F-D": "edge:F-L",
+          "edge:F-L": "edge:F-U",
+          "edge:F-R": "edge:F-D",
+          "edge:F-U": "edge:F-R",
+          "edge:L-B": "edge:U-B",
+          "edge:L-D": "edge:U-L",
+          "edge:L-F": "edge:U-F",
+          "edge:L-U": "edge:U-R",
+          "edge:R-B": "edge:D-B",
+          "edge:R-D": "edge:D-L",
+          "edge:R-F": "edge:D-F",
+          "edge:R-U": "edge:D-R",
+          "edge:U-B": "edge:R-B",
+          "edge:U-F": "edge:R-F",
+          "edge:U-L": "edge:R-U",
+          "edge:U-R": "edge:R-D"
+        }
+      }
+    },
+    {
+      "facePermutation": [
+        4,
+        0,
+        2,
+        1,
+        3,
+        5
+      ],
+      "family": "F",
+      "id": "F'",
+      "inverse": "F",
+      "selectedCells": [
+        "DF",
+        "DFL",
+        "DFR",
+        "F",
+        "FL",
+        "FR",
+        "UF",
+        "UFL",
+        "UFR"
+      ],
+      "transport": "F.counterclockwise",
+      "transports": {
+        "bandage": {
+          "bandage:B-D-B-L-D": "bandage:B-R-B-D-R",
+          "bandage:B-L-B-U-L": "bandage:B-D-B-L-D",
+          "bandage:B-R-B-D-R": "bandage:B-U-B-R-U",
+          "bandage:B-U-B-R-U": "bandage:B-L-B-U-L",
+          "bandage:D-B-D-R-B": "bandage:R-B-R-U-B",
+          "bandage:D-F-D-L-F": "bandage:R-F-R-D-F",
+          "bandage:D-L-D-B-L": "bandage:R-D-R-B-D",
+          "bandage:D-R-D-F-R": "bandage:R-U-R-F-U",
+          "bandage:F-D-F-R-D": "bandage:F-R-F-U-R",
+          "bandage:F-L-F-D-L": "bandage:F-D-F-R-D",
+          "bandage:F-R-F-U-R": "bandage:F-U-F-L-U",
+          "bandage:F-U-F-L-U": "bandage:F-L-F-D-L",
+          "bandage:L-B-L-D-B": "bandage:D-B-D-R-B",
+          "bandage:L-D-L-F-D": "bandage:D-R-D-F-R",
+          "bandage:L-F-L-U-F": "bandage:D-F-D-L-F",
+          "bandage:L-U-L-B-U": "bandage:D-L-D-B-L",
+          "bandage:R-B-R-U-B": "bandage:U-B-U-L-B",
+          "bandage:R-D-R-B-D": "bandage:U-R-U-B-R",
+          "bandage:R-F-R-D-F": "bandage:U-F-U-R-F",
+          "bandage:R-U-R-F-U": "bandage:U-L-U-F-L",
+          "bandage:U-B-U-L-B": "bandage:L-B-L-D-B",
+          "bandage:U-F-U-R-F": "bandage:L-F-L-U-F",
+          "bandage:U-L-U-F-L": "bandage:L-D-L-F-D",
+          "bandage:U-R-U-B-R": "bandage:L-U-L-B-U"
+        },
+        "center": {
+          "center:B": "center:B",
+          "center:D": "center:R",
+          "center:F": "center:F",
+          "center:L": "center:D",
+          "center:R": "center:U",
+          "center:U": "center:L"
+        },
+        "corner": {
+          "corner:B-D-R": "corner:B-R-U",
+          "corner:B-L-D": "corner:B-D-R",
+          "corner:B-R-U": "corner:B-U-L",
+          "corner:B-U-L": "corner:B-L-D",
+          "corner:D-B-L": "corner:R-B-D",
+          "corner:D-F-R": "corner:R-F-U",
+          "corner:D-L-F": "corner:R-D-F",
+          "corner:D-R-B": "corner:R-U-B",
+          "corner:F-D-L": "corner:F-R-D",
+          "corner:F-L-U": "corner:F-D-L",
+          "corner:F-R-D": "corner:F-U-R",
+          "corner:F-U-R": "corner:F-L-U",
+          "corner:L-B-U": "corner:D-B-L",
+          "corner:L-D-B": "corner:D-R-B",
+          "corner:L-F-D": "corner:D-F-R",
+          "corner:L-U-F": "corner:D-L-F",
+          "corner:R-B-D": "corner:U-B-R",
+          "corner:R-D-F": "corner:U-R-F",
+          "corner:R-F-U": "corner:U-F-L",
+          "corner:R-U-B": "corner:U-L-B",
+          "corner:U-B-R": "corner:L-B-U",
+          "corner:U-F-L": "corner:L-F-D",
+          "corner:U-L-B": "corner:L-D-B",
+          "corner:U-R-F": "corner:L-U-F"
+        },
+        "edge": {
+          "edge:B-D": "edge:B-R",
+          "edge:B-L": "edge:B-D",
+          "edge:B-R": "edge:B-U",
+          "edge:B-U": "edge:B-L",
+          "edge:D-B": "edge:R-B",
+          "edge:D-F": "edge:R-F",
+          "edge:D-L": "edge:R-D",
+          "edge:D-R": "edge:R-U",
+          "edge:F-D": "edge:F-R",
+          "edge:F-L": "edge:F-D",
+          "edge:F-R": "edge:F-U",
+          "edge:F-U": "edge:F-L",
+          "edge:L-B": "edge:D-B",
+          "edge:L-D": "edge:D-R",
+          "edge:L-F": "edge:D-F",
+          "edge:L-U": "edge:D-L",
+          "edge:R-B": "edge:U-B",
+          "edge:R-D": "edge:U-R",
+          "edge:R-F": "edge:U-F",
+          "edge:R-U": "edge:U-L",
+          "edge:U-B": "edge:L-B",
+          "edge:U-F": "edge:L-F",
+          "edge:U-L": "edge:L-D",
+          "edge:U-R": "edge:L-U"
+        }
+      }
+    },
+    {
+      "facePermutation": [
+        2,
+        1,
+        3,
+        5,
+        4,
+        0
+      ],
+      "family": "L",
+      "id": "L",
+      "inverse": "L'",
+      "selectedCells": [
+        "BL",
+        "DBL",
+        "DFL",
+        "DL",
+        "FL",
+        "L",
+        "UBL",
+        "UFL",
+        "UL"
+      ],
+      "transport": "L.clockwise",
+      "transports": {
+        "bandage": {
+          "bandage:B-D-B-L-D": "bandage:U-B-U-L-B",
+          "bandage:B-L-B-U-L": "bandage:U-L-U-F-L",
+          "bandage:B-R-B-D-R": "bandage:U-R-U-B-R",
+          "bandage:B-U-B-R-U": "bandage:U-F-U-R-F",
+          "bandage:D-B-D-R-B": "bandage:B-U-B-R-U",
+          "bandage:D-F-D-L-F": "bandage:B-D-B-L-D",
+          "bandage:D-L-D-B-L": "bandage:B-L-B-U-L",
+          "bandage:D-R-D-F-R": "bandage:B-R-B-D-R",
+          "bandage:F-D-F-R-D": "bandage:D-B-D-R-B",
+          "bandage:F-L-F-D-L": "bandage:D-L-D-B-L",
+          "bandage:F-R-F-U-R": "bandage:D-R-D-F-R",
+          "bandage:F-U-F-L-U": "bandage:D-F-D-L-F",
+          "bandage:L-B-L-D-B": "bandage:L-U-L-B-U",
+          "bandage:L-D-L-F-D": "bandage:L-B-L-D-B",
+          "bandage:L-F-L-U-F": "bandage:L-D-L-F-D",
+          "bandage:L-U-L-B-U": "bandage:L-F-L-U-F",
+          "bandage:R-B-R-U-B": "bandage:R-U-R-F-U",
+          "bandage:R-D-R-B-D": "bandage:R-B-R-U-B",
+          "bandage:R-F-R-D-F": "bandage:R-D-R-B-D",
+          "bandage:R-U-R-F-U": "bandage:R-F-R-D-F",
+          "bandage:U-B-U-L-B": "bandage:F-U-F-L-U",
+          "bandage:U-F-U-R-F": "bandage:F-D-F-R-D",
+          "bandage:U-L-U-F-L": "bandage:F-L-F-D-L",
+          "bandage:U-R-U-B-R": "bandage:F-R-F-U-R"
+        },
+        "center": {
+          "center:B": "center:U",
+          "center:D": "center:B",
+          "center:F": "center:D",
+          "center:L": "center:L",
+          "center:R": "center:R",
+          "center:U": "center:F"
+        },
+        "corner": {
+          "corner:B-D-R": "corner:U-B-R",
+          "corner:B-L-D": "corner:U-L-B",
+          "corner:B-R-U": "corner:U-R-F",
+          "corner:B-U-L": "corner:U-F-L",
+          "corner:D-B-L": "corner:B-U-L",
+          "corner:D-F-R": "corner:B-D-R",
+          "corner:D-L-F": "corner:B-L-D",
+          "corner:D-R-B": "corner:B-R-U",
+          "corner:F-D-L": "corner:D-B-L",
+          "corner:F-L-U": "corner:D-L-F",
+          "corner:F-R-D": "corner:D-R-B",
+          "corner:F-U-R": "corner:D-F-R",
+          "corner:L-B-U": "corner:L-U-F",
+          "corner:L-D-B": "corner:L-B-U",
+          "corner:L-F-D": "corner:L-D-B",
+          "corner:L-U-F": "corner:L-F-D",
+          "corner:R-B-D": "corner:R-U-B",
+          "corner:R-D-F": "corner:R-B-D",
+          "corner:R-F-U": "corner:R-D-F",
+          "corner:R-U-B": "corner:R-F-U",
+          "corner:U-B-R": "corner:F-U-R",
+          "corner:U-F-L": "corner:F-D-L",
+          "corner:U-L-B": "corner:F-L-U",
+          "corner:U-R-F": "corner:F-R-D"
+        },
+        "edge": {
+          "edge:B-D": "edge:U-B",
+          "edge:B-L": "edge:U-L",
+          "edge:B-R": "edge:U-R",
+          "edge:B-U": "edge:U-F",
+          "edge:D-B": "edge:B-U",
+          "edge:D-F": "edge:B-D",
+          "edge:D-L": "edge:B-L",
+          "edge:D-R": "edge:B-R",
+          "edge:F-D": "edge:D-B",
+          "edge:F-L": "edge:D-L",
+          "edge:F-R": "edge:D-R",
+          "edge:F-U": "edge:D-F",
+          "edge:L-B": "edge:L-U",
+          "edge:L-D": "edge:L-B",
+          "edge:L-F": "edge:L-D",
+          "edge:L-U": "edge:L-F",
+          "edge:R-B": "edge:R-U",
+          "edge:R-D": "edge:R-B",
+          "edge:R-F": "edge:R-D",
+          "edge:R-U": "edge:R-F",
+          "edge:U-B": "edge:F-U",
+          "edge:U-F": "edge:F-D",
+          "edge:U-L": "edge:F-L",
+          "edge:U-R": "edge:F-R"
+        }
+      }
+    },
+    {
+      "facePermutation": [
+        5,
+        1,
+        0,
+        2,
+        4,
+        3
+      ],
+      "family": "L",
+      "id": "L'",
+      "inverse": "L",
+      "selectedCells": [
+        "BL",
+        "DBL",
+        "DFL",
+        "DL",
+        "FL",
+        "L",
+        "UBL",
+        "UFL",
+        "UL"
+      ],
+      "transport": "L.counterclockwise",
+      "transports": {
+        "bandage": {
+          "bandage:B-D-B-L-D": "bandage:D-F-D-L-F",
+          "bandage:B-L-B-U-L": "bandage:D-L-D-B-L",
+          "bandage:B-R-B-D-R": "bandage:D-R-D-F-R",
+          "bandage:B-U-B-R-U": "bandage:D-B-D-R-B",
+          "bandage:D-B-D-R-B": "bandage:F-D-F-R-D",
+          "bandage:D-F-D-L-F": "bandage:F-U-F-L-U",
+          "bandage:D-L-D-B-L": "bandage:F-L-F-D-L",
+          "bandage:D-R-D-F-R": "bandage:F-R-F-U-R",
+          "bandage:F-D-F-R-D": "bandage:U-F-U-R-F",
+          "bandage:F-L-F-D-L": "bandage:U-L-U-F-L",
+          "bandage:F-R-F-U-R": "bandage:U-R-U-B-R",
+          "bandage:F-U-F-L-U": "bandage:U-B-U-L-B",
+          "bandage:L-B-L-D-B": "bandage:L-D-L-F-D",
+          "bandage:L-D-L-F-D": "bandage:L-F-L-U-F",
+          "bandage:L-F-L-U-F": "bandage:L-U-L-B-U",
+          "bandage:L-U-L-B-U": "bandage:L-B-L-D-B",
+          "bandage:R-B-R-U-B": "bandage:R-D-R-B-D",
+          "bandage:R-D-R-B-D": "bandage:R-F-R-D-F",
+          "bandage:R-F-R-D-F": "bandage:R-U-R-F-U",
+          "bandage:R-U-R-F-U": "bandage:R-B-R-U-B",
+          "bandage:U-B-U-L-B": "bandage:B-D-B-L-D",
+          "bandage:U-F-U-R-F": "bandage:B-U-B-R-U",
+          "bandage:U-L-U-F-L": "bandage:B-L-B-U-L",
+          "bandage:U-R-U-B-R": "bandage:B-R-B-D-R"
+        },
+        "center": {
+          "center:B": "center:D",
+          "center:D": "center:F",
+          "center:F": "center:U",
+          "center:L": "center:L",
+          "center:R": "center:R",
+          "center:U": "center:B"
+        },
+        "corner": {
+          "corner:B-D-R": "corner:D-F-R",
+          "corner:B-L-D": "corner:D-L-F",
+          "corner:B-R-U": "corner:D-R-B",
+          "corner:B-U-L": "corner:D-B-L",
+          "corner:D-B-L": "corner:F-D-L",
+          "corner:D-F-R": "corner:F-U-R",
+          "corner:D-L-F": "corner:F-L-U",
+          "corner:D-R-B": "corner:F-R-D",
+          "corner:F-D-L": "corner:U-F-L",
+          "corner:F-L-U": "corner:U-L-B",
+          "corner:F-R-D": "corner:U-R-F",
+          "corner:F-U-R": "corner:U-B-R",
+          "corner:L-B-U": "corner:L-D-B",
+          "corner:L-D-B": "corner:L-F-D",
+          "corner:L-F-D": "corner:L-U-F",
+          "corner:L-U-F": "corner:L-B-U",
+          "corner:R-B-D": "corner:R-D-F",
+          "corner:R-D-F": "corner:R-F-U",
+          "corner:R-F-U": "corner:R-U-B",
+          "corner:R-U-B": "corner:R-B-D",
+          "corner:U-B-R": "corner:B-D-R",
+          "corner:U-F-L": "corner:B-U-L",
+          "corner:U-L-B": "corner:B-L-D",
+          "corner:U-R-F": "corner:B-R-U"
+        },
+        "edge": {
+          "edge:B-D": "edge:D-F",
+          "edge:B-L": "edge:D-L",
+          "edge:B-R": "edge:D-R",
+          "edge:B-U": "edge:D-B",
+          "edge:D-B": "edge:F-D",
+          "edge:D-F": "edge:F-U",
+          "edge:D-L": "edge:F-L",
+          "edge:D-R": "edge:F-R",
+          "edge:F-D": "edge:U-F",
+          "edge:F-L": "edge:U-L",
+          "edge:F-R": "edge:U-R",
+          "edge:F-U": "edge:U-B",
+          "edge:L-B": "edge:L-D",
+          "edge:L-D": "edge:L-F",
+          "edge:L-F": "edge:L-U",
+          "edge:L-U": "edge:L-B",
+          "edge:R-B": "edge:R-D",
+          "edge:R-D": "edge:R-F",
+          "edge:R-F": "edge:R-U",
+          "edge:R-U": "edge:R-B",
+          "edge:U-B": "edge:B-D",
+          "edge:U-F": "edge:B-U",
+          "edge:U-L": "edge:B-L",
+          "edge:U-R": "edge:B-R"
+        }
+      }
+    },
+    {
+      "facePermutation": [
+        5,
+        1,
+        0,
+        2,
+        4,
+        3
+      ],
+      "family": "R",
+      "id": "R",
+      "inverse": "R'",
+      "selectedCells": [
+        "BR",
+        "DBR",
+        "DFR",
+        "DR",
+        "FR",
+        "R",
+        "UBR",
+        "UFR",
+        "UR"
+      ],
+      "transport": "R.clockwise",
+      "transports": {
+        "bandage": {
+          "bandage:B-D-B-L-D": "bandage:D-F-D-L-F",
+          "bandage:B-L-B-U-L": "bandage:D-L-D-B-L",
+          "bandage:B-R-B-D-R": "bandage:D-R-D-F-R",
+          "bandage:B-U-B-R-U": "bandage:D-B-D-R-B",
+          "bandage:D-B-D-R-B": "bandage:F-D-F-R-D",
+          "bandage:D-F-D-L-F": "bandage:F-U-F-L-U",
+          "bandage:D-L-D-B-L": "bandage:F-L-F-D-L",
+          "bandage:D-R-D-F-R": "bandage:F-R-F-U-R",
+          "bandage:F-D-F-R-D": "bandage:U-F-U-R-F",
+          "bandage:F-L-F-D-L": "bandage:U-L-U-F-L",
+          "bandage:F-R-F-U-R": "bandage:U-R-U-B-R",
+          "bandage:F-U-F-L-U": "bandage:U-B-U-L-B",
+          "bandage:L-B-L-D-B": "bandage:L-D-L-F-D",
+          "bandage:L-D-L-F-D": "bandage:L-F-L-U-F",
+          "bandage:L-F-L-U-F": "bandage:L-U-L-B-U",
+          "bandage:L-U-L-B-U": "bandage:L-B-L-D-B",
+          "bandage:R-B-R-U-B": "bandage:R-D-R-B-D",
+          "bandage:R-D-R-B-D": "bandage:R-F-R-D-F",
+          "bandage:R-F-R-D-F": "bandage:R-U-R-F-U",
+          "bandage:R-U-R-F-U": "bandage:R-B-R-U-B",
+          "bandage:U-B-U-L-B": "bandage:B-D-B-L-D",
+          "bandage:U-F-U-R-F": "bandage:B-U-B-R-U",
+          "bandage:U-L-U-F-L": "bandage:B-L-B-U-L",
+          "bandage:U-R-U-B-R": "bandage:B-R-B-D-R"
+        },
+        "center": {
+          "center:B": "center:D",
+          "center:D": "center:F",
+          "center:F": "center:U",
+          "center:L": "center:L",
+          "center:R": "center:R",
+          "center:U": "center:B"
+        },
+        "corner": {
+          "corner:B-D-R": "corner:D-F-R",
+          "corner:B-L-D": "corner:D-L-F",
+          "corner:B-R-U": "corner:D-R-B",
+          "corner:B-U-L": "corner:D-B-L",
+          "corner:D-B-L": "corner:F-D-L",
+          "corner:D-F-R": "corner:F-U-R",
+          "corner:D-L-F": "corner:F-L-U",
+          "corner:D-R-B": "corner:F-R-D",
+          "corner:F-D-L": "corner:U-F-L",
+          "corner:F-L-U": "corner:U-L-B",
+          "corner:F-R-D": "corner:U-R-F",
+          "corner:F-U-R": "corner:U-B-R",
+          "corner:L-B-U": "corner:L-D-B",
+          "corner:L-D-B": "corner:L-F-D",
+          "corner:L-F-D": "corner:L-U-F",
+          "corner:L-U-F": "corner:L-B-U",
+          "corner:R-B-D": "corner:R-D-F",
+          "corner:R-D-F": "corner:R-F-U",
+          "corner:R-F-U": "corner:R-U-B",
+          "corner:R-U-B": "corner:R-B-D",
+          "corner:U-B-R": "corner:B-D-R",
+          "corner:U-F-L": "corner:B-U-L",
+          "corner:U-L-B": "corner:B-L-D",
+          "corner:U-R-F": "corner:B-R-U"
+        },
+        "edge": {
+          "edge:B-D": "edge:D-F",
+          "edge:B-L": "edge:D-L",
+          "edge:B-R": "edge:D-R",
+          "edge:B-U": "edge:D-B",
+          "edge:D-B": "edge:F-D",
+          "edge:D-F": "edge:F-U",
+          "edge:D-L": "edge:F-L",
+          "edge:D-R": "edge:F-R",
+          "edge:F-D": "edge:U-F",
+          "edge:F-L": "edge:U-L",
+          "edge:F-R": "edge:U-R",
+          "edge:F-U": "edge:U-B",
+          "edge:L-B": "edge:L-D",
+          "edge:L-D": "edge:L-F",
+          "edge:L-F": "edge:L-U",
+          "edge:L-U": "edge:L-B",
+          "edge:R-B": "edge:R-D",
+          "edge:R-D": "edge:R-F",
+          "edge:R-F": "edge:R-U",
+          "edge:R-U": "edge:R-B",
+          "edge:U-B": "edge:B-D",
+          "edge:U-F": "edge:B-U",
+          "edge:U-L": "edge:B-L",
+          "edge:U-R": "edge:B-R"
+        }
+      }
+    },
+    {
+      "facePermutation": [
+        2,
+        1,
+        3,
+        5,
+        4,
+        0
+      ],
+      "family": "R",
+      "id": "R'",
+      "inverse": "R",
+      "selectedCells": [
+        "BR",
+        "DBR",
+        "DFR",
+        "DR",
+        "FR",
+        "R",
+        "UBR",
+        "UFR",
+        "UR"
+      ],
+      "transport": "R.counterclockwise",
+      "transports": {
+        "bandage": {
+          "bandage:B-D-B-L-D": "bandage:U-B-U-L-B",
+          "bandage:B-L-B-U-L": "bandage:U-L-U-F-L",
+          "bandage:B-R-B-D-R": "bandage:U-R-U-B-R",
+          "bandage:B-U-B-R-U": "bandage:U-F-U-R-F",
+          "bandage:D-B-D-R-B": "bandage:B-U-B-R-U",
+          "bandage:D-F-D-L-F": "bandage:B-D-B-L-D",
+          "bandage:D-L-D-B-L": "bandage:B-L-B-U-L",
+          "bandage:D-R-D-F-R": "bandage:B-R-B-D-R",
+          "bandage:F-D-F-R-D": "bandage:D-B-D-R-B",
+          "bandage:F-L-F-D-L": "bandage:D-L-D-B-L",
+          "bandage:F-R-F-U-R": "bandage:D-R-D-F-R",
+          "bandage:F-U-F-L-U": "bandage:D-F-D-L-F",
+          "bandage:L-B-L-D-B": "bandage:L-U-L-B-U",
+          "bandage:L-D-L-F-D": "bandage:L-B-L-D-B",
+          "bandage:L-F-L-U-F": "bandage:L-D-L-F-D",
+          "bandage:L-U-L-B-U": "bandage:L-F-L-U-F",
+          "bandage:R-B-R-U-B": "bandage:R-U-R-F-U",
+          "bandage:R-D-R-B-D": "bandage:R-B-R-U-B",
+          "bandage:R-F-R-D-F": "bandage:R-D-R-B-D",
+          "bandage:R-U-R-F-U": "bandage:R-F-R-D-F",
+          "bandage:U-B-U-L-B": "bandage:F-U-F-L-U",
+          "bandage:U-F-U-R-F": "bandage:F-D-F-R-D",
+          "bandage:U-L-U-F-L": "bandage:F-L-F-D-L",
+          "bandage:U-R-U-B-R": "bandage:F-R-F-U-R"
+        },
+        "center": {
+          "center:B": "center:U",
+          "center:D": "center:B",
+          "center:F": "center:D",
+          "center:L": "center:L",
+          "center:R": "center:R",
+          "center:U": "center:F"
+        },
+        "corner": {
+          "corner:B-D-R": "corner:U-B-R",
+          "corner:B-L-D": "corner:U-L-B",
+          "corner:B-R-U": "corner:U-R-F",
+          "corner:B-U-L": "corner:U-F-L",
+          "corner:D-B-L": "corner:B-U-L",
+          "corner:D-F-R": "corner:B-D-R",
+          "corner:D-L-F": "corner:B-L-D",
+          "corner:D-R-B": "corner:B-R-U",
+          "corner:F-D-L": "corner:D-B-L",
+          "corner:F-L-U": "corner:D-L-F",
+          "corner:F-R-D": "corner:D-R-B",
+          "corner:F-U-R": "corner:D-F-R",
+          "corner:L-B-U": "corner:L-U-F",
+          "corner:L-D-B": "corner:L-B-U",
+          "corner:L-F-D": "corner:L-D-B",
+          "corner:L-U-F": "corner:L-F-D",
+          "corner:R-B-D": "corner:R-U-B",
+          "corner:R-D-F": "corner:R-B-D",
+          "corner:R-F-U": "corner:R-D-F",
+          "corner:R-U-B": "corner:R-F-U",
+          "corner:U-B-R": "corner:F-U-R",
+          "corner:U-F-L": "corner:F-D-L",
+          "corner:U-L-B": "corner:F-L-U",
+          "corner:U-R-F": "corner:F-R-D"
+        },
+        "edge": {
+          "edge:B-D": "edge:U-B",
+          "edge:B-L": "edge:U-L",
+          "edge:B-R": "edge:U-R",
+          "edge:B-U": "edge:U-F",
+          "edge:D-B": "edge:B-U",
+          "edge:D-F": "edge:B-D",
+          "edge:D-L": "edge:B-L",
+          "edge:D-R": "edge:B-R",
+          "edge:F-D": "edge:D-B",
+          "edge:F-L": "edge:D-L",
+          "edge:F-R": "edge:D-R",
+          "edge:F-U": "edge:D-F",
+          "edge:L-B": "edge:L-U",
+          "edge:L-D": "edge:L-B",
+          "edge:L-F": "edge:L-D",
+          "edge:L-U": "edge:L-F",
+          "edge:R-B": "edge:R-U",
+          "edge:R-D": "edge:R-B",
+          "edge:R-F": "edge:R-D",
+          "edge:R-U": "edge:R-F",
+          "edge:U-B": "edge:F-U",
+          "edge:U-F": "edge:F-D",
+          "edge:U-L": "edge:F-L",
+          "edge:U-R": "edge:F-R"
+        }
+      }
+    },
+    {
+      "facePermutation": [
+        0,
+        2,
+        4,
+        3,
+        5,
+        1
+      ],
+      "family": "U",
+      "id": "U",
+      "inverse": "U'",
+      "selectedCells": [
+        "U",
+        "UB",
+        "UBL",
+        "UBR",
+        "UF",
+        "UFL",
+        "UFR",
+        "UL",
+        "UR"
+      ],
+      "transport": "U.clockwise",
+      "transports": {
+        "bandage": {
+          "bandage:B-D-B-L-D": "bandage:R-D-R-B-D",
+          "bandage:B-L-B-U-L": "bandage:R-B-R-U-B",
+          "bandage:B-R-B-D-R": "bandage:R-F-R-D-F",
+          "bandage:B-U-B-R-U": "bandage:R-U-R-F-U",
+          "bandage:D-B-D-R-B": "bandage:D-R-D-F-R",
+          "bandage:D-F-D-L-F": "bandage:D-L-D-B-L",
+          "bandage:D-L-D-B-L": "bandage:D-B-D-R-B",
+          "bandage:D-R-D-F-R": "bandage:D-F-D-L-F",
+          "bandage:F-D-F-R-D": "bandage:L-D-L-F-D",
+          "bandage:F-L-F-D-L": "bandage:L-B-L-D-B",
+          "bandage:F-R-F-U-R": "bandage:L-F-L-U-F",
+          "bandage:F-U-F-L-U": "bandage:L-U-L-B-U",
+          "bandage:L-B-L-D-B": "bandage:B-R-B-D-R",
+          "bandage:L-D-L-F-D": "bandage:B-D-B-L-D",
+          "bandage:L-F-L-U-F": "bandage:B-L-B-U-L",
+          "bandage:L-U-L-B-U": "bandage:B-U-B-R-U",
+          "bandage:R-B-R-U-B": "bandage:F-R-F-U-R",
+          "bandage:R-D-R-B-D": "bandage:F-D-F-R-D",
+          "bandage:R-F-R-D-F": "bandage:F-L-F-D-L",
+          "bandage:R-U-R-F-U": "bandage:F-U-F-L-U",
+          "bandage:U-B-U-L-B": "bandage:U-R-U-B-R",
+          "bandage:U-F-U-R-F": "bandage:U-L-U-F-L",
+          "bandage:U-L-U-F-L": "bandage:U-B-U-L-B",
+          "bandage:U-R-U-B-R": "bandage:U-F-U-R-F"
+        },
+        "center": {
+          "center:B": "center:R",
+          "center:D": "center:D",
+          "center:F": "center:L",
+          "center:L": "center:B",
+          "center:R": "center:F",
+          "center:U": "center:U"
+        },
+        "corner": {
+          "corner:B-D-R": "corner:R-D-F",
+          "corner:B-L-D": "corner:R-B-D",
+          "corner:B-R-U": "corner:R-F-U",
+          "corner:B-U-L": "corner:R-U-B",
+          "corner:D-B-L": "corner:D-R-B",
+          "corner:D-F-R": "corner:D-L-F",
+          "corner:D-L-F": "corner:D-B-L",
+          "corner:D-R-B": "corner:D-F-R",
+          "corner:F-D-L": "corner:L-D-B",
+          "corner:F-L-U": "corner:L-B-U",
+          "corner:F-R-D": "corner:L-F-D",
+          "corner:F-U-R": "corner:L-U-F",
+          "corner:L-B-U": "corner:B-R-U",
+          "corner:L-D-B": "corner:B-D-R",
+          "corner:L-F-D": "corner:B-L-D",
+          "corner:L-U-F": "corner:B-U-L",
+          "corner:R-B-D": "corner:F-R-D",
+          "corner:R-D-F": "corner:F-D-L",
+          "corner:R-F-U": "corner:F-L-U",
+          "corner:R-U-B": "corner:F-U-R",
+          "corner:U-B-R": "corner:U-R-F",
+          "corner:U-F-L": "corner:U-L-B",
+          "corner:U-L-B": "corner:U-B-R",
+          "corner:U-R-F": "corner:U-F-L"
+        },
+        "edge": {
+          "edge:B-D": "edge:R-D",
+          "edge:B-L": "edge:R-B",
+          "edge:B-R": "edge:R-F",
+          "edge:B-U": "edge:R-U",
+          "edge:D-B": "edge:D-R",
+          "edge:D-F": "edge:D-L",
+          "edge:D-L": "edge:D-B",
+          "edge:D-R": "edge:D-F",
+          "edge:F-D": "edge:L-D",
+          "edge:F-L": "edge:L-B",
+          "edge:F-R": "edge:L-F",
+          "edge:F-U": "edge:L-U",
+          "edge:L-B": "edge:B-R",
+          "edge:L-D": "edge:B-D",
+          "edge:L-F": "edge:B-L",
+          "edge:L-U": "edge:B-U",
+          "edge:R-B": "edge:F-R",
+          "edge:R-D": "edge:F-D",
+          "edge:R-F": "edge:F-L",
+          "edge:R-U": "edge:F-U",
+          "edge:U-B": "edge:U-R",
+          "edge:U-F": "edge:U-L",
+          "edge:U-L": "edge:U-B",
+          "edge:U-R": "edge:U-F"
+        }
+      }
+    },
+    {
+      "facePermutation": [
+        0,
+        5,
+        1,
+        3,
+        2,
+        4
+      ],
+      "family": "U",
+      "id": "U'",
+      "inverse": "U",
+      "selectedCells": [
+        "U",
+        "UB",
+        "UBL",
+        "UBR",
+        "UF",
+        "UFL",
+        "UFR",
+        "UL",
+        "UR"
+      ],
+      "transport": "U.counterclockwise",
+      "transports": {
+        "bandage": {
+          "bandage:B-D-B-L-D": "bandage:L-D-L-F-D",
+          "bandage:B-L-B-U-L": "bandage:L-F-L-U-F",
+          "bandage:B-R-B-D-R": "bandage:L-B-L-D-B",
+          "bandage:B-U-B-R-U": "bandage:L-U-L-B-U",
+          "bandage:D-B-D-R-B": "bandage:D-L-D-B-L",
+          "bandage:D-F-D-L-F": "bandage:D-R-D-F-R",
+          "bandage:D-L-D-B-L": "bandage:D-F-D-L-F",
+          "bandage:D-R-D-F-R": "bandage:D-B-D-R-B",
+          "bandage:F-D-F-R-D": "bandage:R-D-R-B-D",
+          "bandage:F-L-F-D-L": "bandage:R-F-R-D-F",
+          "bandage:F-R-F-U-R": "bandage:R-B-R-U-B",
+          "bandage:F-U-F-L-U": "bandage:R-U-R-F-U",
+          "bandage:L-B-L-D-B": "bandage:F-L-F-D-L",
+          "bandage:L-D-L-F-D": "bandage:F-D-F-R-D",
+          "bandage:L-F-L-U-F": "bandage:F-R-F-U-R",
+          "bandage:L-U-L-B-U": "bandage:F-U-F-L-U",
+          "bandage:R-B-R-U-B": "bandage:B-L-B-U-L",
+          "bandage:R-D-R-B-D": "bandage:B-D-B-L-D",
+          "bandage:R-F-R-D-F": "bandage:B-R-B-D-R",
+          "bandage:R-U-R-F-U": "bandage:B-U-B-R-U",
+          "bandage:U-B-U-L-B": "bandage:U-L-U-F-L",
+          "bandage:U-F-U-R-F": "bandage:U-R-U-B-R",
+          "bandage:U-L-U-F-L": "bandage:U-F-U-R-F",
+          "bandage:U-R-U-B-R": "bandage:U-B-U-L-B"
+        },
+        "center": {
+          "center:B": "center:L",
+          "center:D": "center:D",
+          "center:F": "center:R",
+          "center:L": "center:F",
+          "center:R": "center:B",
+          "center:U": "center:U"
+        },
+        "corner": {
+          "corner:B-D-R": "corner:L-D-B",
+          "corner:B-L-D": "corner:L-F-D",
+          "corner:B-R-U": "corner:L-B-U",
+          "corner:B-U-L": "corner:L-U-F",
+          "corner:D-B-L": "corner:D-L-F",
+          "corner:D-F-R": "corner:D-R-B",
+          "corner:D-L-F": "corner:D-F-R",
+          "corner:D-R-B": "corner:D-B-L",
+          "corner:F-D-L": "corner:R-D-F",
+          "corner:F-L-U": "corner:R-F-U",
+          "corner:F-R-D": "corner:R-B-D",
+          "corner:F-U-R": "corner:R-U-B",
+          "corner:L-B-U": "corner:F-L-U",
+          "corner:L-D-B": "corner:F-D-L",
+          "corner:L-F-D": "corner:F-R-D",
+          "corner:L-U-F": "corner:F-U-R",
+          "corner:R-B-D": "corner:B-L-D",
+          "corner:R-D-F": "corner:B-D-R",
+          "corner:R-F-U": "corner:B-R-U",
+          "corner:R-U-B": "corner:B-U-L",
+          "corner:U-B-R": "corner:U-L-B",
+          "corner:U-F-L": "corner:U-R-F",
+          "corner:U-L-B": "corner:U-F-L",
+          "corner:U-R-F": "corner:U-B-R"
+        },
+        "edge": {
+          "edge:B-D": "edge:L-D",
+          "edge:B-L": "edge:L-F",
+          "edge:B-R": "edge:L-B",
+          "edge:B-U": "edge:L-U",
+          "edge:D-B": "edge:D-L",
+          "edge:D-F": "edge:D-R",
+          "edge:D-L": "edge:D-F",
+          "edge:D-R": "edge:D-B",
+          "edge:F-D": "edge:R-D",
+          "edge:F-L": "edge:R-F",
+          "edge:F-R": "edge:R-B",
+          "edge:F-U": "edge:R-U",
+          "edge:L-B": "edge:F-L",
+          "edge:L-D": "edge:F-D",
+          "edge:L-F": "edge:F-R",
+          "edge:L-U": "edge:F-U",
+          "edge:R-B": "edge:B-L",
+          "edge:R-D": "edge:B-D",
+          "edge:R-F": "edge:B-R",
+          "edge:R-U": "edge:B-U",
+          "edge:U-B": "edge:U-L",
+          "edge:U-F": "edge:U-R",
+          "edge:U-L": "edge:U-F",
+          "edge:U-R": "edge:U-B"
+        }
+      }
+    }
+  ],
+  "pieceTypes": [
+    {
+      "id": "bandage",
+      "localPorts": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "placementDomainId": "bandage"
+    },
+    {
+      "id": "center",
+      "localPorts": [
+        "0"
+      ],
+      "placementDomainId": "center"
+    },
+    {
+      "id": "corner",
+      "localPorts": [
+        "0",
+        "1",
+        "2"
+      ],
+      "placementDomainId": "corner"
+    },
+    {
+      "id": "edge",
+      "localPorts": [
+        "0",
+        "1"
+      ],
+      "placementDomainId": "edge"
+    }
+  ],
+  "pieces": [
+    {
+      "homePlacement": "bandage:U-F-U-R-F",
+      "id": "bandage/UF-UFR",
+      "portLabels": {
+        "0": "U",
+        "1": "F",
+        "2": "U",
+        "3": "R",
+        "4": "F"
+      },
+      "type": "bandage"
+    },
+    {
+      "homePlacement": "center:B",
+      "id": "center/B",
+      "portLabels": {
+        "0": "B"
+      },
+      "type": "center"
+    },
+    {
+      "homePlacement": "center:D",
+      "id": "center/D",
+      "portLabels": {
+        "0": "D"
+      },
+      "type": "center"
+    },
+    {
+      "homePlacement": "center:F",
+      "id": "center/F",
+      "portLabels": {
+        "0": "F"
+      },
+      "type": "center"
+    },
+    {
+      "homePlacement": "center:L",
+      "id": "center/L",
+      "portLabels": {
+        "0": "L"
+      },
+      "type": "center"
+    },
+    {
+      "homePlacement": "center:R",
+      "id": "center/R",
+      "portLabels": {
+        "0": "R"
+      },
+      "type": "center"
+    },
+    {
+      "homePlacement": "center:U",
+      "id": "center/U",
+      "portLabels": {
+        "0": "U"
+      },
+      "type": "center"
+    },
+    {
+      "homePlacement": "corner:D-B-L",
+      "id": "corner/DBL",
+      "portLabels": {
+        "0": "D",
+        "1": "B",
+        "2": "L"
+      },
+      "type": "corner"
+    },
+    {
+      "homePlacement": "corner:D-R-B",
+      "id": "corner/DBR",
+      "portLabels": {
+        "0": "D",
+        "1": "R",
+        "2": "B"
+      },
+      "type": "corner"
+    },
+    {
+      "homePlacement": "corner:D-L-F",
+      "id": "corner/DFL",
+      "portLabels": {
+        "0": "D",
+        "1": "L",
+        "2": "F"
+      },
+      "type": "corner"
+    },
+    {
+      "homePlacement": "corner:D-F-R",
+      "id": "corner/DFR",
+      "portLabels": {
+        "0": "D",
+        "1": "F",
+        "2": "R"
+      },
+      "type": "corner"
+    },
+    {
+      "homePlacement": "corner:U-L-B",
+      "id": "corner/UBL",
+      "portLabels": {
+        "0": "U",
+        "1": "L",
+        "2": "B"
+      },
+      "type": "corner"
+    },
+    {
+      "homePlacement": "corner:U-B-R",
+      "id": "corner/UBR",
+      "portLabels": {
+        "0": "U",
+        "1": "B",
+        "2": "R"
+      },
+      "type": "corner"
+    },
+    {
+      "homePlacement": "corner:U-F-L",
+      "id": "corner/UFL",
+      "portLabels": {
+        "0": "U",
+        "1": "F",
+        "2": "L"
+      },
+      "type": "corner"
+    },
+    {
+      "homePlacement": "edge:B-L",
+      "id": "edge/BL",
+      "portLabels": {
+        "0": "B",
+        "1": "L"
+      },
+      "type": "edge"
+    },
+    {
+      "homePlacement": "edge:B-R",
+      "id": "edge/BR",
+      "portLabels": {
+        "0": "B",
+        "1": "R"
+      },
+      "type": "edge"
+    },
+    {
+      "homePlacement": "edge:D-B",
+      "id": "edge/DB",
+      "portLabels": {
+        "0": "D",
+        "1": "B"
+      },
+      "type": "edge"
+    },
+    {
+      "homePlacement": "edge:D-F",
+      "id": "edge/DF",
+      "portLabels": {
+        "0": "D",
+        "1": "F"
+      },
+      "type": "edge"
+    },
+    {
+      "homePlacement": "edge:D-L",
+      "id": "edge/DL",
+      "portLabels": {
+        "0": "D",
+        "1": "L"
+      },
+      "type": "edge"
+    },
+    {
+      "homePlacement": "edge:D-R",
+      "id": "edge/DR",
+      "portLabels": {
+        "0": "D",
+        "1": "R"
+      },
+      "type": "edge"
+    },
+    {
+      "homePlacement": "edge:F-L",
+      "id": "edge/FL",
+      "portLabels": {
+        "0": "F",
+        "1": "L"
+      },
+      "type": "edge"
+    },
+    {
+      "homePlacement": "edge:F-R",
+      "id": "edge/FR",
+      "portLabels": {
+        "0": "F",
+        "1": "R"
+      },
+      "type": "edge"
+    },
+    {
+      "homePlacement": "edge:U-B",
+      "id": "edge/UB",
+      "portLabels": {
+        "0": "U",
+        "1": "B"
+      },
+      "type": "edge"
+    },
+    {
+      "homePlacement": "edge:U-L",
+      "id": "edge/UL",
+      "portLabels": {
+        "0": "U",
+        "1": "L"
+      },
+      "type": "edge"
+    },
+    {
+      "homePlacement": "edge:U-R",
+      "id": "edge/UR",
+      "portLabels": {
+        "0": "U",
+        "1": "R"
+      },
+      "type": "edge"
+    }
+  ],
+  "placementDomains": [
+    {
+      "id": "bandage",
+      "placements": [
+        {
+          "footprint": [
+            "DB",
+            "DBL"
+          ],
+          "key": "bandage:B-D-B-L-D",
+          "portAttachment": {
+            "0": {
+              "attachment": "B",
+              "cell": "DB"
+            },
+            "1": {
+              "attachment": "D",
+              "cell": "DB"
+            },
+            "2": {
+              "attachment": "B",
+              "cell": "DBL"
+            },
+            "3": {
+              "attachment": "L",
+              "cell": "DBL"
+            },
+            "4": {
+              "attachment": "D",
+              "cell": "DBL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "BL",
+            "UBL"
+          ],
+          "key": "bandage:B-L-B-U-L",
+          "portAttachment": {
+            "0": {
+              "attachment": "B",
+              "cell": "BL"
+            },
+            "1": {
+              "attachment": "L",
+              "cell": "BL"
+            },
+            "2": {
+              "attachment": "B",
+              "cell": "UBL"
+            },
+            "3": {
+              "attachment": "U",
+              "cell": "UBL"
+            },
+            "4": {
+              "attachment": "L",
+              "cell": "UBL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "BR",
+            "DBR"
+          ],
+          "key": "bandage:B-R-B-D-R",
+          "portAttachment": {
+            "0": {
+              "attachment": "B",
+              "cell": "BR"
+            },
+            "1": {
+              "attachment": "R",
+              "cell": "BR"
+            },
+            "2": {
+              "attachment": "B",
+              "cell": "DBR"
+            },
+            "3": {
+              "attachment": "D",
+              "cell": "DBR"
+            },
+            "4": {
+              "attachment": "R",
+              "cell": "DBR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UB",
+            "UBR"
+          ],
+          "key": "bandage:B-U-B-R-U",
+          "portAttachment": {
+            "0": {
+              "attachment": "B",
+              "cell": "UB"
+            },
+            "1": {
+              "attachment": "U",
+              "cell": "UB"
+            },
+            "2": {
+              "attachment": "B",
+              "cell": "UBR"
+            },
+            "3": {
+              "attachment": "R",
+              "cell": "UBR"
+            },
+            "4": {
+              "attachment": "U",
+              "cell": "UBR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DB",
+            "DBR"
+          ],
+          "key": "bandage:D-B-D-R-B",
+          "portAttachment": {
+            "0": {
+              "attachment": "D",
+              "cell": "DB"
+            },
+            "1": {
+              "attachment": "B",
+              "cell": "DB"
+            },
+            "2": {
+              "attachment": "D",
+              "cell": "DBR"
+            },
+            "3": {
+              "attachment": "R",
+              "cell": "DBR"
+            },
+            "4": {
+              "attachment": "B",
+              "cell": "DBR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DF",
+            "DFL"
+          ],
+          "key": "bandage:D-F-D-L-F",
+          "portAttachment": {
+            "0": {
+              "attachment": "D",
+              "cell": "DF"
+            },
+            "1": {
+              "attachment": "F",
+              "cell": "DF"
+            },
+            "2": {
+              "attachment": "D",
+              "cell": "DFL"
+            },
+            "3": {
+              "attachment": "L",
+              "cell": "DFL"
+            },
+            "4": {
+              "attachment": "F",
+              "cell": "DFL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DBL",
+            "DL"
+          ],
+          "key": "bandage:D-L-D-B-L",
+          "portAttachment": {
+            "0": {
+              "attachment": "D",
+              "cell": "DL"
+            },
+            "1": {
+              "attachment": "L",
+              "cell": "DL"
+            },
+            "2": {
+              "attachment": "D",
+              "cell": "DBL"
+            },
+            "3": {
+              "attachment": "B",
+              "cell": "DBL"
+            },
+            "4": {
+              "attachment": "L",
+              "cell": "DBL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DFR",
+            "DR"
+          ],
+          "key": "bandage:D-R-D-F-R",
+          "portAttachment": {
+            "0": {
+              "attachment": "D",
+              "cell": "DR"
+            },
+            "1": {
+              "attachment": "R",
+              "cell": "DR"
+            },
+            "2": {
+              "attachment": "D",
+              "cell": "DFR"
+            },
+            "3": {
+              "attachment": "F",
+              "cell": "DFR"
+            },
+            "4": {
+              "attachment": "R",
+              "cell": "DFR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DF",
+            "DFR"
+          ],
+          "key": "bandage:F-D-F-R-D",
+          "portAttachment": {
+            "0": {
+              "attachment": "F",
+              "cell": "DF"
+            },
+            "1": {
+              "attachment": "D",
+              "cell": "DF"
+            },
+            "2": {
+              "attachment": "F",
+              "cell": "DFR"
+            },
+            "3": {
+              "attachment": "R",
+              "cell": "DFR"
+            },
+            "4": {
+              "attachment": "D",
+              "cell": "DFR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DFL",
+            "FL"
+          ],
+          "key": "bandage:F-L-F-D-L",
+          "portAttachment": {
+            "0": {
+              "attachment": "F",
+              "cell": "FL"
+            },
+            "1": {
+              "attachment": "L",
+              "cell": "FL"
+            },
+            "2": {
+              "attachment": "F",
+              "cell": "DFL"
+            },
+            "3": {
+              "attachment": "D",
+              "cell": "DFL"
+            },
+            "4": {
+              "attachment": "L",
+              "cell": "DFL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "FR",
+            "UFR"
+          ],
+          "key": "bandage:F-R-F-U-R",
+          "portAttachment": {
+            "0": {
+              "attachment": "F",
+              "cell": "FR"
+            },
+            "1": {
+              "attachment": "R",
+              "cell": "FR"
+            },
+            "2": {
+              "attachment": "F",
+              "cell": "UFR"
+            },
+            "3": {
+              "attachment": "U",
+              "cell": "UFR"
+            },
+            "4": {
+              "attachment": "R",
+              "cell": "UFR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UF",
+            "UFL"
+          ],
+          "key": "bandage:F-U-F-L-U",
+          "portAttachment": {
+            "0": {
+              "attachment": "F",
+              "cell": "UF"
+            },
+            "1": {
+              "attachment": "U",
+              "cell": "UF"
+            },
+            "2": {
+              "attachment": "F",
+              "cell": "UFL"
+            },
+            "3": {
+              "attachment": "L",
+              "cell": "UFL"
+            },
+            "4": {
+              "attachment": "U",
+              "cell": "UFL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "BL",
+            "DBL"
+          ],
+          "key": "bandage:L-B-L-D-B",
+          "portAttachment": {
+            "0": {
+              "attachment": "L",
+              "cell": "BL"
+            },
+            "1": {
+              "attachment": "B",
+              "cell": "BL"
+            },
+            "2": {
+              "attachment": "L",
+              "cell": "DBL"
+            },
+            "3": {
+              "attachment": "D",
+              "cell": "DBL"
+            },
+            "4": {
+              "attachment": "B",
+              "cell": "DBL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DFL",
+            "DL"
+          ],
+          "key": "bandage:L-D-L-F-D",
+          "portAttachment": {
+            "0": {
+              "attachment": "L",
+              "cell": "DL"
+            },
+            "1": {
+              "attachment": "D",
+              "cell": "DL"
+            },
+            "2": {
+              "attachment": "L",
+              "cell": "DFL"
+            },
+            "3": {
+              "attachment": "F",
+              "cell": "DFL"
+            },
+            "4": {
+              "attachment": "D",
+              "cell": "DFL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "FL",
+            "UFL"
+          ],
+          "key": "bandage:L-F-L-U-F",
+          "portAttachment": {
+            "0": {
+              "attachment": "L",
+              "cell": "FL"
+            },
+            "1": {
+              "attachment": "F",
+              "cell": "FL"
+            },
+            "2": {
+              "attachment": "L",
+              "cell": "UFL"
+            },
+            "3": {
+              "attachment": "U",
+              "cell": "UFL"
+            },
+            "4": {
+              "attachment": "F",
+              "cell": "UFL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UBL",
+            "UL"
+          ],
+          "key": "bandage:L-U-L-B-U",
+          "portAttachment": {
+            "0": {
+              "attachment": "L",
+              "cell": "UL"
+            },
+            "1": {
+              "attachment": "U",
+              "cell": "UL"
+            },
+            "2": {
+              "attachment": "L",
+              "cell": "UBL"
+            },
+            "3": {
+              "attachment": "B",
+              "cell": "UBL"
+            },
+            "4": {
+              "attachment": "U",
+              "cell": "UBL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "BR",
+            "UBR"
+          ],
+          "key": "bandage:R-B-R-U-B",
+          "portAttachment": {
+            "0": {
+              "attachment": "R",
+              "cell": "BR"
+            },
+            "1": {
+              "attachment": "B",
+              "cell": "BR"
+            },
+            "2": {
+              "attachment": "R",
+              "cell": "UBR"
+            },
+            "3": {
+              "attachment": "U",
+              "cell": "UBR"
+            },
+            "4": {
+              "attachment": "B",
+              "cell": "UBR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DBR",
+            "DR"
+          ],
+          "key": "bandage:R-D-R-B-D",
+          "portAttachment": {
+            "0": {
+              "attachment": "R",
+              "cell": "DR"
+            },
+            "1": {
+              "attachment": "D",
+              "cell": "DR"
+            },
+            "2": {
+              "attachment": "R",
+              "cell": "DBR"
+            },
+            "3": {
+              "attachment": "B",
+              "cell": "DBR"
+            },
+            "4": {
+              "attachment": "D",
+              "cell": "DBR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DFR",
+            "FR"
+          ],
+          "key": "bandage:R-F-R-D-F",
+          "portAttachment": {
+            "0": {
+              "attachment": "R",
+              "cell": "FR"
+            },
+            "1": {
+              "attachment": "F",
+              "cell": "FR"
+            },
+            "2": {
+              "attachment": "R",
+              "cell": "DFR"
+            },
+            "3": {
+              "attachment": "D",
+              "cell": "DFR"
+            },
+            "4": {
+              "attachment": "F",
+              "cell": "DFR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UFR",
+            "UR"
+          ],
+          "key": "bandage:R-U-R-F-U",
+          "portAttachment": {
+            "0": {
+              "attachment": "R",
+              "cell": "UR"
+            },
+            "1": {
+              "attachment": "U",
+              "cell": "UR"
+            },
+            "2": {
+              "attachment": "R",
+              "cell": "UFR"
+            },
+            "3": {
+              "attachment": "F",
+              "cell": "UFR"
+            },
+            "4": {
+              "attachment": "U",
+              "cell": "UFR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UB",
+            "UBL"
+          ],
+          "key": "bandage:U-B-U-L-B",
+          "portAttachment": {
+            "0": {
+              "attachment": "U",
+              "cell": "UB"
+            },
+            "1": {
+              "attachment": "B",
+              "cell": "UB"
+            },
+            "2": {
+              "attachment": "U",
+              "cell": "UBL"
+            },
+            "3": {
+              "attachment": "L",
+              "cell": "UBL"
+            },
+            "4": {
+              "attachment": "B",
+              "cell": "UBL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UF",
+            "UFR"
+          ],
+          "key": "bandage:U-F-U-R-F",
+          "portAttachment": {
+            "0": {
+              "attachment": "U",
+              "cell": "UF"
+            },
+            "1": {
+              "attachment": "F",
+              "cell": "UF"
+            },
+            "2": {
+              "attachment": "U",
+              "cell": "UFR"
+            },
+            "3": {
+              "attachment": "R",
+              "cell": "UFR"
+            },
+            "4": {
+              "attachment": "F",
+              "cell": "UFR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UFL",
+            "UL"
+          ],
+          "key": "bandage:U-L-U-F-L",
+          "portAttachment": {
+            "0": {
+              "attachment": "U",
+              "cell": "UL"
+            },
+            "1": {
+              "attachment": "L",
+              "cell": "UL"
+            },
+            "2": {
+              "attachment": "U",
+              "cell": "UFL"
+            },
+            "3": {
+              "attachment": "F",
+              "cell": "UFL"
+            },
+            "4": {
+              "attachment": "L",
+              "cell": "UFL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UBR",
+            "UR"
+          ],
+          "key": "bandage:U-R-U-B-R",
+          "portAttachment": {
+            "0": {
+              "attachment": "U",
+              "cell": "UR"
+            },
+            "1": {
+              "attachment": "R",
+              "cell": "UR"
+            },
+            "2": {
+              "attachment": "U",
+              "cell": "UBR"
+            },
+            "3": {
+              "attachment": "B",
+              "cell": "UBR"
+            },
+            "4": {
+              "attachment": "R",
+              "cell": "UBR"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "center",
+      "placements": [
+        {
+          "footprint": [
+            "B"
+          ],
+          "key": "center:B",
+          "portAttachment": {
+            "0": {
+              "attachment": "B",
+              "cell": "B"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "D"
+          ],
+          "key": "center:D",
+          "portAttachment": {
+            "0": {
+              "attachment": "D",
+              "cell": "D"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "F"
+          ],
+          "key": "center:F",
+          "portAttachment": {
+            "0": {
+              "attachment": "F",
+              "cell": "F"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "L"
+          ],
+          "key": "center:L",
+          "portAttachment": {
+            "0": {
+              "attachment": "L",
+              "cell": "L"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "R"
+          ],
+          "key": "center:R",
+          "portAttachment": {
+            "0": {
+              "attachment": "R",
+              "cell": "R"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "U"
+          ],
+          "key": "center:U",
+          "portAttachment": {
+            "0": {
+              "attachment": "U",
+              "cell": "U"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "corner",
+      "placements": [
+        {
+          "footprint": [
+            "DBR"
+          ],
+          "key": "corner:B-D-R",
+          "portAttachment": {
+            "0": {
+              "attachment": "B",
+              "cell": "DBR"
+            },
+            "1": {
+              "attachment": "D",
+              "cell": "DBR"
+            },
+            "2": {
+              "attachment": "R",
+              "cell": "DBR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DBL"
+          ],
+          "key": "corner:B-L-D",
+          "portAttachment": {
+            "0": {
+              "attachment": "B",
+              "cell": "DBL"
+            },
+            "1": {
+              "attachment": "L",
+              "cell": "DBL"
+            },
+            "2": {
+              "attachment": "D",
+              "cell": "DBL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UBR"
+          ],
+          "key": "corner:B-R-U",
+          "portAttachment": {
+            "0": {
+              "attachment": "B",
+              "cell": "UBR"
+            },
+            "1": {
+              "attachment": "R",
+              "cell": "UBR"
+            },
+            "2": {
+              "attachment": "U",
+              "cell": "UBR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UBL"
+          ],
+          "key": "corner:B-U-L",
+          "portAttachment": {
+            "0": {
+              "attachment": "B",
+              "cell": "UBL"
+            },
+            "1": {
+              "attachment": "U",
+              "cell": "UBL"
+            },
+            "2": {
+              "attachment": "L",
+              "cell": "UBL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DBL"
+          ],
+          "key": "corner:D-B-L",
+          "portAttachment": {
+            "0": {
+              "attachment": "D",
+              "cell": "DBL"
+            },
+            "1": {
+              "attachment": "B",
+              "cell": "DBL"
+            },
+            "2": {
+              "attachment": "L",
+              "cell": "DBL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DFR"
+          ],
+          "key": "corner:D-F-R",
+          "portAttachment": {
+            "0": {
+              "attachment": "D",
+              "cell": "DFR"
+            },
+            "1": {
+              "attachment": "F",
+              "cell": "DFR"
+            },
+            "2": {
+              "attachment": "R",
+              "cell": "DFR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DFL"
+          ],
+          "key": "corner:D-L-F",
+          "portAttachment": {
+            "0": {
+              "attachment": "D",
+              "cell": "DFL"
+            },
+            "1": {
+              "attachment": "L",
+              "cell": "DFL"
+            },
+            "2": {
+              "attachment": "F",
+              "cell": "DFL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DBR"
+          ],
+          "key": "corner:D-R-B",
+          "portAttachment": {
+            "0": {
+              "attachment": "D",
+              "cell": "DBR"
+            },
+            "1": {
+              "attachment": "R",
+              "cell": "DBR"
+            },
+            "2": {
+              "attachment": "B",
+              "cell": "DBR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DFL"
+          ],
+          "key": "corner:F-D-L",
+          "portAttachment": {
+            "0": {
+              "attachment": "F",
+              "cell": "DFL"
+            },
+            "1": {
+              "attachment": "D",
+              "cell": "DFL"
+            },
+            "2": {
+              "attachment": "L",
+              "cell": "DFL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UFL"
+          ],
+          "key": "corner:F-L-U",
+          "portAttachment": {
+            "0": {
+              "attachment": "F",
+              "cell": "UFL"
+            },
+            "1": {
+              "attachment": "L",
+              "cell": "UFL"
+            },
+            "2": {
+              "attachment": "U",
+              "cell": "UFL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DFR"
+          ],
+          "key": "corner:F-R-D",
+          "portAttachment": {
+            "0": {
+              "attachment": "F",
+              "cell": "DFR"
+            },
+            "1": {
+              "attachment": "R",
+              "cell": "DFR"
+            },
+            "2": {
+              "attachment": "D",
+              "cell": "DFR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UFR"
+          ],
+          "key": "corner:F-U-R",
+          "portAttachment": {
+            "0": {
+              "attachment": "F",
+              "cell": "UFR"
+            },
+            "1": {
+              "attachment": "U",
+              "cell": "UFR"
+            },
+            "2": {
+              "attachment": "R",
+              "cell": "UFR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UBL"
+          ],
+          "key": "corner:L-B-U",
+          "portAttachment": {
+            "0": {
+              "attachment": "L",
+              "cell": "UBL"
+            },
+            "1": {
+              "attachment": "B",
+              "cell": "UBL"
+            },
+            "2": {
+              "attachment": "U",
+              "cell": "UBL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DBL"
+          ],
+          "key": "corner:L-D-B",
+          "portAttachment": {
+            "0": {
+              "attachment": "L",
+              "cell": "DBL"
+            },
+            "1": {
+              "attachment": "D",
+              "cell": "DBL"
+            },
+            "2": {
+              "attachment": "B",
+              "cell": "DBL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DFL"
+          ],
+          "key": "corner:L-F-D",
+          "portAttachment": {
+            "0": {
+              "attachment": "L",
+              "cell": "DFL"
+            },
+            "1": {
+              "attachment": "F",
+              "cell": "DFL"
+            },
+            "2": {
+              "attachment": "D",
+              "cell": "DFL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UFL"
+          ],
+          "key": "corner:L-U-F",
+          "portAttachment": {
+            "0": {
+              "attachment": "L",
+              "cell": "UFL"
+            },
+            "1": {
+              "attachment": "U",
+              "cell": "UFL"
+            },
+            "2": {
+              "attachment": "F",
+              "cell": "UFL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DBR"
+          ],
+          "key": "corner:R-B-D",
+          "portAttachment": {
+            "0": {
+              "attachment": "R",
+              "cell": "DBR"
+            },
+            "1": {
+              "attachment": "B",
+              "cell": "DBR"
+            },
+            "2": {
+              "attachment": "D",
+              "cell": "DBR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DFR"
+          ],
+          "key": "corner:R-D-F",
+          "portAttachment": {
+            "0": {
+              "attachment": "R",
+              "cell": "DFR"
+            },
+            "1": {
+              "attachment": "D",
+              "cell": "DFR"
+            },
+            "2": {
+              "attachment": "F",
+              "cell": "DFR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UFR"
+          ],
+          "key": "corner:R-F-U",
+          "portAttachment": {
+            "0": {
+              "attachment": "R",
+              "cell": "UFR"
+            },
+            "1": {
+              "attachment": "F",
+              "cell": "UFR"
+            },
+            "2": {
+              "attachment": "U",
+              "cell": "UFR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UBR"
+          ],
+          "key": "corner:R-U-B",
+          "portAttachment": {
+            "0": {
+              "attachment": "R",
+              "cell": "UBR"
+            },
+            "1": {
+              "attachment": "U",
+              "cell": "UBR"
+            },
+            "2": {
+              "attachment": "B",
+              "cell": "UBR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UBR"
+          ],
+          "key": "corner:U-B-R",
+          "portAttachment": {
+            "0": {
+              "attachment": "U",
+              "cell": "UBR"
+            },
+            "1": {
+              "attachment": "B",
+              "cell": "UBR"
+            },
+            "2": {
+              "attachment": "R",
+              "cell": "UBR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UFL"
+          ],
+          "key": "corner:U-F-L",
+          "portAttachment": {
+            "0": {
+              "attachment": "U",
+              "cell": "UFL"
+            },
+            "1": {
+              "attachment": "F",
+              "cell": "UFL"
+            },
+            "2": {
+              "attachment": "L",
+              "cell": "UFL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UBL"
+          ],
+          "key": "corner:U-L-B",
+          "portAttachment": {
+            "0": {
+              "attachment": "U",
+              "cell": "UBL"
+            },
+            "1": {
+              "attachment": "L",
+              "cell": "UBL"
+            },
+            "2": {
+              "attachment": "B",
+              "cell": "UBL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UFR"
+          ],
+          "key": "corner:U-R-F",
+          "portAttachment": {
+            "0": {
+              "attachment": "U",
+              "cell": "UFR"
+            },
+            "1": {
+              "attachment": "R",
+              "cell": "UFR"
+            },
+            "2": {
+              "attachment": "F",
+              "cell": "UFR"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "edge",
+      "placements": [
+        {
+          "footprint": [
+            "DB"
+          ],
+          "key": "edge:B-D",
+          "portAttachment": {
+            "0": {
+              "attachment": "B",
+              "cell": "DB"
+            },
+            "1": {
+              "attachment": "D",
+              "cell": "DB"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "BL"
+          ],
+          "key": "edge:B-L",
+          "portAttachment": {
+            "0": {
+              "attachment": "B",
+              "cell": "BL"
+            },
+            "1": {
+              "attachment": "L",
+              "cell": "BL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "BR"
+          ],
+          "key": "edge:B-R",
+          "portAttachment": {
+            "0": {
+              "attachment": "B",
+              "cell": "BR"
+            },
+            "1": {
+              "attachment": "R",
+              "cell": "BR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UB"
+          ],
+          "key": "edge:B-U",
+          "portAttachment": {
+            "0": {
+              "attachment": "B",
+              "cell": "UB"
+            },
+            "1": {
+              "attachment": "U",
+              "cell": "UB"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DB"
+          ],
+          "key": "edge:D-B",
+          "portAttachment": {
+            "0": {
+              "attachment": "D",
+              "cell": "DB"
+            },
+            "1": {
+              "attachment": "B",
+              "cell": "DB"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DF"
+          ],
+          "key": "edge:D-F",
+          "portAttachment": {
+            "0": {
+              "attachment": "D",
+              "cell": "DF"
+            },
+            "1": {
+              "attachment": "F",
+              "cell": "DF"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DL"
+          ],
+          "key": "edge:D-L",
+          "portAttachment": {
+            "0": {
+              "attachment": "D",
+              "cell": "DL"
+            },
+            "1": {
+              "attachment": "L",
+              "cell": "DL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DR"
+          ],
+          "key": "edge:D-R",
+          "portAttachment": {
+            "0": {
+              "attachment": "D",
+              "cell": "DR"
+            },
+            "1": {
+              "attachment": "R",
+              "cell": "DR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DF"
+          ],
+          "key": "edge:F-D",
+          "portAttachment": {
+            "0": {
+              "attachment": "F",
+              "cell": "DF"
+            },
+            "1": {
+              "attachment": "D",
+              "cell": "DF"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "FL"
+          ],
+          "key": "edge:F-L",
+          "portAttachment": {
+            "0": {
+              "attachment": "F",
+              "cell": "FL"
+            },
+            "1": {
+              "attachment": "L",
+              "cell": "FL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "FR"
+          ],
+          "key": "edge:F-R",
+          "portAttachment": {
+            "0": {
+              "attachment": "F",
+              "cell": "FR"
+            },
+            "1": {
+              "attachment": "R",
+              "cell": "FR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UF"
+          ],
+          "key": "edge:F-U",
+          "portAttachment": {
+            "0": {
+              "attachment": "F",
+              "cell": "UF"
+            },
+            "1": {
+              "attachment": "U",
+              "cell": "UF"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "BL"
+          ],
+          "key": "edge:L-B",
+          "portAttachment": {
+            "0": {
+              "attachment": "L",
+              "cell": "BL"
+            },
+            "1": {
+              "attachment": "B",
+              "cell": "BL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DL"
+          ],
+          "key": "edge:L-D",
+          "portAttachment": {
+            "0": {
+              "attachment": "L",
+              "cell": "DL"
+            },
+            "1": {
+              "attachment": "D",
+              "cell": "DL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "FL"
+          ],
+          "key": "edge:L-F",
+          "portAttachment": {
+            "0": {
+              "attachment": "L",
+              "cell": "FL"
+            },
+            "1": {
+              "attachment": "F",
+              "cell": "FL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UL"
+          ],
+          "key": "edge:L-U",
+          "portAttachment": {
+            "0": {
+              "attachment": "L",
+              "cell": "UL"
+            },
+            "1": {
+              "attachment": "U",
+              "cell": "UL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "BR"
+          ],
+          "key": "edge:R-B",
+          "portAttachment": {
+            "0": {
+              "attachment": "R",
+              "cell": "BR"
+            },
+            "1": {
+              "attachment": "B",
+              "cell": "BR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "DR"
+          ],
+          "key": "edge:R-D",
+          "portAttachment": {
+            "0": {
+              "attachment": "R",
+              "cell": "DR"
+            },
+            "1": {
+              "attachment": "D",
+              "cell": "DR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "FR"
+          ],
+          "key": "edge:R-F",
+          "portAttachment": {
+            "0": {
+              "attachment": "R",
+              "cell": "FR"
+            },
+            "1": {
+              "attachment": "F",
+              "cell": "FR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UR"
+          ],
+          "key": "edge:R-U",
+          "portAttachment": {
+            "0": {
+              "attachment": "R",
+              "cell": "UR"
+            },
+            "1": {
+              "attachment": "U",
+              "cell": "UR"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UB"
+          ],
+          "key": "edge:U-B",
+          "portAttachment": {
+            "0": {
+              "attachment": "U",
+              "cell": "UB"
+            },
+            "1": {
+              "attachment": "B",
+              "cell": "UB"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UF"
+          ],
+          "key": "edge:U-F",
+          "portAttachment": {
+            "0": {
+              "attachment": "U",
+              "cell": "UF"
+            },
+            "1": {
+              "attachment": "F",
+              "cell": "UF"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UL"
+          ],
+          "key": "edge:U-L",
+          "portAttachment": {
+            "0": {
+              "attachment": "U",
+              "cell": "UL"
+            },
+            "1": {
+              "attachment": "L",
+              "cell": "UL"
+            }
+          }
+        },
+        {
+          "footprint": [
+            "UR"
+          ],
+          "key": "edge:U-R",
+          "portAttachment": {
+            "0": {
+              "attachment": "U",
+              "cell": "UR"
+            },
+            "1": {
+              "attachment": "R",
+              "cell": "UR"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "provenance": {
+    "operations": {
+      "B": {
+        "prototype": "/operationPrototype",
+        "symmetryIndex": 23
+      },
+      "B'": {
+        "prototype": "/operationPrototype",
+        "symmetryIndex": 23
+      },
+      "D": {
+        "prototype": "/operationPrototype",
+        "symmetryIndex": 15
+      },
+      "D'": {
+        "prototype": "/operationPrototype",
+        "symmetryIndex": 15
+      },
+      "F": {
+        "prototype": "/operationPrototype",
+        "symmetryIndex": 11
+      },
+      "F'": {
+        "prototype": "/operationPrototype",
+        "symmetryIndex": 11
+      },
+      "L": {
+        "prototype": "/operationPrototype",
+        "symmetryIndex": 19
+      },
+      "L'": {
+        "prototype": "/operationPrototype",
+        "symmetryIndex": 19
+      },
+      "R": {
+        "prototype": "/operationPrototype",
+        "symmetryIndex": 7
+      },
+      "R'": {
+        "prototype": "/operationPrototype",
+        "symmetryIndex": 7
+      },
+      "U": {
+        "prototype": "/operationPrototype",
+        "symmetryIndex": 3
+      },
+      "U'": {
+        "prototype": "/operationPrototype",
+        "symmetryIndex": 3
+      }
+    },
+    "placements": {
+      "bandage:B-D-B-L-D": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 23
+      },
+      "bandage:B-L-B-U-L": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 20
+      },
+      "bandage:B-R-B-D-R": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 22
+      },
+      "bandage:B-U-B-R-U": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 21
+      },
+      "bandage:D-B-D-R-B": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 12
+      },
+      "bandage:D-F-D-L-F": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 14
+      },
+      "bandage:D-L-D-B-L": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 15
+      },
+      "bandage:D-R-D-F-R": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 13
+      },
+      "bandage:F-D-F-R-D": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 9
+      },
+      "bandage:F-L-F-D-L": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 10
+      },
+      "bandage:F-R-F-U-R": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 8
+      },
+      "bandage:F-U-F-L-U": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 11
+      },
+      "bandage:L-B-L-D-B": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 18
+      },
+      "bandage:L-D-L-F-D": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 17
+      },
+      "bandage:L-F-L-U-F": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 16
+      },
+      "bandage:L-U-L-B-U": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 19
+      },
+      "bandage:R-B-R-U-B": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 4
+      },
+      "bandage:R-D-R-B-D": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 7
+      },
+      "bandage:R-F-R-D-F": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 6
+      },
+      "bandage:R-U-R-F-U": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 5
+      },
+      "bandage:U-B-U-L-B": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 2
+      },
+      "bandage:U-F-U-R-F": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 0
+      },
+      "bandage:U-L-U-F-L": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 1
+      },
+      "bandage:U-R-U-B-R": {
+        "prototype": "/prototypes/bandage",
+        "symmetryIndex": 3
+      },
+      "center:B": {
+        "prototype": "/prototypes/center",
+        "symmetryIndex": 20
+      },
+      "center:D": {
+        "prototype": "/prototypes/center",
+        "symmetryIndex": 12
+      },
+      "center:F": {
+        "prototype": "/prototypes/center",
+        "symmetryIndex": 8
+      },
+      "center:L": {
+        "prototype": "/prototypes/center",
+        "symmetryIndex": 16
+      },
+      "center:R": {
+        "prototype": "/prototypes/center",
+        "symmetryIndex": 4
+      },
+      "center:U": {
+        "prototype": "/prototypes/center",
+        "symmetryIndex": 0
+      },
+      "corner:B-D-R": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 22
+      },
+      "corner:B-L-D": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 23
+      },
+      "corner:B-R-U": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 21
+      },
+      "corner:B-U-L": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 20
+      },
+      "corner:D-B-L": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 15
+      },
+      "corner:D-F-R": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 13
+      },
+      "corner:D-L-F": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 14
+      },
+      "corner:D-R-B": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 12
+      },
+      "corner:F-D-L": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 10
+      },
+      "corner:F-L-U": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 11
+      },
+      "corner:F-R-D": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 9
+      },
+      "corner:F-U-R": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 8
+      },
+      "corner:L-B-U": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 19
+      },
+      "corner:L-D-B": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 18
+      },
+      "corner:L-F-D": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 17
+      },
+      "corner:L-U-F": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 16
+      },
+      "corner:R-B-D": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 7
+      },
+      "corner:R-D-F": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 6
+      },
+      "corner:R-F-U": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 5
+      },
+      "corner:R-U-B": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 4
+      },
+      "corner:U-B-R": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 3
+      },
+      "corner:U-F-L": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 1
+      },
+      "corner:U-L-B": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 2
+      },
+      "corner:U-R-F": {
+        "prototype": "/prototypes/corner",
+        "symmetryIndex": 0
+      },
+      "edge:B-D": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 23
+      },
+      "edge:B-L": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 20
+      },
+      "edge:B-R": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 22
+      },
+      "edge:B-U": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 21
+      },
+      "edge:D-B": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 12
+      },
+      "edge:D-F": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 14
+      },
+      "edge:D-L": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 15
+      },
+      "edge:D-R": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 13
+      },
+      "edge:F-D": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 9
+      },
+      "edge:F-L": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 10
+      },
+      "edge:F-R": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 8
+      },
+      "edge:F-U": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 11
+      },
+      "edge:L-B": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 18
+      },
+      "edge:L-D": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 17
+      },
+      "edge:L-F": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 16
+      },
+      "edge:L-U": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 19
+      },
+      "edge:R-B": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 4
+      },
+      "edge:R-D": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 7
+      },
+      "edge:R-F": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 6
+      },
+      "edge:R-U": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 5
+      },
+      "edge:U-B": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 2
+      },
+      "edge:U-F": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 0
+      },
+      "edge:U-L": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 1
+      },
+      "edge:U-R": {
+        "prototype": "/prototypes/edge",
+        "symmetryIndex": 3
+      }
+    }
+  },
+  "puzzleId": "bandaged-uf-ufr",
+  "ruleModule": "finite-footprint@1",
+  "schemaVersion": 1,
+  "semanticsVersion": "1.0.0",
+  "symmetry": {
+    "members": [
+      [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      [
+        0,
+        2,
+        4,
+        3,
+        5,
+        1
+      ],
+      [
+        0,
+        4,
+        5,
+        3,
+        1,
+        2
+      ],
+      [
+        0,
+        5,
+        1,
+        3,
+        2,
+        4
+      ],
+      [
+        1,
+        0,
+        5,
+        4,
+        3,
+        2
+      ],
+      [
+        1,
+        2,
+        0,
+        4,
+        5,
+        3
+      ],
+      [
+        1,
+        3,
+        2,
+        4,
+        0,
+        5
+      ],
+      [
+        1,
+        5,
+        3,
+        4,
+        2,
+        0
+      ],
+      [
+        2,
+        0,
+        1,
+        5,
+        3,
+        4
+      ],
+      [
+        2,
+        1,
+        3,
+        5,
+        4,
+        0
+      ],
+      [
+        2,
+        3,
+        4,
+        5,
+        0,
+        1
+      ],
+      [
+        2,
+        4,
+        0,
+        5,
+        1,
+        3
+      ],
+      [
+        3,
+        1,
+        5,
+        0,
+        4,
+        2
+      ],
+      [
+        3,
+        2,
+        1,
+        0,
+        5,
+        4
+      ],
+      [
+        3,
+        4,
+        2,
+        0,
+        1,
+        5
+      ],
+      [
+        3,
+        5,
+        4,
+        0,
+        2,
+        1
+      ],
+      [
+        4,
+        0,
+        2,
+        1,
+        3,
+        5
+      ],
+      [
+        4,
+        2,
+        3,
+        1,
+        5,
+        0
+      ],
+      [
+        4,
+        3,
+        5,
+        1,
+        0,
+        2
+      ],
+      [
+        4,
+        5,
+        0,
+        1,
+        2,
+        3
+      ],
+      [
+        5,
+        0,
+        4,
+        2,
+        3,
+        1
+      ],
+      [
+        5,
+        1,
+        0,
+        2,
+        4,
+        3
+      ],
+      [
+        5,
+        3,
+        1,
+        2,
+        0,
+        4
+      ],
+      [
+        5,
+        4,
+        3,
+        2,
+        1,
+        0
+      ]
+    ],
+    "positionOrbits": {
+      "center": {
+        "positions": [
+          {
+            "coset": [
+              [
+                5,
+                0,
+                4,
+                2,
+                3,
+                1
+              ],
+              [
+                5,
+                1,
+                0,
+                2,
+                4,
+                3
+              ],
+              [
+                5,
+                3,
+                1,
+                2,
+                0,
+                4
+              ],
+              [
+                5,
+                4,
+                3,
+                2,
+                1,
+                0
+              ]
+            ],
+            "id": "B"
+          },
+          {
+            "coset": [
+              [
+                3,
+                1,
+                5,
+                0,
+                4,
+                2
+              ],
+              [
+                3,
+                2,
+                1,
+                0,
+                5,
+                4
+              ],
+              [
+                3,
+                4,
+                2,
+                0,
+                1,
+                5
+              ],
+              [
+                3,
+                5,
+                4,
+                0,
+                2,
+                1
+              ]
+            ],
+            "id": "D"
+          },
+          {
+            "coset": [
+              [
+                2,
+                0,
+                1,
+                5,
+                3,
+                4
+              ],
+              [
+                2,
+                1,
+                3,
+                5,
+                4,
+                0
+              ],
+              [
+                2,
+                3,
+                4,
+                5,
+                0,
+                1
+              ],
+              [
+                2,
+                4,
+                0,
+                5,
+                1,
+                3
+              ]
+            ],
+            "id": "F"
+          },
+          {
+            "coset": [
+              [
+                4,
+                0,
+                2,
+                1,
+                3,
+                5
+              ],
+              [
+                4,
+                2,
+                3,
+                1,
+                5,
+                0
+              ],
+              [
+                4,
+                3,
+                5,
+                1,
+                0,
+                2
+              ],
+              [
+                4,
+                5,
+                0,
+                1,
+                2,
+                3
+              ]
+            ],
+            "id": "L"
+          },
+          {
+            "coset": [
+              [
+                1,
+                0,
+                5,
+                4,
+                3,
+                2
+              ],
+              [
+                1,
+                2,
+                0,
+                4,
+                5,
+                3
+              ],
+              [
+                1,
+                3,
+                2,
+                4,
+                0,
+                5
+              ],
+              [
+                1,
+                5,
+                3,
+                4,
+                2,
+                0
+              ]
+            ],
+            "id": "R"
+          },
+          {
+            "coset": [
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5
+              ],
+              [
+                0,
+                2,
+                4,
+                3,
+                5,
+                1
+              ],
+              [
+                0,
+                4,
+                5,
+                3,
+                1,
+                2
+              ],
+              [
+                0,
+                5,
+                1,
+                3,
+                2,
+                4
+              ]
+            ],
+            "id": "U"
+          }
+        ],
+        "representative": "U",
+        "stabilizer": [
+          [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          [
+            0,
+            2,
+            4,
+            3,
+            5,
+            1
+          ],
+          [
+            0,
+            4,
+            5,
+            3,
+            1,
+            2
+          ],
+          [
+            0,
+            5,
+            1,
+            3,
+            2,
+            4
+          ]
+        ]
+      },
+      "corner": {
+        "positions": [
+          {
+            "coset": [
+              [
+                3,
+                5,
+                4,
+                0,
+                2,
+                1
+              ],
+              [
+                4,
+                3,
+                5,
+                1,
+                0,
+                2
+              ],
+              [
+                5,
+                4,
+                3,
+                2,
+                1,
+                0
+              ]
+            ],
+            "id": "DBL"
+          },
+          {
+            "coset": [
+              [
+                1,
+                5,
+                3,
+                4,
+                2,
+                0
+              ],
+              [
+                3,
+                1,
+                5,
+                0,
+                4,
+                2
+              ],
+              [
+                5,
+                3,
+                1,
+                2,
+                0,
+                4
+              ]
+            ],
+            "id": "DBR"
+          },
+          {
+            "coset": [
+              [
+                2,
+                3,
+                4,
+                5,
+                0,
+                1
+              ],
+              [
+                3,
+                4,
+                2,
+                0,
+                1,
+                5
+              ],
+              [
+                4,
+                2,
+                3,
+                1,
+                5,
+                0
+              ]
+            ],
+            "id": "DFL"
+          },
+          {
+            "coset": [
+              [
+                1,
+                3,
+                2,
+                4,
+                0,
+                5
+              ],
+              [
+                2,
+                1,
+                3,
+                5,
+                4,
+                0
+              ],
+              [
+                3,
+                2,
+                1,
+                0,
+                5,
+                4
+              ]
+            ],
+            "id": "DFR"
+          },
+          {
+            "coset": [
+              [
+                0,
+                4,
+                5,
+                3,
+                1,
+                2
+              ],
+              [
+                4,
+                5,
+                0,
+                1,
+                2,
+                3
+              ],
+              [
+                5,
+                0,
+                4,
+                2,
+                3,
+                1
+              ]
+            ],
+            "id": "UBL"
+          },
+          {
+            "coset": [
+              [
+                0,
+                5,
+                1,
+                3,
+                2,
+                4
+              ],
+              [
+                1,
+                0,
+                5,
+                4,
+                3,
+                2
+              ],
+              [
+                5,
+                1,
+                0,
+                2,
+                4,
+                3
+              ]
+            ],
+            "id": "UBR"
+          },
+          {
+            "coset": [
+              [
+                0,
+                2,
+                4,
+                3,
+                5,
+                1
+              ],
+              [
+                2,
+                4,
+                0,
+                5,
+                1,
+                3
+              ],
+              [
+                4,
+                0,
+                2,
+                1,
+                3,
+                5
+              ]
+            ],
+            "id": "UFL"
+          },
+          {
+            "coset": [
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5
+              ],
+              [
+                1,
+                2,
+                0,
+                4,
+                5,
+                3
+              ],
+              [
+                2,
+                0,
+                1,
+                5,
+                3,
+                4
+              ]
+            ],
+            "id": "UFR"
+          }
+        ],
+        "representative": "UFR",
+        "stabilizer": [
+          [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          [
+            1,
+            2,
+            0,
+            4,
+            5,
+            3
+          ],
+          [
+            2,
+            0,
+            1,
+            5,
+            3,
+            4
+          ]
+        ]
+      },
+      "edge": {
+        "positions": [
+          {
+            "coset": [
+              [
+                4,
+                3,
+                5,
+                1,
+                0,
+                2
+              ],
+              [
+                5,
+                0,
+                4,
+                2,
+                3,
+                1
+              ]
+            ],
+            "id": "BL"
+          },
+          {
+            "coset": [
+              [
+                1,
+                0,
+                5,
+                4,
+                3,
+                2
+              ],
+              [
+                5,
+                3,
+                1,
+                2,
+                0,
+                4
+              ]
+            ],
+            "id": "BR"
+          },
+          {
+            "coset": [
+              [
+                3,
+                1,
+                5,
+                0,
+                4,
+                2
+              ],
+              [
+                5,
+                4,
+                3,
+                2,
+                1,
+                0
+              ]
+            ],
+            "id": "DB"
+          },
+          {
+            "coset": [
+              [
+                2,
+                1,
+                3,
+                5,
+                4,
+                0
+              ],
+              [
+                3,
+                4,
+                2,
+                0,
+                1,
+                5
+              ]
+            ],
+            "id": "DF"
+          },
+          {
+            "coset": [
+              [
+                3,
+                5,
+                4,
+                0,
+                2,
+                1
+              ],
+              [
+                4,
+                2,
+                3,
+                1,
+                5,
+                0
+              ]
+            ],
+            "id": "DL"
+          },
+          {
+            "coset": [
+              [
+                1,
+                5,
+                3,
+                4,
+                2,
+                0
+              ],
+              [
+                3,
+                2,
+                1,
+                0,
+                5,
+                4
+              ]
+            ],
+            "id": "DR"
+          },
+          {
+            "coset": [
+              [
+                2,
+                3,
+                4,
+                5,
+                0,
+                1
+              ],
+              [
+                4,
+                0,
+                2,
+                1,
+                3,
+                5
+              ]
+            ],
+            "id": "FL"
+          },
+          {
+            "coset": [
+              [
+                1,
+                3,
+                2,
+                4,
+                0,
+                5
+              ],
+              [
+                2,
+                0,
+                1,
+                5,
+                3,
+                4
+              ]
+            ],
+            "id": "FR"
+          },
+          {
+            "coset": [
+              [
+                0,
+                4,
+                5,
+                3,
+                1,
+                2
+              ],
+              [
+                5,
+                1,
+                0,
+                2,
+                4,
+                3
+              ]
+            ],
+            "id": "UB"
+          },
+          {
+            "coset": [
+              [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5
+              ],
+              [
+                2,
+                4,
+                0,
+                5,
+                1,
+                3
+              ]
+            ],
+            "id": "UF"
+          },
+          {
+            "coset": [
+              [
+                0,
+                2,
+                4,
+                3,
+                5,
+                1
+              ],
+              [
+                4,
+                5,
+                0,
+                1,
+                2,
+                3
+              ]
+            ],
+            "id": "UL"
+          },
+          {
+            "coset": [
+              [
+                0,
+                5,
+                1,
+                3,
+                2,
+                4
+              ],
+              [
+                1,
+                2,
+                0,
+                4,
+                5,
+                3
+              ]
+            ],
+            "id": "UR"
+          }
+        ],
+        "representative": "UF",
+        "stabilizer": [
+          [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          [
+            2,
+            4,
+            0,
+            5,
+            1,
+            3
+          ]
+        ]
+      }
+    }
+  }
+}

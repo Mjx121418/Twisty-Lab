@@ -617,9 +617,17 @@ The existing Dockerfile is the development-toolchain baseline. The running conta
 | Node.js / npm | Node.js 24.21.0 / npm 11.19.0 |
 | Git / Python | Git 2.39.5 / Python 3.11.2 |
 
-Temporary smoke programs passed C++20 compilation and execution with GCC and Clang, modularized WebAssembly ES-module loading in Node, an exported Embind function call, and TypeScript declaration generation. These checks validate the toolchain; simulator modules and browser dependencies will be created in Milestone 1. Pin project dependencies and commit their lockfiles when setting up those builds.
+Temporary smoke programs passed C++20 compilation and execution with GCC and Clang, modularized WebAssembly ES-module loading in Node, an exported Embind function call, and TypeScript declaration generation before implementation began. Project dependencies are now pinned in `package-lock.json`; the JSON library is vendored with its license and recorded checksums.
 
 Keep development and CI commands within the container's memory budget: use at most two build jobs by default, one job for memory-intensive compilation or linking, and one browser-test worker. Run heavy workloads sequentially. The workspace policies in `AGENTS.md` also require explicit user instruction before modifying `Dockerfile` and record the authorized Codex commit identity.
+
+### Implemented baseline (8 October 2026)
+
+The repository now contains the C++ core, finite symmetry compiler, session and notation APIs, native CLI, C++ geometric interpreter, Embind bridge, and React/Three.js application. Both reference puzzles have checked-in sources, explicit compiled definitions, and compatible Euclidean and port-diagram packages. The browser provides synchronized playback, persistent piece selection, blocking evidence, history, seeded legal walks, definition import, and session save/load. See [README.md](README.md) for commands and authoring details.
+
+A clean native/WASM rebuild passed the CTest suite, five Vitest checks, and seven Playwright scenarios against the production browser bundle. Checks cover exact state and witness parity, symmetry covariance, inverse restoration, blocked paths, replay and checkpoints, geometric endpoints, picking, camera independence, imported definitions without visual support, semantic mismatch rejection, context restoration, and repeated puzzle replacement. Heavy workloads ran sequentially with at most two build jobs and one browser worker; observed cgroup peak memory was approximately 2.8 GB. The Dockerfile remains unchanged.
+
+This baseline implements finite domains, the capacity-one footprint rule module, exact declarative mechanism guards/updates, and home-placement goals. Prototype expansion currently targets the cube's 24-element face-label action; other finite models use explicit tables. Visual packages remain the two built-in cube realizations. The later roadmap and its independent model-verification gates still apply.
 
 ### References
 

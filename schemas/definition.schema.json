@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:twisty:schema:definition:1",
+  "type": "object",
+  "required": ["schemaVersion", "semanticsVersion", "kind", "puzzleId", "ruleModule", "cells", "pieceTypes", "pieces", "placementDomains", "operations", "initialState", "goal"],
+  "properties": {
+    "schemaVersion": {"const": 1}, "semanticsVersion": {"type": "string", "minLength": 1},
+    "kind": {"const": "finite-definition"}, "puzzleId": {"$ref": "#/$defs/id"},
+    "definitionDigest": {"$ref": "#/$defs/digest"}, "ruleModule": {"const": "finite-footprint@1"},
+    "cells": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+    "goal": {"type": "object", "required": ["kind"], "properties": {"kind": {"const": "home"}}},
+    "pieceTypes": {
+      "type": "array", "items": {
+        "type": "object", "required": ["id", "placementDomainId", "localPorts"],
+        "properties": {"id": {"$ref": "#/$defs/id"}, "placementDomainId": {"$ref": "#/$defs/id"}, "localPorts": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}}
+      }
+    },
+    "pieces": {
+      "type": "array", "maxItems": 4096, "items": {
+        "type": "object", "required": ["id", "type", "homePlacement", "portLabels"],
+        "properties": {"id": {"$ref": "#/$defs/id"}, "type": {"$ref": "#/$defs/id"}, "homePlacement": {"$ref": "#/$defs/id"}, "portLabels": {"type": "object", "additionalProperties": {"type": "string"}}}
+      }
+    },
+    "placementDomains": {
+      "type": "array", "maxItems": 128, "items": {
+        "type": "object", "required": ["id", "placements"],
+        "properties": {
+          "id": {"$ref": "#/$defs/id"},
+          "placements": {
+            "type": "array", "minItems": 1, "maxItems": 65536, "items": {
+              "type": "object", "required": ["key", "footprint", "portAttachment"],
+              "properties": {
+                "key": {"$ref": "#/$defs/id"}, "footprint": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+                "portAttachment": {"type": "object", "additionalProperties": {"type": "object", "required": ["cell", "attachment"], "properties": {"cell": {"$ref": "#/$defs/id"}, "attachment": {"$ref": "#/$defs/id"}}}}
+              }
+            }
+          }
+        }
+      }
+    },
+    "operations": {
+      "type": "array", "items": {
+        "type": "object", "required": ["id", "inverse", "family", "transport", "selectedCells", "transports"],
+        "properties": {
+          "id": {"$ref": "#/$defs/id"}, "inverse": {"$ref": "#/$defs/id"}, "family": {"$ref": "#/$defs/id"}, "transport": {"$ref": "#/$defs/id"},
+          "selectedCells": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+          "transports": {"type": "object", "additionalProperties": {"type": "object", "additionalProperties": {"$ref": "#/$defs/id"}}},
+          "mechanismGuard": {"type": "object", "additionalProperties": {"$ref": "#/$defs/exact"}},
+          "mechanismUpdate": {"type": "object", "additionalProperties": {"$ref": "#/$defs/exact"}}
+        }
+      }
+    },
+    "initialState": {"$ref": "#/$defs/state"}, "provenance": {"type": "object"}
+  },
+  "$defs": {
+    "id": {"type": "string", "minLength": 1},
+    "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "exact": {"anyOf": [{"type": ["string", "integer", "boolean", "null"]}, {"type": "array", "items": {"$ref": "#/$defs/exact"}}, {"type": "object", "additionalProperties": {"$ref": "#/$defs/exact"}}]},
+    "state": {"type": "object", "required": ["placementOf", "mechanism"], "properties": {"placementOf": {"type": "object", "additionalProperties": {"$ref": "#/$defs/id"}}, "mechanism": {"type": "object", "additionalProperties": {"$ref": "#/$defs/exact"}}}}
+  }
+}

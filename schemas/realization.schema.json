@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:twisty:schema:realization:1",
+  "type": "object",
+  "required": ["schemaVersion", "id", "kind", "compatibleDefinitionDigest", "requiredCapabilities"],
+  "properties": {
+    "schemaVersion": {"const": 1}, "id": {"type": "string", "minLength": 1},
+    "kind": {"enum": ["cube-euclidean", "cube-port-diagram"]},
+    "compatibleDefinitionDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "requiredCapabilities": {"type": "array", "uniqueItems": true, "items": {"enum": ["triangle-meshes", "rigid-transforms"]}}
+  }
+}

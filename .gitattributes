@@ -1,0 +1,2 @@
+# Preserve vendored upstream bytes, including license whitespace.
+third_party/nlohmann/* -whitespace

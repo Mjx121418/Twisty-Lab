@@ -1,0 +1,30 @@
+{
+  "name": "twisty-lab",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build:native": "cmake --preset native && cmake --build --preset native",
+    "build:wasm": "cmake --preset wasm && cmake --build --preset wasm",
+    "build": "npm run build:native && npm run check:packages && npm run build:wasm && tsc --noEmit && vite build",
+    "check:packages": "python3 scripts/compile-packages.py",
+    "dev": "npm run build:wasm && vite --host 0.0.0.0",
+    "preview": "vite preview --host 0.0.0.0",
+    "test:native": "ctest --preset native",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test",
+    "check": "npm run build && npm run test:native && npm run test:unit && npm run test:e2e"
+  },
+  "dependencies": {"react": "19.3.0", "react-dom": "19.3.0", "three": "0.186.1"},
+  "devDependencies": {
+    "@playwright/test": "1.64.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@types/three": "0.186.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "ajv": "8.20.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.4",
+    "vitest": "5.0.3"
+  }
+}

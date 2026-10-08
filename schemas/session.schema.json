@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:twisty:schema:session:1",
+  "type": "object", "required": ["schemaVersion", "kind", "logical", "presentation"],
+  "properties": {
+    "schemaVersion": {"const": 1}, "kind": {"const": "session"}, "presentation": {"type": "object"},
+    "logical": {
+      "type": "object", "required": ["definitionDigest", "originState", "requests", "cursor", "revision", "stateDigest", "checkpoints"],
+      "properties": {
+        "definitionDigest": {"$ref": "urn:twisty:schema:definition:1#/$defs/digest"},
+        "originState": {"$ref": "urn:twisty:schema:definition:1#/$defs/state"},
+        "revision": {"type": "string", "pattern": "^[0-9]+$"}, "cursor": {"type": "integer", "minimum": 0},
+        "stateDigest": {"$ref": "urn:twisty:schema:definition:1#/$defs/digest"},
+        "requests": {"type": "array", "items": {"type": "object", "required": ["operation", "parameters", "afterStateDigest"], "properties": {"operation": {"type": "string"}, "parameters": {"type": "object", "maxProperties": 0}, "afterStateDigest": {"$ref": "urn:twisty:schema:definition:1#/$defs/digest"}}}},
+        "checkpoints": {"type": "array", "items": {"type": "object", "required": ["index", "state", "stateDigest"], "properties": {"index": {"type": "integer", "minimum": 0}, "state": {"$ref": "urn:twisty:schema:definition:1#/$defs/state"}, "stateDigest": {"$ref": "urn:twisty:schema:definition:1#/$defs/digest"}}}}
+      }
+    }
+  }
+}

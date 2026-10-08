@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "semanticsVersion": "1.0.0",
+  "kind": "cube-prototypes",
+  "puzzleId": "cube3",
+  "group": {
+    "generators": [[0, 2, 4, 3, 5, 1], [5, 1, 0, 2, 4, 3]],
+    "limit": 24,
+    "subgroupGenerators": {
+      "corner": [[1, 2, 0, 4, 5, 3]],
+      "edge": [[2, 4, 0, 5, 1, 3]],
+      "center": [[0, 2, 4, 3, 5, 1]]
+    }
+  },
+  "prototypes": {
+    "corner": {"faces": ["U", "R", "F"]},
+    "edge": {"faces": ["U", "F"]},
+    "center": {"faces": ["U"]}
+  },
+  "operationPrototype": {"supportFace": "U", "permutation": [0, 2, 4, 3, 5, 1]},
+  "bandage": false
+}

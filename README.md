@@ -1,0 +1,102 @@
+# Twisty Lab
+
+A twisty puzzle simulator with one exact C++ rule system and interchangeable C++ geometric realizations. The browser application uses Three.js to display a Euclidean puzzle and a labeled port diagram of the same session.
+
+The initial release includes a 3×3 cube and a reference bandaged cube with the UF edge and UFR corner fused into one rigid piece. It provides explainable blocking, synchronized views, file-based definition inspection, algorithms, reproducible legal scrambles, undo/redo, and portable saved sessions.
+
+## Run locally
+
+Use the existing development container or a compatible environment with C++20, CMake 3.25+, Ninja, Emscripten 6.0.11, Node 24, and npm. Follow [AGENTS.md](AGENTS.md): the container has a 4 GB memory budget, heavy workloads run sequentially, builds use at most two jobs, and browser tests use one worker. Do not modify `Dockerfile` without an explicit user request.
+
+```sh
+npm ci
+npm run build
+npm run dev
+```
+
+Open `http://localhost:5173`. `npm run dev` also rebuilds the WASM module when needed. `npm run build` produces the native CLI, the WASM module and TypeScript declarations, and a static browser application in `dist/`.
+
+To serve the production bundle locally:
+
+```sh
+npm run preview
+```
+
+The UI supplies face-turn buttons and face keys `U R F D L B`; hold Shift for an inverse. Drag the Euclidean view to orbit the camera. Click a visual part or inspector entry to highlight the same persistent piece in both views. Camera changes leave the logical state unchanged.
+
+Algorithms support inverse and half-turn suffixes, grouped repetition, commutators, conjugates, and line comments. For example:
+
+```text
+R U R' U'
+(R U)3
+[R,U]
+[R:U]
+# A half turn checks two primitives.
+R2
+```
+
+Interactive execution keeps the legal prefix and stops at the first blocked primitive. Transactional execution commits the entire algorithm only if every intermediate move is legal. A move such as `R R'` is still blocked on the initial bandaged cube; endpoint cancellation does not make its path legal.
+
+## Headless CLI
+
+The CLI links the core, compiler, and session without the geometry or renderer targets.
+
+```sh
+npm run build:native
+build/native/twisty inspect --definition packages/cube3/source.json --json
+build/native/twisty run --algorithm "[R,U]" --policy transactional --json
+build/native/twisty scramble --seed 42 --length 25 --save build/session.json --json
+build/native/twisty replay --session build/session.json --json
+build/native/twisty verify-fixtures --json
+build/native/twisty compile --definition packages/cube3/source.json --output build/definition.json
+build/native/twisty validate --definition packages/bandaged/source.json
+```
+
+Commands are `compile`, `validate`, `inspect`, `run`, `scramble`, `replay`, and `verify-fixtures`. Use `--json` for compact machine-readable results and `--output FILE` to save an output document. `run` and `scramble` accept `--session FILE` to continue an existing session and `--save FILE` to persist the result. Commands return nonzero for blocked execution or invalid input.
+
+Imported states are checked for declared type and occupancy invariants. This does not certify reachability. Saved histories are replayed under an exact definition digest, and state digests and checkpoints are verified before a load commits. A new move after undo truncates the redo continuation; revisions keep increasing.
+
+## Authoring and data packages
+
+`packages/cube3` and `packages/bandaged` contain compact JSON source definitions, checked-in explicit compiled definitions, and separate Euclidean/diagram realization packages. Source definitions use concrete permutations of six abstract face labels, subgroup generators for prototype-position stabilizers, prototype pieces, and a directed operation prototype. C++ validates the stabilizers, enumerates position cosets, and generates finite placements and conjugated operations with their selected-cell guards and source provenance.
+
+Finite definitions can also be supplied explicitly. The native format has piece types, full placement keys, port attachments, cell footprints, directed transport tables, exact mechanism guards/updates, and a home-placement goal. Registered mechanism updates must have exact guarded inverses. Schemas are in `schemas/`; semantic references, occupancy, transport bijections, and inverses are checked by C++.
+
+The browser's **Import definition** accepts sources or compiled finite definitions. A definition with a matching installed realization digest is displayed in both views. Other valid definitions can be inspected and executed headlessly in the browser; missing visual support is reported separately from abstract move blocking. Visual authoring tools and arbitrary executable rule files are outside this release.
+
+Regression fixtures pin a definition digest and specify a replay prefix, request, expected outcome, and optional blocking evidence or unchanged participant. Update a fixture's semantic pin deliberately when changing its rules. Its source path is an authoring convenience, not a replacement for the digest.
+
+`npm run check:packages` checks the compiled reference files, realization compatibility digests, and fixture pins without changing them. After reviewing a source change, regenerate packages with `python3 scripts/compile-packages.py --write`. Add `--update-fixtures` only when deliberately accepting the new semantic identity, then rerun the checks. Build the native CLI before using this script.
+
+## Build boundaries and memory ownership
+
+- `puzzle_core`: exact states, validation, operations, canonical encoding, and SHA-256 digests.
+- `puzzle_compiler`: finite permutation actions, cosets, prototype expansion, and provenance.
+- `puzzle_session`: notation, revisions, history, legal walks, persistence, and replay.
+- `puzzle_geometry`: meshes, placement interpretation, visual identities, animation sampling, and hit bindings.
+- `twisty_wasm`: Embind exports with generated `.d.mts` declarations.
+- `web/src`: a thin session adapter, a Three.js renderer, and the React application.
+
+Definitions and transitions are read-only to realizations. A transition includes all participants, including featureless centers with unchanged placements. C++ animation tracks verify port transport and use a geometric endpoint tolerance of `1e-6`; exact state equality uses no tolerance.
+
+The Three.js adapter copies borrowed WASM asset views immediately, reuses destination transform arrays, and explicitly disposes WASM and GPU resources. Logical records stay in native serialization paths, preserving exact 64-bit mechanism values through saves and animation records. JavaScript consumes placement IDs and digests without becoming the state authority.
+
+## Checks
+
+Install Chromium and its container libraries once:
+
+```sh
+npx playwright install --with-deps chromium
+```
+
+Then run the checks sequentially:
+
+```sh
+npm run check
+```
+
+Native checks exercise hashes, canonical compilation, symmetry covariance, inverses, hidden variables, blocked paths, seeded walks, replay, and both realization endpoints. Vitest compares native and WASM definitions, witnesses, state digests, portable fixtures, exact serialization, and schemas. Playwright serves the production bundle on port 4173 and checks both views, algorithms, bandaging feedback, camera independence, picking, imports, saves, and context/resource replacement with one worker. Run `npm run build` before running browser tests individually.
+
+Dependencies are pinned in `package-lock.json`. The nlohmann JSON header is vendored with its MIT license so CMake builds do not need a network dependency fetch. Build and test outputs are ignored by Git.
+
+Jumbling, spherical cube realizations, Bagua, symbolic placement domains, richer goals, solvers, visual editors, exports, and shared sessions follow the verification gates in [the architecture proposal](twisty_puzzle_simulator_architecture.md).

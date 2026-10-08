@@ -1,0 +1,10 @@
+{
+  "compatibleDefinitionDigest": "3049956cd3afa29ec7a380660aaba3a8997794ee71de5ae13c6dd950d3e7d698",
+  "id": "bandaged-cube-port-diagram-v1",
+  "kind": "cube-port-diagram",
+  "requiredCapabilities": [
+    "triangle-meshes",
+    "rigid-transforms"
+  ],
+  "schemaVersion": 1
+}

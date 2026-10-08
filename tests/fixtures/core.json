@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "kind": "regression-fixtures",
+  "cases": [
+    {
+      "name": "cube U is legal",
+      "source": "packages/cube3/source.json",
+      "prefix": "",
+      "operation": "U",
+      "expectedStatus": "Committed",
+      "definitionDigest": "883bd24d0115e6262058b31938613866a04137ac5387f76aef0a4699799a5de9"
+    },
+    {
+      "name": "unchanged center participates",
+      "source": "packages/cube3/source.json",
+      "prefix": "",
+      "operation": "U",
+      "expectedStatus": "Committed",
+      "unchangedParticipant": "center/U",
+      "definitionDigest": "883bd24d0115e6262058b31938613866a04137ac5387f76aef0a4699799a5de9"
+    },
+    {
+      "name": "bandaged R is blocked",
+      "source": "packages/bandaged/source.json",
+      "prefix": "",
+      "operation": "R",
+      "expectedStatus": "Blocked",
+      "reasonCode": "footprint.partial_overlap",
+      "implicatedPiece": "bandage/UF-UFR",
+      "definitionDigest": "3049956cd3afa29ec7a380660aaba3a8997794ee71de5ae13c6dd950d3e7d698"
+    },
+    {
+      "name": "bandaged U is legal",
+      "source": "packages/bandaged/source.json",
+      "prefix": "",
+      "operation": "U",
+      "expectedStatus": "Committed",
+      "definitionDigest": "3049956cd3afa29ec7a380660aaba3a8997794ee71de5ae13c6dd950d3e7d698"
+    },
+    {
+      "name": "bandaged F is legal",
+      "source": "packages/bandaged/source.json",
+      "prefix": "",
+      "operation": "F",
+      "expectedStatus": "Committed",
+      "definitionDigest": "3049956cd3afa29ec7a380660aaba3a8997794ee71de5ae13c6dd950d3e7d698"
+    },
+    {
+      "name": "R becomes legal after U",
+      "source": "packages/bandaged/source.json",
+      "prefix": "U",
+      "operation": "R",
+      "expectedStatus": "Committed",
+      "definitionDigest": "3049956cd3afa29ec7a380660aaba3a8997794ee71de5ae13c6dd950d3e7d698"
+    },
+    {
+      "name": "inverse restores blocking",
+      "source": "packages/bandaged/source.json",
+      "prefix": "U U'",
+      "operation": "R",
+      "expectedStatus": "Blocked",
+      "reasonCode": "footprint.partial_overlap",
+      "definitionDigest": "3049956cd3afa29ec7a380660aaba3a8997794ee71de5ae13c6dd950d3e7d698"
+    }
+  ]
+}
