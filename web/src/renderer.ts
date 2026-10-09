@@ -38,12 +38,14 @@ export class RenderView {
   constructor(
     module: MainModule,
     private readonly host: HTMLElement,
-    definition: string,
+    session: InstanceType<MainModule['Session']>,
     realization: Realization,
     private readonly onPick: (piece: string) => void,
     private readonly canPick: () => boolean,
   ) {
-    this.geometry = new module.Geometry(definition, JSON.stringify(realization));
+    const geometry = module.createGeometry(session, JSON.stringify(realization));
+    if (!geometry) throw new Error('The geometric interpreter could not be created.');
+    this.geometry = geometry;
     this.descriptor = JSON.parse(this.geometry.sceneJSON()) as SceneDescriptor;
     this.frameData = copyFloatView(this.geometry.transforms() as Float32Array);
     try {

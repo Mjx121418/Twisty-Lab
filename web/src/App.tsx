@@ -93,7 +93,7 @@ export function App() {
     try {
       for (let i = 0; i < 2; i++) {
         const host = i === 0 ? cubeHost.current : diagramHost.current;
-        const view = new RenderView(module, host, session.definitionText, preset.realizations[i] as Realization, setSelected, () => !busyRef.current);
+        const view = new RenderView(module, host, session.native, preset.realizations[i] as Realization, setSelected, () => !busyRef.current);
         view.setState(session.stateText()); created.push(view);
       }
       views.current = created;

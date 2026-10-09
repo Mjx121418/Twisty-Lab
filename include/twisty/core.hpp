@@ -24,6 +24,8 @@ struct DiagnosticError : std::runtime_error {
 struct Placement {
   std::string key;
   std::vector<std::string> footprint;
+  // Definition-local indices accelerate occupancy without changing canonical data.
+  std::vector<Index> footprint_cells;
   // Each port names an abstract cell and attachment, never a coordinate.
   std::map<std::string, std::pair<std::string, std::string>> ports;
 };
@@ -62,6 +64,7 @@ struct Definition {
   std::string digest;
   Json canonical;
   Json provenance;
+  std::vector<std::string> cells;
   std::vector<Domain> domains;
   std::vector<Piece> pieces;
   std::vector<Operation> operations;

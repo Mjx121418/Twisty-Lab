@@ -31,13 +31,18 @@ std::uint64_t parse_revision(const std::string &text) {
 }
 } // namespace
 Session::Session(const std::string &source) {
-  const auto result = compile_json(source);
-  if (result.at("status") != "Compiled") {
-    const auto &diagnostic = result.at("diagnostics").at(0);
-    throw DiagnosticError(diagnostic.at("reasonCode"), diagnostic.value("source", "/"),
-                          diagnostic.at("message"));
+  auto document = Json::parse(source);
+  if (document.value("kind", std::string{}) == "finite-definition")
+    definition_ = load_definition(std::move(document));
+  else {
+    const auto result = compile_json(source);
+    if (result.at("status") != "Compiled") {
+      const auto &diagnostic = result.at("diagnostics").at(0);
+      throw DiagnosticError(diagnostic.at("reasonCode"), diagnostic.value("source", "/"),
+                            diagnostic.at("message"));
+    }
+    definition_ = load_definition(result.at("definition"));
   }
-  definition_ = load_definition(result.at("definition"));
   origin_ = definition_->initial;
   state_ = origin_;
 }
@@ -48,20 +53,24 @@ bool Session::stale(const std::string &expected) const {
   return parse_revision(expected) != revision_;
 }
 Json Session::snapshot() const {
+  if (cached_snapshot_ && cached_revision_ == revision_)
+    return *cached_snapshot_;
   Json history = Json::array();
   for (const auto &transition : history_)
     history.push_back(transition.operation);
-  return {{"definitionDigest", definition_->digest},
-          {"puzzleId", definition_->id},
-          {"revision", revision()},
-          {"stateDigest", state_digest(*definition_, state_)},
-          {"state", encode_state(*definition_, state_)},
-          {"solved", solved(*definition_, state_)},
-          {"legalRequests", legal_operations(*definition_, state_)},
-          {"history", history},
-          {"cursor", cursor_},
-          {"canUndo", cursor_ > 0},
-          {"canRedo", cursor_ < history_.size()}};
+  cached_snapshot_ = Json{{"definitionDigest", definition_->digest},
+                          {"puzzleId", definition_->id},
+                          {"revision", revision()},
+                          {"stateDigest", state_digest(*definition_, state_)},
+                          {"state", encode_state(*definition_, state_)},
+                          {"solved", solved(*definition_, state_)},
+                          {"legalRequests", legal_operations(*definition_, state_)},
+                          {"history", history},
+                          {"cursor", cursor_},
+                          {"canUndo", cursor_ > 0},
+                          {"canRedo", cursor_ < history_.size()}};
+  cached_revision_ = revision_;
+  return *cached_snapshot_;
 }
 Json Session::commit(const Transition &transition, bool truncate) {
   if (truncate && cursor_ < history_.size())

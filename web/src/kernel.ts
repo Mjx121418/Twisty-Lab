@@ -45,11 +45,14 @@ export class KernelSession {
   readonly definitionText: string;
 
   constructor(module: MainModule, source: string) {
-    const compiled = JSON.parse(module.compileJSON(source)) as Result & { definition?: CompiledDefinition };
-    if (compiled.status !== 'Compiled' || !compiled.definition) {
-      throw new Error(compiled.diagnostics?.map((d) => `${d.source}: ${d.message}`).join('\n') ?? 'Invalid definition.');
+    try {
+      this.native = new module.Session(source);
+    } catch (error: unknown) {
+      // Recover structured diagnostics only for an invalid import; valid sources
+      // compile once in Session, preserving exact native serialization.
+      const result = JSON.parse(module.compileJSON(source)) as Result;
+      throw new Error(result.diagnostics?.map((d) => `${d.source}: ${d.message}`).join('\n') ?? String(error));
     }
-    this.native = new module.Session(source);
     this.definitionText = this.native.definitionJSON();
     this.definition = JSON.parse(this.definitionText) as CompiledDefinition;
   }
@@ -57,15 +60,15 @@ export class KernelSession {
   snapshot(): Snapshot { return JSON.parse(this.native.snapshotJSON()) as Snapshot; }
   stateText(): string { return this.native.stateJSON(); }
   move(operation: string): Result {
-    return JSON.parse(this.native.executeJSON(JSON.stringify({ operation, parameters: {} }), this.snapshot().revision)) as Result;
+    return JSON.parse(this.native.executeJSON(JSON.stringify({ operation, parameters: {} }), this.native.revision())) as Result;
   }
   run(notation: string, policy: string): Result {
-    return JSON.parse(this.native.runJSON(notation, policy, this.snapshot().revision)) as Result;
+    return JSON.parse(this.native.runJSON(notation, policy, this.native.revision())) as Result;
   }
-  undo(): Result { return JSON.parse(this.native.undoJSON(this.snapshot().revision)) as Result; }
-  redo(): Result { return JSON.parse(this.native.redoJSON(this.snapshot().revision)) as Result; }
+  undo(): Result { return JSON.parse(this.native.undoJSON(this.native.revision())) as Result; }
+  redo(): Result { return JSON.parse(this.native.redoJSON(this.native.revision())) as Result; }
   scramble(seed: number, length: number): Result {
-    return JSON.parse(this.native.scrambleJSON(seed, length, this.snapshot().revision)) as Result;
+    return JSON.parse(this.native.scrambleJSON(seed, length, this.native.revision())) as Result;
   }
   load(document: string): Result { return JSON.parse(this.native.loadJSON(document)) as Result; }
   save(presentation: unknown): string {

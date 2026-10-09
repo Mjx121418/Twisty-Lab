@@ -20,7 +20,8 @@ describe('native / WebAssembly parity', () => {
     const algorithm = "UF_ab UL_af (UF_ab UL_af)' UF_ad";
     const reference = JSON.parse(execFileSync('build/native/geometry_probe', [definition, realization, algorithm], { encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 }));
     const value = new runtime.Session(read(definition));
-    const geometry = new runtime.Geometry(value.definitionJSON(), read(realization));
+    const geometry = runtime.createGeometry(value, read(realization));
+    if (!geometry) throw new Error('Geometry creation failed.');
     const sameFloats = (actual: Float32Array, expected: number[]): void => {
       expect(actual.length).toBe(expected.length);
       for (let i = 0; i < actual.length; i++) expect(Math.abs(actual[i] - expected[i])).toBeLessThan(1e-6);
@@ -46,6 +47,21 @@ describe('native / WebAssembly parity', () => {
       }
       expect(snapshot(value).stateDigest).toBe(reference.stateDigest);
     } finally { geometry.delete(); value.delete(); }
+  });
+  it('keeps a shared geometric definition alive after its session is disposed', () => {
+    const value = new runtime.Session(read('packages/helicopter/definition.json'));
+    const state = value.stateJSON();
+    const geometry = runtime.createGeometry(value, read('packages/helicopter/helicopter-euclidean.json'));
+    if (!geometry) throw new Error('Geometry creation failed.');
+    value.delete();
+    try {
+      const initial = Array.from(geometry.transforms() as Float32Array);
+      geometry.setStateJSON(state);
+      geometry.sample(1);
+      expect(Array.from(geometry.transforms() as Float32Array)).toEqual(initial);
+      const part = JSON.parse(geometry.sceneJSON()).visualParts[0];
+      expect(JSON.parse(geometry.bindHitJSON(part.visualPartId)).pieceId).toBe(part.pieceId);
+    } finally { geometry.delete(); }
   });
   it('matches Helicopter jumbling, blocking, inverse and replay records', () => {
     const path = 'packages/helicopter/definition.json';

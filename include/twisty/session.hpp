@@ -47,6 +47,9 @@ private:
   std::vector<Transition> history_;
   std::size_t cursor_ = 0;
   std::uint64_t revision_ = 0;
+  // Every successful state/history edit advances the revision.
+  mutable std::optional<Json> cached_snapshot_;
+  mutable std::uint64_t cached_revision_ = 0;
   Json commit(const Transition &, bool truncate = true);
   bool stale(const std::string &) const;
 };

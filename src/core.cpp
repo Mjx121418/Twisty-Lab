@@ -78,10 +78,13 @@ std::shared_ptr<const Definition> load_definition(Json compiled) {
   definition->digest = sha256(compiled.dump());
   ensure(claimed_digest.empty() || claimed_digest == definition->digest, "definition.digest_mismatch",
          "/definitionDigest", "Compiled definition digest does not match its contents.");
-  std::set<std::string> cells;
-  for (const auto &cell : compiled.at("cells"))
-    ensure(cells.insert(cell.get<std::string>()).second, "cell.duplicate", "/cells",
+  std::map<std::string, Index> cells;
+  for (const auto &cell : compiled.at("cells")) {
+    const auto id = cell.get<std::string>();
+    ensure(cells.emplace(id, static_cast<Index>(definition->cells.size())).second, "cell.duplicate", "/cells",
            "Duplicate abstract cell.");
+    definition->cells.push_back(id);
+  }
   std::map<std::string, Index> domains;
   for (const auto &item : compiled.at("placementDomains")) {
     Domain domain;
@@ -97,9 +100,11 @@ std::shared_ptr<const Definition> load_definition(Json compiled) {
       ensure(!placement.footprint.empty(), "placement.empty", placement.key,
              "A finite placement must occupy a cell.");
       std::set<std::string> occupied;
-      for (const auto &cell : placement.footprint)
+      for (const auto &cell : placement.footprint) {
         ensure(cells.contains(cell) && occupied.insert(cell).second, "placement.cell", placement.key,
                "Footprints must reference distinct declared cells.");
+        placement.footprint_cells.push_back(cells.at(cell));
+      }
       for (const auto &[port, attachment] : q.at("portAttachment").items()) {
         const auto cell = attachment.at("cell").get<std::string>();
         ensure(occupied.contains(cell), "port.cell", placement.key,
@@ -309,10 +314,7 @@ Json validate_state(const Definition &definition, const State &state) {
   if (!state.mechanism.is_object())
     diagnostics.push_back(
         {{"reasonCode", "state.mechanism"}, {"message", "Mechanism variables must be a record."}});
-  std::map<std::string, std::vector<std::string>> occupants;
-  if (!definition.placement_relations)
-    for (const auto &cell : definition.canonical.at("cells"))
-      occupants[cell.get<std::string>()] = {};
+  std::vector<Index> occupancy(definition.cells.size(), 0);
   for (Index i = 0; i < definition.pieces.size(); ++i) {
     const auto &piece = definition.pieces[i];
     if (state.placement_of[i] >= definition.domains[piece.domain].placements.size()) {
@@ -321,17 +323,30 @@ Json validate_state(const Definition &definition, const State &state) {
                              {"message", "Placement is outside the piece domain."}});
       continue;
     }
-    for (const auto &cell : definition.domains[piece.domain].placements[state.placement_of[i]].footprint)
-      occupants[cell].push_back(piece.id);
+    for (const auto cell : definition.domains[piece.domain].placements[state.placement_of[i]].footprint_cells)
+      ++occupancy[cell];
   }
-  for (const auto &[cell, pieces] : occupants)
-    if (pieces.size() > 1 || (!definition.placement_relations && pieces.empty()))
+  for (Index cell = 0; cell < occupancy.size(); ++cell)
+    if (occupancy[cell] > 1 || (!definition.placement_relations && occupancy[cell] == 0)) {
+      // Only invalid assignments need piece names; valid paths allocate no
+      // per-resource strings or occupant lists.
+      std::vector<std::string> pieces;
+      for (Index i = 0; i < definition.pieces.size(); ++i) {
+        const auto &piece = definition.pieces[i];
+        const auto &domain = definition.domains[piece.domain];
+        if (state.placement_of[i] >= domain.placements.size())
+          continue;
+        const auto &footprint = domain.placements[state.placement_of[i]].footprint_cells;
+        if (std::binary_search(footprint.begin(), footprint.end(), cell))
+          pieces.push_back(piece.id);
+      }
       diagnostics.push_back({{"reasonCode", "state.occupancy"},
-                             {"source", cell},
+                             {"source", definition.cells[cell]},
                              {"implicatedPieces", pieces},
                              {"message", definition.placement_relations
                                              ? "An exclusion cell can have at most one occupant."
                                              : "Each declared cell must have exactly one occupant."}});
+    }
   return diagnostics;
 }
 State decode_state(const Definition &definition, const Json &json) {

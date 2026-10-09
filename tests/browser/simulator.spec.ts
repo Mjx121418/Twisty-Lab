@@ -94,6 +94,11 @@ test('matches native seeded walks and reloads the exported session', async ({ pa
 });
 
 test('imports independent type/domain IDs and named operations without visual support', async ({ page }) => {
+  const initialDigest = await page.getByTestId('state-digest').textContent();
+  await page.getByLabel('Import definition file').setInputFiles({ name: 'invalid.json', mimeType: 'application/json', buffer: Buffer.from('{}') });
+  await expect(page.getByTestId('blocking-evidence')).toContainText('source.invalid');
+  await expect(page.getByTestId('state-digest')).toHaveText(initialDigest!);
+  await expect(page.locator('canvas')).toHaveCount(2);
   const downloading = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save session ↗' }).click();
   const originalSession = readFileSync((await (await downloading).path())!, 'utf8');

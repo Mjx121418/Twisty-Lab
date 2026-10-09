@@ -93,6 +93,8 @@ Definitions and transitions are read-only to realizations. A transition includes
 
 The Three.js adapter copies borrowed WASM asset views immediately, reuses destination transform arrays, and explicitly disposes WASM and GPU resources. Logical records stay in native serialization paths, preserving exact 64-bit mechanism values through saves and animation records. JavaScript consumes placement IDs and digests without becoming the state authority.
 
+Compiled definitions load once per session, and both browser realizations share that immutable C++ definition. Occupancy checks use precomputed abstract resource indices; snapshots reuse their state and legal-request results within one revision. Every successful move, undo, redo, or load advances the revision. These optimizations preserve canonical definitions, diagnostics, and rule checks while reducing Helicopter loading and input delays. Simulation and rendering run in the browser; the development container serves the application and builds its artifacts.
+
 ## Checks
 
 Install Chromium and its container libraries once:

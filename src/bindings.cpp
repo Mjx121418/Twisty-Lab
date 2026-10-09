@@ -20,12 +20,17 @@ val transforms(const Geometry &geometry) {
 std::string compile(const std::string &source) {
   return compile_json(source).dump();
 }
+Geometry *create_geometry(const Session &session, const std::string &realization) {
+  return new Geometry(session.definition(), realization);
+}
 } // namespace
 EMSCRIPTEN_BINDINGS(twisty) {
   function("compileJSON", &compile);
+  function("createGeometry", &create_geometry, return_value_policy::take_ownership());
   class_<Session>("Session")
       .constructor<std::string>()
       .function("snapshotJSON", &Session::snapshot_json)
+      .function("revision", &Session::revision)
       .function("definitionJSON", &Session::definition_json)
       .function("stateJSON", &Session::state_json)
       .function("executeJSON", &Session::execute_json)

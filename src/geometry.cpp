@@ -81,8 +81,10 @@ V diagram_center(const std::string &face) {
 }
 } // namespace
 Geometry::Geometry(const std::string &definition_json, const std::string &realization_json)
-    : definition_(load_definition(Json::parse(definition_json))), displayed_(definition_->initial),
-      before_(displayed_), after_(displayed_) {
+    : Geometry(load_definition(Json::parse(definition_json)), realization_json) {}
+Geometry::Geometry(std::shared_ptr<const Definition> definition, const std::string &realization_json)
+    : definition_(std::move(definition)), displayed_(definition_->initial), before_(displayed_),
+      after_(displayed_) {
   const auto realization = Json::parse(realization_json);
   if (realization.at("schemaVersion") != 1 ||
       realization.at("compatibleDefinitionDigest") != definition_->digest)

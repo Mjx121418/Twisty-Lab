@@ -6,6 +6,7 @@ namespace twisty {
 class Geometry {
 public:
   Geometry(const std::string &definition_json, const std::string &realization_json);
+  Geometry(std::shared_ptr<const Definition>, const std::string &realization_json);
   std::string scene_json() const {
     return scene_.dump();
   }

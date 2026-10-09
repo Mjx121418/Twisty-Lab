@@ -161,6 +161,57 @@ void test_rules_and_sessions() {
   check(mechanism.snapshot().at("stateDigest") == mechanical_origin.at("stateDigest"),
         "Inverse restores hidden mechanism variable");
 }
+void test_indexed_occupancy() {
+  for (const auto &name : {"cube3", "bandaged", "helicopter"}) {
+    Session session(read("packages/" + std::string(name) + "/definition.json"));
+    const auto d = session.definition();
+    // Preserve the complete externally visible diagnostics against a reference
+    // using resource names, including empty cells in the footprint backend.
+    auto reference = [&](const State &state) {
+      std::map<std::string, std::vector<std::string>> occupants;
+      if (!d->placement_relations)
+        for (const auto &cell : d->canonical.at("cells"))
+          occupants[cell.get<std::string>()] = {};
+      for (Index i = 0; i < d->pieces.size(); ++i) {
+        const auto &piece = d->pieces[i];
+        for (const auto &cell : d->domains[piece.domain].placements[state.placement_of[i]].footprint)
+          occupants[cell].push_back(piece.id);
+      }
+      auto diagnostics = Json::array();
+      for (const auto &[cell, pieces] : occupants)
+        if (pieces.size() > 1 || (!d->placement_relations && pieces.empty()))
+          diagnostics.push_back(
+              {{"reasonCode", "state.occupancy"},
+               {"source", cell},
+               {"implicatedPieces", pieces},
+               {"message", d->placement_relations ? "An exclusion cell can have at most one occupant."
+                                                  : "Each declared cell must have exactly one occupant."}});
+      return diagnostics;
+    };
+    check(validate_state(*d, d->initial) == reference(d->initial), "Initial indexed occupancy agrees");
+    for (Index i = 0; i < d->pieces.size(); ++i)
+      for (Index j = i + 1; j < d->pieces.size(); ++j)
+        if (d->pieces[i].domain == d->pieces[j].domain) {
+          auto invalid = d->initial;
+          invalid.placement_of[i] = invalid.placement_of[j];
+          check(validate_state(*d, invalid) == reference(invalid),
+                "Indexed occupancy preserves conflict and vacancy diagnostics");
+        }
+    for (int step = 0; step < 12; ++step) {
+      const auto before = session.snapshot();
+      const auto requests = before.at("legalRequests");
+      const auto move = requests.at((step * 37) % requests.size()).at("operation").get<std::string>();
+      session.execute(move, session.revision());
+      const auto after = session.snapshot();
+      check(after.at("state") == encode_state(*d, session.state()) &&
+                after.at("legalRequests") == legal_operations(*d, session.state()) &&
+                after.at("revision") == session.revision(),
+            "Snapshot cache follows state and legality at every revision");
+      check(validate_state(*d, session.state()) == reference(session.state()), "Moved occupancy agrees");
+      check(session.snapshot() == after, "Repeated snapshot is stable");
+    }
+  }
+}
 void test_scramble_and_replay() {
   auto renamed = compile_source(Json::parse(read("packages/cube3/source.json")));
   renamed.erase("definitionDigest");
@@ -521,6 +572,7 @@ int main() {
     test_hashes();
     test_compiler();
     test_rules_and_sessions();
+    test_indexed_occupancy();
     test_scramble_and_replay();
     test_symmetry_covariance();
     test_helicopter();
