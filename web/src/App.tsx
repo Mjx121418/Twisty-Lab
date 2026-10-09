@@ -6,12 +6,16 @@ import cubeRealization from '../../packages/cube3/cube-euclidean.json';
 import cubeDiagram from '../../packages/cube3/cube-port-diagram.json';
 import bandageRealization from '../../packages/bandaged/cube-euclidean.json';
 import bandageDiagram from '../../packages/bandaged/cube-port-diagram.json';
+import helicopterSource from '../../packages/helicopter/definition.json?raw';
+import helicopterRealization from '../../packages/helicopter/helicopter-euclidean.json';
+import helicopterDiagram from '../../packages/helicopter/helicopter-port-diagram.json';
 import { KernelSession, loadRuntime, type Realization, type Result, type Snapshot, type Transition } from './kernel';
 import { RenderView } from './renderer';
 
 const presets = [
   { id: 'cube3', label: '3 × 3 cube', source: cubeSource, realizations: [cubeRealization, cubeDiagram] },
   { id: 'bandaged-uf-ufr', label: 'Bandaged cube · UF + UFR', source: bandageSource, realizations: [bandageRealization, bandageDiagram] },
+  { id: 'helicopter', label: 'Helicopter Cube · jumbling', source: helicopterSource, realizations: [helicopterRealization, helicopterDiagram] },
 ];
 type Layout = 'both' | 'cube' | 'diagram';
 type Inspector = 'pieces' | 'history' | 'definition';
@@ -65,6 +69,7 @@ export function App() {
     commands.current = [];
     setSourceId(id); setSnapshot(initial); setVisualDigest(initial.stateDigest);
     setSelected(undefined); setEvidence(undefined); setLastScramble(''); setVisualError('');
+    setAlgorithm(initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' : "R U R' U'");
     setGeneration((value) => value + 1);
   }
 
@@ -204,6 +209,9 @@ export function App() {
   const definition = kernel.current?.definition;
   const definitionText = useMemo(() => kernel.current?.definitionText ?? '', [generation]);
   const legal = new Set(snapshot?.legalRequests.map((request) => request.operation));
+  // Choose requests for the displayed source phase; core legalRequests remains
+  // the authority for legality, including blockers on these same requests.
+  const phaseRequests = definition?.operations.filter((operation) => Object.entries(operation.pieceGuards ?? {}).every(([piece, placement]) => snapshot?.state.placementOf[piece] === placement));
   const families = Array.from(new Set(definition?.operations.map((operation) => operation.family) ?? []));
   const faceOrder = ['U', 'R', 'F', 'D', 'L', 'B'];
   families.sort((a, b) => (faceOrder.includes(a) ? faceOrder.indexOf(a) : 6) - (faceOrder.includes(b) ? faceOrder.indexOf(b) : 6) || a.localeCompare(b));
@@ -257,8 +265,8 @@ export function App() {
           </div>
 
           <section className="commands">
-            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">Face keys U R F D L B · Shift for inverse</span></div>
-            <div className="moves">{families.map((family) => <div className="move-pair" key={family}>{definition?.operations.filter((operation) => operation.family === family).map((operation) => <button key={operation.id} aria-label={`Move ${operation.id === `${family}'` ? `${family} inverse` : operation.id}`} className={!legal.has(operation.id) ? 'may-block' : ''} disabled={!snapshot} onClick={() => enqueue(() => kernel.current!.move(operation.id))}>{operation.id === `${family}'` ? '′' : operation.id}</button>)}</div>)}
+            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
+            <div className="moves">{families.map((family) => <div className={`move-pair ${definition?.operations.some((op) => op.family === family && op.pieceGuards) ? 'many-moves' : ''}`} key={family}>{phaseRequests?.filter((operation) => operation.family === family).map((operation) => <button key={operation.id} aria-label={`Move ${operation.id === `${family}'` ? `${family} inverse` : operation.id}`} className={!legal.has(operation.id) ? 'may-block' : ''} disabled={!snapshot} onClick={() => enqueue(() => kernel.current!.move(operation.id))}>{operation.id === `${family}'` ? '′' : operation.id}</button>)}</div>)}
               <div className="history-controls"><button disabled={!snapshot?.canUndo} onClick={() => enqueue(() => kernel.current!.undo())}>↶ Undo</button><button disabled={!snapshot?.canRedo} onClick={() => enqueue(() => kernel.current!.redo())}>↷ Redo</button></div>
             </div>
             <div className="algorithm-row"><textarea aria-label="Algorithm" value={algorithm} onChange={(event) => setAlgorithm(event.target.value)} spellCheck={false} rows={2} />
@@ -275,7 +283,7 @@ export function App() {
         <aside className="inspector">
           <div className="inspector-header"><span className="eyebrow">LOOK UNDER THE SURFACE</span><h2>Definition inspector</h2><p>Follow a piece from abstract placement to visual part.</p></div>
           <div className="metrics"><div><strong>{definition?.pieces.length ?? '—'}</strong><span>pieces</span></div><div><strong>{definition?.operations.length ?? '—'}</strong><span>primitives</span></div><div><strong>{definition?.symmetry?.members?.length ?? '—'}</strong><span>symmetries</span></div></div>
-          {evidence && <section className="evidence" role="alert" data-testid="blocking-evidence"><span className="eyebrow">{evidence.status === 'Blocked' ? 'MOVE BLOCKED' : 'INVALID INPUT'}</span><h3>{evidence.reasonCode === 'footprint.partial_overlap' ? 'A rigid piece crosses the turn boundary.' : evidence.diagnostics?.[0]?.message ?? evidence.reasonCode}</h3><code>{evidence.reasonCode ?? evidence.diagnostics?.[0]?.reasonCode}</code>{evidence.implicatedPieces?.map((piece) => <button key={piece} onClick={() => setSelected(piece)}>{piece}</button>)}{evidence.evidence !== undefined && <details><summary>Abstract evidence</summary><pre>{JSON.stringify(evidence.evidence, null, 2)}</pre></details>}</section>}
+          {evidence && <section className="evidence" role="alert" data-testid="blocking-evidence"><span className="eyebrow">{evidence.status === 'Blocked' ? 'MOVE BLOCKED' : 'INVALID INPUT'}</span><h3>{['footprint.partial_overlap', 'placement.blocked'].includes(evidence.reasonCode ?? '') ? 'A rigid piece crosses the turn boundary.' : evidence.diagnostics?.[0]?.message ?? evidence.reasonCode}</h3><code>{evidence.reasonCode ?? evidence.diagnostics?.[0]?.reasonCode}</code>{evidence.implicatedPieces?.map((piece) => <button key={piece} onClick={() => setSelected(piece)}>{piece}</button>)}{evidence.evidence !== undefined && <details><summary>Abstract evidence</summary><pre>{JSON.stringify(evidence.evidence, null, 2)}</pre></details>}</section>}
           <div className="inspector-tabs">{(['pieces', 'history', 'definition'] as Inspector[]).map((value) => <button key={value} aria-pressed={inspector === value} onClick={() => setInspector(value)}>{value === 'definition' ? 'Source & rules' : value[0].toUpperCase() + value.slice(1)}</button>)}</div>
           {inspector === 'pieces' && <>
             <div className="piece-list">{definition?.pieces.map((piece) => <button key={piece.id} aria-label={`Select ${piece.id}`} aria-pressed={selected === piece.id} onClick={() => setSelected(piece.id)}><span>{piece.id}</span><small>{piece.type}</small></button>)}</div>

@@ -4,7 +4,7 @@ A twisty puzzle simulator with one exact C++ rule system and interchangeable C++
 
 The initial release includes a 3×3 cube and a reference bandaged cube with the UF edge and UFR corner fused into one rigid piece. It provides explainable blocking, synchronized views, file-based definition inspection, algorithms, reproducible legal scrambles, undo/redo, and portable saved sessions.
 
-An experimental headless Helicopter Cube package now adds exact jumbling stops, placement-dependent blocking, and a complete shape-graph verifier. Its [model specification](docs/helicopter-model.md) records the finite catalogs, external acceptance targets, and remaining independent review and geometric integration work.
+An experimental Helicopter Cube preset adds exact jumbling stops, placement-dependent blocking, a complete shape-graph verifier, and synchronized polyhedral/port-diagram realizations. Its [model specification](docs/helicopter-model.md) records the finite catalogs, geometric interpretation, external acceptance targets, and remaining independent review.
 
 ## Run locally
 
@@ -24,7 +24,7 @@ To serve the production bundle locally:
 npm run preview
 ```
 
-The UI supplies face-turn buttons and face keys `U R F D L B`; hold Shift for an inverse. Drag the Euclidean view to orbit the camera. Click a visual part or inspector entry to highlight the same persistent piece in both views. Camera changes leave the logical state unchanged.
+The cube presets supply face-turn buttons and face keys `U R F D L B`; hold Shift for an inverse. Choose **Helicopter Cube · jumbling** to see five destination buttons per grip's current phase; its default algorithm `UF_ab UL_af` demonstrates jumbling. Drag the Euclidean view to orbit the camera. Click a visual part or inspector entry to highlight the same persistent piece in both views. Camera changes leave the logical state unchanged.
 
 Algorithms support inverse and half-turn suffixes, grouped repetition, commutators, conjugates, and line comments. For example:
 
@@ -64,7 +64,7 @@ Imported states are checked for declared type and occupancy invariants. This doe
 
 Finite definitions can also be supplied explicitly. The native format has piece types, full placement keys, port attachments, cell footprints, directed transport tables, exact mechanism guards/updates, and a home-placement goal. Registered mechanism updates must have exact guarded inverses. Schemas are in `schemas/`; semantic references, occupancy, transport bijections, and inverses are checked by C++.
 
-`finite-placement-relations@1` adds per-placement blocking and partial participant transports, guarded by persistent piece placements. Its resources have capacity at most one, so exclusion pairs can validate catalogs whose placements overlap. `packages/helicopter/definition.json` uses this backend with 240 labeled corner placements, 144 center placements, and 36 hidden-edge placements. The runtime definition contains no geometric data. `scripts/helicopter_model.py` derives it offline using exact arithmetic; the package check verifies reproducibility.
+`finite-placement-relations@1` adds per-placement blocking and partial participant transports, guarded by persistent piece placements. Its resources have capacity at most one, so exclusion pairs can validate catalogs whose placements overlap. `packages/helicopter/definition.json` uses this backend with 240 labeled corner placements, 144 center placements, and 36 hidden-edge placements. The runtime definition contains no geometric data. `scripts/helicopter_model.py` derives it offline using exact arithmetic and emits separate geometric packages with shared models, placement frames, and angular tracks; the package check verifies reproducibility.
 
 ```sh
 build/native/twisty run --definition packages/helicopter/definition.json \
@@ -72,7 +72,7 @@ build/native/twisty run --definition packages/helicopter/definition.json \
 build/native/helicopter_verify
 ```
 
-The letters `a` through `f` identify the six stops. The source phase has three values because the hidden edge is unchanged by a half turn. See the specification before authoring sequences. This package currently imports as a headless definition in the browser.
+The letters `a` through `f` identify the six stops. The source phase has three values because the hidden edge is unchanged by a half turn. See the specification before authoring sequences. The browser includes both C++ realizations for this package, so importing its compiled definition also installs the views.
 
 The browser's **Import definition** accepts sources or compiled finite definitions. A definition with a matching installed realization digest is displayed in both views. Other valid definitions can be inspected and executed headlessly in the browser; missing visual support is reported separately from abstract move blocking. Visual authoring tools and arbitrary executable rule files are outside this release.
 
@@ -89,7 +89,7 @@ Regression fixtures pin a definition digest and specify a replay prefix, request
 - `twisty_wasm`: Embind exports with generated `.d.mts` declarations.
 - `web/src`: a thin session adapter, a Three.js renderer, and the React application.
 
-Definitions and transitions are read-only to realizations. A transition includes all participants, including featureless centers with unchanged placements. C++ animation tracks verify port transport and use a geometric endpoint tolerance of `1e-6`; exact state equality uses no tolerance.
+Definitions and transitions are read-only to realizations. A transition includes all participants, including featureless centers with unchanged placements. C++ animation tracks verify port transport and use a geometric endpoint tolerance of `1e-6`; exact state equality uses no tolerance. Polyhedral realizations validate every catalog transport when loading and account for declared label-preserving mesh symmetries, including hidden edges whose half-turn motion leaves their core phase unchanged.
 
 The Three.js adapter copies borrowed WASM asset views immediately, reuses destination transform arrays, and explicitly disposes WASM and GPU resources. Logical records stay in native serialization paths, preserving exact 64-bit mechanism values through saves and animation records. JavaScript consumes placement IDs and digests without becoming the state authority.
 
@@ -107,8 +107,8 @@ Then run the checks sequentially:
 npm run check
 ```
 
-Native checks exercise hashes, canonical compilation, symmetry covariance, inverses, hidden variables, blocked paths, seeded walks, replay, both realization endpoints, and the exhaustive Helicopter shape graph. Vitest compares native and WASM definitions, witnesses, state digests, portable fixtures, exact serialization, and schemas. Playwright serves the production bundle on port 4173 and checks both views, algorithms, bandaging feedback, camera independence, picking, imports, saves, and context/resource replacement with one worker. Run `npm run build` before running browser tests individually.
+Native checks exercise hashes, canonical compilation, symmetry covariance, inverses, hidden variables, blocked paths, seeded walks, replay, realization endpoints and mesh continuity, and the exhaustive Helicopter shape graph. Vitest compares native and WASM definitions, witnesses, state digests, Helicopter meshes and sampled frames, portable fixtures, exact serialization, and schemas. Playwright serves the production bundle on port 4173 and checks both views, algorithms, jumbling and bandaging feedback, camera independence, picking, imports, saves, and context/resource replacement with one worker. Run `npm run build` before running browser tests individually.
 
 Dependencies are pinned in `package-lock.json`. The nlohmann JSON header is vendored with its MIT license so CMake builds do not need a network dependency fetch. Build and test outputs are ignored by Git.
 
-Independent review and geometric integration of the Helicopter model, spherical cube realizations, Bagua, symbolic placement domains, richer goals, solvers, visual editors, exports, and shared sessions follow the verification gates in [the architecture proposal](twisty_puzzle_simulator_architecture.md).
+Independent review of the Helicopter model, spherical cube realizations, Bagua, symbolic placement domains, richer goals, solvers, visual editors, exports, and shared sessions follow the verification gates in [the architecture proposal](twisty_puzzle_simulator_architecture.md).

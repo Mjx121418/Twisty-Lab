@@ -364,6 +364,121 @@ void test_helicopter() {
   invalid["operations"][0]["selectedCells"] = Json::array();
   rejects([&] { load_definition(invalid); }, "rule.fields");
 }
+void test_helicopter_geometry() {
+  Session session(read("packages/helicopter/definition.json"));
+  const auto d = session.definition();
+  for (const auto &kind : {"euclidean", "port-diagram"}) {
+    const bool diagram = std::string(kind) == "port-diagram";
+    const auto package = read("packages/helicopter/helicopter-" + std::string(kind) + ".json");
+    Geometry geometry(session.definition_json(), package);
+    const auto scene = Json::parse(geometry.scene_json());
+    check(scene.at("catalogTransportVerified") == true, "All catalog transports registered geometrically");
+    check(scene.at("visualParts").size() == (diagram ? 48 : 92), "Expected shared bodies and labeled ports");
+    std::map<std::string, Json> assets;
+    for (const auto &asset : scene.at("meshAssets")) {
+      assets[asset.at("id")] = asset;
+      const auto start = asset.at("indexOffset").get<std::size_t>();
+      const auto end = start + asset.at("indexCount").get<std::size_t>();
+      check(end <= geometry.indices().size(), "Mesh index slice is in bounds");
+      for (std::size_t i = start; i < end; ++i)
+        check(geometry.indices()[i] < asset.at("vertexCount"), "Shared mesh indices are local to the asset");
+    }
+    if (!diagram) {
+      const std::map<std::string, std::array<double, 3>> normals{{"U", {0, 1, 0}}, {"D", {0, -1, 0}},
+                                                                 {"F", {0, 0, 1}}, {"B", {0, 0, -1}},
+                                                                 {"R", {1, 0, 0}}, {"L", {-1, 0, 0}}};
+      const auto &transforms = geometry.transforms();
+      for (std::size_t i = 0; i < scene.at("visualParts").size(); ++i) {
+        const auto &part = scene.at("visualParts")[i];
+        if (part.at("role") != "port")
+          continue;
+        const auto offset = assets.at(part.at("meshAssetId")).at("positionOffset").get<std::size_t>();
+        const auto &expected = normals.at(part.at("materialBindingId"));
+        for (int row = 0; row < 3; ++row) {
+          double actual = 0;
+          for (int column = 0; column < 3; ++column)
+            actual += transforms[i * 16 + column * 4 + row] * geometry.normals()[offset + column] / 1.4;
+          check(std::abs(actual - expected[row]) < 1e-6, "Solved port color faces the correct direction");
+        }
+      }
+    }
+    auto verify = [&](const Transition &transition) {
+      geometry.set_state_json(encode_state(*d, transition.before).dump());
+      const auto initial = geometry.transforms();
+      const auto prepared =
+          Json::parse(geometry.prepare_animation_json(encode_transition(*d, transition).dump()));
+      check(prepared.at("status") == "Prepared", "Legal Helicopter transition has a geometric route");
+      check(geometry.transforms() == initial, "Catalog animation starts at the canonical source");
+      geometry.sample(0.5);
+      check(std::all_of(geometry.transforms().begin(), geometry.transforms().end(),
+                        [](float value) { return std::isfinite(value); }),
+            "Jumble intermediate frame is finite");
+      geometry.sample(1 - 1e-7);
+      const auto near_target = geometry.transforms();
+      geometry.sample(1);
+      const auto target = geometry.transforms();
+      geometry.set_state_json(encode_state(*d, transition.after).dump());
+      check(geometry.transforms() == target,
+            "Catalog endpoint matches an independently rebuilt resting scene");
+      if (!diagram) {
+        // Compare actual mesh points before the canonical endpoint. This catches
+        // discontinuities hidden by sample(1), including quotient edge poses.
+        for (std::size_t p = 0; p < scene.at("visualParts").size(); ++p) {
+          const auto &part = scene.at("visualParts")[p];
+          const auto &asset = assets.at(part.at("meshAssetId"));
+          const auto offset = asset.at("positionOffset").get<std::size_t>();
+          const auto count = asset.at("vertexCount").get<std::size_t>();
+          auto point = [&](const auto &matrices, std::size_t v) {
+            std::array<double, 3> point{};
+            for (int row = 0; row < 3; ++row)
+              for (int column = 0; column < 3; ++column)
+                point[row] +=
+                    matrices[p * 16 + column * 4 + row] * geometry.positions()[offset + v * 3 + column];
+            return point;
+          };
+          for (std::size_t v = 0; v < count; ++v) {
+            const auto actual = point(near_target, v);
+            bool found = false;
+            for (std::size_t w = 0; w < count; ++w) {
+              const auto expected = point(target, w);
+              double distance = 0;
+              for (int row = 0; row < 3; ++row)
+                distance += (actual[row] - expected[row]) * (actual[row] - expected[row]);
+              found = found || distance < 1e-12;
+            }
+            check(found, "Continuous track reaches the target mesh, allowing only declared asset symmetry");
+          }
+        }
+      }
+    };
+    for (const auto &operation : d->operations) {
+      const auto planned = plan(*d, d->initial, operation.id);
+      if (planned.transition)
+        verify(*planned.transition);
+    }
+    auto state = d->initial;
+    for (int step = 0; step < 20; ++step) {
+      const auto requests = legal_operations(*d, state);
+      const auto id = requests[(step * 37) % requests.size()].at("operation").get<std::string>();
+      const auto transition = *plan(*d, state, id).transition;
+      verify(transition);
+      state = transition.after;
+    }
+    for (const auto &part : scene.at("visualParts")) {
+      const auto hit = Json::parse(geometry.bind_hit_json(part.at("visualPartId")));
+      check(hit.at("pieceId") == part.at("pieceId"), "Catalog hit preserves the persistent piece identity");
+      if (part.contains("portId"))
+        check(hit.at("portId") == part.at("portId"), "Catalog hit preserves the port identity");
+    }
+    auto invalid = Json::parse(package);
+    invalid["operationTracks"]["UF_ab"]["axis"] = {1, 0, 0};
+    rejects([&] { Geometry bad(session.definition_json(), invalid.dump()); }, "realization.catalog");
+    invalid = Json::parse(package);
+    invalid["models"]["edge"]["symmetries"][1] = {0, -1, 0, 1, 0, 0, 0, 0, 1};
+    rejects([&] { Geometry bad(session.definition_json(), invalid.dump()); }, "realization.catalog");
+    check(session.state() == d->initial, "Catalog geometry never changes authoritative state");
+  }
+}
 void test_geometry() {
   for (const auto &filename : {"packages/cube3/source.json", "packages/bandaged/source.json"}) {
     Session session(read(filename));
@@ -409,6 +524,7 @@ int main() {
     test_scramble_and_replay();
     test_symmetry_covariance();
     test_helicopter();
+    test_helicopter_geometry();
     test_geometry();
     std::cout << checks << " checks passed\n";
     return 0;

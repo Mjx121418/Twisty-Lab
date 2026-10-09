@@ -37,12 +37,31 @@ private:
   std::shared_ptr<const Definition> definition_;
   Json scene_;
   bool diagram_ = false;
+  bool catalog_ = false;
+  using Frame = std::array<double, 16>;
+  using Point = std::array<double, 3>;
+  struct Model {
+    std::string id;
+    std::vector<Point> vertices;
+    std::map<std::string, Point> port_centers;
+    std::map<std::string, Point> port_normals;
+    std::vector<Frame> symmetries;
+  };
+  struct Track {
+    Point axis;
+    double angle;
+  };
+  std::vector<Model> models_;
+  std::vector<Index> model_of_domain_;
+  std::vector<std::vector<Frame>> placement_frames_;
+  std::vector<Track> tracks_;
+  double scale_ = 1;
   State displayed_;
   State before_;
   State after_;
   bool animated_ = false;
-  std::string family_;
-  bool inverse_ = false;
+  Point rotation_axis_{};
+  double rotation_angle_ = 0;
   std::vector<bool> moving_;
   std::vector<Part> parts_;
   std::vector<float> positions_;
@@ -50,5 +69,8 @@ private:
   std::vector<std::uint32_t> indices_;
   std::vector<float> transforms_;
   std::array<double, 16> resting(const Part &, const State &) const;
+  void build_catalog(const Json &);
+  Frame catalog_resting(const Part &, const State &) const;
+  void validate_catalog_transport(Index operation) const;
 };
 } // namespace twisty

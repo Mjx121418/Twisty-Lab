@@ -27,6 +27,9 @@ it('validates shipped sources, compiled definitions, realizations, fixtures, and
   }
   const helicopterText = readFileSync('packages/helicopter/definition.json', 'utf8');
   check('definition', JSON.parse(helicopterText));
+  for (const kind of ['euclidean', 'port-diagram']) {
+    check('realization', JSON.parse(readFileSync(`packages/helicopter/helicopter-${kind}.json`, 'utf8')));
+  }
   const helicopter = new module.Session(helicopterText);
   try {
     check('state', JSON.parse(helicopter.stateJSON()));

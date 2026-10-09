@@ -5,7 +5,7 @@ import { copyFloatView, copyIndexView, type Realization } from './kernel';
 
 type Part = {
   visualPartId: string; pieceId: string; portId?: string; meshAssetId: string;
-  materialBindingId: string; label?: string; role: string;
+  materialBindingId: string; label?: string; labelScale?: number; role: string;
 };
 type SceneDescriptor = {
   sceneId: string; diagram: boolean;
@@ -13,7 +13,7 @@ type SceneDescriptor = {
   visualParts: Part[];
 };
 const colors: Record<string, number> = {
-  U: 0xf1eee3, R: 0xe76561, F: 0x66c7a0, D: 0xf1cf67, L: 0xeea76d, B: 0x7fa5ed, body: 0x202a35,
+  U: 0xf1eee3, R: 0xe76561, F: 0x66c7a0, D: 0xf1cf67, L: 0xeea76d, B: 0x7fa5ed, body: 0x202a35, mechanism: 0x17212a,
 };
 
 export class RenderView {
@@ -122,7 +122,8 @@ export class RenderView {
         const texture = new THREE.CanvasTexture(canvas);
         this.textures.push(texture);
         const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, depthTest: false }));
-        sprite.scale.set(0.76, 0.76, 1);
+        const labelScale = part.labelScale ?? 0.76;
+        sprite.scale.set(labelScale, labelScale, 1);
         sprite.userData.meshIndex = this.meshes.length - 1;
         this.labelSprites.push(sprite);
         this.scene.add(sprite);

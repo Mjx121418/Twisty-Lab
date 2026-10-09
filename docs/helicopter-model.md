@@ -1,8 +1,8 @@
 # Helicopter Cube: experimental exact model
 
-The first jumbling milestone now has a finite, headless reference package. The C++ core executes its abstract placement relations; an offline Python authoring tool derives those relations with exact rational arithmetic. No coordinates, matrices, cut planes, tolerances, or meshes enter the runtime definition.
+The first jumbling milestone has a finite reference package and two C++ geometric realizations, displayed by Three.js. The C++ core executes its abstract placement relations; an offline Python authoring tool derives those relations with exact rational arithmetic. No coordinates, matrices, cut planes, tolerances, or meshes enter the runtime definition. Separate realization packages introduce geometry at the interpreter layer.
 
-The package remains experimental pending independent human review of this specification and its fixtures. It has no installed C++ geometric realization or Three.js scene yet. Automated agreement with published results is strong evidence for the stated model, rather than a claim of general physical fidelity.
+The package remains experimental pending independent human review of this specification and its fixtures. The rendered bodies use the model's ideal polyhedra with cosmetic clearances. Automated agreement with published results supports this stated model; it does not certify a manufactured mechanism, forced moves, or arbitrary intermediate-angle states.
 
 ## Scope and references
 
@@ -83,6 +83,20 @@ A participating source whose requested rotation does not end in the finite catal
 
 The cut plane is invariant under rotation about its normal. Consequently, moving and stationary pieces remain on opposite sides throughout a legal rotation, and rigid rotation preserves separation among participants. This explains why these cut predicates check a path rather than only its endpoint. The six-stop restriction and hidden-edge rules specify which intermediate positions are admitted as logical states.
 
+## Geometric realization
+
+`helicopter-euclidean.json` and `helicopter-port-diagram.json` are separate packages pinned to the abstract definition's digest. They contain three shared polyhedral models, triangular port faces, a model assignment for each domain, and a row-major rotation matrix for each of the 420 labeled placements. Each of the 180 operations has an outward axis and source/destination stop indices into the clockwise angular-stop catalog. These floating-point values are visual data and do not affect logical equality or legality.
+
+The C++ interpreter constructs convex-hull triangles and flat normals from the model vertices, shrinks bodies by 3% toward their centroids, and adds inset colored stickers to the declared port faces. The Euclidean scene uses seven shared mesh assets for 44 bodies and 48 ports. Three.js receives mesh buffers, material bindings, persistent piece/port identities, and sampled transforms. It does not derive placement geometry or decide which pieces move.
+
+When loading either realization, C++ checks proper rotation frames, model/port coverage, declared model symmetries, and every participant transport in all 180 operations. A track must end at its exact target placement's geometric frame within `1e-6`, allowing only a declared model symmetry that preserves every labeled port. Port positions and normals must also agree individually. During animation, the interpreter validates the recorded core witness, rotates only its participants along the shorter angular path with smooth easing, and returns the canonical resting scene at the endpoint.
+
+Hidden edges have no ports and have half-turn symmetry. A half turn can therefore leave a hidden edge's core placement unchanged while its mesh rotates continuously. Its endpoint frame may differ by the declared symmetry, but the physical mesh agrees. Corners retain all three labeled orientations and cannot use that quotient. Native checks compare mesh points immediately before the canonical endpoint to catch a discontinuity hidden by rebuilding the final frame.
+
+The companion diagram shows the same 48 labeled ports in six fixed panels. C++ assigns each port to the panel whose normal is closest to its transformed face normal and projects its centroid into that panel. Port markers interpolate between source and destination positions; this is a schematic of identities and transport. The Euclidean view supplies the rigid-body motion. Both views share selection, core blocking evidence, and one authoritative session.
+
+Choose **Helicopter Cube · jumbling** in the browser. The buttons show five destination choices for each grip's current source phase, including blocked requests so their evidence can be inspected. The default algorithm `UF_ab UL_af` demonstrates jumbling. Undo, inverse algorithms, seeded legal walks, and saved-session replay use the same core APIs as the cube presets.
+
 ## Verification and commands
 
 ```sh
@@ -97,12 +111,12 @@ npm run check
 
 The C++ shape verifier projects corner sticker orientations away, while retaining all face locations and hidden phases. It reads the same compiled roles, guards, and transports as the core. Its breadth-first search is capped at 700,000 shapes and reproduces 654,117 oriented shapes, 28,055 classes under rotations, and 14,098 classes when mirror images are identified. Both complete published depth distributions agree, and maximum depth is 28. These are shape counts, not counts of labeled puzzle states. The verifier also checks placement exclusions for every reachable shape, that its projection is independent of corner labels, and that every symmetry preserves reachability and depth.
 
-Native fixtures check participation, blocked source phases, face-piece blockers, inverses, undo/replay, and the center exchange `UF_ab DR_ab FR_ad DR_ba UF_ba`. That sequence returns to cube shape and moves exactly two centers between the four ordinary six-center orbits. Native/WASM parity checks cover its transitions, exact inverse, replay, and transactional rejection.
+Native fixtures check participation, blocked source phases, face-piece blockers, inverses, undo/replay, and the center exchange `UF_ab DR_ab FR_ad DR_ba UF_ba`. That sequence returns to cube shape and moves exactly two centers between the four ordinary six-center orbits. Native/WASM parity checks cover its transitions, exact inverse, replay, and transactional rejection. Geometry checks cover all catalog transports at registration, solved port directions, intermediate frames, mesh continuity, canonical endpoints, stable hit bindings, and rejection of inconsistent axes or symmetries. Both realizations' mesh buffers and sampled transforms agree between native and WASM builds.
 
-On 9 October 2026, `npm run check` passed three native checks, six unit tests, and eight production-browser scenarios. This includes headless package import and blocked-piece feedback. Builds used at most two jobs and browser tests one worker; the container reported no memory-limit or out-of-memory events. Dockerfile was unchanged.
+On 9 October 2026, the native/WASM production build and all three native checks, eight unit tests, and nine production-browser scenarios passed. Browser coverage includes realized package import, jumbling, blocked-piece feedback in both views, inverse restoration, picking, and saved replay. Builds used at most two jobs and browser tests one worker; the container reported no memory-limit or out-of-memory events. Dockerfile was unchanged.
 
-The generator is deterministic. `python3 scripts/helicopter_model.py` checks both the definition and review data without changing them. After reviewing a model change, regenerate with `--write`; review the resulting digest and deliberately update affected fixture pins. The review data contains abstract shape permutations and external acceptance counts, independently of the runtime definition.
+The generator is deterministic. `python3 scripts/helicopter_model.py` checks the definition, review data, and both realization packages without changing them. After reviewing a model change, regenerate with `--write`; review the resulting digest and deliberately update affected fixture pins. The review data contains abstract shape permutations and external acceptance counts, independently of the runtime definition. A visual-only change leaves the abstract semantic digest unchanged.
 
-## Next integration gate
+## Remaining review
 
-Independent human review should examine the polyhedra, clockwise convention, admitted stops, source-phase quotient, conflict construction, and fixtures. Then implement the C++ geometric realization and verify its port transport and animation endpoints before exposing this puzzle as a rendered example. The existing browser can already import the compiled package for headless inspection and execution.
+Independent human review should examine the polyhedra, clockwise convention, admitted stops, source-phase quotient, conflict construction, and fixtures before promoting this experimental example to a reviewed reference model. The C++ geometric realization and its port/endpoint checks are implemented. Further physical fidelity would require a separate mechanism model and evidence about actual clearances and admitted moves.

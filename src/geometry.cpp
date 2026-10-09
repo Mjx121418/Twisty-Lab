@@ -89,14 +89,18 @@ Geometry::Geometry(const std::string &definition_json, const std::string &realiz
     throw DiagnosticError("realization.digest_mismatch", "/compatibleDefinitionDigest",
                           "Realization is not compatible with the exact definition.");
   const auto kind = realization.at("kind").get<std::string>();
-  if (kind != "cube-euclidean" && kind != "cube-port-diagram")
+  if (kind != "cube-euclidean" && kind != "cube-port-diagram" && kind != "polyhedral-euclidean" &&
+      kind != "polyhedral-port-diagram")
     throw DiagnosticError("realization.unsupported", "/kind", "Unknown realization kind.");
-  diagram_ = kind == "cube-port-diagram";
-  for (const auto &piece : definition_->pieces)
-    for (const auto &[_, label] : piece.labels)
-      normal(label);
-  for (const auto &operation : definition_->operations)
-    normal(operation.family);
+  diagram_ = kind.ends_with("port-diagram");
+  catalog_ = kind.starts_with("polyhedral-");
+  if (!catalog_) {
+    for (const auto &piece : definition_->pieces)
+      for (const auto &[_, label] : piece.labels)
+        normal(label);
+    for (const auto &operation : definition_->operations)
+      normal(operation.family);
+  }
   scene_ = {{"sceneId", realization.at("id").get<std::string>() + ":" + definition_->digest},
             {"realizationId", realization.at("id")},
             {"definitionDigest", definition_->digest},
@@ -105,6 +109,13 @@ Geometry::Geometry(const std::string &definition_json, const std::string &realiz
             {"visualParts", Json::array()},
             {"labels", Json::array()},
             {"diagram", diagram_}};
+  if (catalog_) {
+    build_catalog(realization);
+    moving_.resize(definition_->pieces.size(), false);
+    transforms_.resize(parts_.size() * 16);
+    sample(0);
+    return;
+  }
   auto face_mesh = [&](V n, V r, V u, double radius, bool body) {
     const auto start = static_cast<std::uint32_t>(positions_.size() / 3);
     const V center = body ? n * radius : V{0, 0, 0};
@@ -161,6 +172,8 @@ Geometry::Geometry(const std::string &definition_json, const std::string &realiz
   sample(0);
 }
 std::array<double, 16> Geometry::resting(const Part &part, const State &state) const {
+  if (catalog_)
+    return catalog_resting(part, state);
   const auto &piece = definition_->pieces[part.piece];
   const auto &placement = definition_->domains[piece.domain].placements.at(state.placement_of.at(part.piece));
   if (part.kind == "port") {
@@ -202,12 +215,17 @@ std::string Geometry::prepare_animation_json(const std::string &input) {
       throw DiagnosticError("realization.witness", "/transition",
                             "Transition is not the recorded abstract witness.");
     const auto &operation = definition_->operations.at(definition_->operation_ids.at(operation_id));
-    const bool reversed = operation.transport.ends_with(".counterclockwise");
-    const auto axis = normal(operation.family);
-    const auto angle = (reversed ? 1 : -1) * std::numbers::pi / 2;
+    const auto op_index = definition_->operation_ids.at(operation_id);
+    const auto track_axis = catalog_ ? tracks_[op_index].axis : Point{};
+    const auto axis = catalog_ ? V{track_axis[0], track_axis[1], track_axis[2]} : normal(operation.family);
+    const auto angle =
+        catalog_ ? tracks_[op_index].angle
+                 : (operation.transport.ends_with(".counterclockwise") ? 1 : -1) * std::numbers::pi / 2;
     std::vector<bool> moving(definition_->pieces.size(), false);
     for (const auto &action : planned.transition->actions) {
       moving[action.piece] = true;
+      if (catalog_)
+        continue; // All catalog transports and ports were checked when loading this realization.
       const auto &piece = definition_->pieces[action.piece];
       const auto &domain = definition_->domains[piece.domain];
       const auto &source = domain.placements[action.from];
@@ -229,12 +247,13 @@ std::string Geometry::prepare_animation_json(const std::string &input) {
     }
     before_ = std::move(before);
     after_ = std::move(after);
-    family_ = operation.family;
-    inverse_ = reversed;
+    rotation_axis_ = {axis.x, axis.y, axis.z};
+    rotation_angle_ = angle;
     moving_ = std::move(moving);
     animated_ = true;
     sample(0);
-    return Json{{"status", "Prepared"}, {"durationHint", 220}}.dump();
+    return Json{{"status", "Prepared"}, {"durationHint", 220 * std::abs(angle) / (std::numbers::pi / 2)}}
+        .dump();
   } catch (const std::exception &error) {
     auto result = diagnostic_result(error);
     result["status"] = "UnsupportedTransition";
@@ -255,7 +274,8 @@ void Geometry::sample(double progress) {
         for (int coordinate = 12; coordinate < 15; ++coordinate)
           transform[coordinate] += (target[coordinate] - transform[coordinate]) * eased;
       } else
-        transform = rotated(transform, normal(family_), (inverse_ ? 1 : -1) * std::numbers::pi / 2 * eased);
+        transform = rotated(transform, {rotation_axis_[0], rotation_axis_[1], rotation_axis_[2]},
+                            rotation_angle_ * eased);
     }
     for (std::size_t j = 0; j < 16; ++j)
       transforms_[i * 16 + j] = static_cast<float>(transform[j]);
@@ -275,9 +295,11 @@ std::string Geometry::bind_hit_json(const std::string &id) const {
       definition_->domains[piece.domain].placements[displayed_.placement_of[found->piece]];
   Json candidates = Json::array();
   for (const auto &operation : definition_->operations)
-    if (std::any_of(placement.footprint.begin(), placement.footprint.end(), [&](const std::string &cell) {
-          return std::find(operation.cells.begin(), operation.cells.end(), cell) != operation.cells.end();
-        }))
+    if ((catalog_ && operation.roles[piece.domain][displayed_.placement_of[found->piece]] == 1) ||
+        (!catalog_ &&
+         std::any_of(placement.footprint.begin(), placement.footprint.end(), [&](const std::string &cell) {
+           return std::find(operation.cells.begin(), operation.cells.end(), cell) != operation.cells.end();
+         })))
       candidates.push_back({{"operation", operation.id}, {"parameters", Json::object()}});
   Json target{{"status", "Target"}, {"pieceId", piece.id}, {"operationCandidates", candidates}};
   if (!found->port.empty())

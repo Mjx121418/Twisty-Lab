@@ -269,7 +269,7 @@ Geometry-based generation requires coverage and verification. Sampling a few sta
 
 Start with finite placement domains and registered abstract predicates. The first release implements permutation/orientation and finite-footprint rules using the reference cube and bandaged variant. Placement-relation catalogs and symbolic domains remain extension points.
 
-After the first release, independently review the exact rule model and fixtures for one real jumbling puzzle before integrating it. Introduce symbolic domains only when that example demonstrates a concrete need; preserve the interface boundary from the beginning. The finite bandaged fixture does not establish a general jumbling model.
+After the first release, independently review the exact rule model and fixtures for one real jumbling puzzle before promoting it to a reviewed reference model. Experimental geometric previews may follow automated headless validation. Introduce symbolic domains only when that example demonstrates a concrete need; preserve the interface boundary from the beginning. The finite bandaged fixture does not establish a general jumbling model.
 
 ## 7. Geometric realization contracts
 
@@ -597,7 +597,7 @@ After the first release, follow this order:
 3. Add Bagua and broader authoring improvements, reusing the same rule and realization boundaries. Its rule model and fixtures require their own review.
 4. Add branching history, solvers, state-graph analysis, variant/visual editors, KPuzzle interoperability, deterministic export, and shared sessions once their foundations are reliable. S3 and H3 require dedicated geometry/projection design.
 
-The selected first jumbling example is now the Helicopter Cube. Its [experimental exact model specification](docs/helicopter-model.md), offline authoring tool, and headless reference package are available for independent review. The first-release cube and bandage implementation remains independently usable.
+The selected first jumbling example is now the Helicopter Cube. Its [experimental exact model specification](docs/helicopter-model.md), offline authoring tool, headless reference package, and C++ geometric realizations are available for independent review. The browser displays an ideal polyhedral preview and a synchronized labeled-port diagram. The first-release cube and bandage implementation remains independently usable.
 
 ### Fixed initial decisions
 
@@ -631,11 +631,15 @@ This baseline implements finite domains, the capacity-one footprint rule module,
 
 ### First jumbling model (9 October 2026)
 
-The experimental Helicopter Cube package uses the generic C++ `finite-placement-relations@1` backend. It declares stationary, participating, and blocked placements separately, supplies partial exact transports and persistent-piece guards, and validates capacity-one exclusion resources. All coordinates and rational rotation matrices remain in the offline authoring tool; the runtime core receives only abstract tables. The model has 80 geometric corner locations with three labeled orientations each, 144 face-center placements, and 36 hidden-edge placements distributed across twelve fixed axes.
+The experimental Helicopter Cube package uses the generic C++ `finite-placement-relations@1` backend. It declares stationary, participating, and blocked placements separately, supplies partial exact transports and persistent-piece guards, and validates capacity-one exclusion resources. Coordinates and rotation matrices are confined to offline authoring and separate realization packages; the runtime core receives only abstract tables. The model has 80 geometric corner locations with three labeled orientations each, 144 face-center placements, and 36 hidden-edge placements distributed across twelve fixed axes.
 
 Its headless C++ shape verifier checks the same compiled tables against 654,117 oriented shapes, 28,055 rotation classes, 14,098 classes with mirrors identified, and both complete published depth distributions through depth 28. Native and WASM fixtures cover source-stop guards, face-piece blocking, inverse restoration, replay, and exchange between ordinary center orbits. See the model specification for scope and commands.
 
-This is a reviewable headless model. Independent human review and a C++ geometric realization remain the next integration gates; no Helicopter rendering claim is made. Existing cube and bandage semantic digests are preserved. No symbolic domain was required.
+The C++ interpreter now constructs shared polyhedral meshes and triangular ports from separate geometric packages, maps all 420 labeled placements to frames, and validates participant transports across all 180 directed operations. Registration checks proper frames, model coverage, port positions/normals, and endpoint agreement within `1e-6`, allowing only declared label-preserving model symmetries. Hidden edges can rotate through a half turn while keeping the same abstract phase because their unlabeled mesh has that symmetry. Animation samples the core's recorded participants; Three.js consumes buffers and transforms. A second realization charts the same labeled ports in six panels with schematic interpolation.
+
+The browser includes a Helicopter preset, phase-appropriate grip controls, synchronized jumbling playback, blocking highlights, picking, inverse restoration, and saved-session replay. The production build, three native checks, eight unit tests, and nine browser scenarios pass with at most two build jobs and one browser worker. Geometry tests compare actual mesh points immediately before endpoints and compare native/WASM assets and sampled frames. The abstract core and all existing semantic digests are unchanged by this geometric addition; Dockerfile is unchanged.
+
+Independent human review remains necessary before promoting this experimental model to a reviewed reference. Rendered shapes use ideal polyhedra and cosmetic clearances; manufactured mechanism fidelity would require separate evidence. No symbolic domain was required. The next planned implementation is the spherical cube realization after the jumbling model's review gate.
 
 ### References
 

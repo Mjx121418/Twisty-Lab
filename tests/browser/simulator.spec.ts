@@ -125,20 +125,57 @@ test('imports independent type/domain IDs and named operations without visual su
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
 });
 
-test('imports the headless Helicopter model and explains jumbling blockers', async ({ page }) => {
+test('imports the Helicopter model, animates both views, and explains jumbling blockers', async ({ page }) => {
   await page.getByLabel('Import definition file').setInputFiles('packages/helicopter/definition.json');
-  await expect(page.getByRole('alert')).toContainText('No compatible realization');
-  await expect(page.locator('canvas')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Move UF_ab', exact: true })).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await expect(page.locator('canvas')).toHaveCount(2);
+  await resting(page);
   const initial = await page.getByTestId('state-digest').textContent();
   await page.getByRole('button', { name: 'Move UF_ab', exact: true }).click();
+  await resting(page);
   await expect(page.getByTestId('state-digest')).not.toHaveText(initial!);
   const jumbled = await page.getByTestId('state-digest').textContent();
   await page.getByRole('button', { name: 'Move UR_ad', exact: true }).click();
   await expect(page.getByTestId('blocking-evidence')).toContainText('placement.blocked');
   await expect(page.getByTestId('blocking-evidence')).toContainText('center/Ufl');
   await expect(page.getByTestId('state-digest')).toHaveText(jumbled!);
+  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-blocked-pieces', 'center/Ufl');
+  await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-blocked-pieces', 'center/Ufl');
   await page.getByRole('button', { name: '↶ Undo' }).click();
+  await resting(page);
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
+});
+
+test('renders the Helicopter preset through jumbling, inverse, picking, and saved replay', async ({ page }) => {
+  await page.getByLabel('Puzzle', { exact: true }).selectOption('helicopter');
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await expect(page.locator('canvas')).toHaveCount(2);
+  await resting(page);
+  const initial = await page.getByTestId('state-digest').textContent();
+  await page.screenshot({ path: 'test-results/helicopter-solved.png', fullPage: true });
+  await page.getByLabel('Algorithm', { exact: true }).fill('UF_ab UL_af');
+  await page.getByRole('button', { name: 'Play algorithm →' }).click();
+  await resting(page);
+  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/helicopter/definition.json', '--algorithm', 'UF_ab UL_af', '--json'], { encoding: 'utf8' }));
+  await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
+  await page.screenshot({ path: 'test-results/helicopter-jumbled.png', fullPage: true });
+  const canvas = page.getByTestId('cube-view').locator('canvas');
+  await canvas.click({ position: { x: 300, y: 180 } });
+  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-selected-piece', /^(corner|center|mechanism)\//);
+  const selected = await page.getByTestId('cube-view').getAttribute('data-selected-piece');
+  await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-selected-piece', selected!);
+  const downloading = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save session ↗' }).click();
+  const saved = readFileSync((await (await downloading).path())!, 'utf8');
+  await page.getByLabel('Algorithm', { exact: true }).fill("(UF_ab UL_af)'");
+  await page.getByRole('button', { name: 'Play algorithm →' }).click();
+  await resting(page);
+  await expect(page.getByTestId('state-digest')).toHaveText(initial!);
+  await page.getByLabel('Open session file').setInputFiles({ name: 'helicopter-session.json', mimeType: 'application/json', buffer: Buffer.from(saved) });
+  await resting(page);
+  await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
+  await expect(page.getByRole('alert')).toHaveCount(0);
 });
 
 test('recreates views after context loss and repeated puzzle replacement', async ({ page }) => {

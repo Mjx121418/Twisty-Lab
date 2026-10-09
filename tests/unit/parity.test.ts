@@ -14,6 +14,39 @@ beforeAll(async () => { runtime = await createModule(); });
 afterAll(() => { for (const handle of handles) handle.delete(); });
 
 describe('native / WebAssembly parity', () => {
+  it.each(['euclidean', 'port-diagram'])('matches native Helicopter assets and sampled %s frames', (kind) => {
+    const definition = 'packages/helicopter/definition.json';
+    const realization = `packages/helicopter/helicopter-${kind}.json`;
+    const algorithm = "UF_ab UL_af (UF_ab UL_af)' UF_ad";
+    const reference = JSON.parse(execFileSync('build/native/geometry_probe', [definition, realization, algorithm], { encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 }));
+    const value = new runtime.Session(read(definition));
+    const geometry = new runtime.Geometry(value.definitionJSON(), read(realization));
+    const sameFloats = (actual: Float32Array, expected: number[]): void => {
+      expect(actual.length).toBe(expected.length);
+      for (let i = 0; i < actual.length; i++) expect(Math.abs(actual[i] - expected[i])).toBeLessThan(1e-6);
+    };
+    try {
+      expect(JSON.parse(geometry.sceneJSON())).toEqual(reference.scene);
+      sameFloats(geometry.positions() as Float32Array, reference.positions);
+      sameFloats(geometry.normals() as Float32Array, reference.normals);
+      expect(Array.from(geometry.indices() as Uint32Array)).toEqual(reference.indices);
+      sameFloats(geometry.transforms() as Float32Array, reference.initial);
+      const result = JSON.parse(value.runJSON(algorithm, 'transactional', '0'));
+      expect(result.status).toBe('Committed');
+      for (let i = 0; i < result.transitionRecords.length; i++) {
+        expect(JSON.parse(geometry.prepareAnimationJSON(result.transitionRecords[i])).status).toBe('Prepared');
+        sameFloats(geometry.transforms() as Float32Array, reference.frames[i].source);
+        geometry.sample(0.5);
+        sameFloats(geometry.transforms() as Float32Array, reference.frames[i].middle);
+        geometry.sample(1);
+        sameFloats(geometry.transforms() as Float32Array, reference.frames[i].target);
+        const endpoint = Array.from(geometry.transforms() as Float32Array);
+        geometry.setStateJSON(JSON.stringify(result.transitions[i].afterState));
+        expect(Array.from(geometry.transforms() as Float32Array)).toEqual(endpoint);
+      }
+      expect(snapshot(value).stateDigest).toBe(reference.stateDigest);
+    } finally { geometry.delete(); value.delete(); }
+  });
   it('matches Helicopter jumbling, blocking, inverse and replay records', () => {
     const path = 'packages/helicopter/definition.json';
     const wasm = new runtime.Session(read(path));

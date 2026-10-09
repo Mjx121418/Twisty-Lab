@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """Offline exact authoring of the experimental Helicopter Cube relation package.
 
-Coordinates are confined to this authoring tool. The generated definition contains
-only abstract identifiers, exclusion resources, guards, and directed transports.
-All constructions use rational or integer arithmetic, including collision tests.
+Coordinates are confined to authoring and separate geometric packages. The
+definition contains only abstract identifiers, resources, guards, and transports.
+Rule construction uses rational or integer arithmetic, including collision tests.
+Visual frames and angular stops are exported separately as floating-point data.
 """
 import argparse
 from fractions import Fraction as Q
 from itertools import combinations, permutations, product
 import json
-from math import gcd, lcm
+from math import acos, gcd, lcm, pi
 from pathlib import Path
 import subprocess
 
@@ -218,6 +219,7 @@ class AuthoringModel:
             assert determinant(frame) == 1
             center_frames.append(frame)
         frames = {'corner': sorted(corner_frames), 'center': sorted(center_frames)}
+        self.visual_frames = {}
         assert len(frames['corner']) == 240 and len(frames['center']) == 144
         geom_indexes = {vs: i for i, vs in enumerate(all_shapes)}
         definitions = []
@@ -231,6 +233,7 @@ class AuthoringModel:
             home_locations = set()
             frame_keys[kind] = {frame: f'{kind}/q{i:03}' for i, frame in enumerate(frames[kind])}
             for frame, key in frame_keys[kind].items():
+                self.visual_frames[key] = frame
                 vs = transformed(frame, prototype)
                 geometry = geom_indexes[vs]
                 placement_geometry[key] = vs
@@ -254,9 +257,11 @@ class AuthoringModel:
                           'localPorts': ['0', '1', '2'] if kind == 'corner' else ['0']})
         for axis, name in enumerate(GRIPS):
             domain = f'edge/{name}'
+            base_frame = next(g for g in self.symmetries if apply(g, (1, 1, 0)) == self.axes[axis])
             entries = []
             for phase in range(3):
                 key = f'{domain}/{"abc"[phase]}'
+                self.visual_frames[key] = matmul(self.rotations[axis][phase], base_frame)
                 vs = self.edge_shapes[axis * 3 + phase]
                 placement_geometry[key] = vs
                 entries.append({'key': key, 'footprint': resources[224 + axis * 3 + phase],
@@ -331,6 +336,40 @@ class AuthoringModel:
                                 140, 153, 220, 387, 544, 350, 169, 29, 8]},
                 'reference': 'https://twistypuzzles.com/forum/viewtopic.php?f=1&t=28265'}
 
+    def realizations(self, compiled):
+        def flat(frame):
+            return [float(x) for row in frame for x in row]
+        models = {
+            'corner': {'vertices': [[float(x) for x in v] for v in CORNER],
+                       'ports': {'0': [0, 2, 3], '1': [0, 1, 3], '2': [0, 1, 2]},
+                       'symmetries': [flat(IDENTITY)]},
+            'center': {'vertices': [[float(x) for x in v] for v in CENTER],
+                       'ports': {'0': [0, 1, 2]}, 'symmetries': [flat(IDENTITY)]},
+            'edge': {'vertices': [[float(x) for x in v] for v in EDGE], 'ports': {},
+                     'symmetries': [flat(IDENTITY), flat(((0, 1, 0), (1, 0, 0), (0, 0, -1)))]}
+        }
+        tracks = {}
+        for operation in compiled['operations']:
+            axis = GRIPS.index(operation['family'])
+            tracks[operation['id']] = {'axis': list(self.axes[axis]),
+                                       'fromStop': 'abc'.index(operation['id'][-2]),
+                                       'toStop': 'abcdef'.index(operation['id'][-1])}
+        alpha = acos(1 / 3)
+        common = {'schemaVersion': 1, 'compatibleDefinitionDigest': compiled['definitionDigest'],
+                  'requiredCapabilities': ['triangle-meshes', 'rigid-transforms'],
+                  'models': models,
+                  'modelByDomain': {d['id']: d['id'] if d['id'] in models else 'edge'
+                                    for d in compiled['placementDomains']},
+                  'placementFrames': {key: flat(frame) for key, frame in self.visual_frames.items()},
+                  'operationTracks': tracks,
+                  'angularStops': [0, alpha, pi - alpha, pi, pi + alpha, 2 * pi - alpha],
+                  'scale': 1.4, 'bodyInset': 0.03,
+                  'stickerInset': 0.10, 'stickerLift': 0.0015,
+                  'fidelity': 'idealized-polyhedral'}
+        return {f'helicopter-{kind}.json': {**common, 'id': f'helicopter-{kind}-v1',
+                                           'kind': f'polyhedral-{kind}'}
+                for kind in ['euclidean', 'port-diagram']}
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -345,6 +384,7 @@ def main():
                                                 '--definition', str(temporary), '--json'], text=True))
     compiled = result['definition']
     documents = {'definition.json': compiled, 'review.json': model.review(compiled['definitionDigest'])}
+    documents.update(model.realizations(compiled))
     for filename, data in documents.items():
         destination = package / filename
         if args.write:

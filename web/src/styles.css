@@ -73,6 +73,8 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) 324px; gap: 24px; pa
 .move-pair button:first-child { border-radius: 6px 0 0 6px; }
 .move-pair button:last-child { border-radius: 0 6px 6px 0; padding-left: 9px; padding-right: 9px; min-width: 25px; border-left: 0; color: #91acae; }
 .move-pair .may-block { border-color: #795548; background: #36282a; color: #e9b098; }
+.move-pair.many-moves { flex-wrap: wrap; max-width: 100%; gap: 3px; }
+.move-pair.many-moves button { font-size: 11px; padding: 8px 10px; border-radius: 5px; border-left-width: 1px; }
 .history-controls { display: flex; gap: 7px; margin-left: auto; align-items: center; font-size: 11px; }
 .algorithm-row { display: grid; grid-template-columns: minmax(0, 1fr) 170px; gap: 10px; margin-top: 18px; }
 .algorithm-row textarea { min-height: 77px; font-size: 14px; letter-spacing: .5px; line-height: 1.6; padding: 13px; }
