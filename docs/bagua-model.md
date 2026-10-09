@@ -44,7 +44,7 @@ The C++ interpreter consumes separate realization documents. Polygonal stickers 
 
 ## Independent acceptance targets
 
-[`review.json`](../packages/bagua/review.json) pins the semantic digest, piece counts, external sequences, and a model-derived blocking fixture. It records experimental status and the remaining review scope.
+[`review.json`](../packages/bagua/review.json) pins the semantic digest, piece counts, external sequences and their expected effects, an independent geometric audit, and a model-derived blocking fixture. It records experimental status and the remaining review scope. See the [verification record](bagua-verification.md) for the evidence and reproducible checks.
 
 The strongest external fixture is Konrad's [LLL-B1 pair cycle](https://sites.google.com/site/easytutorial3x3x3/bagua):
 
@@ -54,9 +54,15 @@ The strongest external fixture is Konrad's [LLL-B1 pair cycle](https://sites.goo
 
 It must produce two 3-cycles, moving three kites and their three triangles, while every other labeled piece stays unchanged. This expected effect comes from the solving guide. Further legal sequences include Konrad's TP-B2, R-B1 and cuboid algorithms, [Spencer Parkin's W](https://spencerparkin.github.io/twisty-puzzle-solutions/puzzle_bagua.html), and [Chris King's Sun commutator](https://dhushara.com/cubes/cubes.htm).
 
+Two [ramon13 kite commutators](https://twistypuzzles.ru/forum/index.php?topic=939.0) each produce a single three-cycle of kites while preserving the other 143 labeled pieces. Native and WASM tests check the cycle length and unchanged pieces. Parkin's `X = (R2 U+ R2 U-)7` transfers the U-facing RU triangle to the RUB corner triangle region. Its inverse creates the described pair of slivers at RD protruding through R. Native checks identify these by their unshrunk surface positions and body bounds, independently of generated piece and placement IDs.
+
+A separate C++ checker reconstructs convex hulls from the realization's exported vertices. It compares all 66,960 placement/turn cut classifications with the abstract guards and checks all 1,892,485 pairs of distinct locations against their shared occupancy resources. Its supporting-plane and separating-axis implementation imports no authoring code. All 51,876 positive-volume overlaps agree. This numerical cross-check uses a `1e-8` tolerance and does not replace the exact arithmetic used in authoring or a physical mechanism review.
+
 Native tests verify these sequences, inverses, eight-step closure, quarter/half-turn equivalence, a blocked jumbled cut, occupancy exclusions, transactional rollback, undo/redo and replay. Geometry checks cover unshrunk sticker area, polygon validation, picking, stationary pieces, continuous sampled frames and exact endpoints. Native/WASM parity and independent native/Canvas consumers exercise the same package.
 
 The blocking example `U+ R F- U+` stops at the final turn with `corner/07` crossing the cut. This is a fixture derived from the specified ideal solids, not an independently photographed manufactured-puzzle state.
+
+David Guo's [physical solving guide](https://www.davidguo.idv.tw/Cube/BaGua.htm) includes a circled configuration where L cannot turn. It supplies neither a scramble history nor a complete labeled assignment, so it is recorded as physical blocking evidence with an outstanding replay requirement. It does not validate our blocking prefix.
 
 ## Regeneration and memory
 

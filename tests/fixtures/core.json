@@ -115,6 +115,16 @@
       "definitionDigest": "9e9c2c32a01e8aa431723e69df35e59f43e5778f3b377ce3e965d555b5c2a1e6"
     },
     {
+      "name": "Bagua Parkin RD sliver pair allows its published R2 repair start",
+      "prefix": "((R2 U+ R2 U-)7)'",
+      "operation": "R_half",
+      "expectedStatus": "Committed",
+      "source": "packages/bagua/definition.json",
+      "definitionDigest": "9e9c2c32a01e8aa431723e69df35e59f43e5778f3b377ce3e965d555b5c2a1e6",
+      "reference": "https://spencerparkin.github.io/twisty-puzzle-solutions/puzzle_bagua.html",
+      "basis": "Inverse X is a model reproduction of the author's RD sliver-pair setup; X starts with R2."
+    },
+    {
       "name": "Bagua jumbled corner crosses the next cut",
       "prefix": "U+ R F-",
       "operation": "U+",

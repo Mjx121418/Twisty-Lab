@@ -8,7 +8,7 @@ let runtime: MainModule;
 const handles: Session[] = [];
 const session = (path: string): Session => { const value = new runtime.Session(read(path)); handles.push(value); return value; };
 const snapshot = (value: Session): any => JSON.parse(value.snapshotJSON());
-const native = (args: string[]): any => JSON.parse(execFileSync('build/native/twisty', [...args, '--json'], { encoding: 'utf8' }));
+const native = (args: string[]): any => JSON.parse(execFileSync('build/native/twisty', [...args, '--json'], { encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 }));
 
 beforeAll(async () => { runtime = await createModule(); });
 afterEach(() => { for (const handle of handles) handle.delete(); handles.length = 0; });
@@ -127,6 +127,32 @@ describe('native / WebAssembly parity', () => {
       expect(snapshot(wasm).stateDigest).toBe(origin.stateDigest);
     } finally { wasm.delete(); restored.delete(); }
   });
+
+  it.each(JSON.parse(read('packages/bagua/review.json')).pureKiteCycles)(
+    'matches Bagua $name and its published pure three-cycle', ({ notation }: { notation: string }) => {
+      const path = 'packages/bagua/definition.json';
+      const wasm = session(path);
+      const definition = JSON.parse(wasm.definitionJSON());
+      const result = JSON.parse(wasm.runJSON(notation, 'transactional', '0'));
+      const reference = native(['run', '--definition', path, '--algorithm', notation, '--policy', 'transactional']);
+      expect(result.status).toBe('Committed');
+      expect(result.snapshot).toEqual(reference.snapshot);
+      expect(result.transitions).toEqual(reference.transitions);
+      const moved = definition.pieces.filter((piece: any) => result.snapshot.state.placementOf[piece.id] !== piece.homePlacement);
+      expect(moved).toHaveLength(3);
+      expect(moved.every((piece: any) => piece.type.startsWith('kite-'))).toBe(true);
+      const destinations = new Map(moved.map((piece: any) => [piece.homePlacement, piece.id]));
+      let current = moved[0].id;
+      const cycle = new Set<string>();
+      for (let i = 0; i < 3; i++) {
+        expect(cycle.has(current)).toBe(false);
+        cycle.add(current);
+        current = destinations.get(result.snapshot.state.placementOf[current]) as string;
+        expect(current).toBeDefined();
+      }
+      expect(current).toBe(moved[0].id);
+    },
+  );
 
   it('runs the same version-pinned portable fixtures', () => {
     const fixtures = JSON.parse(read('tests/fixtures/core.json'));

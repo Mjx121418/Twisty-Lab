@@ -703,6 +703,14 @@ The C++ interpreter validates and triangulates convex polygonal ports while reta
 
 The production build and package regeneration pass, followed sequentially by six native checks, twenty unit tests, eight independent native/WASM consumer cases and twenty-two browser scenarios. An unbounded projection cache discovered during authoring was replaced with a 16-entry cache per hull and a 384 MiB authoring-process ceiling; overlap generation reported about 70 MiB high-water RSS. Build presets use one job, fixture handles are released promptly, and the browser test server runs directly in one Node process. Browser dependencies were restored after the container reset. A memory guard stopped early browser attempts above 3 GiB; reclaiming cached file pages provided headroom for the completed suite, which peaked near 2.44 GiB. No cgroup OOM events occurred after the reset. Dockerfile and the existing puzzle definitions were untouched.
 
+### Bagua verification progress (9 October 2026)
+
+The [verification record](docs/bagua-verification.md) now includes two independently published pure kite three-cycles and Parkin's directional triangle transfer and protruding RD sliver pair. Native and WASM checks assert the kite-cycle effects; native surface checks identify the triangle and slivers without generated placement IDs. A separate C++ checker reconstructs convex hulls from the exported unshrunk vertices, cross-checks all 66,960 cut guards, and compares all 1,892,485 distinct-location pairs with the abstract exclusion resources. All 51,876 positive-volume overlaps agree within the checker's documented floating-point tolerance. The exact authoring result and semantic digest are unchanged.
+
+A physical guide supplies a blocked-L photograph, but no complete state or move history. It is recorded as evidence rather than treated as a verified replay fixture. Whole-model human review and a reproducible physical blocked-state comparison remain open; the Bagua package retains experimental status. Spherical Bagua remains the next rendering extension and will inherit the same review limits.
+
+Validation passes seven native tests, twenty-two unit tests, TypeScript checking, and eight independent native/WASM consumer cases. The standalone kernel package includes the verification record and semantic review pin. Compilation used one job and heavy checks ran sequentially; the highest observed container usage was about 2.55 GiB, with no cgroup OOM events.
+
 ### References
 
 [Cubing Standard 3: KPuzzle draft](https://standards.cubing.net/draft/3/kpuzzle/) (2018-09-06). The format provides a useful finite combinatorial reference. The partial-operation, transition-witness, realization, and ambient-renderer contracts above are the proposed architecture.

@@ -18,6 +18,42 @@
     "expectedEffect": "Three kite/triangle pairs in two 3-cycles; all other labeled pieces unchanged.",
     "source": "https://sites.google.com/site/easytutorial3x3x3/bagua"
   },
+  "pureKiteCycles": [
+    {
+      "name": "ramon13 kite commutator 1",
+      "notation": "[[R2,U+ D-]4,F- B+ L2 F+ B-]",
+      "expectedEffect": "One 3-cycle of kites; all other 143 labeled pieces unchanged.",
+      "source": "https://twistypuzzles.ru/forum/index.php?topic=939.0",
+      "sourceSection": "Reply 1, formulas for permuting kites, 3-cycles",
+      "notationMapping": "Source [A,B] is our [A,B]; source repetition after a bracket is repetition here too."
+    },
+    {
+      "name": "ramon13 kite commutator 2",
+      "notation": "[[F-:[U' B' U,F]],[U-:D- R2 F2 R2]]",
+      "expectedEffect": "One 3-cycle of kites; all other 143 labeled pieces unchanged.",
+      "source": "https://twistypuzzles.ru/forum/index.php?topic=939.0",
+      "sourceSection": "Reply 1, formulas for permuting kites, 3-cycles",
+      "notationMapping": "Source {A,B} is our [A:B]; source [A,B] is our [A,B]."
+    }
+  ],
+  "sliverPair": {
+    "name": "Parkin X",
+    "notation": "(R2 U+ R2 U-)7",
+    "source": "https://spencerparkin.github.io/twisty-puzzle-solutions/puzzle_bagua.html",
+    "sourceSection": "Steps 2 and 3, V-pair and triangle-transfer diagram",
+    "notationMapping": "2R = R2, (1/2)U = U+, 2Ri = R2, (1/2)Ui = U-; 7[...] repeats the listed moves.",
+    "expectedEffect": "X sends the U-facing RU edge triangle to the U-facing RUB corner triangle region. Inverse X from solved creates two sliver protrusions at RD through R; X resolves that pair.",
+    "basis": "Published directional transfer and sliver-pair configuration, checked by unshrunk surface regions rather than generated placement IDs. The inverse prefix is a model reproduction of the described setup."
+  },
+  "geometryAudit": {
+    "layerDepth": 0.45,
+    "distinctLocations": 1946,
+    "guardComparisons": 66960,
+    "overlapPairs": 51876,
+    "basis": "Separate C++ supporting-plane and separating-axis implementation over unshrunk exported vertices; no imports from the Python authoring tool.",
+    "numericalTolerance": 1e-8,
+    "limits": "This floating-point audit cross-checks the exact authoring result; it does not certify physical tolerances or joint-state reachability."
+  },
   "legalAlgorithms": [
     {
       "name": "Konrad TP-B1 / Parkin W",
@@ -51,6 +87,14 @@
     "reasonCode": "placement.blocked",
     "implicatedPiece": "corner/07",
     "basis": "Exact cut-crossing guard in the specified planar model; not a photographed manufactured-puzzle fixture."
+  },
+  "physicalBlockingEvidence": {
+    "source": "https://www.davidguo.idv.tw/Cube/BaGua.htm",
+    "sourceSection": "Step 1, circled blocked L-face photograph",
+    "image": "https://www.davidguo.idv.tw/Cube/images/Bagua/Step1_1.jpg",
+    "observation": "The author identifies L as blocked in the circled physical configuration.",
+    "status": "not-replayable",
+    "limits": "The source supplies neither a scramble history nor a complete labeled assignment. This photograph is evidence of physical blocking, not an exact state fixture or a verification of our existing blocking prefix."
   },
   "limits": [
     "No independent whole-model human review yet.",
