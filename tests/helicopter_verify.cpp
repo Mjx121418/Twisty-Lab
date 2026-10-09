@@ -59,7 +59,8 @@ int main() {
   try {
     const auto definition = load_definition(read("definition.json"));
     const auto review = read("review.json");
-    check(definition->digest == review.at("definitionDigest"), "Review pins different semantics");
+    check(definition->digest == review.at("definitionDigest").get<std::string>(),
+          "Review pins different semantics");
     const std::array<std::string, 12> grips = {"UF", "UR", "UB", "UL", "DF", "DR",
                                                "DB", "DL", "FR", "FL", "BR", "BL"};
     std::map<std::string, int> axes;
