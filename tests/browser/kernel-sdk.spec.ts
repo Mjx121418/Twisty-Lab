@@ -1,10 +1,10 @@
 import { execFileSync } from 'node:child_process';
 import { expect, test } from '@playwright/test';
 
-test('a separate Canvas renderer and controller consume only the portable kernel', async ({ page }) => {
+test('a separate Canvas renderer and controller consume only the portable kernel', async ({ page, baseURL }) => {
   const modules: string[] = [];
   page.on('request', (request) => { if (/\.(js|mjs)(\?|$)/.test(request.url())) modules.push(request.url()); });
-  await page.goto('/kernel/examples/canvas/');
+  await page.goto('kernel/examples/canvas/');
   await expect(page.getByRole('status')).toHaveText('Ready');
   await expect(page.locator('canvas')).toHaveCount(1);
   const initial = await page.locator('#digest').textContent();
@@ -35,6 +35,7 @@ test('a separate Canvas renderer and controller consume only the portable kernel
   const origin = JSON.parse(execFileSync('build/native/twisty', ['inspect', '--definition', 'packages/helicopter/definition.json', '--json'], { encoding: 'utf8' }));
   await expect(page.locator('#digest')).toHaveText(origin.snapshot.stateDigest);
   expect(modules.some((url) => url.endsWith('/kernel/index.js'))).toBe(true);
-  expect(modules.every((url) => new URL(url).pathname.startsWith('/kernel/'))).toBe(true);
+  const kernelPath = new URL('kernel/', baseURL!).pathname;
+  expect(modules.every((url) => new URL(url).pathname.startsWith(kernelPath))).toBe(true);
   await page.screenshot({ path: 'test-results/kernel-canvas.png', fullPage: true });
 });

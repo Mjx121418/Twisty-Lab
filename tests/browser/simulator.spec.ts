@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/');
+  await page.goto('./');
   await expect(page.getByTestId('state-digest')).toHaveText(/[0-9a-f]{64}/);
   await expect(page.locator('canvas')).toHaveCount(2);
   await expect(page.getByRole('alert')).toHaveCount(0);
@@ -178,8 +178,9 @@ test('renders the Helicopter preset through jumbling, inverse, picking, and save
   await resting(page);
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
   await page.getByLabel('Open session file').setInputFiles({ name: 'helicopter-session.json', mimeType: 'application/json', buffer: Buffer.from(saved) });
-  await resting(page);
+  // File.text() completes asynchronously; wait for the loaded state first.
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
+  await resting(page);
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
 

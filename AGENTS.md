@@ -18,6 +18,10 @@ Do not modify, replace, regenerate, or reformat `Dockerfile` unless the user exp
 
 The user authorizes commits as `Codex`. Use the repository-local identity `Codex <codex@local.invalid>` for these commits; do not change global Git configuration. The email is a placeholder for the local agent identity.
 
+## Remote publishing
+
+The user manages Git pushes from macOS and decides when to update GitHub Pages. Keep the Pages workflow manually triggered with `workflow_dispatch`. Do not push, create a GitHub repository, or trigger a deployment unless the user explicitly requests that action.
+
 ## Portable kernel boundary
 
 The C++ abstract core, compiler, session, and geometric interpreter form a reusable portable kernel. Custom renderers and controllers must be able to consume its public native or WASM APIs independently of the reference application.

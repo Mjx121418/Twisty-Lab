@@ -24,6 +24,14 @@ To serve the production bundle locally:
 npm run preview
 ```
 
+## Publish on GitHub Pages
+
+Push this repository from macOS, choose **GitHub Actions** as the repository's Pages source, and manually run **Deploy GitHub Pages** when you want to publish. Pushing commits does not trigger deployment. GitHub builds the C++ kernel into WebAssembly and publishes `dist/`, including the independent Canvas client; no application server is needed.
+
+See [the deployment guide](docs/github-pages.md) for initial repository setup, later updates, and testing a repository subpath locally. The workflow discovers the site's base path automatically, so repository names are not hardcoded.
+
+## Using the simulator
+
 The cube presets supply face-turn buttons and face keys `U R F D L B`; hold Shift for an inverse. Choose **Helicopter Cube · jumbling** to see five destination buttons per grip's current phase; its default algorithm `UF_ab UL_af` demonstrates jumbling. Drag the Euclidean view to orbit the camera. Click a visual part or inspector entry to highlight the same persistent piece in both views. Camera changes leave the logical state unchanged.
 
 Algorithms support inverse and half-turn suffixes, grouped repetition, commutators, conjugates, and line comments. For example:
