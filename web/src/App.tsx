@@ -42,7 +42,7 @@ export function App() {
   const [generation, setGeneration] = useState(0);
   const [sourceId, setSourceId] = useState('cube3');
   const [layout, setLayout] = useState<Layout>('both');
-  const [viewPair, setViewPair] = useState<ViewPair>('cube-diagram');
+  const [viewPair, setViewPair] = useState<ViewPair>('cube-sphere');
   const [inspector, setInspector] = useState<Inspector>('pieces');
   const [algorithm, setAlgorithm] = useState("R U R' U'");
   const [policy, setPolicy] = useState('interactive');

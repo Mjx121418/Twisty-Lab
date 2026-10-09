@@ -18,7 +18,7 @@ async function resting(page: import('@playwright/test').Page): Promise<void> {
 
 test('runs the same cube on a sphere, preserves state across views, and restores presentation', async ({ page }) => {
   const initial = await page.getByTestId('state-digest').textContent();
-  await page.getByLabel('Geometry views').selectOption('cube-sphere');
+  await expect(page.getByLabel('Geometry views')).toHaveValue('cube-sphere');
   const sphere = page.getByLabel('Spherical puzzle', { exact: true });
   await expect(sphere).toBeVisible();
   await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-realization-id', 'cube3-cube-spherical-v1');
@@ -154,6 +154,7 @@ test('keeps bandage blocking and identity on the spherical surface', async ({ pa
 });
 
 test('executes algorithms in both views, switches layout, and restores exact state', async ({ page }) => {
+  await page.getByLabel('Geometry views').selectOption('cube-diagram');
   const initial = await page.getByTestId('state-digest').textContent();
   await page.getByLabel('Algorithm', { exact: true }).fill("R U R' U'");
   await page.getByRole('button', { name: 'Play algorithm →' }).click();
@@ -203,6 +204,7 @@ test('supports transactional rollback and interactive legal prefixes', async ({ 
 });
 
 test('picks a visual port, shares selection, and leaves camera motion outside state', async ({ page }) => {
+  await page.getByLabel('Geometry views').selectOption('cube-diagram');
   const initial = await page.getByTestId('state-digest').textContent();
   // The fixed net's front center is left of its camera target; click a visible port.
   const diagram = await page.getByTestId('diagram-view').boundingBox();
