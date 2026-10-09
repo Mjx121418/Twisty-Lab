@@ -2,6 +2,7 @@
 /node_modules/
 /dist/
 /web/generated/
+/kernel/generated/
 /test-results/
 /playwright-report/
 *.log

@@ -1,5 +1,4 @@
-#include "twisty/geometry.hpp"
-#include "twisty/session.hpp"
+#include "twisty/kernel.hpp"
 #include <emscripten/bind.h>
 
 using namespace emscripten;
@@ -20,12 +19,16 @@ val transforms(const Geometry &geometry) {
 std::string compile(const std::string &source) {
   return compile_json(source).dump();
 }
+std::string kernel_info_json() {
+  return kernel_info().dump();
+}
 Geometry *create_geometry(const Session &session, const std::string &realization) {
   return new Geometry(session.definition(), realization);
 }
 } // namespace
 EMSCRIPTEN_BINDINGS(twisty) {
   function("compileJSON", &compile);
+  function("kernelInfoJSON", &kernel_info_json);
   function("createGeometry", &create_geometry, return_value_policy::take_ownership());
   class_<Session>("Session")
       .constructor<std::string>()
@@ -34,6 +37,8 @@ EMSCRIPTEN_BINDINGS(twisty) {
       .function("definitionJSON", &Session::definition_json)
       .function("stateJSON", &Session::state_json)
       .function("executeJSON", &Session::execute_json)
+      .function("planJSON", &Session::plan_json)
+      .function("validateStateJSON", &Session::validate_state_json)
       .function("runJSON", &Session::run_json)
       .function("undoJSON", &Session::undo_json)
       .function("redoJSON", &Session::redo_json)

@@ -6,14 +6,17 @@
   "scripts": {
     "build:native": "cmake --preset native && cmake --build --preset native",
     "build:wasm": "cmake --preset wasm && cmake --build --preset wasm",
-    "build": "npm run build:native && npm run check:packages && npm run build:wasm && tsc --noEmit && vite build",
+    "build": "npm run build:native && npm run check:packages && npm run build:wasm && npm run package:kernel && tsc --noEmit && vite build && node scripts/build-kernel.mjs --stage-web",
+    "build:kernel": "cmake --preset native && cmake --build --preset native --target puzzle_core puzzle_compiler puzzle_session puzzle_geometry && npm run build:wasm && npm run package:kernel",
+    "package:kernel": "node scripts/build-kernel.mjs",
+    "check:kernel": "node scripts/check-kernel.mjs",
     "check:packages": "python3 scripts/compile-packages.py",
     "dev": "npm run build:wasm && vite --host 0.0.0.0",
     "preview": "vite preview --host 0.0.0.0",
     "test:native": "ctest --preset native",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
-    "check": "npm run build && npm run test:native && npm run test:unit && npm run test:e2e"
+    "check": "npm run build && npm run test:native && npm run test:unit && npm run check:kernel && npm run test:e2e"
   },
   "dependencies": {"react": "19.3.0", "react-dom": "19.3.0", "three": "0.186.1"},
   "devDependencies": {

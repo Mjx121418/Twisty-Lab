@@ -1,17 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import type { MainModule } from '../generated/twisty.mjs';
-import { copyFloatView, copyIndexView, type Realization } from './kernel';
-
-type Part = {
-  visualPartId: string; pieceId: string; portId?: string; meshAssetId: string;
-  materialBindingId: string; label?: string; labelScale?: number; role: string;
-};
-type SceneDescriptor = {
-  sceneId: string; diagram: boolean;
-  meshAssets: { id: string; positionOffset: number; vertexCount: number; indexOffset: number; indexCount: number }[];
-  visualParts: Part[];
-};
+import { copyFloatView, copyIndexView, type MainModule, type Realization, type SceneDescriptor } from '../../kernel/index';
 const colors: Record<string, number> = {
   U: 0xf1eee3, R: 0xe76561, F: 0x66c7a0, D: 0xf1cf67, L: 0xeea76d, B: 0x7fa5ed, body: 0x202a35, mechanism: 0x17212a,
 };

@@ -29,6 +29,13 @@ std::uint64_t parse_revision(const std::string &text) {
     throw DiagnosticError("revision.invalid", "/revision", "Revision is outside the supported range.");
   return value;
 }
+std::string request_operation(const std::string &request) {
+  const auto parsed = Json::parse(request);
+  if (!parsed.at("parameters").is_object() || !parsed.at("parameters").empty())
+    throw DiagnosticError("request.parameters", "/parameters",
+                          "These primitives accept an empty parameter record.");
+  return parsed.at("operation").get<std::string>();
+}
 } // namespace
 Session::Session(const std::string &source) {
   auto document = Json::parse(source);
@@ -289,12 +296,22 @@ std::string Session::definition_json() const {
   return output.dump();
 }
 std::string Session::execute_json(const std::string &request, const std::string &expected) {
-  return guarded([&]() {
-    const auto parsed = Json::parse(request);
-    if (!parsed.at("parameters").is_object() || !parsed.at("parameters").empty())
-      throw DiagnosticError("request.parameters", "/parameters",
-                            "These primitives accept an empty parameter record.");
-    return execute(parsed.at("operation"), expected);
+  return guarded([&]() { return execute(request_operation(request), expected); });
+}
+std::string Session::plan_json(const std::string &request, const std::string &state) const {
+  return guarded([&]() -> Json {
+    const auto result =
+        plan(*definition_, decode_state(*definition_, Json::parse(state)), request_operation(request));
+    if (!result.transition)
+      return result.blocked;
+    const auto transition = encode_transition(*definition_, *result.transition);
+    return {{"status", "Legal"}, {"transition", transition}, {"transitionRecord", transition.dump()}};
+  });
+}
+std::string Session::validate_state_json(const std::string &state) const {
+  return guarded([&]() -> Json {
+    decode_state(*definition_, Json::parse(state));
+    return {{"status", "Valid"}};
   });
 }
 std::string Session::run_json(const std::string &notation, const std::string &policy,

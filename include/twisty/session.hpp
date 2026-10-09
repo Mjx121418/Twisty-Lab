@@ -30,6 +30,8 @@ public:
     return encode_state(*definition_, state_).dump();
   }
   std::string execute_json(const std::string &, const std::string &);
+  std::string plan_json(const std::string &request, const std::string &state) const;
+  std::string validate_state_json(const std::string &state) const;
   std::string run_json(const std::string &, const std::string &, const std::string &);
   std::string undo_json(const std::string &);
   std::string redo_json(const std::string &);

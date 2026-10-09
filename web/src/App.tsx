@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { MainModule } from '../generated/twisty.mjs';
+import type { MainModule } from '../../kernel/index';
 import cubeSource from '../../packages/cube3/source.json?raw';
 import bandageSource from '../../packages/bandaged/source.json?raw';
 import cubeRealization from '../../packages/cube3/cube-euclidean.json';

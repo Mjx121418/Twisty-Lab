@@ -1,82 +1,10 @@
-import createModule, { type MainModule } from '../generated/twisty.mjs';
-import wasmUrl from '../generated/twisty.wasm?url';
+import { createKernel, type MainModule } from '../../kernel/index';
+import wasmURL from '../../kernel/generated/twisty.wasm?url';
+export * from '../../kernel/index';
 
-export type State = { placementOf: Record<string, string>; mechanism: Record<string, unknown> };
-export type Request = { operation: string; parameters: Record<string, never> };
-export type Snapshot = {
-  puzzleId: string; definitionDigest: string; stateDigest: string; revision: string;
-  state: State; solved: boolean; legalRequests: Request[];
-  history: string[]; cursor: number; canUndo: boolean; canRedo: boolean;
-};
-export type Transition = {
-  definitionDigest: string; beforeStateDigest: string; afterStateDigest: string;
-  request: Request; beforeState: State; afterState: State;
-  pieceActions: { pieceId: string; from: string; to: string; role: string; transport: string }[];
-};
-export type Result = {
-  status: string; snapshot?: Snapshot; transitions?: Transition[]; reasonCode?: string;
-  transitionRecords?: string[];
-  implicatedPieces?: string[]; evidence?: unknown; failureIndex?: number;
-  diagnostics?: { reasonCode: string; source: string; message: string }[];
-  scramble?: { seed: number; generatorVersion: string; notation: string; requests: string[]; termination: string };
-};
-export type CompiledDefinition = {
-  kind: string; puzzleId: string; definitionDigest: string;
-  pieceTypes: { id: string; placementDomainId: string; localPorts: string[] }[];
-  placementDomains: { id: string; placements: { key: string; footprint: string[]; portAttachment: Record<string, { cell: string; attachment: string }> }[] }[];
-  pieces: { id: string; type: string; homePlacement: string; portLabels: Record<string, string> }[];
-  operations: { id: string; inverse: string; family: string; selectedCells?: string[]; transport: string; pieceGuards?: Record<string, string> }[];
-  symmetry?: { members?: number[][]; positionOrbits?: Record<string, { representative: string; stabilizer: number[][]; positions: { id: string }[] }> }; cells: string[]; provenance: unknown;
-};
-export type Realization = {
-  schemaVersion: number; id: string; kind: 'cube-euclidean' | 'cube-port-diagram' | 'polyhedral-euclidean' | 'polyhedral-port-diagram';
-  compatibleDefinitionDigest: string; requiredCapabilities: string[];
-};
-
+// Asset resolution belongs to the bundled app. The kernel has no Vite dependency.
 let runtime: Promise<MainModule> | undefined;
 export function loadRuntime(): Promise<MainModule> {
-  runtime ??= createModule({ locateFile: (filename: string) => filename.endsWith('.wasm') ? wasmUrl : filename });
+  runtime ??= createKernel({ wasmURL });
   return runtime;
 }
-
-export class KernelSession {
-  readonly native: InstanceType<MainModule['Session']>;
-  readonly definition: CompiledDefinition;
-  readonly definitionText: string;
-
-  constructor(module: MainModule, source: string) {
-    try {
-      this.native = new module.Session(source);
-    } catch (error: unknown) {
-      // Recover structured diagnostics only for an invalid import; valid sources
-      // compile once in Session, preserving exact native serialization.
-      const result = JSON.parse(module.compileJSON(source)) as Result;
-      throw new Error(result.diagnostics?.map((d) => `${d.source}: ${d.message}`).join('\n') ?? String(error));
-    }
-    this.definitionText = this.native.definitionJSON();
-    this.definition = JSON.parse(this.definitionText) as CompiledDefinition;
-  }
-
-  snapshot(): Snapshot { return JSON.parse(this.native.snapshotJSON()) as Snapshot; }
-  stateText(): string { return this.native.stateJSON(); }
-  move(operation: string): Result {
-    return JSON.parse(this.native.executeJSON(JSON.stringify({ operation, parameters: {} }), this.native.revision())) as Result;
-  }
-  run(notation: string, policy: string): Result {
-    return JSON.parse(this.native.runJSON(notation, policy, this.native.revision())) as Result;
-  }
-  undo(): Result { return JSON.parse(this.native.undoJSON(this.native.revision())) as Result; }
-  redo(): Result { return JSON.parse(this.native.redoJSON(this.native.revision())) as Result; }
-  scramble(seed: number, length: number): Result {
-    return JSON.parse(this.native.scrambleJSON(seed, length, this.native.revision())) as Result;
-  }
-  load(document: string): Result { return JSON.parse(this.native.loadJSON(document)) as Result; }
-  save(presentation: unknown): string {
-    return this.native.saveWithPresentationJSON(JSON.stringify(presentation));
-  }
-  dispose(): void { this.native.delete(); }
-}
-
-// Native memory views are borrowed. Every view is copied before the next WASM call.
-export function copyFloatView(view: Float32Array): Float32Array { return new Float32Array(view); }
-export function copyIndexView(view: Uint32Array): Uint32Array { return new Uint32Array(view); }

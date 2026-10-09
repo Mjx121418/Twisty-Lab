@@ -17,3 +17,12 @@ Do not modify, replace, regenerate, or reformat `Dockerfile` unless the user exp
 ## Git commits
 
 The user authorizes commits as `Codex`. Use the repository-local identity `Codex <codex@local.invalid>` for these commits; do not change global Git configuration. The email is a placeholder for the local agent identity.
+
+## Portable kernel boundary
+
+The C++ abstract core, compiler, session, and geometric interpreter form a reusable portable kernel. Custom renderers and controllers must be able to consume its public native or WASM APIs independently of the reference application.
+
+- Keep Three.js, React, Vite, DOM access, camera controls, input gestures, and animation/event-loop scheduling outside the kernel.
+- Keep abstract rules independent of geometric data within the kernel. Renderers consume interpreter assets and frames; controllers submit revision-checked abstract requests.
+- Maintain the independent native/WASM packaging and consumer examples when changing public APIs. Document ownership, exact serialization, errors, capabilities, and buffer layouts in `docs/kernel-api.md`.
+- Treat API/buffer versions separately from puzzle schemas and semantic digests. Update public declarations and appropriate independent-consumer checks with contract changes.

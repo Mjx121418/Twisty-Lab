@@ -1,10 +1,10 @@
 # Twisty Puzzle Simulator Architecture
 
-**Revised architecture proposal and implementation plan | 8 October 2026**
+**Revised architecture proposal and implementation plan | 9 October 2026**
 
 *An abstract rule system with interchangeable geometric realizations*
 
-This proposal combines the abstract architecture with the agreed implementation plan. C++20 implements the abstract core, compiler, sessions, and geometric interpreter. A TypeScript application uses Three.js to render C++ scene and frame data, with the C++ components compiled to WebAssembly for the browser and to native code for a headless CLI. Interfaces below remain contract pseudocode; the implementation languages and first-release decisions are fixed.
+This proposal combines the abstract architecture with the agreed implementation plan. C++20 implements a portable kernel containing the abstract core, compiler, sessions, and geometric interpreter. The kernel exposes public native and WebAssembly APIs for custom renderers and controllers. The bundled TypeScript/Three.js application and native CLI consume those APIs as reference clients. Interfaces below remain contract pseudocode where they describe future extensions; [the kernel API guide](docs/kernel-api.md) documents the implemented API.
 
 ## 1. Architecture and scope
 
@@ -14,15 +14,18 @@ A piece is an identity with an abstract placement. A position is an address in a
 
 ```mermaid
 flowchart TD
-    A["Abstract definition and exact state"] --> K["C++ kernel, session, and transition witness"]
-    K --> CLI["Native headless CLI"]
-    K --> E["C++ Euclidean realization"]
-    K --> P["C++ labeled port diagram"]
-    K -.-> S["Later C++ spherical realization"]
-    E --> B["Scene descriptors and frame buffers"]
-    P --> B
-    S -.-> B
-    B --> R["TypeScript application and Three.js renderer"]
+    A["Abstract definition"] --> K
+    G["Separate realization definition"] --> I
+    subgraph PK["Portable C++ kernel · native and WASM APIs"]
+      K["Abstract core, compiler, and session"] --> I["Geometric interpreter and realizations"]
+      I --> B["Scene assets, frame buffers, and hit bindings"]
+    end
+    K --> CLI["Headless CLI client"]
+    K --> C["Custom controller · snapshots and transitions"]
+    C -->|"Abstract requests"| K
+    B --> R["Custom renderer · Three.js, Canvas, or native graphics"]
+    R -->|"Picked visual IDs"| C
+    C -->|"Recorded transitions and progress"| I
 ```
 
 | Component | Owns | Does not own |
@@ -30,6 +33,7 @@ flowchart TD
 | Abstract model | Pieces, placements, constraints, operations, goals, symmetry | Meshes, matrices, axes, collision geometry |
 | Realization | Visual parts, placement interpretation, animation, interaction bindings | Move legality or puzzle state mutation |
 | Renderer | Ambient geometry, projection, drawing, picking, GPU resources | Puzzle rules or move selection |
+| Front-end controller | Input mapping, queues, displayed-frame cursor, animation clock, selection | Rule evaluation or geometric motion implementation |
 
 **Boundary rule:** a legal abstract transition remains legal when the realization changes. A geometry mismatch is a realization defect or an explicitly unsupported visual case, rather than a change to the puzzle rules.
 
@@ -37,7 +41,7 @@ Scope: rigid or combinatorial twisty puzzles with exact discrete resting states.
 
 ### 1.1 Implementation and delivery
 
-The first delivery targets are a browser application and a native headless CLI. Build the C++20 modules with CMake and Ninja. Use Emscripten to produce a modularized WebAssembly ES module with Embind bindings and generated TypeScript declarations. The native and WebAssembly builds use the same rule, compiler, session, and geometric-interpreter sources.
+Deliver the reusable kernel as installable C++20 libraries and an independent WebAssembly/ES-module package, alongside the browser application and native headless CLI. Build the C++20 modules with CMake and Ninja. Use Emscripten to produce a modularized WebAssembly ES module with Embind bindings and generated TypeScript declarations. The native and WebAssembly builds use the same rule, compiler, session, and geometric-interpreter sources.
 
 Build the browser application with TypeScript, React, and Vite. Three.js owns drawing, camera projection, raycasting, lighting, and GPU resources. C++ owns puzzle geometry, placement transforms, animation paths, and the interpretation of picked visual parts. Browser UI code does not duplicate puzzle rules or geometric realization logic.
 
@@ -52,6 +56,14 @@ Support a standard 3x3 cube and a reference bandaged variant with one fused edge
 Authors edit versioned JSON files and run the compiler through the CLI or browser file import. The browser supplies a definition inspector and diagnostics. An in-browser text editor and graphical authoring tools are later work.
 
 The first release also includes notation playback, seeded legal scrambles, undo/redo, save/load, replay, operation controls, animation controls, and cross-view piece highlighting. Jumbling, spherical realizations, Bagua, solvers, branching history, and shared sessions follow the release gates in Section 12.
+
+### 1.3 Portable kernel requirement
+
+The kernel is a reusable product for other applications. A developer must be able to build a custom renderer and controller without importing the reference application, Three.js, React, or Vite. Public APIs expose definition loading/validation, state snapshots and legal requests, pure planning, revision-checked commands, history and persistence, scene/asset bindings, animation preparation/sampling, and stable hit-to-piece/port bindings. Core and geometry remain separate internally; a headless client can use the abstract/session subset.
+
+Version the public API and frame format independently of puzzle schemas and semantic digests. Specify error outcomes, capability discovery, exact serialized records, buffer layout, ownership, handle disposal, and displayed-state semantics. Controllers choose input gestures and timing; renderers choose graphics technology, cameras, and appearance. The kernel has no front-end imports or animation/event-loop ownership.
+
+Acceptance requires two consumers outside the bundled application: an external CMake project linked to an installed native package and an independently hosted renderer/controller using only the assembled WASM package. The reference Three.js application uses the same public API. Additional language bindings, a common C ABI, and broader platform certification follow concrete consumer requirements; native source portability does not imply a cross-compiler binary ABI.
 
 ## 2. Abstract definitions and state
 
@@ -222,7 +234,7 @@ Retain the directed operation and its exact parameters. Two operations can have 
 
 Planning checks the guard, determines participants, computes their updates, updates mechanism variables, and checks the declared postconditions. A blocked result includes an abstract reason code and relevant piece or relation IDs. The session commits the complete result once, against the expected state revision.
 
-Expose planning as a pure C++ operation over an immutable definition and source state. `PuzzleSession.execute(request, expectedRevision)` performs planning and atomic commit. A blocked request or stale revision leaves the authoritative state, revision, and history unchanged. The public realization API exposes no state setters or commit methods.
+Expose planning as a pure C++ operation over an immutable definition and source state. `PuzzleSession.execute(request, expectedRevision)` performs planning and atomic commit. A blocked request or stale revision leaves the authoritative state, revision, and history unchanged. A realization may update its own displayed state and sampled frame; it exposes no authoritative session-state setters or commit methods.
 
 ### Primitive paths versus powers
 
@@ -364,9 +376,9 @@ Compile asset bindings once. Reuse meshes or spherical patch templates; update t
 
 A render resource cache is disposable. A geometry or GPU failure can cause visual reconstruction from the authoritative state and operation history. It cannot corrupt the logical state.
 
-### 8.1 C++ to Three.js bridge
+### 8.1 Public renderer bridge
 
-Keep the renderer bridge independent of puzzle-specific C++ types. Its public contracts are:
+Keep the renderer bridge independent of puzzle-specific C++ types and graphics frameworks. Three.js and other renderers consume the same public contracts:
 
 ```text
 SceneDescriptor {
@@ -450,7 +462,7 @@ Run identical operation sequences through the Euclidean puzzle and labeled diagr
 
 ## 10. Sessions, history, and playback
 
-A PuzzleSession owns the definition reference, authoritative state revision, operation history, and logical command queue. A presentation controller owns the chosen realization, renderer, camera, visual cursor, and animations. The two controllers communicate through immutable transition records.
+A PuzzleSession owns the definition reference, authoritative state revision, and operation history. A front-end controller owns its request queue, input ordering, chosen realization, renderer, camera, visual cursor, and animations. It submits revision-checked commands to the session and consumes immutable transition records.
 
 Implement the session in C++ and the presentation controller in TypeScript. The CLI uses the same session API without initializing geometry or GPU resources. Browser views cannot change logical state except by submitting commands to the session.
 
@@ -510,10 +522,13 @@ Maintain two puzzle-data packages while allowing several software modules. The b
 | realization-api | C++20 | Read-only core identities and transitions; scene, animation, and hit-binding contracts. |
 | geometry and realizations | C++20 | Ambient primitive algebra, puzzle geometry, assets, placement interpretation, animation tracks, and interaction bindings. |
 | wasm-bindings | C++20 with a TypeScript wrapper | Embind exports and explicit buffer/handle ownership. Depends on public C++ APIs. |
+| portable-kernel package | C++20 and TypeScript | Installed native targets, independent WASM factory/adapter, public types, capability/version discovery, and API documentation. No front-end dependency. |
 | three-renderer | TypeScript and Three.js | Scene and frame consumption, camera projection, drawing, picking, and GPU resource management. |
 | application | TypeScript, React, and Vite | Input and presentation controllers, file import/export, inspection, controls, and realization selection. |
 
 Enforce C++ module dependencies with separate CMake targets. Native headless targets link the core, compiler, and session without geometry, WASM bindings, or GPU libraries. Browser builds compile the same sources with Emscripten. Keep application and renderer imports separate so UI components do not acquire puzzle-rule implementations.
+
+Install native headers and libraries as `TwistyKernel`, exporting component targets and aggregate `Twisty::kernel`. Assemble `@twisty/kernel` as a local ES-module package with the WASM binary, generated bindings, public TypeScript declarations, and a caller-configurable asset loader. Keep Vite-specific URL resolution in the reference app. Deliver independent native and Canvas consumers as executable API examples and validate copied/installed artifacts outside the source tree.
 
 ### Definition packages
 
@@ -581,8 +596,11 @@ Use CTest for C++ checks, Vitest for the TypeScript adapter and presentation log
 | 4. Symmetry authoring | Finite permutation-group and coset compilation; prototype pieces, directed operations, and transformed guards; source provenance and the definition inspector. | A prototype-authored cube compiles to the explicit reference cube's canonical semantics. |
 | 5. Bandaged reference | The fused UF-edge/UFR-corner variant; finite-footprint blocking; structured evidence and whole-piece highlighting in both views. | Initial U and F are legal, initial R is blocked, and R is legal after U; inverse and later blocking fixtures pass. |
 | 6. First release | File import/export, inspector usability, full regression coverage, documentation, static browser assets, and native CLI artifacts. | All acceptance checks pass from a clean container build. |
+| 7. Portable kernel | Installed native package, independent WASM SDK, documented/versioned APIs, pure planning and state validation, and custom renderer/controller examples. | External native and copied WASM consumers reproduce states and geometric endpoints without reference-app dependencies; a separate Canvas client passes browser integration. |
 
 Milestones 1 through 6 define the first release. Add portable fixtures and structured diagnostics as each subsystem appears; they are release requirements, not a final polish step.
+
+The clarified portable-kernel requirement makes Milestone 7 the immediate delivery gate before further puzzle/realization expansion. After its initial implementation, strengthen consumer conformance and destination-platform CI as part of API upkeep. The public kernel owns both the abstract and geometric layers while preserving their internal boundary.
 
 ### Headless command surface
 
@@ -642,6 +660,14 @@ The browser includes a Helicopter preset, phase-appropriate grip controls, synch
 Runtime occupancy uses definition-local resource indices while canonical data retains abstract names. A session caches its snapshot at the current revision, invalidating it through the monotonic revisions already used by edits and loads. Compiled definitions validate once when constructing a session, and both geometric interpreters share its immutable definition through C++ ownership. Geometric validation still runs separately for each realization. These optimizations reduce repeated CPU work and allocation during Helicopter input and loading without relaxing rule validation or adding geometry to the core.
 
 Independent human review remains necessary before promoting this experimental model to a reviewed reference. Rendered shapes use ideal polyhedra and cosmetic clearances; manufactured mechanism fidelity would require separate evidence. No symbolic domain was required. The next planned implementation is the spherical cube realization after the jumbling model's review gate.
+
+### Portable kernel foundation (9 October 2026)
+
+The clarified delivery target includes both abstract and geometric layers as a portable kernel. Native installation now exports `TwistyKernel` component targets and `Twisty::kernel`, with public headers and the JSON dependency. The independent `@twisty/kernel` ES-module package contains the same C++ implementation compiled to WASM, generated declarations, and a framework-independent TypeScript adapter. The reference app owns its Vite asset loader and imports the public adapter and scene types. Version/capability discovery, pure planning, and assignment validation are exposed alongside the existing command, persistence, geometry, and hit APIs.
+
+Installed native and copied WASM consumers outside the source tree agree on snapshots, scenes, and endpoint transforms for all three puzzles. The independent Canvas renderer/controller consumes only kernel-package modules and verifies picking, commands, inverse algorithms, and history in a browser. The production build, three native checks, nine unit tests, the external package checks, and ten browser scenarios pass. Builds used one job for changed C++ code and one browser worker; no memory-limit or out-of-memory events occurred. Dockerfile and puzzle semantic digests are unchanged.
+
+The next portability work strengthens adapter conformance and destination-platform CI. Additional language bindings and a common C ABI are separate planned extensions. The existing spherical/Bagua roadmap continues after this kernel delivery foundation and the relevant model-review gates.
 
 ### References
 

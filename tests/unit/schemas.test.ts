@@ -1,7 +1,7 @@
 import Ajv from 'ajv';
 import { readFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
-import createModule from '../../web/generated/twisty.mjs';
+import createModule from '../../kernel/generated/twisty.mjs';
 
 it('validates shipped sources, compiled definitions, realizations, fixtures, and generated saves', async () => {
   const ajv = new Ajv({ allErrors: true, strict: false });

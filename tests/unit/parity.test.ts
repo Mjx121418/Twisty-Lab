@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import createModule, { type MainModule, type Session } from '../../web/generated/twisty.mjs';
+import createModule, { type MainModule, type Session } from '../../kernel/generated/twisty.mjs';
 
 const read = (path: string): string => readFileSync(path, 'utf8');
 let runtime: MainModule;

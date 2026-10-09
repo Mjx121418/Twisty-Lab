@@ -1,6 +1,6 @@
 # Twisty Lab
 
-A twisty puzzle simulator with one exact C++ rule system and interchangeable C++ geometric realizations. The browser application uses Three.js to display a Euclidean puzzle and a labeled port diagram of the same session.
+A portable twisty-puzzle kernel with one exact C++ rule system and interchangeable C++ geometric realizations. Custom native and browser renderers/controllers use its public APIs. The bundled application is a reference client using Three.js to display a Euclidean puzzle and a labeled port diagram of the same session.
 
 The initial release includes a 3×3 cube and a reference bandaged cube with the UF edge and UFR corner fused into one rigid piece. It provides explainable blocking, synchronized views, file-based definition inspection, algorithms, reproducible legal scrambles, undo/redo, and portable saved sessions.
 
@@ -58,6 +58,17 @@ Commands are `compile`, `validate`, `inspect`, `run`, `scramble`, `replay`, and 
 
 Imported states are checked for declared type and occupancy invariants. This does not certify reachability. Saved histories are replayed under an exact definition digest, and state digests and checkpoints are verified before a load commits. A new move after undo truncates the redo continuation; revisions keep increasing.
 
+## Build a custom front end
+
+```sh
+npm run build:kernel
+cmake --install build/native --prefix /your/kernel/install
+```
+
+Native consumers use `find_package(TwistyKernel CONFIG REQUIRED)` and link `Twisty::kernel` or its individual components. JavaScript/TypeScript consumers copy or locally install `build/kernel/`, which contains a framework-independent WASM/ES-module package and public declarations. The SDK provides state/legality inspection, pure planning, revision-checked commands, history, persistence, geometric assets, sampled frames, and hit bindings. Renderers and controllers own cameras, input gestures, selection, and animation clocks.
+
+See [the public API guide](docs/kernel-api.md), [the independent CMake consumer](examples/native/main.cpp), and [the Canvas renderer/controller](examples/canvas/app.js). Run `npm run check:kernel` to check installed/copied artifacts outside the repository. The production build also serves the standalone Canvas example at `/kernel/examples/canvas/`. The kernel can be built and hosted separately from React, Three.js, and Vite.
+
 ## Authoring and data packages
 
 `packages/cube3` and `packages/bandaged` contain compact JSON source definitions, checked-in explicit compiled definitions, and separate Euclidean/diagram realization packages. Source definitions use concrete permutations of six abstract face labels, subgroup generators for prototype-position stabilizers, prototype pieces, and a directed operation prototype. C++ validates the stabilizers, enumerates position cosets, and generates finite placements and conjugated operations with their selected-cell guards and source provenance.
@@ -87,7 +98,8 @@ Regression fixtures pin a definition digest and specify a replay prefix, request
 - `puzzle_session`: notation, revisions, history, legal walks, persistence, and replay.
 - `puzzle_geometry`: meshes, placement interpretation, visual identities, animation sampling, and hit bindings.
 - `twisty_wasm`: Embind exports with generated `.d.mts` declarations.
-- `web/src`: a thin session adapter, a Three.js renderer, and the React application.
+- `kernel/`: the public framework-independent TypeScript adapter/types and generated WASM runtime.
+- `web/src`: reference-app asset resolution, a Three.js renderer, and the React application.
 
 Definitions and transitions are read-only to realizations. A transition includes all participants, including featureless centers with unchanged placements. C++ animation tracks verify port transport and use a geometric endpoint tolerance of `1e-6`; exact state equality uses no tolerance. Polyhedral realizations validate every catalog transport when loading and account for declared label-preserving mesh symmetries, including hidden edges whose half-turn motion leaves their core phase unchanged.
 
@@ -109,7 +121,7 @@ Then run the checks sequentially:
 npm run check
 ```
 
-Native checks exercise hashes, canonical compilation, symmetry covariance, inverses, hidden variables, blocked paths, seeded walks, replay, realization endpoints and mesh continuity, and the exhaustive Helicopter shape graph. Vitest compares native and WASM definitions, witnesses, state digests, Helicopter meshes and sampled frames, portable fixtures, exact serialization, and schemas. Playwright serves the production bundle on port 4173 and checks both views, algorithms, jumbling and bandaging feedback, camera independence, picking, imports, saves, and context/resource replacement with one worker. Run `npm run build` before running browser tests individually.
+Native checks exercise hashes, canonical compilation, symmetry covariance, inverses, hidden variables, blocked paths, seeded walks, replay, realization endpoints and mesh continuity, and the exhaustive Helicopter shape graph. Vitest compares native and WASM definitions, witnesses, state digests, Helicopter meshes and sampled frames, portable fixtures, exact serialization, and schemas. Kernel-package checks build an external installed native consumer and load a copied WASM package in Node, comparing all three puzzles. Playwright serves the production bundle on port 4173 and checks both views, algorithms, jumbling and bandaging feedback, camera independence, picking, imports, saves, context/resource replacement, and the independent Canvas client with one worker. Run `npm run build` before running browser tests individually.
 
 Dependencies are pinned in `package-lock.json`. The nlohmann JSON header is vendored with its MIT license so CMake builds do not need a network dependency fetch. Build and test outputs are ignored by Git.
 

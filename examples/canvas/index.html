@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Custom Canvas front end</title>
+  <style>
+    body { margin: 24px auto; padding: 0 20px; max-width: 920px; font: 16px system-ui; color: #18242b; background: #f4f6f5; }
+    canvas { display: block; width: 100%; height: 440px; background: white; border: 1px solid #bccac7; border-radius: 8px; }
+    button, select, input { padding: 8px 12px; font: inherit; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0; }
+    #moves button { font-size: 12px; }
+    #moves .blocked { color: #9b3225; border-color: #c58b81; }
+    input { flex: 1; min-width: 180px; } code { overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <h1>Custom Canvas front end</h1>
+  <p>A renderer and controller using the portable kernel. Click a port to select its piece.</p>
+  <div class="controls"><label for="puzzle">Puzzle</label><select id="puzzle"><option value="cube3">3 × 3 cube</option><option value="bandaged">Bandaged cube</option><option value="helicopter">Helicopter Cube</option></select><button id="undo">Undo</button><button id="redo">Redo</button></div>
+  <canvas id="view" width="920" height="440" aria-label="Canvas port diagram"></canvas>
+  <p id="selection" aria-live="polite">No piece selected</p>
+  <div id="moves" class="controls"></div>
+  <form id="algorithm" class="controls"><input id="notation" aria-label="Algorithm" value="R U R' U'"><button>Play algorithm</button></form>
+  <p id="status" role="status">Loading…</p>
+  <p>State digest: <code id="digest"></code></p>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

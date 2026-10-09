@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 include(CTest)
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
 add_library(project_options INTERFACE)
 target_compile_options(project_options INTERFACE -Wall -Wextra -Wpedantic)
@@ -14,10 +16,15 @@ if(EMSCRIPTEN)
 endif()
 
 add_library(json_headers INTERFACE)
-target_include_directories(json_headers SYSTEM INTERFACE third_party)
+target_include_directories(json_headers SYSTEM INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/third_party>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 add_library(puzzle_core src/core.cpp src/sha256.cpp)
-target_include_directories(puzzle_core PUBLIC include)
+target_include_directories(puzzle_core PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_compile_features(puzzle_core PUBLIC cxx_std_20)
 target_link_libraries(puzzle_core PUBLIC json_headers project_options)
 
 add_library(puzzle_compiler src/compiler.cpp)
@@ -29,19 +36,45 @@ target_link_libraries(puzzle_session PUBLIC puzzle_compiler)
 add_library(puzzle_geometry src/geometry.cpp src/catalog_geometry.cpp)
 target_link_libraries(puzzle_geometry PUBLIC puzzle_core)
 
+add_library(puzzle_kernel INTERFACE)
+target_link_libraries(puzzle_kernel INTERFACE puzzle_session puzzle_geometry)
+foreach(component IN ITEMS core compiler session geometry kernel)
+  add_library(Twisty::${component} ALIAS puzzle_${component})
+  set_target_properties(puzzle_${component} PROPERTIES EXPORT_NAME ${component})
+endforeach()
+
 if(EMSCRIPTEN)
   add_executable(twisty_wasm src/bindings.cpp)
   target_link_libraries(twisty_wasm PRIVATE puzzle_session puzzle_geometry embind)
   set_target_properties(twisty_wasm PROPERTIES
     OUTPUT_NAME twisty SUFFIX .mjs
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/web/generated")
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/kernel/generated")
   target_link_options(twisty_wasm PRIVATE
     --no-entry
     -sMODULARIZE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,node
     -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=33554432
     -sMAXIMUM_MEMORY=268435456 -sSTACK_SIZE=1048576
-    --emit-tsd "${CMAKE_SOURCE_DIR}/web/generated/twisty.d.mts")
+    --emit-tsd "${CMAKE_SOURCE_DIR}/kernel/generated/twisty.d.mts")
 else()
+  install(TARGETS puzzle_core puzzle_compiler puzzle_session puzzle_geometry puzzle_kernel
+    json_headers project_options EXPORT TwistyKernelTargets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  install(DIRECTORY include/twisty DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+  install(FILES third_party/nlohmann/json.hpp DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/nlohmann)
+  install(FILES third_party/nlohmann/LICENSE.MIT
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/TwistyKernel/licenses)
+  configure_package_config_file(cmake/TwistyKernelConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/TwistyKernelConfig.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TwistyKernel)
+  write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/TwistyKernelConfigVersion.cmake
+    VERSION ${PROJECT_VERSION} COMPATIBILITY SameMajorVersion)
+  install(EXPORT TwistyKernelTargets NAMESPACE Twisty::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TwistyKernel)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/TwistyKernelConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/TwistyKernelConfigVersion.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TwistyKernel)
   add_executable(twisty src/cli.cpp)
   target_link_libraries(twisty PRIVATE puzzle_session)
   if(BUILD_TESTING)
