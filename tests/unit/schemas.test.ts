@@ -18,6 +18,7 @@ it('validates shipped sources, compiled definitions, realizations, fixtures, and
     check('definition', JSON.parse(readFileSync(`packages/${name}/definition.json`, 'utf8')));
     check('realization', JSON.parse(readFileSync(`packages/${name}/cube-euclidean.json`, 'utf8')));
     check('realization', JSON.parse(readFileSync(`packages/${name}/cube-port-diagram.json`, 'utf8')));
+    check('realization', JSON.parse(readFileSync(`packages/${name}/cube-spherical.json`, 'utf8')));
     const session = new module.Session(readFileSync(`packages/${name}/source.json`, 'utf8'));
     try {
       check('state', JSON.parse(session.stateJSON()));

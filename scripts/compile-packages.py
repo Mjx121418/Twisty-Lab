@@ -23,12 +23,18 @@ for name in ['cube3', 'bandaged']:
     definition = result['definition']
     digests[name] = definition['definitionDigest']
     documents = {'definition.json': definition}
-    for kind in ['cube-euclidean', 'cube-port-diagram']:
+    for kind in ['cube-euclidean', 'cube-port-diagram', 'cube-spherical']:
         documents[f'{kind}.json'] = {
             'schemaVersion': 1, 'id': f'{name}-{kind}-v1', 'kind': kind,
             'compatibleDefinitionDigest': definition['definitionDigest'],
             'requiredCapabilities': ['triangle-meshes', 'rigid-transforms']
         }
+        if kind == 'cube-spherical':
+            documents[f'{kind}.json'].update({
+                'radius': 2.05, 'diskAngleDegrees': 60, 'angularSegments': 64,
+                'radialSegments': 5, 'portInset': 0.04, 'surfaceLift': 0.02,
+                'fidelity': 'spherical-surface-model'
+            })
     for filename, document in documents.items():
         path = package / filename
         if args.write:

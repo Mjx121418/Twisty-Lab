@@ -45,7 +45,8 @@ export class RenderView {
     }
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.domElement.setAttribute('aria-label', this.descriptor.diagram ? 'Port diagram' : 'Euclidean puzzle');
+    this.renderer.domElement.setAttribute('aria-label', this.descriptor.diagram ? 'Port diagram' : this.descriptor.ambientSpace === 'S2' ? 'Spherical puzzle' : 'Euclidean puzzle');
+    this.host.dataset.realizationId = this.descriptor.realizationId;
     this.host.append(this.renderer.domElement);
     if (this.descriptor.diagram) {
       this.camera = new THREE.OrthographicCamera(-6, 6, 4.5, -4.5, 0.1, 100);

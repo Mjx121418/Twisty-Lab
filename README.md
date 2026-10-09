@@ -1,8 +1,10 @@
 # Twisty Lab
 
-A portable twisty-puzzle kernel with one exact C++ rule system and interchangeable C++ geometric realizations. Custom native and browser renderers/controllers use its public APIs. The bundled application is a reference client using Three.js to display a Euclidean puzzle and a labeled port diagram of the same session.
+A portable twisty-puzzle kernel with one exact C++ rule system and interchangeable C++ geometric realizations. Custom native and browser renderers/controllers use its public APIs. The bundled Three.js application displays synchronized Euclidean, spherical, and labeled port views of the same session.
 
 The initial release includes a 3×3 cube and a reference bandaged cube with the UF edge and UFR corner fused into one rigid piece. It provides explainable blocking, synchronized views, file-based definition inspection, algorithms, reproducible legal scrambles, undo/redo, and portable saved sessions.
+
+The cube presets also support an [ideal spherical realization](docs/spherical-cube.md): six overlapping face disks partition a sphere into the same center, edge, and corner regions. Choose **Geometry views → Cube + sphere** or **Sphere + diagram**. C++ verifies the disk transports against the existing definition; changing views preserves state and history.
 
 An experimental Helicopter Cube preset adds exact jumbling stops, placement-dependent blocking, a complete shape-graph verifier, and synchronized polyhedral/port-diagram realizations. Its [model specification](docs/helicopter-model.md) records the finite catalogs, geometric interpretation, external acceptance targets, and remaining independent review.
 
@@ -79,7 +81,7 @@ See [the public API guide](docs/kernel-api.md), [the independent CMake consumer]
 
 ## Authoring and data packages
 
-`packages/cube3` and `packages/bandaged` contain compact JSON source definitions, checked-in explicit compiled definitions, and separate Euclidean/diagram realization packages. Source definitions use concrete permutations of six abstract face labels, subgroup generators for prototype-position stabilizers, prototype pieces, and a directed operation prototype. C++ validates the stabilizers, enumerates position cosets, and generates finite placements and conjugated operations with their selected-cell guards and source provenance.
+`packages/cube3` and `packages/bandaged` contain compact JSON source definitions, checked-in explicit compiled definitions, and separate Euclidean, spherical, and diagram realization packages. Source definitions use concrete permutations of six abstract face labels, subgroup generators for prototype-position stabilizers, prototype pieces, and a directed operation prototype. C++ validates the stabilizers, enumerates position cosets, and generates finite placements and conjugated operations with their selected-cell guards and source provenance.
 
 Finite definitions can also be supplied explicitly. The native format has piece types, full placement keys, port attachments, cell footprints, directed transport tables, exact mechanism guards/updates, and a home-placement goal. Registered mechanism updates must have exact guarded inverses. Schemas are in `schemas/`; semantic references, occupancy, transport bijections, and inverses are checked by C++.
 
@@ -129,11 +131,11 @@ Then run the checks sequentially:
 npm run check
 ```
 
-Native checks exercise hashes, canonical compilation, symmetry covariance, inverses, hidden variables, blocked paths, seeded walks, replay, realization endpoints and mesh continuity, and the exhaustive Helicopter shape graph. Vitest compares native and WASM definitions, witnesses, state digests, Helicopter meshes and sampled frames, portable fixtures, exact serialization, and schemas. Kernel-package checks build an external installed native consumer and load a copied WASM package in Node, comparing all three puzzles. Playwright serves the production bundle on port 4173 and checks both views, algorithms, jumbling and bandaging feedback, camera independence, picking, imports, saves, context/resource replacement, and the independent Canvas client with one worker. Run `npm run build` before running browser tests individually.
+Native checks exercise hashes, canonical compilation, symmetry covariance, inverses, hidden variables, blocked paths, seeded walks, replay, realization endpoints and mesh continuity, spherical disk membership and radial meshes, and the exhaustive Helicopter shape graph. Vitest compares native and WASM definitions, witnesses, state digests, Helicopter and spherical meshes and sampled frames, portable fixtures, exact serialization, and schemas. Kernel-package checks build an external installed native consumer and load a copied WASM package in Node, comparing all three puzzles and both spherical packages. Playwright serves the production bundle on port 4173 and checks synchronized views, spherical view switching, algorithms, jumbling and bandaging feedback, camera independence, picking, imports, saves, context/resource replacement, and the independent Canvas client with one worker. Run `npm run build` before running browser tests individually.
 
 Dependencies are pinned in `package-lock.json`. The nlohmann JSON header is vendored with its MIT license so CMake builds do not need a network dependency fetch. Build and test outputs are ignored by Git.
 
-Independent review of the Helicopter model, spherical cube realizations, Bagua, symbolic placement domains, richer goals, solvers, visual editors, exports, and shared sessions follow the verification gates in [the architecture proposal](twisty_puzzle_simulator_architecture.md).
+Independent review of the Helicopter model, Bagua, symbolic placement domains, richer goals, solvers, visual editors, exports, and shared sessions follow the verification gates in [the architecture proposal](twisty_puzzle_simulator_architecture.md). Further portability hardening is deferred while the original puzzle and realization roadmap takes priority.
 
 ## Acknowledgments
 

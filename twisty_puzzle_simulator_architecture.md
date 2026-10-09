@@ -438,11 +438,13 @@ Face-turn operations select abstract face-layer cells. A composite piece partici
 
 The initial fixture must allow U and F and block R. After a legal U quarter-turn, R must be allowed. Add fixtures for inverse restoration and later configurations that move the blocking relation. Both the Euclidean view and port diagram bind every constituent visual fragment to the composite identity, so blocking feedback highlights the whole rigid piece.
 
-### Later spherical disk realization
+### Spherical disk realization
 
 Use the six abstract face labels to select six disk centers in the proposed octahedral arrangement on S2. Bind abstract ports to spherical regions. A logical piece may be represented by several regions. Each directed operation has a corresponding surface motion supplied by this realization.
 
 The radii, region boundaries, attachment map, and operation animations are additional geometric data. An octahedral arrangement alone does not establish that the surface mechanism realizes the cube: verify that every primitive move transports the regions according to the same abstract port action and satisfies the endpoint contract.
+
+The implemented `cube-spherical` realization uses six equal 60° caps centered on the signed coordinate axes. Disk membership defines six center, twelve edge, and eight corner regions; dominant face coordinates divide them into 54 labeled ports. C++ constructs tessellated spherical patches, maps existing cube placements to their frames, and rotates each selected disk through its directed quarter turn. Registration verifies every participating catalog placement and primitive port transport. Featureless center patches have fourfold symmetry, allowing unchanged core placements while their surfaces turn. Native mesh-continuity checks cover this quotient explicitly. See [the spherical specification](docs/spherical-cube.md).
 
 | Shared | Euclidean data | Spherical data |
 | --- | --- | --- |
@@ -600,7 +602,7 @@ Use CTest for C++ checks, Vitest for the TypeScript adapter and presentation log
 
 Milestones 1 through 6 define the first release. Add portable fixtures and structured diagnostics as each subsystem appears; they are release requirements, not a final polish step.
 
-The clarified portable-kernel requirement makes Milestone 7 the immediate delivery gate before further puzzle/realization expansion. After its initial implementation, strengthen consumer conformance and destination-platform CI as part of API upkeep. The public kernel owns both the abstract and geometric layers while preserving their internal boundary.
+Milestone 7's portable-kernel foundation is implemented. The project owner's current priority is the spherical cube goal in the original roadmap; further consumer-conformance and destination-platform CI work is deferred. New realizations continue to use the public kernel, which owns both the abstract and geometric layers while preserving their internal boundary.
 
 ### Headless command surface
 
@@ -611,7 +613,7 @@ The native CLI provides `compile`, `validate`, `inspect`, `run`, `scramble`, `re
 After the first release, follow this order:
 
 1. Specify and independently review one real jumbling puzzle's exact placements, guards, inverse behavior, and blocked-state fixtures. Integrate it only after that model passes headless validation. Introduce a symbolic backend only if the model establishes a concrete need.
-2. Implement the spherical cube realization. Verify every primitive's port transport and endpoint agreement against the shared cube definition. Treat physical mechanism fidelity as a separate claim requiring additional evidence.
+2. Implement the spherical cube realization (now implemented). Verify every primitive's port transport and endpoint agreement against the shared cube definition. Treat physical mechanism fidelity as a separate claim requiring additional evidence.
 3. Add Bagua and broader authoring improvements, reusing the same rule and realization boundaries. Its rule model and fixtures require their own review.
 4. Add branching history, solvers, state-graph analysis, variant/visual editors, KPuzzle interoperability, deterministic export, and shared sessions once their foundations are reliable. S3 and H3 require dedicated geometry/projection design.
 
@@ -659,7 +661,7 @@ The browser includes a Helicopter preset, phase-appropriate grip controls, synch
 
 Runtime occupancy uses definition-local resource indices while canonical data retains abstract names. A session caches its snapshot at the current revision, invalidating it through the monotonic revisions already used by edits and loads. Compiled definitions validate once when constructing a session, and both geometric interpreters share its immutable definition through C++ ownership. Geometric validation still runs separately for each realization. These optimizations reduce repeated CPU work and allocation during Helicopter input and loading without relaxing rule validation or adding geometry to the core.
 
-Independent human review remains necessary before promoting this experimental model to a reviewed reference. Rendered shapes use ideal polyhedra and cosmetic clearances; manufactured mechanism fidelity would require separate evidence. No symbolic domain was required. The next planned implementation is the spherical cube realization after the jumbling model's review gate.
+Independent human review remains necessary before promoting this experimental model to a reviewed reference. Rendered shapes use ideal polyhedra and cosmetic clearances; manufactured mechanism fidelity would require separate evidence. No symbolic domain was required. The project owner prioritized the independent spherical cube milestone while Helicopter retains its experimental designation.
 
 ### Portable kernel foundation (9 October 2026)
 
@@ -667,7 +669,17 @@ The clarified delivery target includes both abstract and geometric layers as a p
 
 Installed native and copied WASM consumers outside the source tree agree on snapshots, scenes, and endpoint transforms for all three puzzles. The independent Canvas renderer/controller consumes only kernel-package modules and verifies picking, commands, inverse algorithms, and history in a browser. The production build, three native checks, nine unit tests, the external package checks, and ten browser scenarios pass. Builds used one job for changed C++ code and one browser worker; no memory-limit or out-of-memory events occurred. Dockerfile and puzzle semantic digests are unchanged.
 
-The next portability work strengthens adapter conformance and destination-platform CI. Additional language bindings and a common C ABI are separate planned extensions. The existing spherical/Bagua roadmap continues after this kernel delivery foundation and the relevant model-review gates.
+Further adapter conformance and destination-platform CI are deferred at the project owner's request. Additional language bindings and a common C ABI are separate planned extensions. The spherical/Bagua roadmap continues using the existing kernel foundation and the relevant model-review gates.
+
+### Spherical cube delivery (9 October 2026)
+
+The C++ geometric interpreter now supplies a six-disk spherical realization for the existing cube and bandaged definitions. Eight shared mesh assets and 108 visual parts cover their 54 ports and dark backing surfaces. Registration verifies all participating catalog placements against every directed primitive, including selected-disk membership, port action, and proper target frames. Spherical cuts and visual clearances stay in the realization package; abstract definitions and semantic digests are unchanged.
+
+The reference application offers Cube + diagram, Sphere + diagram, and Cube + sphere. Switching pairs preserves logical state, revision, history, selection, and cameras associated with each realization. Saved presentation restores the view pair and its cameras. Three.js consumes the existing C++ asset, motion, and hit-binding API; the public kernel advertises the additional realization without a buffer-version change.
+
+The verification gate includes independent native checks of disk membership, coverage, normals, winding, shell-preserving motion, stationary fragments, inverse behavior, and pre-endpoint mesh continuity. Native/WASM parity covers spherical assets and sampled frames; browser scenarios cover picking, synchronized moves, bandaging, pair switching, and save/load. The surface model establishes the cube port action; physical thickness, hardware, and continuous collision certification remain separate work. Bagua is the next puzzle expansion in the original roadmap and requires an explicit model and reviewed fixtures first.
+
+`npm run check` passes the production build, four native tests, eleven unit tests, installed/copied native/WASM consumers (including both spherical packages), and twelve browser scenarios. The native spherical check also bounds each colored triangle outside the backing shell and rejects valid abstract moves that select only part of a face disk. Changed C++/WASM code was built with one job and browser tests with one worker; no cgroup memory-limit or out-of-memory events occurred. Dockerfile remains unchanged.
 
 ### References
 

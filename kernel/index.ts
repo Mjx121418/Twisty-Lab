@@ -37,6 +37,7 @@ export type Result = {
 };
 export type MeshAsset = {
   id: string; positionOffset: number; vertexCount: number; indexOffset: number; indexCount: number;
+  rotationSymmetryOrder?: number;
 };
 export type VisualPart = {
   visualPartId: string; pieceId: string; portId?: string; meshAssetId: string;
@@ -45,6 +46,8 @@ export type VisualPart = {
 export type SceneDescriptor = {
   sceneId: string; realizationId: string; definitionDigest: string; requiredCapabilities: string[];
   meshAssets: MeshAsset[]; visualParts: VisualPart[]; diagram: boolean;
+  ambientSpace?: 'R3' | 'S2'; sphereRadius?: number; diskAngleDegrees?: number; fidelity?: string;
+  diskCenters?: Record<string, [number, number, number]>; surfaceTransportVerified?: boolean;
 };
 export type HitBinding = {
   status: string; pieceId?: string; portId?: string; operationCandidates?: Request[];
@@ -58,7 +61,7 @@ export type CompiledDefinition = {
   symmetry?: { members?: number[][]; positionOrbits?: Record<string, { representative: string; stabilizer: number[][]; positions: { id: string }[] }> }; cells: string[]; provenance: unknown;
 };
 export type Realization = {
-  schemaVersion: number; id: string; kind: 'cube-euclidean' | 'cube-port-diagram' | 'polyhedral-euclidean' | 'polyhedral-port-diagram';
+  schemaVersion: number; id: string; kind: 'cube-euclidean' | 'cube-port-diagram' | 'cube-spherical' | 'polyhedral-euclidean' | 'polyhedral-port-diagram';
   compatibleDefinitionDigest: string; requiredCapabilities: string[];
 };
 

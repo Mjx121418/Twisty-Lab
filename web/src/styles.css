@@ -44,6 +44,8 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) 324px; gap: 24px; pa
 .workspace-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
 .workspace-toolbar select { background: transparent; padding: 5px 26px 5px 0; font-size: 20px; font-weight: 600; border: 0; margin-top: 4px; letter-spacing: -.5px; }
 .workspace-toolbar select option { background: #1b252d; }
+.view-options { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 12px; }
+.workspace-toolbar .realization-choice select { font-size: 12px; letter-spacing: 0; font-weight: 500; padding: 5px 20px 5px 0; }
 .segmented { display: flex; background: #161e25; padding: 3px; border: 1px solid #2c3b43; border-radius: 8px; }
 .segmented button { padding: 7px 10px; background: transparent; border: 0; color: #93a8af; font-size: 11px; }
 .segmented button[aria-pressed='true'] { color: #cceadd; background: #2a3c3e; }

@@ -14,7 +14,8 @@ inline Json kernel_info() {
           {"frameBufferVersion", 1},
           {"ruleModules", {"finite-footprint@1", "finite-placement-relations@1"}},
           {"realizationKinds",
-           {"cube-euclidean", "cube-port-diagram", "polyhedral-euclidean", "polyhedral-port-diagram"}},
+           {"cube-euclidean", "cube-port-diagram", "cube-spherical", "polyhedral-euclidean",
+            "polyhedral-port-diagram"}},
           {"geometryCapabilities", {"triangle-meshes", "rigid-transforms"}}};
 }
 } // namespace twisty

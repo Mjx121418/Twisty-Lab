@@ -21,6 +21,7 @@
       "enum": [
         "cube-euclidean",
         "cube-port-diagram",
+        "cube-spherical",
         "polyhedral-euclidean",
         "polyhedral-port-diagram"
       ]
@@ -113,7 +114,13 @@
     },
     "fidelity": {
       "type": "string"
-    }
+    },
+    "radius": {"type": "number", "exclusiveMinimum": 0, "maximum": 10},
+    "diskAngleDegrees": {"type": "number", "minimum": 55, "maximum": 85},
+    "angularSegments": {"type": "integer", "minimum": 16, "maximum": 128, "multipleOf": 4},
+    "radialSegments": {"type": "integer", "minimum": 2, "maximum": 12},
+    "portInset": {"type": "number", "minimum": 0, "exclusiveMaximum": 0.25},
+    "surfaceLift": {"type": "number", "exclusiveMinimum": 0}
   },
   "$defs": {
     "point": {
@@ -172,6 +179,10 @@
     }
   },
   "allOf": [
+    {
+      "if": {"properties": {"kind": {"const": "cube-spherical"}}},
+      "then": {"required": ["radius", "diskAngleDegrees", "angularSegments", "radialSegments", "portInset", "surfaceLift"]}
+    },
     {
       "if": {
         "properties": {

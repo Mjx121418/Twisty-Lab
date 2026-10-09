@@ -91,11 +91,12 @@ Geometry::Geometry(std::shared_ptr<const Definition> definition, const std::stri
     throw DiagnosticError("realization.digest_mismatch", "/compatibleDefinitionDigest",
                           "Realization is not compatible with the exact definition.");
   const auto kind = realization.at("kind").get<std::string>();
-  if (kind != "cube-euclidean" && kind != "cube-port-diagram" && kind != "polyhedral-euclidean" &&
-      kind != "polyhedral-port-diagram")
+  if (kind != "cube-euclidean" && kind != "cube-port-diagram" && kind != "cube-spherical" &&
+      kind != "polyhedral-euclidean" && kind != "polyhedral-port-diagram")
     throw DiagnosticError("realization.unsupported", "/kind", "Unknown realization kind.");
   diagram_ = kind.ends_with("port-diagram");
   catalog_ = kind.starts_with("polyhedral-");
+  spherical_ = kind == "cube-spherical";
   if (!catalog_) {
     for (const auto &piece : definition_->pieces)
       for (const auto &[_, label] : piece.labels)
@@ -113,6 +114,13 @@ Geometry::Geometry(std::shared_ptr<const Definition> definition, const std::stri
             {"diagram", diagram_}};
   if (catalog_) {
     build_catalog(realization);
+    moving_.resize(definition_->pieces.size(), false);
+    transforms_.resize(parts_.size() * 16);
+    sample(0);
+    return;
+  }
+  if (spherical_) {
+    build_spherical(realization);
     moving_.resize(definition_->pieces.size(), false);
     transforms_.resize(parts_.size() * 16);
     sample(0);
@@ -174,6 +182,8 @@ Geometry::Geometry(std::shared_ptr<const Definition> definition, const std::stri
   sample(0);
 }
 std::array<double, 16> Geometry::resting(const Part &part, const State &state) const {
+  if (spherical_)
+    return spherical_frames_[part.frame_index][state.placement_of[part.piece]];
   if (catalog_)
     return catalog_resting(part, state);
   const auto &piece = definition_->pieces[part.piece];

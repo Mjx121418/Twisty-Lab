@@ -23,10 +23,16 @@ try {
   const manifest = JSON.parse(await readFile(join(javascript, 'package.json'), 'utf8'));
   assert.equal(info.apiVersion, 1); assert.equal(info.frameBufferVersion, 1);
   assert.equal(info.version, manifest.version);
-  for (const [puzzle, algorithm, firstMove] of [['cube3', "R U R' U'", 'U'], ['bandaged', 'U R', 'U'], ['helicopter', 'UF_ab UL_af', 'UF_ab']]) {
+  for (const [puzzle, algorithm, firstMove, kind] of [
+    ['cube3', "R U R' U'", 'U', 'cube-port-diagram'],
+    ['bandaged', 'U R', 'U', 'cube-port-diagram'],
+    ['helicopter', 'UF_ab UL_af', 'UF_ab', 'helicopter-port-diagram'],
+    ['cube3', 'U R F D L B', 'U', 'cube-spherical'],
+    ['bandaged', 'U R', 'U', 'cube-spherical'],
+  ]) {
     const directory = join(javascript, 'examples/canvas/data', puzzle);
     const source = await readFile(join(directory, 'definition.json'), 'utf8');
-    const realizationPath = join(directory, `${puzzle === 'helicopter' ? 'helicopter' : 'cube'}-port-diagram.json`);
+    const realizationPath = join(directory, `${kind}.json`);
     const realization = await readFile(realizationPath, 'utf8');
     const session = new KernelSession(module, source);
     const geometry = module.createGeometry(session.native, realization);
@@ -67,7 +73,7 @@ try {
       } finally { restored.dispose(); }
       const part = reference.scene.visualParts[0];
       assert.equal(JSON.parse(geometry.bindHitJSON(part.visualPartId)).pieceId, part.pieceId);
-      console.log(`Portable native/WASM consumers agree: ${puzzle}`);
+      console.log(`Portable native/WASM consumers agree: ${puzzle} / ${kind}`);
     } finally { geometry.delete(); session.dispose(); }
   }
 } finally { await rm(temporary, { recursive: true, force: true }); }

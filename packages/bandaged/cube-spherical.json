@@ -1,0 +1,17 @@
+{
+  "angularSegments": 64,
+  "compatibleDefinitionDigest": "3049956cd3afa29ec7a380660aaba3a8997794ee71de5ae13c6dd950d3e7d698",
+  "diskAngleDegrees": 60,
+  "fidelity": "spherical-surface-model",
+  "id": "bandaged-cube-spherical-v1",
+  "kind": "cube-spherical",
+  "portInset": 0.04,
+  "radialSegments": 5,
+  "radius": 2.05,
+  "requiredCapabilities": [
+    "triangle-meshes",
+    "rigid-transforms"
+  ],
+  "schemaVersion": 1,
+  "surfaceLift": 0.02
+}

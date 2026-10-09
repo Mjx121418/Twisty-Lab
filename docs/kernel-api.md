@@ -107,6 +107,8 @@ Create a C++ `Geometry` from the immutable definition pointer and a compatible r
 
 The public `SceneDescriptor`, `MeshAsset`, `VisualPart`, and `HitBinding` TypeScript types describe the wire data. Check `requiredCapabilities` against your renderer before constructing drawing resources. Current capabilities are `triangle-meshes` and `rigid-transforms`. The `diagram` flag identifies flat diagrams. Material bindings are symbolic labels; the renderer chooses colors, lighting, fonts, and selection/blocking styles.
 
+`kernelInfoJSON()` also advertises the `cube-spherical` realization. Its optional scene metadata identifies `ambientSpace: "S2"`, the six `diskCenters`, `sphereRadius`, `diskAngleDegrees`, `fidelity`, and `surfaceTransportVerified`. Mesh assets may declare `rotationSymmetryOrder`; featureless spherical centers use order four. These additive descriptors use the same buffer format and rendering capabilities as other realizations. Custom clients pass a compatible `cube-spherical.json` into the existing geometry constructor; the packaged example data includes both reference cube realizations. See [the spherical construction](spherical-cube.md) for its geometric verification and surface-model scope.
+
 Buffer version 1:
 
 - Positions and normals are packed `Float32` triples. `positionOffset` is an offset in scalar elements, and `vertexCount` counts vertices. Position and normal slices have the same offsets and lengths.
@@ -130,4 +132,4 @@ python3 -m http.server 8080 --directory build/kernel
 
 Open `/examples/canvas/` on that server. The ordinary production build also includes the example at `/kernel/examples/canvas/` for browser checks. `check:kernel` installs the native libraries, builds an external consumer, copies the WASM package to a temporary location without repository imports, and compares states, scenes, and endpoints for all three puzzles. Browser checks exercise the independent renderer/controller and verify that it loads only kernel-package modules.
 
-The next portability steps are a renderer-neutral adapter conformance suite, broader destination-platform CI, and additional language bindings when requested. A common C ABI, package-registry publication, worker orchestration, and dynamic native plugin loading are separate deliverables. The current portable API already supports custom native and browser renderers/controllers without changing the puzzle implementation.
+Further portability work is deferred in favor of the original puzzle and realization roadmap. A renderer-neutral adapter conformance suite, broader destination-platform CI, and additional language bindings remain possible later steps. A common C ABI, package-registry publication, worker orchestration, and dynamic native plugin loading are separate deliverables. The current portable API already supports custom native and browser renderers/controllers without changing the puzzle implementation.

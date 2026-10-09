@@ -4,8 +4,10 @@ import cubeSource from '../../packages/cube3/source.json?raw';
 import bandageSource from '../../packages/bandaged/source.json?raw';
 import cubeRealization from '../../packages/cube3/cube-euclidean.json';
 import cubeDiagram from '../../packages/cube3/cube-port-diagram.json';
+import cubeSphere from '../../packages/cube3/cube-spherical.json';
 import bandageRealization from '../../packages/bandaged/cube-euclidean.json';
 import bandageDiagram from '../../packages/bandaged/cube-port-diagram.json';
+import bandageSphere from '../../packages/bandaged/cube-spherical.json';
 import helicopterSource from '../../packages/helicopter/definition.json?raw';
 import helicopterRealization from '../../packages/helicopter/helicopter-euclidean.json';
 import helicopterDiagram from '../../packages/helicopter/helicopter-port-diagram.json';
@@ -13,12 +15,19 @@ import { KernelSession, loadRuntime, type Realization, type Result, type Snapsho
 import { RenderView } from './renderer';
 
 const presets = [
-  { id: 'cube3', label: '3 × 3 cube', source: cubeSource, realizations: [cubeRealization, cubeDiagram] },
-  { id: 'bandaged-uf-ufr', label: 'Bandaged cube · UF + UFR', source: bandageSource, realizations: [bandageRealization, bandageDiagram] },
-  { id: 'helicopter', label: 'Helicopter Cube · jumbling', source: helicopterSource, realizations: [helicopterRealization, helicopterDiagram] },
+  { id: 'cube3', label: '3 × 3 cube', source: cubeSource, realizations: [cubeRealization, cubeDiagram], spherical: cubeSphere },
+  { id: 'bandaged-uf-ufr', label: 'Bandaged cube · UF + UFR', source: bandageSource, realizations: [bandageRealization, bandageDiagram], spherical: bandageSphere },
+  { id: 'helicopter', label: 'Helicopter Cube · jumbling', source: helicopterSource, realizations: [helicopterRealization, helicopterDiagram], spherical: undefined },
 ];
 type Layout = 'both' | 'cube' | 'diagram';
+type ViewPair = 'cube-diagram' | 'sphere-diagram' | 'cube-sphere';
 type Inspector = 'pieces' | 'history' | 'definition';
+
+function realizationPair(preset: typeof presets[number], pair: ViewPair): Realization[] {
+  const [cube, diagram] = preset.realizations;
+  return (preset.spherical && pair === 'sphere-diagram' ? [preset.spherical, diagram] :
+    preset.spherical && pair === 'cube-sphere' ? [cube, preset.spherical] : [cube, diagram]) as Realization[];
+}
 
 function download(filename: string, content: string): void {
   const url = URL.createObjectURL(new Blob([content], { type: 'application/json' }));
@@ -32,6 +41,7 @@ export function App() {
   const [generation, setGeneration] = useState(0);
   const [sourceId, setSourceId] = useState('cube3');
   const [layout, setLayout] = useState<Layout>('both');
+  const [viewPair, setViewPair] = useState<ViewPair>('cube-diagram');
   const [inspector, setInspector] = useState<Inspector>('pieces');
   const [algorithm, setAlgorithm] = useState("R U R' U'");
   const [policy, setPolicy] = useState('interactive');
@@ -48,6 +58,8 @@ export function App() {
   const [lastScramble, setLastScramble] = useState('');
   const kernel = useRef<KernelSession | undefined>(undefined);
   const views = useRef<RenderView[]>([]);
+  const cameraCache = useRef(new Map<string, unknown>());
+  const pendingCameras = useRef<Map<string, unknown> | undefined>(undefined);
   const cubeHost = useRef<HTMLDivElement>(null);
   const diagramHost = useRef<HTMLDivElement>(null);
   const progressBar = useRef<HTMLDivElement>(null);
@@ -61,12 +73,16 @@ export function App() {
   const animationFrame = useRef(0);
   const epoch = useRef(0);
   speedRef.current = duration;
+  const activePreset = presets.find((item) => item.realizations[0].compatibleDefinitionDigest === snapshot?.definitionDigest);
+  const effectivePair = activePreset?.spherical ? viewPair : 'cube-diagram';
 
   function install(runtime: MainModule, source: string, id: string): void {
     const next = new KernelSession(runtime, source);
     const initial = next.snapshot();
     kernel.current?.dispose(); kernel.current = next;
     commands.current = [];
+    cameraCache.current = new Map();
+    pendingCameras.current = undefined;
     setSourceId(id); setSnapshot(initial); setVisualDigest(initial.stateDigest);
     setSelected(undefined); setEvidence(undefined); setLastScramble(''); setVisualError('');
     setAlgorithm(initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' : "R U R' U'");
@@ -90,22 +106,31 @@ export function App() {
     const preset = presets.find((item) => item.realizations[0].compatibleDefinitionDigest === session.definition.definitionDigest);
     if (!preset) { setVisualError('No compatible realization is installed for this definition. The headless engine and inspector remain available.'); return; }
     const created: RenderView[] = [];
+    const realizations = realizationPair(preset, viewPair);
+    const cameras = cameraCache.current;
+    const restoredCameras = pendingCameras.current;
+    pendingCameras.current = undefined;
     try {
       for (let i = 0; i < 2; i++) {
         const host = i === 0 ? cubeHost.current : diagramHost.current;
-        const view = new RenderView(module, host, session.native, preset.realizations[i] as Realization, setSelected, () => !busyRef.current);
+        const view = new RenderView(module, host, session.native, realizations[i], setSelected, () => !busyRef.current);
+        view.restoreCamera(restoredCameras?.get(realizations[i].id) ?? cameras.get(realizations[i].id));
         view.setState(session.stateText()); created.push(view);
       }
       views.current = created;
       setVisualError('');
     } catch (error: unknown) {
       for (const view of created) view.dispose();
+      created.length = 0;
       setVisualError(`Visual limitation: ${String(error)}`);
     }
-    return () => { for (const view of created) view.dispose(); views.current = []; };
-  }, [module, generation]);
+    return () => {
+      created.forEach((view, index) => { cameras.set(realizations[index].id, view.cameraState()); view.dispose(); });
+      views.current = [];
+    };
+  }, [module, generation, viewPair]);
 
-  useEffect(() => { for (const view of views.current) view.highlight(selected, evidence?.implicatedPieces ?? []); }, [selected, evidence, generation]);
+  useEffect(() => { for (const view of views.current) view.highlight(selected, evidence?.implicatedPieces ?? []); }, [selected, evidence, generation, viewPair]);
 
   async function animate(result: Result): Promise<void> {
     const token = epoch.current;
@@ -201,9 +226,14 @@ export function App() {
     if (result.status !== 'Loaded') { setEvidence(result); return; }
     setSnapshot(kernel.current.snapshot()); setVisualDigest(kernel.current.snapshot().stateDigest); setEvidence(undefined);
     for (const view of views.current) view.setState(kernel.current.stateText());
-    const presentation = JSON.parse(text).presentation as { layout?: Layout; cameras?: unknown[] } | undefined;
+    const presentation = JSON.parse(text).presentation as { layout?: Layout; viewPair?: ViewPair; cameras?: unknown[] } | undefined;
     if (presentation?.layout && ['both', 'cube', 'diagram'].includes(presentation.layout)) setLayout(presentation.layout);
-    if (Array.isArray(presentation?.cameras)) presentation.cameras.forEach((camera, index) => views.current[index]?.restoreCamera(camera));
+    const pair = presentation?.viewPair && ['cube-diagram', 'sphere-diagram', 'cube-sphere'].includes(presentation.viewPair) ? presentation.viewPair : viewPair;
+    if (Array.isArray(presentation?.cameras)) {
+      if (pair === viewPair) presentation.cameras.forEach((camera, index) => views.current[index]?.restoreCamera(camera));
+      else if (activePreset) pendingCameras.current = new Map(realizationPair(activePreset, pair).map((realization, index) => [realization.id, presentation.cameras![index]]));
+    }
+    setViewPair(pair);
   }
 
   const definition = kernel.current?.definition;
@@ -226,7 +256,7 @@ export function App() {
         <div className="top-actions">
           <button onClick={() => sourceInput.current?.click()} disabled={!snapshot || busy}>Import definition</button>
           <button onClick={() => sessionInput.current?.click()} disabled={!snapshot || busy}>Open session</button>
-          <button className="primary" disabled={!snapshot || busy} onClick={() => download(`${snapshot!.puzzleId}-session.json`, kernel.current!.save({ layout, cameras: views.current.map((view) => view.cameraState()) }))}>Save session ↗</button>
+          <button className="primary" disabled={!snapshot || busy} onClick={() => download(`${snapshot!.puzzleId}-session.json`, kernel.current!.save({ layout, viewPair: effectivePair, cameras: views.current.map((view) => view.cameraState()) }))}>Save session ↗</button>
         </div>
         <input ref={sourceInput} aria-label="Import definition file" className="file-input" type="file" accept=".json,application/json" onChange={(event) => { void importSource(event.target.files?.[0]); event.target.value = ''; }} />
         <input ref={sessionInput} aria-label="Open session file" className="file-input" type="file" accept=".json,application/json" onChange={(event) => { void importSession(event.target.files?.[0]); event.target.value = ''; }} />
@@ -239,17 +269,20 @@ export function App() {
               {presets.map((preset) => <option key={preset.id} value={preset.id}>{preset.label}</option>)}
               {sourceId === 'imported' && <option value="imported">Imported definition</option>}
             </select></div>
-            <div className="segmented" aria-label="View layout">{(['both', 'cube', 'diagram'] as Layout[]).map((value) => <button key={value} aria-pressed={layout === value} onClick={() => requestLayout(value)}>{value === 'both' ? 'Both views' : value === 'cube' ? 'Cube' : 'Diagram'}</button>)}</div>
+            <div className="view-options">
+              {activePreset?.spherical && <label className="realization-choice"><span className="eyebrow">GEOMETRY VIEWS</span><select aria-label="Geometry views" value={effectivePair} disabled={busy} onChange={(event) => setViewPair(event.target.value as ViewPair)}><option value="cube-diagram">Cube + diagram</option><option value="sphere-diagram">Sphere + diagram</option><option value="cube-sphere">Cube + sphere</option></select></label>}
+              <div className="segmented" aria-label="View layout">{(['both', 'cube', 'diagram'] as Layout[]).map((value) => <button key={value} aria-pressed={layout === value} onClick={() => requestLayout(value)}>{value === 'both' ? 'Both views' : value === 'cube' ? effectivePair === 'sphere-diagram' ? 'Sphere' : 'Cube' : effectivePair === 'cube-sphere' ? 'Sphere' : 'Diagram'}</button>)}</div>
+            </div>
           </div>
 
           <div className={`views layout-${layout}`}>
             <article className={`view-panel cube-panel ${layout === 'diagram' ? 'hidden' : ''}`}>
-              <div className="view-title"><span>01 / Euclidean</span><span className="subtle">Drag to orbit · scroll to zoom</span></div>
+              <div className="view-title"><span>01 / {effectivePair === 'sphere-diagram' ? 'Spherical' : 'Euclidean'}</span><span className="subtle">Drag to orbit · scroll to zoom</span></div>
               <div ref={cubeHost} className="canvas-host" data-testid="cube-view" data-state-digest={visualDigest} />
-              <span className="view-note">Rigid bodies & bound ports</span>
+              <span className="view-note">{effectivePair === 'sphere-diagram' ? 'Six disks · one exact cube' : 'Rigid bodies & bound ports'}</span>
             </article>
             <article className={`view-panel diagram-panel ${layout === 'cube' ? 'hidden' : ''}`}>
-              <div className="view-title"><span>02 / Port diagram</span><span className="subtle">Click a port to inspect its piece</span></div>
+              <div className="view-title"><span>02 / {effectivePair === 'cube-sphere' ? 'Spherical' : 'Port diagram'}</span><span className="subtle">{effectivePair === 'cube-sphere' ? 'Drag to orbit · click a region' : 'Click a port to inspect its piece'}</span></div>
               <div ref={diagramHost} className="canvas-host" data-testid="diagram-view" data-state-digest={visualDigest} />
               <span className="view-note">Same identities. Same transition.</span>
             </article>

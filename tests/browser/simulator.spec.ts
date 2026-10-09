@@ -15,6 +15,80 @@ async function resting(page: import('@playwright/test').Page): Promise<void> {
   await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-state-digest', digest!);
 }
 
+test('runs the same cube on a sphere, preserves state across views, and restores presentation', async ({ page }) => {
+  const initial = await page.getByTestId('state-digest').textContent();
+  await page.getByLabel('Geometry views').selectOption('cube-sphere');
+  const sphere = page.getByLabel('Spherical puzzle', { exact: true });
+  await expect(sphere).toBeVisible();
+  await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-realization-id', 'cube3-cube-spherical-v1');
+  await page.screenshot({ path: 'test-results/spherical-solved.png', fullPage: true });
+  const bounds = await sphere.boundingBox();
+  await sphere.click({ position: { x: bounds!.width / 2, y: bounds!.height / 2 } });
+  await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-selected-piece', /^(corner|edge|center)\//);
+  const selected = await page.getByTestId('diagram-view').getAttribute('data-selected-piece');
+  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-selected-piece', selected!);
+  await page.getByLabel('Algorithm', { exact: true }).fill('U R F D L B');
+  await page.getByRole('button', { name: 'Play algorithm →' }).click();
+  await resting(page);
+  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--algorithm', 'U R F D L B', '--json'], { encoding: 'utf8' }));
+  await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
+  await page.getByLabel('Geometry views').selectOption('sphere-diagram');
+  await expect(page.getByTestId('cube-view').getByLabel('Spherical puzzle')).toBeVisible();
+  await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
+  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-selected-piece', selected!);
+  await page.getByRole('button', { name: 'History', exact: true }).click();
+  await expect(page.locator('.history-list')).toContainText('6 committed primitives');
+  await page.screenshot({ path: 'test-results/spherical-mixed.png', fullPage: true });
+  const downloading = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save session ↗' }).click();
+  const saved = readFileSync((await (await downloading).path())!, 'utf8');
+  const document = JSON.parse(saved);
+  expect(document.presentation.viewPair).toBe('sphere-diagram');
+  document.presentation.cameras = [
+    { position: [4, 3, 7], target: [0, 0, 0], zoom: 1.2 },
+    { position: [2, 1, 15], target: [1.5, 0, 0], zoom: 1.3 },
+  ];
+  await page.getByLabel('Geometry views').selectOption('cube-diagram');
+  await page.getByLabel('Algorithm', { exact: true }).fill("(U R F D L B)'");
+  await page.getByRole('button', { name: 'Play algorithm →' }).click();
+  await resting(page);
+  await expect(page.getByTestId('state-digest')).toHaveText(initial!);
+  await page.getByLabel('Open session file').setInputFiles({ name: 'sphere-session.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(document)) });
+  await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
+  await expect(page.getByLabel('Geometry views')).toHaveValue('sphere-diagram');
+  await resting(page);
+  const restoredDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save session ↗' }).click();
+  const restored = JSON.parse(readFileSync((await (await restoredDownload).path())!, 'utf8'));
+  for (let i = 0; i < 2; i++) {
+    expect(restored.presentation.cameras[i].zoom).toBe(document.presentation.cameras[i].zoom);
+    restored.presentation.cameras[i].position.forEach((value: number, axis: number) => expect(value).toBeCloseTo(document.presentation.cameras[i].position[axis], 6));
+  }
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+test('keeps bandage blocking and identity on the spherical surface', async ({ page }) => {
+  await page.getByLabel('Puzzle', { exact: true }).selectOption('bandaged-uf-ufr');
+  await page.getByLabel('Geometry views').selectOption('sphere-diagram');
+  await expect(page.getByLabel('Spherical puzzle')).toBeVisible();
+  const initial = await page.getByTestId('state-digest').textContent();
+  await page.getByRole('button', { name: 'Move R', exact: true }).click();
+  await expect(page.getByTestId('blocking-evidence')).toContainText('footprint.partial_overlap');
+  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-blocked-pieces', 'bandage/UF-UFR');
+  await expect(page.getByTestId('state-digest')).toHaveText(initial!);
+  await page.getByRole('button', { name: 'Select bandage/UF-UFR', exact: true }).click();
+  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-selected-piece', 'bandage/UF-UFR');
+  await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-selected-piece', 'bandage/UF-UFR');
+  await page.getByRole('button', { name: 'Move U', exact: true }).click(); await resting(page);
+  await page.getByRole('button', { name: 'Move R', exact: true }).click(); await resting(page);
+  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/bandaged/definition.json', '--algorithm', 'U R', '--json'], { encoding: 'utf8' }));
+  await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
+  await page.getByRole('button', { name: '↶ Undo' }).click(); await resting(page);
+  await page.getByRole('button', { name: '↷ Redo' }).click(); await resting(page);
+  await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
 test('executes algorithms in both views, switches layout, and restores exact state', async ({ page }) => {
   const initial = await page.getByTestId('state-digest').textContent();
   await page.getByLabel('Algorithm', { exact: true }).fill("R U R' U'");

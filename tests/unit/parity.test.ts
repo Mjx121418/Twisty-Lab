@@ -14,10 +14,14 @@ beforeAll(async () => { runtime = await createModule(); });
 afterAll(() => { for (const handle of handles) handle.delete(); });
 
 describe('native / WebAssembly parity', () => {
-  it.each(['euclidean', 'port-diagram'])('matches native Helicopter assets and sampled %s frames', (kind) => {
-    const definition = 'packages/helicopter/definition.json';
-    const realization = `packages/helicopter/helicopter-${kind}.json`;
-    const algorithm = "UF_ab UL_af (UF_ab UL_af)' UF_ad";
+  it.each([
+    ['helicopter', 'helicopter-euclidean', "UF_ab UL_af (UF_ab UL_af)' UF_ad"],
+    ['helicopter', 'helicopter-port-diagram', "UF_ab UL_af (UF_ab UL_af)' UF_ad"],
+    ['cube3', 'cube-spherical', "U R F D L B (U R F D L B)'"],
+    ['bandaged', 'cube-spherical', "U R R' U' F F'"],
+  ])('matches native %s assets and sampled %s frames', (name, kind, algorithm) => {
+    const definition = `packages/${name}/definition.json`;
+    const realization = `packages/${name}/${kind}.json`;
     const reference = JSON.parse(execFileSync('build/native/geometry_probe', [definition, realization, algorithm], { encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 }));
     const value = new runtime.Session(read(definition));
     const geometry = runtime.createGeometry(value, read(realization));
