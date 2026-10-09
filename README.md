@@ -134,3 +134,7 @@ Native checks exercise hashes, canonical compilation, symmetry covariance, inver
 Dependencies are pinned in `package-lock.json`. The nlohmann JSON header is vendored with its MIT license so CMake builds do not need a network dependency fetch. Build and test outputs are ignored by Git.
 
 Independent review of the Helicopter model, spherical cube realizations, Bagua, symbolic placement domains, richer goals, solvers, visual editors, exports, and shared sessions follow the verification gates in [the architecture proposal](twisty_puzzle_simulator_architecture.md).
+
+## Acknowledgments
+
+Most of this project's code, tests, and documentation were written by ChatGPT (OpenAI), working through Codex, with direction, requirements, and feedback from the project owner.
