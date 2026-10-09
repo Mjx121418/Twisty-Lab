@@ -4,6 +4,8 @@ A twisty puzzle simulator with one exact C++ rule system and interchangeable C++
 
 The initial release includes a 3×3 cube and a reference bandaged cube with the UF edge and UFR corner fused into one rigid piece. It provides explainable blocking, synchronized views, file-based definition inspection, algorithms, reproducible legal scrambles, undo/redo, and portable saved sessions.
 
+An experimental headless Helicopter Cube package now adds exact jumbling stops, placement-dependent blocking, and a complete shape-graph verifier. Its [model specification](docs/helicopter-model.md) records the finite catalogs, external acceptance targets, and remaining independent review and geometric integration work.
+
 ## Run locally
 
 Use the existing development container or a compatible environment with C++20, CMake 3.25+, Ninja, Emscripten 6.0.11, Node 24, and npm. Follow [AGENTS.md](AGENTS.md): the container has a 4 GB memory budget, heavy workloads run sequentially, builds use at most two jobs, and browser tests use one worker. Do not modify `Dockerfile` without an explicit user request.
@@ -62,6 +64,16 @@ Imported states are checked for declared type and occupancy invariants. This doe
 
 Finite definitions can also be supplied explicitly. The native format has piece types, full placement keys, port attachments, cell footprints, directed transport tables, exact mechanism guards/updates, and a home-placement goal. Registered mechanism updates must have exact guarded inverses. Schemas are in `schemas/`; semantic references, occupancy, transport bijections, and inverses are checked by C++.
 
+`finite-placement-relations@1` adds per-placement blocking and partial participant transports, guarded by persistent piece placements. Its resources have capacity at most one, so exclusion pairs can validate catalogs whose placements overlap. `packages/helicopter/definition.json` uses this backend with 240 labeled corner placements, 144 center placements, and 36 hidden-edge placements. The runtime definition contains no geometric data. `scripts/helicopter_model.py` derives it offline using exact arithmetic; the package check verifies reproducibility.
+
+```sh
+build/native/twisty run --definition packages/helicopter/definition.json \
+  --algorithm 'UF_ab UL_af' --policy transactional --json
+build/native/helicopter_verify
+```
+
+The letters `a` through `f` identify the six stops. The source phase has three values because the hidden edge is unchanged by a half turn. See the specification before authoring sequences. This package currently imports as a headless definition in the browser.
+
 The browser's **Import definition** accepts sources or compiled finite definitions. A definition with a matching installed realization digest is displayed in both views. Other valid definitions can be inspected and executed headlessly in the browser; missing visual support is reported separately from abstract move blocking. Visual authoring tools and arbitrary executable rule files are outside this release.
 
 Regression fixtures pin a definition digest and specify a replay prefix, request, expected outcome, and optional blocking evidence or unchanged participant. Update a fixture's semantic pin deliberately when changing its rules. Its source path is an authoring convenience, not a replacement for the digest.
@@ -95,8 +107,8 @@ Then run the checks sequentially:
 npm run check
 ```
 
-Native checks exercise hashes, canonical compilation, symmetry covariance, inverses, hidden variables, blocked paths, seeded walks, replay, and both realization endpoints. Vitest compares native and WASM definitions, witnesses, state digests, portable fixtures, exact serialization, and schemas. Playwright serves the production bundle on port 4173 and checks both views, algorithms, bandaging feedback, camera independence, picking, imports, saves, and context/resource replacement with one worker. Run `npm run build` before running browser tests individually.
+Native checks exercise hashes, canonical compilation, symmetry covariance, inverses, hidden variables, blocked paths, seeded walks, replay, both realization endpoints, and the exhaustive Helicopter shape graph. Vitest compares native and WASM definitions, witnesses, state digests, portable fixtures, exact serialization, and schemas. Playwright serves the production bundle on port 4173 and checks both views, algorithms, bandaging feedback, camera independence, picking, imports, saves, and context/resource replacement with one worker. Run `npm run build` before running browser tests individually.
 
 Dependencies are pinned in `package-lock.json`. The nlohmann JSON header is vendored with its MIT license so CMake builds do not need a network dependency fetch. Build and test outputs are ignored by Git.
 
-Jumbling, spherical cube realizations, Bagua, symbolic placement domains, richer goals, solvers, visual editors, exports, and shared sessions follow the verification gates in [the architecture proposal](twisty_puzzle_simulator_architecture.md).
+Independent review and geometric integration of the Helicopter model, spherical cube realizations, Bagua, symbolic placement domains, richer goals, solvers, visual editors, exports, and shared sessions follow the verification gates in [the architecture proposal](twisty_puzzle_simulator_architecture.md).

@@ -61,6 +61,42 @@
       "expectedStatus": "Blocked",
       "reasonCode": "footprint.partial_overlap",
       "definitionDigest": "3049956cd3afa29ec7a380660aaba3a8997794ee71de5ae13c6dd950d3e7d698"
+    },
+    {
+      "source": "packages/helicopter/definition.json",
+      "definitionDigest": "aeadf784d10d7b90ea6f8b71437a6e410f215b5f47327fa139b9dc797c1c895a",
+      "name": "Helicopter jumble stop is legal",
+      "prefix": "",
+      "operation": "UF_ab",
+      "expectedStatus": "Committed"
+    },
+    {
+      "source": "packages/helicopter/definition.json",
+      "definitionDigest": "aeadf784d10d7b90ea6f8b71437a6e410f215b5f47327fa139b9dc797c1c895a",
+      "name": "Helicopter stop guard rejects wrong source",
+      "prefix": "UF_ab",
+      "operation": "UF_ac",
+      "expectedStatus": "Blocked",
+      "reasonCode": "placement.guard",
+      "implicatedPiece": "mechanism/UF"
+    },
+    {
+      "source": "packages/helicopter/definition.json",
+      "definitionDigest": "aeadf784d10d7b90ea6f8b71437a6e410f215b5f47327fa139b9dc797c1c895a",
+      "name": "Helicopter face piece blocks a cut",
+      "prefix": "UF_ab",
+      "operation": "UR_ad",
+      "expectedStatus": "Blocked",
+      "reasonCode": "placement.blocked",
+      "implicatedPiece": "center/Ufl"
+    },
+    {
+      "source": "packages/helicopter/definition.json",
+      "definitionDigest": "aeadf784d10d7b90ea6f8b71437a6e410f215b5f47327fa139b9dc797c1c895a",
+      "name": "Helicopter second jumble stop is legal",
+      "prefix": "UF_ab",
+      "operation": "UL_af",
+      "expectedStatus": "Committed"
     }
   ]
 }

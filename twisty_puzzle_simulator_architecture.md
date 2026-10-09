@@ -597,7 +597,7 @@ After the first release, follow this order:
 3. Add Bagua and broader authoring improvements, reusing the same rule and realization boundaries. Its rule model and fixtures require their own review.
 4. Add branching history, solvers, state-graph analysis, variant/visual editors, KPuzzle interoperability, deterministic export, and shared sessions once their foundations are reliable. S3 and H3 require dedicated geometry/projection design.
 
-The named jumbling puzzle and its exact rule specification are a later design deliverable. The first-release implementation does not depend on selecting or approximating that model.
+The selected first jumbling example is now the Helicopter Cube. Its [experimental exact model specification](docs/helicopter-model.md), offline authoring tool, and headless reference package are available for independent review. The first-release cube and bandage implementation remains independently usable.
 
 ### Fixed initial decisions
 
@@ -628,6 +628,14 @@ The repository now contains the C++ core, finite symmetry compiler, session and 
 A clean native/WASM rebuild passed the CTest suite, five Vitest checks, and seven Playwright scenarios against the production browser bundle. Checks cover exact state and witness parity, symmetry covariance, inverse restoration, blocked paths, replay and checkpoints, geometric endpoints, picking, camera independence, imported definitions without visual support, semantic mismatch rejection, context restoration, and repeated puzzle replacement. Heavy workloads ran sequentially with at most two build jobs and one browser worker; observed cgroup peak memory was approximately 2.8 GB. The Dockerfile remains unchanged.
 
 This baseline implements finite domains, the capacity-one footprint rule module, exact declarative mechanism guards/updates, and home-placement goals. Prototype expansion currently targets the cube's 24-element face-label action; other finite models use explicit tables. Visual packages remain the two built-in cube realizations. The later roadmap and its independent model-verification gates still apply.
+
+### First jumbling model (9 October 2026)
+
+The experimental Helicopter Cube package uses the generic C++ `finite-placement-relations@1` backend. It declares stationary, participating, and blocked placements separately, supplies partial exact transports and persistent-piece guards, and validates capacity-one exclusion resources. All coordinates and rational rotation matrices remain in the offline authoring tool; the runtime core receives only abstract tables. The model has 80 geometric corner locations with three labeled orientations each, 144 face-center placements, and 36 hidden-edge placements distributed across twelve fixed axes.
+
+Its headless C++ shape verifier checks the same compiled tables against 654,117 oriented shapes, 28,055 rotation classes, 14,098 classes with mirrors identified, and both complete published depth distributions through depth 28. Native and WASM fixtures cover source-stop guards, face-piece blocking, inverse restoration, replay, and exchange between ordinary center orbits. See the model specification for scope and commands.
+
+This is a reviewable headless model. Independent human review and a C++ geometric realization remain the next integration gates; no Helicopter rendering claim is made. Existing cube and bandage semantic digests are preserved. No symbolic domain was required.
 
 ### References
 

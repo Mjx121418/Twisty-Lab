@@ -246,6 +246,124 @@ void test_symmetry_covariance() {
     }
   }
 }
+void test_helicopter() {
+  const auto text = read("packages/helicopter/definition.json");
+  Session session(text);
+  const auto d = session.definition();
+  check(d->pieces.size() == 44 && d->operations.size() == 180, "Helicopter pieces and stop requests");
+  check(legal_operations(*d, d->initial).size() == 60, "All five stops available on each solved grip");
+  for (const auto &op : d->operations) {
+    const auto forward = plan(*d, d->initial, op.id);
+    if (!forward.transition)
+      continue;
+    const auto reverse = plan(*d, forward.transition->after, op.inverse);
+    check(reverse.transition && reverse.transition->after == d->initial,
+          "Every solved stop has an exact inverse");
+  }
+  const auto turn = plan(*d, d->initial, "UF_ab");
+  check(turn.transition && turn.transition->actions.size() == 7,
+        "Jumble moves two corners, four centers and a hidden edge");
+  const auto wrong_phase = plan(*d, turn.transition->after, "UF_ac");
+  check(!wrong_phase.transition && wrong_phase.blocked.at("reasonCode") == "placement.guard",
+        "Wrong source stop is blocked");
+  check(session.run("UF_ab UL_af", "transactional", "0").at("status") == "Committed",
+        "Published two-step jumble is legal");
+  const auto saved = session.save();
+  session.undo(session.revision());
+  session.undo(session.revision());
+  check(session.state() == d->initial, "Undo unjumbles exactly");
+  session.load(saved);
+  check(session.save().at("logical").at("requests") == saved.at("logical").at("requests"),
+        "Jumbled history replays exactly");
+
+  // Ordinary half turns preserve four six-center orbits; the published jumble
+  // sequence returns to cube shape while transporting centers between orbits.
+  Index center_domain = 0;
+  for (Index i = 0; i < d->domains.size(); ++i)
+    if (d->domains[i].id == "center")
+      center_domain = i;
+  std::map<Index, int> orbit;
+  int count = 0;
+  for (const auto &piece : d->pieces) {
+    if (piece.type != "center" || orbit.contains(piece.home))
+      continue;
+    std::vector<Index> frontier{piece.home};
+    orbit[piece.home] = count;
+    for (std::size_t i = 0; i < frontier.size(); ++i)
+      for (const auto &op : d->operations)
+        if (op.id.ends_with("_ad") && op.roles[center_domain][frontier[i]] == 1) {
+          const auto q = op.maps[center_domain][frontier[i]];
+          if (!orbit.contains(q)) {
+            orbit[q] = count;
+            frontier.push_back(q);
+          }
+        }
+    check(frontier.size() == 6, "Each ordinary center orbit contains six placements");
+    ++count;
+  }
+  check(count == 4 && orbit.size() == 24, "Four ordinary center orbits");
+  Session exchanged(text);
+  check(exchanged.run("UF_ab DR_ab FR_ad DR_ba UF_ba", "transactional", "0").at("status") == "Committed",
+        "Published center-exchange jumble sequence is legal");
+  int crossed = 0;
+  for (Index i = 0; i < d->pieces.size(); ++i)
+    if (d->pieces[i].type == "center") {
+      check(orbit.contains(exchanged.state().placement_of[i]),
+            "Center returns to an ordinary cube placement");
+      crossed += orbit.at(exchanged.state().placement_of[i]) != orbit.at(d->pieces[i].home);
+    }
+  check(crossed == 2, "Jumble exchanges exactly two centers across ordinary orbits");
+
+  State walked = d->initial;
+  for (int i = 0; i < 80; ++i) {
+    const auto requests = legal_operations(*d, walked);
+    check(!requests.empty(), "Reachable jumble has a legal continuation");
+    const auto &id = requests.at((i * 37) % requests.size()).at("operation");
+    const auto forward = plan(*d, walked, id);
+    const auto reverse = plan(*d, forward.transition->after, d->operations[d->operation_ids.at(id)].inverse);
+    check(reverse.transition && reverse.transition->after == walked,
+          "Jumbled inverse restores labels and hidden phases");
+    walked = forward.transition->after;
+  }
+  auto invalid = d->canonical;
+  auto assignment = encode_state(*d, d->initial);
+  std::vector<std::string> corners;
+  for (const auto &piece : d->pieces)
+    if (piece.type == "corner")
+      corners.push_back(piece.id);
+  assignment["placementOf"][corners[1]] = assignment["placementOf"][corners[0]];
+  rejects([&] { decode_state(*d, assignment); }, "state.occupancy");
+  const auto &home_corner = *std::find_if(d->pieces.begin(), d->pieces.end(),
+                                          [](const Piece &piece) { return piece.type == "corner"; });
+  const auto &footprint = d->domains[home_corner.domain].placements[home_corner.home].footprint;
+  bool conflict_checked = false;
+  for (const auto &q : d->domains[center_domain].placements) {
+    for (const auto &cell : q.footprint)
+      if (cell.starts_with("exclusion/") &&
+          std::find(footprint.begin(), footprint.end(), cell) != footprint.end()) {
+        assignment = encode_state(*d, d->initial);
+        const auto &center = *std::find_if(d->pieces.begin(), d->pieces.end(),
+                                           [](const Piece &piece) { return piece.type == "center"; });
+        assignment["placementOf"][center.id] = q.key;
+        rejects([&] { decode_state(*d, assignment); }, "state.occupancy");
+        conflict_checked = true;
+        break;
+      }
+    if (conflict_checked)
+      break;
+  }
+  check(conflict_checked, "A cross-domain exclusion rejects overlapping corner and center placements");
+  auto &rule = invalid["operations"][0]["placementRules"]["corner"];
+  const auto from = rule["transports"].begin().key();
+  rule["blocked"].push_back(from);
+  rejects([&] { load_definition(invalid); }, "relation.duplicate");
+  invalid = d->canonical;
+  invalid["operations"][0]["pieceGuards"]["mechanism/UF"] = "missing";
+  rejects([&] { load_definition(invalid); }, "guard.placement");
+  invalid = d->canonical;
+  invalid["operations"][0]["selectedCells"] = Json::array();
+  rejects([&] { load_definition(invalid); }, "rule.fields");
+}
 void test_geometry() {
   for (const auto &filename : {"packages/cube3/source.json", "packages/bandaged/source.json"}) {
     Session session(read(filename));
@@ -290,6 +408,7 @@ int main() {
     test_rules_and_sessions();
     test_scramble_and_replay();
     test_symmetry_covariance();
+    test_helicopter();
     test_geometry();
     std::cout << checks << " checks passed\n";
     return 0;

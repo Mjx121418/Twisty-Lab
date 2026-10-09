@@ -25,7 +25,7 @@ export type CompiledDefinition = {
   pieceTypes: { id: string; placementDomainId: string; localPorts: string[] }[];
   placementDomains: { id: string; placements: { key: string; footprint: string[]; portAttachment: Record<string, { cell: string; attachment: string }> }[] }[];
   pieces: { id: string; type: string; homePlacement: string; portLabels: Record<string, string> }[];
-  operations: { id: string; inverse: string; family: string; selectedCells: string[]; transport: string }[];
+  operations: { id: string; inverse: string; family: string; selectedCells?: string[]; transport: string }[];
   symmetry?: { members?: number[][]; positionOrbits?: Record<string, { representative: string; stabilizer: number[][]; positions: { id: string }[] }> }; cells: string[]; provenance: unknown;
 };
 export type Realization = {

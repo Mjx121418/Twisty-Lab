@@ -14,6 +14,25 @@ beforeAll(async () => { runtime = await createModule(); });
 afterAll(() => { for (const handle of handles) handle.delete(); });
 
 describe('native / WebAssembly parity', () => {
+  it('matches Helicopter jumbling, blocking, inverse and replay records', () => {
+    const path = 'packages/helicopter/definition.json';
+    const wasm = new runtime.Session(read(path));
+    const restored = new runtime.Session(read(path));
+    try {
+      const algorithm = 'UF_ab DR_ab FR_ad DR_ba UF_ba';
+      const result = JSON.parse(wasm.runJSON(algorithm, 'transactional', '0'));
+      const reference = native(['run', '--definition', path, '--algorithm', algorithm, '--policy', 'transactional']);
+      expect(result.status).toBe('Committed');
+      expect(result.snapshot).toEqual(reference.snapshot);
+      expect(result.transitions).toEqual(reference.transitions);
+      expect(JSON.parse(restored.loadJSON(wasm.saveJSON())).status).toBe('Loaded');
+      expect(snapshot(restored).stateDigest).toBe(snapshot(wasm).stateDigest);
+      expect(JSON.parse(wasm.runJSON(`(${algorithm})'`, 'transactional', snapshot(wasm).revision)).status).toBe('Committed');
+      expect(snapshot(wasm).solved).toBe(true);
+      expect(JSON.parse(wasm.runJSON('UF_ab UR_ad', 'transactional', snapshot(wasm).revision)).reasonCode).toBe('placement.blocked');
+      expect(snapshot(wasm).solved).toBe(true);
+    } finally { wasm.delete(); restored.delete(); }
+  });
   it.each(['cube3', 'bandaged'])('matches compilation, state, scramble, and witnesses for %s', (name) => {
     const path = `packages/${name}/source.json`;
     const wasm = session(path);

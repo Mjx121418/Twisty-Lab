@@ -36,6 +36,8 @@ for name in ['cube3', 'bandaged']:
         elif json.loads(path.read_text()) != document:
             raise SystemExit(f'{path.relative_to(root)} is stale; review the change and run this script with --write.')
     print(f'{name}: {definition["definitionDigest"]}')
+subprocess.run(['python3', str(root / 'scripts/helicopter_model.py')], check=True)
+digests['helicopter'] = json.loads((root / 'packages/helicopter/definition.json').read_text())['definitionDigest']
 fixture_path = root / 'tests/fixtures/core.json'
 fixtures = json.loads(fixture_path.read_text())
 for case in fixtures['cases']:

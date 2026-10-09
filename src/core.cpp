@@ -42,14 +42,16 @@ std::shared_ptr<const Definition> load_definition(Json compiled) {
          "Only schema version 1 is supported.");
   ensure(compiled.at("kind") == "finite-definition", "definition.unsupported", "/kind",
          "Expected a finite definition.");
-  ensure(compiled.at("ruleModule") == "finite-footprint@1", "rule.unsupported", "/ruleModule",
-         "Unknown abstract rule module.");
+  ensure(compiled.at("ruleModule") == "finite-footprint@1" ||
+             compiled.at("ruleModule") == "finite-placement-relations@1",
+         "rule.unsupported", "/ruleModule", "Unknown abstract rule module.");
   ensure(compiled.at("goal").at("kind") == "home", "goal.unsupported", "/goal",
          "Only the home-placement goal is supported.");
   ensure(compiled.at("pieces").size() <= 4096 && compiled.at("placementDomains").size() <= 128,
          "definition.limit", "/", "Definition exceeds the initial finite model limits.");
   const auto claimed_digest = compiled.value("definitionDigest", std::string{});
   auto definition = std::make_shared<Definition>();
+  definition->placement_relations = compiled.at("ruleModule") == "finite-placement-relations@1";
   definition->provenance = compiled.value("provenance", Json::object());
   compiled.erase("provenance");
   compiled.erase("definitionDigest");
@@ -64,8 +66,13 @@ std::shared_ptr<const Definition> load_definition(Json compiled) {
     for (auto &q : domain["placements"])
       std::sort(q["footprint"].begin(), q["footprint"].end());
   }
-  for (auto &operation : compiled["operations"])
-    std::sort(operation["selectedCells"].begin(), operation["selectedCells"].end());
+  for (auto &operation : compiled["operations"]) {
+    if (operation.contains("selectedCells"))
+      std::sort(operation["selectedCells"].begin(), operation["selectedCells"].end());
+    if (operation.contains("placementRules"))
+      for (auto &[_, rule] : operation["placementRules"].items())
+        std::sort(rule["blocked"].begin(), rule["blocked"].end());
+  }
   definition->id = compiled.at("puzzleId").get<std::string>();
   definition->canonical = compiled;
   definition->digest = sha256(compiled.dump());
@@ -126,6 +133,7 @@ std::shared_ptr<const Definition> load_definition(Json compiled) {
     }
   }
   std::set<std::string> piece_ids;
+  std::map<std::string, Index> piece_indexes;
   for (const auto &item : compiled.at("pieces")) {
     const auto id = item.at("id").get<std::string>();
     const auto type = item.at("type").get<std::string>();
@@ -143,6 +151,7 @@ std::shared_ptr<const Definition> load_definition(Json compiled) {
            "Port labels must cover every local port.");
     definition->pieces.push_back(
         {id, type, domain, definition->domains[domain].by_key.at(home), std::move(labels)});
+    piece_indexes[id] = static_cast<Index>(definition->pieces.size() - 1);
   }
   for (const auto &item : compiled.at("operations")) {
     Operation operation;
@@ -150,7 +159,7 @@ std::shared_ptr<const Definition> load_definition(Json compiled) {
     operation.inverse = item.at("inverse").get<std::string>();
     operation.family = item.at("family").get<std::string>();
     operation.transport = item.at("transport").get<std::string>();
-    operation.cells = item.at("selectedCells").get<std::vector<std::string>>();
+    operation.cells = item.value("selectedCells", std::vector<std::string>{});
     std::set<std::string> selected;
     for (const auto &cell : operation.cells)
       ensure(cells.contains(cell) && selected.insert(cell).second, "operation.cell", operation.id,
@@ -159,28 +168,77 @@ std::shared_ptr<const Definition> load_definition(Json compiled) {
     operation.mechanism_update = item.value("mechanismUpdate", Json::object());
     ensure(operation.mechanism_guard.is_object() && operation.mechanism_update.is_object(),
            "mechanism.record", operation.id, "Mechanism guards and updates must be records.");
-    for (const auto &domain : definition->domains) {
-      const auto &map = item.at("transports").at(domain.id);
-      ensure(map.size() == domain.placements.size(), "transport.coverage", operation.id,
-             "Transport table must cover its finite domain.");
-      std::vector<Index> indexes;
-      std::set<Index> destinations;
-      for (const auto &placement : domain.placements) {
-        const auto destination = map.at(placement.key).get<std::string>();
-        ensure(domain.by_key.contains(destination), "transport.target", operation.id,
-               "Transport target is outside the domain.");
-        const auto index = domain.by_key.at(destination);
-        ensure(destinations.insert(index).second, "transport.bijection", operation.id,
-               "Transport table must be bijective.");
-        indexes.push_back(index);
-        const auto contained = std::all_of(placement.footprint.begin(), placement.footprint.end(),
-                                           [&](const auto &cell) { return selected.contains(cell); });
-        if (contained)
-          for (const auto &cell : domain.placements[index].footprint)
-            ensure(selected.contains(cell), "transport.support", operation.id,
-                   "Participating placements must remain in the selected cells.");
+    const auto piece_guards = item.value("pieceGuards", Json::object());
+    ensure(piece_guards.is_object(), "guard.record", operation.id, "Piece guards must be a record.");
+    for (const auto &[id, key] : piece_guards.items()) {
+      ensure(definition->placement_relations && piece_indexes.contains(id), "guard.piece", operation.id,
+             "Piece guard must reference a declared persistent piece in a placement-relations model.");
+      const auto piece = piece_indexes.at(id);
+      const auto &domain = definition->domains[definition->pieces[piece].domain];
+      ensure(domain.by_key.contains(key.get<std::string>()), "guard.placement", operation.id,
+             "Piece guard placement must belong to the piece domain.");
+      operation.piece_guards.emplace(piece, domain.by_key.at(key.get<std::string>()));
+    }
+    if (definition->placement_relations) {
+      ensure(!item.contains("transports") && !item.contains("selectedCells"), "rule.fields", operation.id,
+             "Placement relations use placementRules rather than selected-cell transports.");
+      const auto &rules = item.at("placementRules");
+      ensure(rules.is_object() && rules.size() == definition->domains.size(), "relation.coverage",
+             operation.id, "Placement rules must cover every declared domain.");
+      for (const auto &domain : definition->domains) {
+        const auto &rule = rules.at(domain.id);
+        std::vector<Index> maps(domain.placements.size());
+        std::vector<std::uint8_t> roles(maps.size(), 0);
+        for (Index q = 0; q < maps.size(); ++q)
+          maps[q] = q;
+        for (const auto &key : rule.at("blocked")) {
+          ensure(domain.by_key.contains(key.get<std::string>()), "relation.placement", operation.id,
+                 "Blocked placement is outside its domain.");
+          const auto q = domain.by_key.at(key.get<std::string>());
+          ensure(roles[q] == 0, "relation.duplicate", operation.id, "Duplicate placement role.");
+          roles[q] = 2;
+        }
+        for (const auto &[from, target] : rule.at("transports").items()) {
+          const auto to = target.get<std::string>();
+          ensure(domain.by_key.contains(from) && domain.by_key.contains(to), "relation.placement",
+                 operation.id, "Transport placement is outside its domain.");
+          const auto q = domain.by_key.at(from);
+          ensure(roles[q] == 0, "relation.duplicate", operation.id,
+                 "A blocked placement cannot also participate.");
+          roles[q] = 1;
+          maps[q] = domain.by_key.at(to);
+        }
+        operation.maps.push_back(std::move(maps));
+        operation.roles.push_back(std::move(roles));
       }
-      operation.maps.push_back(std::move(indexes));
+    } else {
+      ensure(!item.contains("placementRules") && !item.contains("pieceGuards"), "rule.fields", operation.id,
+             "Footprint rules do not accept placement-relation fields.");
+      ensure(item.contains("selectedCells") && item.contains("transports"), "rule.fields", operation.id,
+             "Footprint rules require selectedCells and transports.");
+      for (const auto &domain : definition->domains) {
+        const auto &map = item.at("transports").at(domain.id);
+        ensure(map.size() == domain.placements.size(), "transport.coverage", operation.id,
+               "Transport table must cover its finite domain.");
+        std::vector<Index> indexes;
+        std::set<Index> destinations;
+        for (const auto &placement : domain.placements) {
+          const auto destination = map.at(placement.key).get<std::string>();
+          ensure(domain.by_key.contains(destination), "transport.target", operation.id,
+                 "Transport target is outside the domain.");
+          const auto index = domain.by_key.at(destination);
+          ensure(destinations.insert(index).second, "transport.bijection", operation.id,
+                 "Transport table must be bijective.");
+          indexes.push_back(index);
+          const auto contained = std::all_of(placement.footprint.begin(), placement.footprint.end(),
+                                             [&](const auto &cell) { return selected.contains(cell); });
+          if (contained)
+            for (const auto &cell : domain.placements[index].footprint)
+              ensure(selected.contains(cell), "transport.support", operation.id,
+                     "Participating placements must remain in the selected cells.");
+        }
+        operation.maps.push_back(std::move(indexes));
+      }
     }
     ensure(definition->operation_ids.emplace(operation.id, static_cast<Index>(definition->operations.size()))
                .second,
@@ -204,9 +262,26 @@ std::shared_ptr<const Definition> load_definition(Json compiled) {
         ensure(opposite.mechanism_guard.contains(key) && opposite.mechanism_guard.at(key) == value,
                "inverse.mechanism", operation.id, "Unchanged mechanism guards must agree with the inverse.");
     for (Index domain = 0; domain < definition->domains.size(); ++domain)
-      for (Index q = 0; q < operation.maps[domain].size(); ++q)
+      for (Index q = 0; q < operation.maps[domain].size(); ++q) {
+        if (definition->placement_relations) {
+          const auto role = operation.roles[domain][q];
+          if (role == 2)
+            continue;
+          ensure(opposite.roles[domain][operation.maps[domain][q]] == role, "inverse.role", operation.id,
+                 "Inverse must preserve stationary and participating roles at transported placements.");
+        }
         ensure(opposite.maps[domain][operation.maps[domain][q]] == q, "inverse.transport", operation.id,
                "Declared transport inverse does not restore the placement.");
+      }
+    for (const auto &[piece, q] : operation.piece_guards) {
+      const auto domain = definition->pieces[piece].domain;
+      ensure(opposite.piece_guards.contains(piece) &&
+                 opposite.piece_guards.at(piece) == operation.maps[domain][q] &&
+                 operation.roles[domain][q] != 2,
+             "inverse.piece_guard", operation.id, "Inverse guard must require the transported guard piece.");
+    }
+    ensure(operation.piece_guards.size() == opposite.piece_guards.size(), "inverse.piece_guard", operation.id,
+           "Inverse piece guards must cover the same pieces.");
   }
   definition->initial = decode_state(*definition, compiled.at("initialState"));
   return definition;
@@ -235,8 +310,9 @@ Json validate_state(const Definition &definition, const State &state) {
     diagnostics.push_back(
         {{"reasonCode", "state.mechanism"}, {"message", "Mechanism variables must be a record."}});
   std::map<std::string, std::vector<std::string>> occupants;
-  for (const auto &cell : definition.canonical.at("cells"))
-    occupants[cell.get<std::string>()] = {};
+  if (!definition.placement_relations)
+    for (const auto &cell : definition.canonical.at("cells"))
+      occupants[cell.get<std::string>()] = {};
   for (Index i = 0; i < definition.pieces.size(); ++i) {
     const auto &piece = definition.pieces[i];
     if (state.placement_of[i] >= definition.domains[piece.domain].placements.size()) {
@@ -249,11 +325,13 @@ Json validate_state(const Definition &definition, const State &state) {
       occupants[cell].push_back(piece.id);
   }
   for (const auto &[cell, pieces] : occupants)
-    if (pieces.size() != 1)
+    if (pieces.size() > 1 || (!definition.placement_relations && pieces.empty()))
       diagnostics.push_back({{"reasonCode", "state.occupancy"},
                              {"source", cell},
                              {"implicatedPieces", pieces},
-                             {"message", "Each declared cell must have exactly one occupant."}});
+                             {"message", definition.placement_relations
+                                             ? "An exclusion cell can have at most one occupant."
+                                             : "Each declared cell must have exactly one occupant."}});
   return diagnostics;
 }
 State decode_state(const Definition &definition, const Json &json) {
@@ -301,12 +379,37 @@ Plan plan(const Definition &definition, const State &state, const std::string &i
                {"constraintId", "mechanism.guard"},
                {"implicatedPieces", Json::array()},
                {"evidence", {{"variable", key}, {"required", value}}}}};
+  for (const auto &[piece, required] : operation.piece_guards)
+    if (state.placement_of[piece] != required)
+      return {std::nullopt,
+              {{"status", "Blocked"},
+               {"reasonCode", "placement.guard"},
+               {"operationId", id},
+               {"constraintId", "placement.guard"},
+               {"implicatedPieces", Json::array({definition.pieces[piece].id})}}};
   Transition transition{id, state, state, {}};
   const std::set<std::string> selected(operation.cells.begin(), operation.cells.end());
   for (Index i = 0; i < definition.pieces.size(); ++i) {
     const auto &piece = definition.pieces[i];
     const auto from = state.placement_of[i];
     const auto &placement = definition.domains[piece.domain].placements[from];
+    if (definition.placement_relations) {
+      const auto role = operation.roles[piece.domain][from];
+      if (role == 2)
+        return {std::nullopt,
+                {{"status", "Blocked"},
+                 {"reasonCode", "placement.blocked"},
+                 {"operationId", id},
+                 {"constraintId", "placement-relation"},
+                 {"implicatedPieces", Json::array({piece.id})},
+                 {"implicatedPlacements", Json::array({placement.key})}}};
+      if (role == 1) {
+        const auto to = operation.maps[piece.domain][from];
+        transition.after.placement_of[i] = to;
+        transition.actions.push_back({i, from, to});
+      }
+      continue;
+    }
     std::vector<std::string> overlap;
     for (const auto &cell : placement.footprint)
       if (selected.contains(cell))

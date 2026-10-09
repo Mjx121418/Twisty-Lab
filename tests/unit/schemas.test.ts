@@ -25,5 +25,13 @@ it('validates shipped sources, compiled definitions, realizations, fixtures, and
       check('session', JSON.parse(session.saveJSON()));
     } finally { session.delete(); }
   }
+  const helicopterText = readFileSync('packages/helicopter/definition.json', 'utf8');
+  check('definition', JSON.parse(helicopterText));
+  const helicopter = new module.Session(helicopterText);
+  try {
+    check('state', JSON.parse(helicopter.stateJSON()));
+    expect(JSON.parse(helicopter.runJSON('UF_ab UL_af', 'transactional', '0')).status).toBe('Committed');
+    check('session', JSON.parse(helicopter.saveJSON()));
+  } finally { helicopter.delete(); }
   check('fixture', JSON.parse(readFileSync('tests/fixtures/core.json', 'utf8')));
 });

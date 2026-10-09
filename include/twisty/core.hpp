@@ -46,6 +46,9 @@ struct Operation {
   std::string transport;
   std::vector<std::string> cells;
   std::vector<std::vector<Index>> maps;
+  // Placement relations: 0 = stationary, 1 = participant, 2 = blocked.
+  std::vector<std::vector<std::uint8_t>> roles;
+  std::map<Index, Index> piece_guards;
   Json mechanism_guard = Json::object();
   Json mechanism_update = Json::object();
 };
@@ -64,6 +67,7 @@ struct Definition {
   std::vector<Operation> operations;
   std::map<std::string, Index> operation_ids;
   State initial;
+  bool placement_relations = false;
 };
 struct Action {
   Index piece;

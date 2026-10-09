@@ -6,7 +6,7 @@
   "properties": {
     "schemaVersion": {"const": 1}, "semanticsVersion": {"type": "string", "minLength": 1},
     "kind": {"const": "finite-definition"}, "puzzleId": {"$ref": "#/$defs/id"},
-    "definitionDigest": {"$ref": "#/$defs/digest"}, "ruleModule": {"const": "finite-footprint@1"},
+    "definitionDigest": {"$ref": "#/$defs/digest"}, "ruleModule": {"enum": ["finite-footprint@1", "finite-placement-relations@1"]},
     "cells": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
     "goal": {"type": "object", "required": ["kind"], "properties": {"kind": {"const": "home"}}},
     "pieceTypes": {
@@ -40,11 +40,19 @@
     },
     "operations": {
       "type": "array", "items": {
-        "type": "object", "required": ["id", "inverse", "family", "transport", "selectedCells", "transports"],
+        "type": "object", "required": ["id", "inverse", "family", "transport"],
         "properties": {
           "id": {"$ref": "#/$defs/id"}, "inverse": {"$ref": "#/$defs/id"}, "family": {"$ref": "#/$defs/id"}, "transport": {"$ref": "#/$defs/id"},
           "selectedCells": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
           "transports": {"type": "object", "additionalProperties": {"type": "object", "additionalProperties": {"$ref": "#/$defs/id"}}},
+          "pieceGuards": {"type": "object", "additionalProperties": {"$ref": "#/$defs/id"}},
+          "placementRules": {"type": "object", "additionalProperties": {
+            "type": "object", "required": ["blocked", "transports"],
+            "properties": {
+              "blocked": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+              "transports": {"type": "object", "additionalProperties": {"$ref": "#/$defs/id"}}
+            }
+          }},
           "mechanismGuard": {"type": "object", "additionalProperties": {"$ref": "#/$defs/exact"}},
           "mechanismUpdate": {"type": "object", "additionalProperties": {"$ref": "#/$defs/exact"}}
         }
@@ -52,6 +60,68 @@
     },
     "initialState": {"$ref": "#/$defs/state"}, "provenance": {"type": "object"}
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "ruleModule": {
+            "const": "finite-placement-relations@1"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "operations": {
+            "items": {
+              "required": [
+                "placementRules"
+              ],
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "transports"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "selectedCells"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "operations": {
+            "items": {
+              "required": [
+                "selectedCells",
+                "transports"
+              ],
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "placementRules"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "pieceGuards"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
   "$defs": {
     "id": {"type": "string", "minLength": 1},
     "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},

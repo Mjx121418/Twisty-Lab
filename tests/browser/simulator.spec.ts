@@ -125,6 +125,22 @@ test('imports independent type/domain IDs and named operations without visual su
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
 });
 
+test('imports the headless Helicopter model and explains jumbling blockers', async ({ page }) => {
+  await page.getByLabel('Import definition file').setInputFiles('packages/helicopter/definition.json');
+  await expect(page.getByRole('alert')).toContainText('No compatible realization');
+  await expect(page.locator('canvas')).toHaveCount(0);
+  const initial = await page.getByTestId('state-digest').textContent();
+  await page.getByRole('button', { name: 'Move UF_ab', exact: true }).click();
+  await expect(page.getByTestId('state-digest')).not.toHaveText(initial!);
+  const jumbled = await page.getByTestId('state-digest').textContent();
+  await page.getByRole('button', { name: 'Move UR_ad', exact: true }).click();
+  await expect(page.getByTestId('blocking-evidence')).toContainText('placement.blocked');
+  await expect(page.getByTestId('blocking-evidence')).toContainText('center/Ufl');
+  await expect(page.getByTestId('state-digest')).toHaveText(jumbled!);
+  await page.getByRole('button', { name: '↶ Undo' }).click();
+  await expect(page.getByTestId('state-digest')).toHaveText(initial!);
+});
+
 test('recreates views after context loss and repeated puzzle replacement', async ({ page }) => {
   const initial = await page.getByTestId('state-digest').textContent();
   const recovery = await page.locator('canvas').first().evaluate(async (canvas) => {
