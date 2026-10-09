@@ -47,6 +47,7 @@ private:
   struct Model {
     std::string id;
     std::vector<Point> vertices;
+    std::vector<Point> surface_vertices;
     std::map<std::string, Point> port_centers;
     std::map<std::string, Point> port_normals;
     std::vector<Frame> symmetries;

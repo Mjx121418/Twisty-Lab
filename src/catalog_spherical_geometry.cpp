@@ -38,7 +38,7 @@ bool inside(Point p, const Bounds &bounds, double tolerance = 1e-10) {
   return std::all_of(bounds.begin(), bounds.end(),
                      [&](const auto &b) { return dot(p, b.normal) >= b.offset - tolerance; });
 }
-// Intersect the ORIGINAL hull with the unit sphere. Visual insets must never
+// Intersect the declared surface hull with the unit sphere. Visual insets must never
 // change the cut arrangement or the abstract participant classification.
 Bounds hull(const std::vector<Point> &vertices) {
   Bounds bounds;
@@ -213,7 +213,7 @@ void Geometry::build_catalog_spherical(const Json &realization) {
                                     {"indexCount", patch.indices.size()}, {"rotationSymmetryOrder", symmetry_order}});
   };
   for (const auto &model : models_) {
-    bounds.push_back(hull(model.vertices));
+    bounds.push_back(hull(model.surface_vertices.empty() ? model.vertices : model.surface_vertices));
     for (const auto &b : bounds.back())
       ensure(std::abs(std::abs(b.offset) - threshold) < 1e-10,
              "Model cut circles disagree with the declared disk angle.");
@@ -260,7 +260,10 @@ void Geometry::build_catalog_spherical(const Json &realization) {
           continue;
         const auto range = ranges_by_grip.at(operation.family)[domain][q];
         ensure(role == 1 ? range[0] >= threshold - 1e-9 : range[1] <= threshold + 1e-9,
-               "A catalog participant or stationary section crosses the moving disk.");
+               "A catalog participant or stationary section crosses the moving disk: " +
+                   operation.id + "/" + definition_->domains[domain].placements[q].key +
+                   " (role " + std::to_string(role) + ", range " + std::to_string(range[0]) +
+                   ".." + std::to_string(range[1]) + ", threshold " + std::to_string(threshold) + ").");
       }
   }
   scene_["surfaceTransportVerified"] = true;

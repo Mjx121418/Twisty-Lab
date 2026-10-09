@@ -132,6 +132,19 @@ void Geometry::build_catalog(const Json &realization) {
     model.vertices = data.at("vertices").get<std::vector<Point>>();
     ensure(model.vertices.size() >= 4 && model.vertices.size() <= 32, id,
            "A polyhedron needs 4–32 vertices.");
+    if (catalog_spherical_ && data.contains("surfaceVertices")) {
+      const auto &surface = data.at("surfaceVertices");
+      ensure(surface.is_array() && surface.size() >= 4 && surface.size() <= 32, id,
+             "A spherical prototype needs 4–32 vertices.");
+      for (const auto &v : surface)
+        ensure(v.is_array() && v.size() == 3 &&
+                   std::all_of(v.begin(), v.end(), [](const auto &x) { return x.is_number(); }),
+               id, "A spherical prototype vertex must have three numeric coordinates.");
+      model.surface_vertices = surface.get<std::vector<Point>>();
+      for (const auto &v : model.surface_vertices)
+        for (double x : v)
+          ensure(std::isfinite(x), id, "Spherical prototype vertices must be finite.");
+    }
     Point center{};
     for (const auto &v : model.vertices) {
       for (double x : v)
@@ -239,6 +252,10 @@ void Geometry::build_catalog(const Json &realization) {
         ensure(std::any_of(model.vertices.begin(), model.vertices.end(),
                            [&](Point other) { return close(transformed(symmetry, v), other); }),
                id, "A declared symmetry must preserve the model vertices.");
+      for (const auto &v : model.surface_vertices)
+        ensure(std::any_of(model.surface_vertices.begin(), model.surface_vertices.end(),
+                           [&](Point other) { return close(transformed(symmetry, v), other); }),
+               id, "A declared symmetry must preserve the spherical prototype vertices.");
       for (const auto &[port, anchor] : model.port_centers)
         ensure(close(transformed(symmetry, anchor), anchor) &&
                    close(transformed(symmetry, model.port_normals.at(port)), model.port_normals.at(port)),

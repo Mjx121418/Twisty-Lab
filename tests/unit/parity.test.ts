@@ -22,6 +22,7 @@ describe('native / WebAssembly parity', () => {
     ['bandaged', 'cube-spherical', "U R R' U' F F'"],
     ['bagua', 'bagua-euclidean', '[[U+ R2:U+],[R R+ L-:D2]]'],
     ['bagua', 'bagua-port-diagram', "U+ R' L' D2 R L U-"],
+    ['bagua', 'bagua-spherical', "U+ R F- (U+ R F-)'"],
   ])('matches native %s assets and sampled %s frames', (name, kind, algorithm) => {
     const definition = `packages/${name}/definition.json`;
     const realization = `packages/${name}/${kind}.json`;

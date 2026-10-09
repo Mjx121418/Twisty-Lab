@@ -180,6 +180,14 @@
             "$ref": "#/$defs/point"
           }
         },
+        "surfaceVertices": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/$defs/point"
+          }
+        },
         "ports": {
           "type": "object",
           "additionalProperties": {

@@ -39,7 +39,7 @@ it('validates shipped sources, compiled definitions, realizations, fixtures, and
   } finally { helicopter.delete(); }
   const baguaText = readFileSync('packages/bagua/definition.json', 'utf8');
   check('definition', JSON.parse(baguaText));
-  for (const kind of ['euclidean', 'port-diagram']) {
+  for (const kind of ['euclidean', 'port-diagram', 'spherical']) {
     check('realization', JSON.parse(readFileSync(`packages/bagua/bagua-${kind}.json`, 'utf8')));
   }
   const bagua = new module.Session(baguaText);

@@ -1,6 +1,6 @@
 # Experimental Bagua Cube
 
-This package models the DaYan Bagua Cube with six face axes and 45° stops. It is an ideal planar mechanism, available for independent review. The reference application offers a polyhedral cube and a labeled port diagram; the original cube still opens in **Cube + sphere**.
+This package models the DaYan Bagua Cube with six face axes and 45° stops. It is an ideal planar mechanism, available for independent review. The reference application offers a polyhedral cube, a [spherical interpretation](spherical-bagua.md) and a labeled port diagram. Bagua and the original cube open in **Cube + sphere**.
 
 ## Pieces and notation
 
@@ -76,4 +76,4 @@ python3 scripts/bagua_model.py --write  # Rewrite after reviewing the model chan
 
 The exact overlap calculation takes a few minutes. Projection caches are bounded to 16 entries per hull, and the authoring process has a 384 MiB address-space ceiling. Progress reports its Linux process high-water RSS. Compact JSON keeps each document below the kernel's 4 MiB input bound. Native/WASM builds default to one job and browser tests use one worker. Fixture tests release each puzzle handle promptly. Heavy workloads run sequentially under the container's 4 GiB budget.
 
-The ideal solids omit rounding, springs, friction, hardware and manufacturing tolerances. Full independent human review and a physically observed blocked-state comparison remain open. A spherical Bagua realization is a separate later milestone.
+The ideal solids omit rounding, springs, friction, hardware and manufacturing tolerances. Full independent human review and a physically observed blocked-state comparison remain open. The spherical Bagua realization inherits the same abstract rules and review limits.

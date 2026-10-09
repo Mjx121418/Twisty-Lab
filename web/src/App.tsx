@@ -15,6 +15,7 @@ import helicopterSphere from '../../packages/helicopter/helicopter-spherical.jso
 import baguaSource from '../../packages/bagua/definition.json?raw';
 import baguaRealization from '../../packages/bagua/bagua-euclidean.json';
 import baguaDiagram from '../../packages/bagua/bagua-port-diagram.json';
+import baguaSphere from '../../packages/bagua/bagua-spherical.json';
 import { KernelSession, loadRuntime, type Realization, type Result, type Snapshot, type Transition } from './kernel';
 import { RenderView } from './renderer';
 import { pieceDestinations, type PieceDestination } from './destinations';
@@ -23,7 +24,7 @@ const presets = [
   { id: 'cube3', label: '3 × 3 cube', source: cubeSource, realizations: [cubeRealization, cubeDiagram], spherical: cubeSphere },
   { id: 'bandaged-uf-ufr', label: 'Bandaged cube · UF + UFR', source: bandageSource, realizations: [bandageRealization, bandageDiagram], spherical: bandageSphere },
   { id: 'helicopter', label: 'Helicopter Cube · jumbling', source: helicopterSource, realizations: [helicopterRealization, helicopterDiagram], spherical: helicopterSphere },
-  { id: 'bagua', label: 'Bagua Cube · experimental', source: baguaSource, realizations: [baguaRealization, baguaDiagram], spherical: undefined },
+  { id: 'bagua', label: 'Bagua Cube · experimental', source: baguaSource, realizations: [baguaRealization, baguaDiagram], spherical: baguaSphere },
 ];
 type Layout = 'both' | 'cube' | 'diagram';
 type ViewPair = 'cube-diagram' | 'sphere-diagram' | 'cube-sphere';

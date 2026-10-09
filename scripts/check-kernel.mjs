@@ -32,6 +32,7 @@ try {
     ['bandaged', 'U R', 'U', 'cube-spherical'],
     ['bagua', "U+ R' L' D2 R L U-", 'U+', 'bagua-port-diagram'],
     ['bagua', '[[U+ R2:U+],[R R+ L-:D2]]', 'U+', 'bagua-euclidean'],
+    ['bagua', "U+ R F- (U+ R F-)'", 'U+', 'bagua-spherical'],
   ]) {
     const directory = join(javascript, 'examples/canvas/data', puzzle);
     const source = await readFile(join(directory, 'definition.json'), 'utf8');

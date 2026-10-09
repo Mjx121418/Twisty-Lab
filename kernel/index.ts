@@ -60,9 +60,14 @@ export type CompiledDefinition = {
   operations: { id: string; inverse: string; family: string; selectedCells?: string[]; transport: string; pieceGuards?: Record<string, string> }[];
   symmetry?: { members?: number[][]; positionOrbits?: Record<string, { representative: string; stabilizer: number[][]; positions: { id: string }[] }> }; cells: string[]; provenance: unknown;
 };
+export type PolyhedralModel = {
+  vertices: number[][]; ports: Record<string, number[]>; symmetries: number[][];
+  surfaceVertices?: number[][];
+};
 export type Realization = {
   schemaVersion: number; id: string; kind: 'cube-euclidean' | 'cube-port-diagram' | 'cube-spherical' | 'polyhedral-euclidean' | 'polyhedral-port-diagram' | 'polyhedral-spherical';
   compatibleDefinitionDigest: string; requiredCapabilities: string[];
+  models?: Record<string, PolyhedralModel>;
 };
 
 export class KernelSession {

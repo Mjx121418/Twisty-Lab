@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from fractions import Fraction as F
 from functools import total_ordering
 from itertools import combinations, permutations, product
-from math import sqrt, gcd, lcm, pi
+from math import sqrt, gcd, lcm, pi, acos
 from pathlib import Path
 import json
 import resource
@@ -173,7 +173,10 @@ def split(parts, plane):
                 if len(divided) >= 4:
                     result.append((half, divided))
         else:
-            result.append((constraints, polyhedron))
+            # Keep the side of every cut, including redundant bounds. The
+            # spherical interpretation extends the exterior faces afterward.
+            sign = -1 if lo >= offset else 1
+            result.append((constraints + [(tuple(sign * x for x in normal), sign * offset)], polyhedron))
     return result
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -301,6 +304,7 @@ class Hull:
 class AuthoringModel:
     def __init__(self):
         self.prototypes = []
+        self.prototype_planes = []
         self.homes = []
         candidates = Gs + [mul(g, r) for g in Gs for r in Rs]
         # Construct representative center, edge, and corner blocks. Refine a
@@ -325,12 +329,13 @@ class AuthoringModel:
                     n = tuple(sj if a == j else sk if a == k else 0 for a in range(3))
                     parts = split(parts, (n, c))
             assert len(parts) == {3: 1, 1: 5, 2: 9}[sum(cell)]
-            for _, vs in parts:
+            for constraints, vs in parts:
                 found = next(((kind, g) for kind, base in enumerate(self.prototypes)
                               for g in candidates if shape(g, base) == vs), None)
                 if found is None:
                     found = len(self.prototypes), I
                     self.prototypes.append(vs)
+                    self.prototype_planes.append(constraints)
                     self.homes.append({})
                 kind, frame = found
                 for g in Gs:
@@ -498,9 +503,30 @@ class AuthoringModel:
                   'operationTracks': tracks, 'angularStops': [i * pi / 4 for i in range(8)],
                   'scale': 1.4, 'bodyInset': 0.025, 'stickerInset': 0.06, 'stickerLift': 0.0015,
                   'fidelity': 'experimental-planar-mechanism'}
-        return {f'bagua-{kind}.json': {**common, 'id': f'bagua-{kind}-v1',
-                                     'kind': f'polyhedral-{kind}'}
-                for kind in ['euclidean', 'port-diagram']}
+        documents = {f'bagua-{kind}.json': {**common, 'id': f'bagua-{kind}-v1',
+                                          'kind': f'polyhedral-{kind}'}
+                     for kind in ['euclidean', 'port-diagram']}
+        # Sample a sphere of radius 10/9 in the original cut coordinates, and
+        # extend the cube's exterior faces to its tangent planes. Normalize
+        # the result to the unit sphere: cuts become 81/200, center trims
+        # 81/100, and edge trims x+z >= 243/200. The omitted core fits
+        # strictly inside S², so those interior trims have no surface boundary.
+        factor = Q2(F(9, 10))
+        trims = {((0, -1, 0), Q2(F(-9, 10))),
+                 ((-1, 0, -1), Q2(F(-27, 20)))}
+        spherical_models = {}
+        for kind, name in enumerate(KINDS):
+            vs = vertices([(n, offset if offset == 1 else offset * factor)
+                           for n, offset in self.prototype_planes[kind] if (n, offset) not in trims])
+            spherical_models[name] = {
+                **models[name], 'surfaceVertices': [[float(x) for x in v] for v in vs]}
+        documents['bagua-spherical.json'] = {
+            **common, 'id': 'bagua-spherical-v1', 'kind': 'polyhedral-spherical',
+            'models': spherical_models, 'scale': 2.05, 'radius': 2.05,
+            'diskAngleDegrees': acos(float(h * factor)) * 180 / pi,
+            'angularSegments': 64, 'radialSegments': 5, 'portInset': 0.04,
+            'surfaceLift': 0.02, 'fidelity': 'spherical-section-with-inherited-guards'}
+        return documents
 
 
 def main():

@@ -2,7 +2,7 @@
 
 The current model passes independent geometric consistency checks and additional source-based behavior fixtures. It remains **experimental**. This record separates published expectations, model reproductions, and evidence that still needs a physical replay.
 
-The reviewed semantic digest is `9e9c2c32a01e8aa431723e69df35e59f43e5778f3b377ce3e965d555b5c2a1e6`. These checks do not change the puzzle definition, its 146 pieces, the native/WASM APIs, or the reference application's default view.
+The reviewed semantic digest is `9e9c2c32a01e8aa431723e69df35e59f43e5778f3b377ce3e965d555b5c2a1e6`. These checks pin the unchanged puzzle definition and its 146 pieces. The spherical interpretation shares that same semantic identity and public native/WASM APIs.
 
 ## Published behavior
 
@@ -58,7 +58,7 @@ build/native/twisty run --definition packages/bagua/definition.json \
 
 The saved history verifies replay. The second command reports the kernel's decision and implicated pieces; its output must be compared with the physical observation, not used to supply that observation.
 
-Spherical Bagua remains the next rendering extension. It can reuse the existing physical identities and abstract rules; these review limits also apply to that interpretation.
+The [spherical Bagua realization](spherical-bagua.md) now reuses the existing piece identities and abstract rules. Its own coverage, transport and animation checks establish the geometric interpretation; the physical review limits above continue to apply.
 
 ## Run the checks
 
