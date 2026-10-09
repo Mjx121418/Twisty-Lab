@@ -34,7 +34,7 @@ See [the deployment guide](docs/github-pages.md) for initial repository setup, l
 
 ## Using the simulator
 
-The cube presets supply face-turn buttons and face keys `U R F D L B`; hold Shift for an inverse. Choose **Helicopter Cube · jumbling** to see five destination buttons per grip's current phase; its default algorithm `UF_ab UL_af` demonstrates jumbling. Drag the Euclidean view to orbit the camera. Click a visual part or inspector entry to highlight the same persistent piece in both views. Camera changes leave the logical state unchanged.
+The cube presets supply face-turn buttons and face keys `U R F D L B`; hold Shift for an inverse. Choose **Helicopter Cube · jumbling** to see five destination buttons per grip's current phase; its default algorithm `UF_ab UL_af` demonstrates jumbling. Drag the Euclidean view to orbit the camera. Spherical views use free trackball rotation: drag or swipe to rotate along the pointer's direction, stopping on release. Scroll to zoom. The full camera orientation survives view switching and saved sessions. Click a visual part or inspector entry to highlight the same persistent piece in both views. Camera changes leave the logical state unchanged.
 
 Algorithms support inverse and half-turn suffixes, grouped repetition, commutators, conjugates, and line comments. For example:
 

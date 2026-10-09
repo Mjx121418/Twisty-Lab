@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
 import { copyFloatView, copyIndexView, type MainModule, type Realization, type SceneDescriptor } from '../../kernel/index';
 const colors: Record<string, number> = {
   U: 0xf1eee3, R: 0xe76561, F: 0x66c7a0, D: 0xf1cf67, L: 0xeea76d, B: 0x7fa5ed, body: 0x202a35, mechanism: 0x17212a,
@@ -9,7 +10,7 @@ export class RenderView {
   readonly geometry: InstanceType<MainModule['Geometry']>;
   readonly scene = new THREE.Scene();
   readonly camera: THREE.PerspectiveCamera | THREE.OrthographicCamera;
-  readonly controls: OrbitControls;
+  readonly controls: OrbitControls | TrackballControls;
   private readonly renderer: THREE.WebGLRenderer;
   private readonly descriptor: SceneDescriptor;
   private readonly meshes: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>[] = [];
@@ -55,15 +56,26 @@ export class RenderView {
       this.camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
       this.camera.position.set(5, 4.2, 6);
     }
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping = true;
-    this.controls.enablePan = this.descriptor.diagram;
-    this.controls.enableRotate = !this.descriptor.diagram;
+    if (this.descriptor.ambientSpace === 'S2') {
+      const controls = new TrackballControls(this.camera, this.renderer.domElement);
+      controls.staticMoving = true;
+      controls.noPan = true;
+      // The application owns keyboard face moves (including D).
+      controls.keys = ['', '', ''];
+      this.controls = controls;
+    } else {
+      const controls = new OrbitControls(this.camera, this.renderer.domElement);
+      controls.enableDamping = true;
+      controls.enablePan = this.descriptor.diagram;
+      controls.enableRotate = !this.descriptor.diagram;
+      this.controls = controls;
+    }
     this.controls.target.set(this.descriptor.diagram ? 1.5 : 0, 0, 0);
     this.controls.minDistance = 5;
     this.controls.maxDistance = 18;
     this.controls.minZoom = 0.6;
     this.controls.maxZoom = 3;
+    if (this.controls instanceof TrackballControls) this.alignCameraUp();
     this.controls.update();
     this.scene.add(new THREE.AmbientLight(0xffffff, 2.4));
     const light = new THREE.DirectionalLight(0xffffff, 3.2);
@@ -159,6 +171,18 @@ export class RenderView {
       this.camera.top = vertical; this.camera.bottom = -vertical;
     }
     this.camera.updateProjectionMatrix();
+    if (this.controls instanceof TrackballControls) this.controls.handleResize();
+  }
+  private alignCameraUp(): void {
+    const direction = this.camera.position.clone().sub(this.controls.target).normalize();
+    this.camera.up.projectOnPlane(direction);
+    if (this.camera.up.lengthSq() < 1e-12) {
+      this.camera.up.set(0, Math.abs(direction.y) < 0.9 ? 1 : 0, Math.abs(direction.y) < 0.9 ? 0 : 1);
+      this.camera.up.projectOnPlane(direction);
+    }
+    // Trackball's drag basis must be orthonormal to follow diagonal drags as
+    // precisely as horizontal/vertical ones, including after restoring a view.
+    this.camera.up.normalize();
   }
   private updateTransforms(): void {
     // Copy before any other WASM call. Destination storage is reused every frame.
@@ -194,12 +218,16 @@ export class RenderView {
     this.host.dataset.selectedPiece = selected ?? '';
     this.host.dataset.blockedPieces = blocked.join(',');
   }
-  cameraState(): unknown { return { position: this.camera.position.toArray(), target: this.controls.target.toArray(), zoom: this.camera.zoom }; }
+  cameraState(): unknown { return { position: this.camera.position.toArray(), target: this.controls.target.toArray(), up: this.camera.up.toArray(), zoom: this.camera.zoom }; }
   restoreCamera(value: unknown): void {
-    const data = value as { position?: number[]; target?: number[]; zoom?: number } | undefined;
+    const data = value as { position?: number[]; target?: number[]; up?: number[]; zoom?: number } | undefined;
     if (!data || !Array.isArray(data.position) || !Array.isArray(data.target) || data.position.length !== 3 || data.target.length !== 3) return;
     if (![...data.position, ...data.target, data.zoom ?? 1].every(Number.isFinite)) return;
+    const up = data.up ?? [0, 1, 0];
+    if (!Array.isArray(up) || up.length !== 3 || !up.every(Number.isFinite) || Math.hypot(...up) < 1e-12) return;
     this.camera.position.fromArray(data.position); this.controls.target.fromArray(data.target);
+    this.camera.up.fromArray(up);
+    if (this.controls instanceof TrackballControls) this.alignCameraUp();
     this.camera.zoom = Math.min(3, Math.max(0.6, data.zoom ?? 1));
     this.camera.updateProjectionMatrix(); this.controls.update();
   }

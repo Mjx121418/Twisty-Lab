@@ -278,12 +278,12 @@ export function App() {
 
           <div className={`views layout-${layout}`}>
             <article className={`view-panel cube-panel ${layout === 'diagram' ? 'hidden' : ''}`}>
-              <div className="view-title"><span>01 / {effectivePair === 'sphere-diagram' ? 'Spherical' : 'Euclidean'}</span><span className="subtle">Drag to orbit · scroll to zoom</span></div>
+              <div className="view-title"><span>01 / {effectivePair === 'sphere-diagram' ? 'Spherical' : 'Euclidean'}</span><span className="subtle">{effectivePair === 'sphere-diagram' ? 'Drag to rotate freely · scroll to zoom' : 'Drag to orbit · scroll to zoom'}</span></div>
               <div ref={cubeHost} className="canvas-host" data-testid="cube-view" data-state-digest={visualDigest} />
               <span className="view-note">{effectivePair === 'sphere-diagram' ? 'Spherical regions · one exact state' : 'Rigid bodies & bound ports'}</span>
             </article>
             <article className={`view-panel diagram-panel ${layout === 'cube' ? 'hidden' : ''}`}>
-              <div className="view-title"><span>02 / {effectivePair === 'cube-sphere' ? 'Spherical' : 'Port diagram'}</span><span className="subtle">{effectivePair === 'cube-sphere' ? 'Drag to orbit · click a region' : 'Click a port to inspect its piece'}</span></div>
+              <div className="view-title"><span>02 / {effectivePair === 'cube-sphere' ? 'Spherical' : 'Port diagram'}</span><span className="subtle">{effectivePair === 'cube-sphere' ? 'Drag to rotate freely · click a region' : 'Click a port to inspect its piece'}</span></div>
               <div ref={diagramHost} className="canvas-host" data-testid="diagram-view" data-state-digest={visualDigest} />
               <span className="view-note">Same identities. Same transition.</span>
             </article>

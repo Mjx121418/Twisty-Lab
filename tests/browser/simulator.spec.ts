@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { PerspectiveCamera, Vector3 } from 'three';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('./');
@@ -64,6 +65,69 @@ test('runs the same cube on a sphere, preserves state across views, and restores
     expect(restored.presentation.cameras[i].zoom).toBe(document.presentation.cameras[i].zoom);
     restored.presentation.cameras[i].position.forEach((value: number, axis: number) => expect(value).toBeCloseTo(document.presentation.cameras[i].position[axis], 6));
   }
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+test('tracks spherical drags in screen direction and preserves full camera orientation', async ({ page }) => {
+  type Camera = { position: number[]; target: number[]; up: number[]; zoom: number };
+  const saved = async (): Promise<any> => {
+    const downloading = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Save session ↗' }).click();
+    return JSON.parse(readFileSync((await (await downloading).path())!, 'utf8'));
+  };
+  await page.getByLabel('Geometry views').selectOption('cube-sphere');
+  const sphere = page.getByLabel('Spherical puzzle', { exact: true });
+  const initial = await page.getByTestId('state-digest').textContent();
+  const bounds = (await sphere.boundingBox())!;
+  let previous = await saved();
+  const euclidean = previous.presentation.cameras[0];
+  const initialUp = previous.presentation.cameras[1].up;
+  for (const [dx, dy] of [[65, 0], [0, -55], [50, 35]]) {
+    const before = previous.presentation.cameras[1] as Camera;
+    const eye = new Vector3().fromArray(before.position).sub(new Vector3().fromArray(before.target));
+    // A surface point facing the camera starts at the center of the screen.
+    // Its projected motion must follow horizontal, vertical and diagonal drags,
+    // including after previous rotations have changed the camera's up vector.
+    const anchor = eye.clone().normalize().multiplyScalar(2.05).add(new Vector3().fromArray(before.target));
+    await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(bounds.x + bounds.width / 2 + dx, bounds.y + bounds.height / 2 + dy, { steps: 8 });
+    await page.mouse.up();
+    previous = await saved();
+    const after = previous.presentation.cameras[1] as Camera;
+    const camera = new PerspectiveCamera(35, bounds.width / bounds.height, 0.1, 100);
+    camera.position.fromArray(after.position); camera.up.fromArray(after.up); camera.zoom = after.zoom;
+    camera.lookAt(new Vector3().fromArray(after.target));
+    camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+    const projected = anchor.project(camera);
+    const movement = [projected.x * bounds.width / 2, -projected.y * bounds.height / 2];
+    const length = Math.hypot(...movement), dragLength = Math.hypot(dx, dy);
+    expect(length).toBeGreaterThan(5);
+    expect((movement[0] * dx + movement[1] * dy) / (length * dragLength)).toBeGreaterThan(0.99999);
+    expect(Math.abs(movement[0] * dy - movement[1] * dx) / (length * dragLength)).toBeLessThan(0.001);
+    expect(after.target).toEqual(before.target);
+    expect(new Vector3().fromArray(after.position).sub(new Vector3().fromArray(after.target)).length()).toBeCloseTo(eye.length(), 7);
+    expect(previous.presentation.cameras[0]).toEqual(euclidean);
+    await expect(page.getByTestId('state-digest')).toHaveText(initial!);
+    await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-selected-piece', '');
+  }
+  const rotated = previous.presentation.cameras[1] as Camera;
+  expect(rotated.up).not.toEqual(initialUp);
+  const stopped = (await saved()).presentation.cameras[1] as Camera;
+  stopped.position.forEach((value, i) => expect(value).toBeCloseTo(rotated.position[i], 9));
+  stopped.up.forEach((value, i) => expect(value).toBeCloseTo(rotated.up[i], 9));
+  await page.getByLabel('Geometry views').selectOption('sphere-diagram');
+  const switched = (await saved()).presentation.cameras[0] as Camera;
+  switched.position.forEach((value, i) => expect(value).toBeCloseTo(rotated.position[i], 7));
+  switched.up.forEach((value, i) => expect(value).toBeCloseTo(rotated.up[i], 7));
+  await page.getByLabel('Geometry views').selectOption('cube-diagram');
+  await page.getByLabel('Open session file').setInputFiles({ name: 'trackball-session.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(previous)) });
+  await expect(page.getByLabel('Geometry views')).toHaveValue('cube-sphere');
+  await resting(page);
+  const restored = (await saved()).presentation.cameras[1] as Camera;
+  restored.position.forEach((value, i) => expect(value).toBeCloseTo(rotated.position[i], 7));
+  restored.up.forEach((value, i) => expect(value).toBeCloseTo(rotated.up[i], 7));
+  await expect(page.getByTestId('state-digest')).toHaveText(initial!);
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
 

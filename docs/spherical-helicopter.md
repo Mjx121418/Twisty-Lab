@@ -2,6 +2,8 @@
 
 Select **Helicopter Cube · jumbling**, then **Geometry views → Cube + sphere** or **Sphere + diagram**. Both views share the existing abstract session, move controls, blocking evidence, selection, undo/redo, and saved replay. Switching views preserves state and history.
 
+Drag or swipe the sphere with free trackball controls to rotate along the pointer's direction, stopping on release. Scroll to zoom and click a region to select its piece. View switching and saved sessions preserve the camera's full orientation. Camera movement changes only the presentation.
+
 The package [helicopter-spherical.json](../packages/helicopter/helicopter-spherical.json) uses the C++ `polyhedral-spherical` interpreter. Three.js draws its shared triangle assets and sampled rigid transforms. Custom frontends use the same public [kernel API](kernel-api.md); no renderer-specific geometry or rules enter the kernel.
 
 ## Construction on S²
