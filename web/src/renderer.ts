@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
 import { copyFloatView, copyIndexView, type MainModule, type Realization, type SceneDescriptor } from '../../kernel/index';
+import { DestinationOverlay } from './destinationOverlay';
+import type { PieceDestination } from './destinations';
 const colors: Record<string, number> = {
   U: 0xf1eee3, R: 0xe76561, F: 0x66c7a0, D: 0xf1cf67, L: 0xeea76d, B: 0x7fa5ed, body: 0x202a35, mechanism: 0x17212a,
 };
@@ -20,18 +22,20 @@ export class RenderView {
   private readonly resizeObserver: ResizeObserver;
   private readonly raycaster = new THREE.Raycaster();
   private readonly frameData: Float32Array;
+  private readonly destinations: DestinationOverlay;
   private frame = 0;
   private frameId = 0;
   private disposed = false;
-  private pointerStart = { x: 0, y: 0 };
+  private pointerStart?: { x: number; y: number; id: number; dragged: boolean };
 
   constructor(
     module: MainModule,
     private readonly host: HTMLElement,
     session: InstanceType<MainModule['Session']>,
     realization: Realization,
-    private readonly onPick: (piece: string) => void,
+    private readonly onPick: (piece: string | undefined) => void,
     private readonly canPick: () => boolean,
+    onDestination: (destination: PieceDestination) => void,
   ) {
     const geometry = module.createGeometry(session, JSON.stringify(realization));
     if (!geometry) throw new Error('The geometric interpreter could not be created.');
@@ -133,25 +137,46 @@ export class RenderView {
         this.scene.add(sprite);
       }
     }
+    this.destinations = new DestinationOverlay(module, session, realization, host, this.scene, this.descriptor, this.assets, colors, onDestination, canPick);
     this.updateTransforms();
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(host);
     this.renderer.domElement.addEventListener('pointerdown', this.pointerDown);
+    this.renderer.domElement.addEventListener('pointermove', this.pointerMove);
     this.renderer.domElement.addEventListener('pointerup', this.pointerUp);
+    this.renderer.domElement.addEventListener('pointercancel', this.pointerCancel);
+    this.renderer.domElement.addEventListener('pointerleave', this.pointerLeave);
     this.renderer.domElement.addEventListener('webglcontextlost', this.contextLost);
     this.renderer.domElement.addEventListener('webglcontextrestored', this.contextRestored);
     this.resize();
     this.draw();
   }
 
-  private pointerDown = (event: PointerEvent): void => { this.pointerStart = { x: event.clientX, y: event.clientY }; };
-  private pointerUp = (event: PointerEvent): void => {
-    if (!this.canPick() || Math.hypot(event.clientX - this.pointerStart.x, event.clientY - this.pointerStart.y) > 5) return;
+  private pointerDown = (event: PointerEvent): void => {
+    this.destinations.dismiss();
+    this.pointerStart = event.isPrimary && event.button === 0 ? { x: event.clientX, y: event.clientY, id: event.pointerId, dragged: false } : undefined;
+  };
+  private aim(event: PointerEvent): void {
     const rect = this.renderer.domElement.getBoundingClientRect();
     this.raycaster.setFromCamera(new THREE.Vector2((event.clientX - rect.left) / rect.width * 2 - 1, -(event.clientY - rect.top) / rect.height * 2 + 1), this.camera);
     this.scene.updateMatrixWorld(true);
+  }
+  private pointerMove = (event: PointerEvent): void => {
+    if (this.pointerStart && this.pointerStart.id === event.pointerId && Math.hypot(event.clientX - this.pointerStart.x, event.clientY - this.pointerStart.y) > 5) this.pointerStart.dragged = true;
+    if (event.buttons || !this.canPick()) { this.destinations.dismiss(); return; }
+    this.aim(event);
+    this.destinations.hover(this.raycaster, event.clientX, event.clientY);
+  };
+  private pointerCancel = (): void => { this.pointerStart = undefined; this.destinations.dismiss(); };
+  private pointerLeave = (): void => { this.destinations.clearHover(); };
+  private pointerUp = (event: PointerEvent): void => {
+    const start = this.pointerStart;
+    this.pointerStart = undefined;
+    if (!start || start.id !== event.pointerId || event.button !== 0 || start.dragged || !this.canPick() || Math.hypot(event.clientX - start.x, event.clientY - start.y) > 5) return;
+    this.aim(event);
+    if (this.destinations.pick(this.raycaster, event.clientX, event.clientY)) return;
     const hit = this.raycaster.intersectObjects(this.meshes)[0];
-    if (!hit) return;
+    if (!hit) { this.onPick(undefined); return; }
     // The hit is resolved against this view's sampled frame, never the session's newer state.
     const target = JSON.parse(this.geometry.bindHitJSON(hit.object.userData.visualPartId)) as { status: string; pieceId?: string };
     if (target.status === 'Target' && target.pieceId) this.onPick(target.pieceId);
@@ -202,12 +227,14 @@ export class RenderView {
     this.frame = requestAnimationFrame(this.draw);
   };
 
-  setState(state: string): void { this.geometry.setStateJSON(state); this.updateTransforms(); }
+  setState(state: string): void { this.destinations.clear(); this.geometry.setStateJSON(state); this.updateTransforms(); }
   prepare(transition: string): void {
+    this.destinations.clear();
     const result = JSON.parse(this.geometry.prepareAnimationJSON(transition));
     if (result.status !== 'Prepared') throw new Error(result.diagnostics?.[0]?.message ?? 'Unsupported visual transition.');
   }
   sample(progress: number): void { this.geometry.sample(progress); this.updateTransforms(); }
+  setDestinations(piece: string | undefined, destinations: PieceDestination[]): void { this.destinations.setDestinations(piece, destinations); }
   highlight(selected: string | undefined, blocked: string[]): void {
     for (const mesh of this.meshes) {
       const isBlocked = blocked.includes(mesh.userData.pieceId);
@@ -236,9 +263,13 @@ export class RenderView {
     cancelAnimationFrame(this.frame);
     this.resizeObserver.disconnect(); this.controls.dispose();
     this.renderer.domElement.removeEventListener('pointerdown', this.pointerDown);
+    this.renderer.domElement.removeEventListener('pointermove', this.pointerMove);
     this.renderer.domElement.removeEventListener('pointerup', this.pointerUp);
+    this.renderer.domElement.removeEventListener('pointercancel', this.pointerCancel);
+    this.renderer.domElement.removeEventListener('pointerleave', this.pointerLeave);
     this.renderer.domElement.removeEventListener('webglcontextlost', this.contextLost);
     this.renderer.domElement.removeEventListener('webglcontextrestored', this.contextRestored);
+    this.destinations.dispose();
     for (const mesh of this.meshes) mesh.material.dispose();
     for (const sprite of this.labelSprites) sprite.material.dispose();
     for (const texture of this.textures) texture.dispose();

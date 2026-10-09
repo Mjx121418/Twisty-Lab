@@ -14,6 +14,7 @@ import helicopterDiagram from '../../packages/helicopter/helicopter-port-diagram
 import helicopterSphere from '../../packages/helicopter/helicopter-spherical.json';
 import { KernelSession, loadRuntime, type Realization, type Result, type Snapshot, type Transition } from './kernel';
 import { RenderView } from './renderer';
+import { pieceDestinations, type PieceDestination } from './destinations';
 
 const presets = [
   { id: 'cube3', label: '3 × 3 cube', source: cubeSource, realizations: [cubeRealization, cubeDiagram], spherical: cubeSphere },
@@ -114,7 +115,7 @@ export function App() {
     try {
       for (let i = 0; i < 2; i++) {
         const host = i === 0 ? cubeHost.current : diagramHost.current;
-        const view = new RenderView(module, host, session.native, realizations[i], setSelected, () => !busyRef.current);
+        const view = new RenderView(module, host, session.native, realizations[i], setSelected, () => !busyRef.current, chooseDestination);
         view.restoreCamera(restoredCameras?.get(realizations[i].id) ?? cameras.get(realizations[i].id));
         view.setState(session.stateText()); created.push(view);
       }
@@ -132,6 +133,23 @@ export function App() {
   }, [module, generation, viewPair]);
 
   useEffect(() => { for (const view of views.current) view.highlight(selected, evidence?.implicatedPieces ?? []); }, [selected, evidence, generation, viewPair]);
+
+  useEffect(() => {
+    if (!kernel.current || !snapshot || !views.current.length) return;
+    try {
+      const destinations = !busy && selected ? pieceDestinations(kernel.current, snapshot, selected) : [];
+      for (const view of views.current) view.setDestinations(busy ? undefined : selected, destinations);
+    } catch (error: unknown) {
+      for (const view of views.current) view.setDestinations(undefined, []);
+      setVisualError(`Destination preview unavailable: ${String(error)}`);
+    }
+  }, [selected, snapshot, busy, generation, viewPair]);
+
+  function chooseDestination(destination: PieceDestination): void {
+    const session = kernel.current;
+    if (!session || busyRef.current || session.definition.definitionDigest !== destination.definitionDigest) return;
+    enqueue(() => session.execute(destination.request, destination.revision));
+  }
 
   async function animate(result: Result): Promise<void> {
     const token = epoch.current;
@@ -200,7 +218,9 @@ export function App() {
     const keydown = (event: KeyboardEvent): void => {
       const element = event.target as HTMLElement;
       if (event.repeat || ['INPUT', 'TEXTAREA', 'SELECT'].includes(element.tagName)) return;
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
+      if (event.key === 'Escape') {
+        setSelected(undefined);
+      } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
         event.preventDefault(); enqueue(() => event.shiftKey ? kernel.current!.redo() : kernel.current!.undo());
       } else if (!event.ctrlKey && !event.metaKey && !event.altKey && /^[urfdlb]$/i.test(event.key)) {
         event.preventDefault(); const operation = event.key.toUpperCase() + (event.shiftKey ? "'" : '');
@@ -280,12 +300,12 @@ export function App() {
             <article className={`view-panel cube-panel ${layout === 'diagram' ? 'hidden' : ''}`}>
               <div className="view-title"><span>01 / {effectivePair === 'sphere-diagram' ? 'Spherical' : 'Euclidean'}</span><span className="subtle">{effectivePair === 'sphere-diagram' ? 'Drag to rotate freely · scroll to zoom' : 'Drag to orbit · scroll to zoom'}</span></div>
               <div ref={cubeHost} className="canvas-host" data-testid="cube-view" data-state-digest={visualDigest} />
-              <span className="view-note">{effectivePair === 'sphere-diagram' ? 'Spherical regions · one exact state' : 'Rigid bodies & bound ports'}</span>
+              <span className="view-note" hidden={!!selected}>{effectivePair === 'sphere-diagram' ? 'Spherical regions · one exact state' : 'Rigid bodies & bound ports'}</span>
             </article>
             <article className={`view-panel diagram-panel ${layout === 'cube' ? 'hidden' : ''}`}>
-              <div className="view-title"><span>02 / {effectivePair === 'cube-sphere' ? 'Spherical' : 'Port diagram'}</span><span className="subtle">{effectivePair === 'cube-sphere' ? 'Drag to rotate freely · click a region' : 'Click a port to inspect its piece'}</span></div>
+              <div className="view-title"><span>02 / {effectivePair === 'cube-sphere' ? 'Spherical' : 'Port diagram'}</span><span className="subtle">Click a piece, then a translucent destination</span></div>
               <div ref={diagramHost} className="canvas-host" data-testid="diagram-view" data-state-digest={visualDigest} />
-              <span className="view-note">Same identities. Same transition.</span>
+              <span className="view-note" hidden={!!selected}>Same identities. Same transition.</span>
             </article>
           </div>
 
