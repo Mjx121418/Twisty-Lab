@@ -47,7 +47,7 @@ export type SceneDescriptor = {
   sceneId: string; realizationId: string; definitionDigest: string; requiredCapabilities: string[];
   meshAssets: MeshAsset[]; visualParts: VisualPart[]; diagram: boolean;
   ambientSpace?: 'R3' | 'S2'; sphereRadius?: number; diskAngleDegrees?: number; fidelity?: string;
-  diskCenters?: Record<string, [number, number, number]>; surfaceTransportVerified?: boolean;
+  diskCenters?: Record<string, [number, number, number]>; surfaceTransportVerified?: boolean; catalogTransportVerified?: boolean;
 };
 export type HitBinding = {
   status: string; pieceId?: string; portId?: string; operationCandidates?: Request[];
@@ -61,7 +61,7 @@ export type CompiledDefinition = {
   symmetry?: { members?: number[][]; positionOrbits?: Record<string, { representative: string; stabilizer: number[][]; positions: { id: string }[] }> }; cells: string[]; provenance: unknown;
 };
 export type Realization = {
-  schemaVersion: number; id: string; kind: 'cube-euclidean' | 'cube-port-diagram' | 'cube-spherical' | 'polyhedral-euclidean' | 'polyhedral-port-diagram';
+  schemaVersion: number; id: string; kind: 'cube-euclidean' | 'cube-port-diagram' | 'cube-spherical' | 'polyhedral-euclidean' | 'polyhedral-port-diagram' | 'polyhedral-spherical';
   compatibleDefinitionDigest: string; requiredCapabilities: string[];
 };
 

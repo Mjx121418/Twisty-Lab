@@ -97,6 +97,8 @@ The companion diagram shows the same 48 labeled ports in six fixed panels. C++ a
 
 Choose **Helicopter Cube · jumbling** in the browser. The buttons show five destination choices for each grip's current source phase, including blocked requests so their evidence can be inspected. The default algorithm `UF_ab UL_af` demonstrates jumbling. Undo, inverse algorithms, seeded legal walks, and saved-session replay use the same core APIs as the cube presets.
 
+The additional `helicopter-spherical.json` package uses `polyhedral-spherical`: intersect the unshrunk prototype hulls with S², giving twelve 45° disk cuts. All 44 pieces and 48 ports remain; the twelve mechanism pieces appear as uncolored surface regions. Choose **Cube + sphere** or **Sphere + diagram** to compare realizations without changing state. C++ verifies catalog transports and continuous section membership. The existing volume-derived blockers, phase guards, catalog restrictions, and exclusion resources remain authoritative, including blockers that become tangencies on the sphere. See [the spherical specification](spherical-helicopter.md) for the construction and its scope.
+
 ## Verification and commands
 
 ```sh

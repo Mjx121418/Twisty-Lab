@@ -17,6 +17,7 @@ describe('native / WebAssembly parity', () => {
   it.each([
     ['helicopter', 'helicopter-euclidean', "UF_ab UL_af (UF_ab UL_af)' UF_ad"],
     ['helicopter', 'helicopter-port-diagram', "UF_ab UL_af (UF_ab UL_af)' UF_ad"],
+    ['helicopter', 'helicopter-spherical', "UF_ab DR_ab FR_ad DR_ba UF_ba (UF_ab DR_ab FR_ad DR_ba UF_ba)'"],
     ['cube3', 'cube-spherical', "U R F D L B (U R F D L B)'"],
     ['bandaged', 'cube-spherical', "U R R' U' F F'"],
   ])('matches native %s assets and sampled %s frames', (name, kind, algorithm) => {

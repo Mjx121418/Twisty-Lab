@@ -444,7 +444,7 @@ Use the six abstract face labels to select six disk centers in the proposed octa
 
 The radii, region boundaries, attachment map, and operation animations are additional geometric data. An octahedral arrangement alone does not establish that the surface mechanism realizes the cube: verify that every primitive move transports the regions according to the same abstract port action and satisfies the endpoint contract.
 
-The implemented `cube-spherical` realization uses six equal 60° caps centered on the signed coordinate axes. Disk membership defines six center, twelve edge, and eight corner regions; dominant face coordinates divide them into 54 labeled ports. C++ constructs tessellated spherical patches, maps existing cube placements to their frames, and rotates each selected disk through its directed quarter turn. Registration verifies every participating catalog placement and primitive port transport. Featureless center patches have fourfold symmetry, allowing unchanged core placements while their surfaces turn. Native mesh-continuity checks cover this quotient explicitly. See [the spherical specification](docs/spherical-cube.md).
+The implemented `cube-spherical` realization uses six equal 70° caps centered on the signed coordinate axes. Their angular radius was increased from 60° while retaining the existing pieces. Disk membership defines six center, twelve edge, and eight corner regions; dominant face coordinates divide them into 54 labeled ports. C++ constructs tessellated spherical patches, maps existing cube placements to their frames, and rotates each selected disk through its directed quarter turn. Registration verifies every participating catalog placement and primitive port transport. Featureless center patches have fourfold symmetry, allowing unchanged core placements while their surfaces turn. Native mesh-continuity checks cover this quotient explicitly. See [the spherical specification](docs/spherical-cube.md).
 
 | Shared | Euclidean data | Spherical data |
 | --- | --- | --- |
@@ -602,7 +602,7 @@ Use CTest for C++ checks, Vitest for the TypeScript adapter and presentation log
 
 Milestones 1 through 6 define the first release. Add portable fixtures and structured diagnostics as each subsystem appears; they are release requirements, not a final polish step.
 
-Milestone 7's portable-kernel foundation is implemented. The project owner's current priority is the spherical cube goal in the original roadmap; further consumer-conformance and destination-platform CI work is deferred. New realizations continue to use the public kernel, which owns both the abstract and geometric layers while preserving their internal boundary.
+Milestone 7's portable-kernel foundation is implemented. The project owner's current priority is spherical realizations in the original roadmap; further consumer-conformance and destination-platform CI work is deferred. New realizations continue to use the public kernel, which owns both the abstract and geometric layers while preserving their internal boundary.
 
 ### Headless command surface
 
@@ -613,11 +613,11 @@ The native CLI provides `compile`, `validate`, `inspect`, `run`, `scramble`, `re
 After the first release, follow this order:
 
 1. Specify and independently review one real jumbling puzzle's exact placements, guards, inverse behavior, and blocked-state fixtures. Integrate it only after that model passes headless validation. Introduce a symbolic backend only if the model establishes a concrete need.
-2. Implement the spherical cube realization (now implemented). Verify every primitive's port transport and endpoint agreement against the shared cube definition. Treat physical mechanism fidelity as a separate claim requiring additional evidence.
+2. Implement the spherical cube realization (now implemented, with 70° disks and the existing pieces). Verify every primitive's port transport and endpoint agreement against the shared cube definition. The requested spherical Helicopter extension reuses its existing placement catalog and inherited guards. Treat physical mechanism fidelity as a separate claim requiring additional evidence.
 3. Add Bagua and broader authoring improvements, reusing the same rule and realization boundaries. Its rule model and fixtures require their own review.
 4. Add branching history, solvers, state-graph analysis, variant/visual editors, KPuzzle interoperability, deterministic export, and shared sessions once their foundations are reliable. S3 and H3 require dedicated geometry/projection design.
 
-The selected first jumbling example is now the Helicopter Cube. Its [experimental exact model specification](docs/helicopter-model.md), offline authoring tool, headless reference package, and C++ geometric realizations are available for independent review. The browser displays an ideal polyhedral preview and a synchronized labeled-port diagram. The first-release cube and bandage implementation remains independently usable.
+The selected first jumbling example is now the Helicopter Cube. Its [experimental exact model specification](docs/helicopter-model.md), offline authoring tool, headless reference package, and C++ geometric realizations are available for independent review. The browser displays an ideal polyhedral preview, a spherical interpretation, and a synchronized labeled-port diagram in selectable pairs. The first-release cube and bandage implementation remains independently usable.
 
 ### Fixed initial decisions
 
@@ -680,6 +680,18 @@ The reference application offers Cube + diagram, Sphere + diagram, and Cube + sp
 The verification gate includes independent native checks of disk membership, coverage, normals, winding, shell-preserving motion, stationary fragments, inverse behavior, and pre-endpoint mesh continuity. Native/WASM parity covers spherical assets and sampled frames; browser scenarios cover picking, synchronized moves, bandaging, pair switching, and save/load. The surface model establishes the cube port action; physical thickness, hardware, and continuous collision certification remain separate work. Bagua is the next puzzle expansion in the original roadmap and requires an explicit model and reviewed fixtures first.
 
 `npm run check` passes the production build, four native tests, eleven unit tests, installed/copied native/WASM consumers (including both spherical packages), and twelve browser scenarios. The native spherical check also bounds each colored triangle outside the backing shell and rejects valid abstract moves that select only part of a face disk. Changed C++/WASM code was built with one job and browser tests with one worker; no cgroup memory-limit or out-of-memory events occurred. Dockerfile remains unchanged.
+
+### Spherical Helicopter and enlarged cube disks (9 October 2026)
+
+The cube's six disk radii are increased from 60° to 70°, preserving all existing pieces, 26 regions, and 54 ports. The bandaged definition still has 25 persistent pieces, with its fused piece occupying two surface regions.
+
+The C++ `polyhedral-spherical` interpreter realizes the existing Helicopter catalog by intersecting its unshrunk prototypes with the unit sphere. Twelve 45° disks define the cuts. Seven shared assets provide 44 existing bodies and 48 ports; the twelve mechanism pieces become uncolored surface regions. Proper catalog rotations carry these sections to their exact targets. Registration additionally checks continuous section extrema so participating and stationary regions remain on opposite sides of each moving disk.
+
+The Helicopter core's volume-derived blockers, mechanism guards, partial catalog transports, and exclusion resources remain authoritative. A volume-crossing blocker can become a tangency after intersecting S², so the spherical outline does not establish every blocked request. This realizes the existing abstract state machine with inherited guards; it does not certify a mechanism whose legality is determined solely by spherical cuts. See [the spherical Helicopter specification](docs/spherical-helicopter.md).
+
+The browser and public native/WASM kernel expose the realization through the existing scene, mesh-buffer, hit-binding, and frame-sampling APIs. View switching and session replay share the original core state and semantic digest. Native checks exercise spherical coverage during jumbling, mesh symmetry and continuity, radial shells, port clearance, stationary fragments, inverses, picking, and registration errors. Native/WASM parity and independent consumers include the new package; browser checks cover spherical Helicopter blocking and saved replay.
+
+The full `npm run check` passes the production build, five native tests, twelve unit tests, six independent native/WASM consumer cases, and thirteen browser scenarios. Changed C++/WASM code was built with one job, heavy checks ran sequentially, and browsers used one worker. The 4 GiB cgroup recorded no memory-limit or out-of-memory events. All abstract definitions and semantic digests are unchanged, and Dockerfile is untouched.
 
 ### References
 

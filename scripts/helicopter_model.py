@@ -366,9 +366,17 @@ class AuthoringModel:
                   'scale': 1.4, 'bodyInset': 0.03,
                   'stickerInset': 0.10, 'stickerLift': 0.0015,
                   'fidelity': 'idealized-polyhedral'}
-        return {f'helicopter-{kind}.json': {**common, 'id': f'helicopter-{kind}-v1',
-                                           'kind': f'polyhedral-{kind}'}
-                for kind in ['euclidean', 'port-diagram']}
+        documents = {f'helicopter-{kind}.json': {**common, 'id': f'helicopter-{kind}-v1',
+                                               'kind': f'polyhedral-{kind}'}
+                     for kind in ['euclidean', 'port-diagram']}
+        documents['helicopter-spherical.json'] = {
+            **common, 'id': 'helicopter-spherical-v1', 'kind': 'polyhedral-spherical',
+            'scale': 2.05, 'radius': 2.05, 'diskAngleDegrees': 45,
+            'angularSegments': 64, 'radialSegments': 5,
+            'portInset': 0.04, 'surfaceLift': 0.02,
+            'fidelity': 'spherical-section-with-inherited-guards'
+        }
+        return documents
 
 
 def main():

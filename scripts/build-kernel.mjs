@@ -16,18 +16,20 @@ if (process.argv.includes('--stage-web')) {
   await writeFile(new URL('package.json', output), JSON.stringify({
     name: '@twisty/kernel', version, type: 'module',
     exports: { '.': { types: './index.d.ts', import: './index.js' }, './runtime': './generated/twisty.mjs', './wasm': './generated/twisty.wasm' },
-    files: ['index.js', 'index.d.ts', 'generated', 'examples', 'README.md', 'spherical-cube.md'],
+    files: ['index.js', 'index.d.ts', 'generated', 'examples', 'README.md', 'spherical-cube.md', 'spherical-helicopter.md'],
   }, null, 2) + '\n');
   await cp(new URL('../docs/kernel-api.md', import.meta.url), new URL('README.md', output));
-  const sphericalGuide = (await readFile(new URL('../docs/spherical-cube.md', import.meta.url), 'utf8'))
-    .replaceAll('../packages/', 'examples/canvas/data/').replaceAll('(kernel-api.md)', '(README.md)');
-  await writeFile(new URL('spherical-cube.md', output), sphericalGuide);
+  for (const file of ['spherical-cube.md', 'spherical-helicopter.md']) {
+    const guide = (await readFile(new URL(`../docs/${file}`, import.meta.url), 'utf8'))
+      .replaceAll('../packages/', 'examples/canvas/data/').replaceAll('(kernel-api.md)', '(README.md)');
+    await writeFile(new URL(file, output), guide);
+  }
   await cp(new URL('../examples/canvas/', import.meta.url), new URL('examples/canvas/', output), { recursive: true });
   for (const puzzle of ['cube3', 'bandaged', 'helicopter']) {
     const directory = new URL(`examples/canvas/data/${puzzle}/`, output);
     await mkdir(directory, { recursive: true });
     const files = ['definition.json', `${puzzle === 'helicopter' ? 'helicopter' : 'cube'}-port-diagram.json`];
-    if (puzzle !== 'helicopter') files.push('cube-spherical.json');
+    files.push(`${puzzle === 'helicopter' ? 'helicopter' : 'cube'}-spherical.json`);
     for (const file of files) {
       await cp(new URL(`../packages/${puzzle}/${file}`, import.meta.url), new URL(file, directory));
     }

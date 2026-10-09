@@ -12,9 +12,11 @@ For unit direction `p`, the face disk centered at unit normal `n` is
 D(n) = { p on S² : n · p >= cos(alpha) }
 ```
 
-The six centers are `R = +X`, `L = −X`, `U = +Y`, `D = −Y`, `F = +Z`, and `B = −Z`. The shipped angular radius is 60°, so the threshold is 1/2. Sphere radius 2.05 only sets the display scale.
+The six centers are `R = +X`, `L = −X`, `U = +Y`, `D = −Y`, `F = +Z`, and `B = −Z`. The shipped angular radius is 70°, increased from 60°, so the threshold is `cos(70°) ≈ 0.3420201433`. Sphere radius 2.05 only sets the display scale.
 
-Opposite disks are disjoint. Every point belongs to at least one disk because the largest absolute coordinate of a unit vector is at least `1/sqrt(3) > 1/2`. Disk membership divides the surface into six single-face regions, twelve adjacent-face pair regions, and eight adjacent-face triple regions. These correspond to the six centers, twelve edges, and eight corners. Shared cut boundaries are interpreted with a numerical tolerance during mesh validation.
+Opposite disks are disjoint. Every point belongs to at least one disk because the largest absolute coordinate of a unit vector is at least `1/sqrt(3) > cos(70°)`. Disk membership divides the surface into six single-face regions, twelve adjacent-face pair regions, and eight adjacent-face triple regions. These correspond to the six centers, twelve edges, and eight corners. Shared cut boundaries are interpreted with a numerical tolerance during mesh validation.
+
+Increasing the angular radius enlarges the moving caps and the corner regions while shrinking the center regions. It preserves the same 26 regions and 54 labeled ports throughout the permitted angular-radius interval. The standard cube keeps its 26 pieces; the bandaged cube keeps its 25 pieces, with two constituent regions bound to its composite piece.
 
 Within a region, the face with the largest coordinate assigns its colored port. This subdivides centers into one port, edges into two, and corners into three: 54 labeled ports in total. Labels are attached to persistent pieces; the interpreter obtains their current cell and face from the abstract placement. A bandaged piece binds the five ports of its two constituent regions to one PieceId, retaining the same core footprint guard.
 

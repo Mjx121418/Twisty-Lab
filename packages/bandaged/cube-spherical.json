@@ -1,7 +1,7 @@
 {
   "angularSegments": 64,
   "compatibleDefinitionDigest": "3049956cd3afa29ec7a380660aaba3a8997794ee71de5ae13c6dd950d3e7d698",
-  "diskAngleDegrees": 60,
+  "diskAngleDegrees": 70,
   "fidelity": "spherical-surface-model",
   "id": "bandaged-cube-spherical-v1",
   "kind": "cube-spherical",

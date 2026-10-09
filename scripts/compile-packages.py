@@ -31,7 +31,7 @@ for name in ['cube3', 'bandaged']:
         }
         if kind == 'cube-spherical':
             documents[f'{kind}.json'].update({
-                'radius': 2.05, 'diskAngleDegrees': 60, 'angularSegments': 64,
+                'radius': 2.05, 'diskAngleDegrees': 70, 'angularSegments': 64,
                 'radialSegments': 5, 'portInset': 0.04, 'surfaceLift': 0.02,
                 'fidelity': 'spherical-surface-model'
             })

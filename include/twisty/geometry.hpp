@@ -41,6 +41,7 @@ private:
   bool diagram_ = false;
   bool catalog_ = false;
   bool spherical_ = false;
+  bool catalog_spherical_ = false;
   using Frame = std::array<double, 16>;
   using Point = std::array<double, 3>;
   struct Model {
@@ -75,6 +76,7 @@ private:
   std::array<double, 16> resting(const Part &, const State &) const;
   void build_catalog(const Json &);
   void build_spherical(const Json &);
+  void build_catalog_spherical(const Json &);
   Frame catalog_resting(const Part &, const State &) const;
   void validate_catalog_transport(Index operation) const;
 };

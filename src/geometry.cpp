@@ -92,11 +92,12 @@ Geometry::Geometry(std::shared_ptr<const Definition> definition, const std::stri
                           "Realization is not compatible with the exact definition.");
   const auto kind = realization.at("kind").get<std::string>();
   if (kind != "cube-euclidean" && kind != "cube-port-diagram" && kind != "cube-spherical" &&
-      kind != "polyhedral-euclidean" && kind != "polyhedral-port-diagram")
+      kind != "polyhedral-euclidean" && kind != "polyhedral-port-diagram" && kind != "polyhedral-spherical")
     throw DiagnosticError("realization.unsupported", "/kind", "Unknown realization kind.");
   diagram_ = kind.ends_with("port-diagram");
   catalog_ = kind.starts_with("polyhedral-");
   spherical_ = kind == "cube-spherical";
+  catalog_spherical_ = kind == "polyhedral-spherical";
   if (!catalog_) {
     for (const auto &piece : definition_->pieces)
       for (const auto &[_, label] : piece.labels)

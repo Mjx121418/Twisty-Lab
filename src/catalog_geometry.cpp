@@ -164,7 +164,7 @@ void Geometry::build_catalog(const Json &realization) {
           facets.emplace(face, n);
         }
     ensure(facets.size() >= 4, id, "A model must enclose a three-dimensional volume.");
-    if (!diagram_)
+    if (!diagram_ && !catalog_spherical_)
       asset(id + "/body", [&](const auto &triangle) {
         for (const auto &[vertices, n] : facets) {
           Point face_center{};
@@ -199,7 +199,7 @@ void Geometry::build_catalog(const Json &realization) {
       anchor = add(inset(anchor), scaled(n, lift));
       model.port_centers[port] = anchor;
       model.port_normals[port] = n;
-      if (!diagram_)
+      if (!diagram_ && !catalog_spherical_)
         asset(id + "/port/" + port, [&](const auto &triangle) {
           std::array<Point, 3> points;
           for (int i = 0; i < 3; ++i)
@@ -270,6 +270,8 @@ void Geometry::build_catalog(const Json &realization) {
   }
   for (Index i = 0; i < definition_->operations.size(); ++i)
     validate_catalog_transport(i);
+  if (catalog_spherical_)
+    build_catalog_spherical(realization);
   for (Index i = 0; i < definition_->pieces.size(); ++i) {
     const auto &piece = definition_->pieces[i];
     const auto &model = models_[model_of_domain_[piece.domain]];

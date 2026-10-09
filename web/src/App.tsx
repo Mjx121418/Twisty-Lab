@@ -11,13 +11,14 @@ import bandageSphere from '../../packages/bandaged/cube-spherical.json';
 import helicopterSource from '../../packages/helicopter/definition.json?raw';
 import helicopterRealization from '../../packages/helicopter/helicopter-euclidean.json';
 import helicopterDiagram from '../../packages/helicopter/helicopter-port-diagram.json';
+import helicopterSphere from '../../packages/helicopter/helicopter-spherical.json';
 import { KernelSession, loadRuntime, type Realization, type Result, type Snapshot, type Transition } from './kernel';
 import { RenderView } from './renderer';
 
 const presets = [
   { id: 'cube3', label: '3 × 3 cube', source: cubeSource, realizations: [cubeRealization, cubeDiagram], spherical: cubeSphere },
   { id: 'bandaged-uf-ufr', label: 'Bandaged cube · UF + UFR', source: bandageSource, realizations: [bandageRealization, bandageDiagram], spherical: bandageSphere },
-  { id: 'helicopter', label: 'Helicopter Cube · jumbling', source: helicopterSource, realizations: [helicopterRealization, helicopterDiagram], spherical: undefined },
+  { id: 'helicopter', label: 'Helicopter Cube · jumbling', source: helicopterSource, realizations: [helicopterRealization, helicopterDiagram], spherical: helicopterSphere },
 ];
 type Layout = 'both' | 'cube' | 'diagram';
 type ViewPair = 'cube-diagram' | 'sphere-diagram' | 'cube-sphere';
@@ -279,7 +280,7 @@ export function App() {
             <article className={`view-panel cube-panel ${layout === 'diagram' ? 'hidden' : ''}`}>
               <div className="view-title"><span>01 / {effectivePair === 'sphere-diagram' ? 'Spherical' : 'Euclidean'}</span><span className="subtle">Drag to orbit · scroll to zoom</span></div>
               <div ref={cubeHost} className="canvas-host" data-testid="cube-view" data-state-digest={visualDigest} />
-              <span className="view-note">{effectivePair === 'sphere-diagram' ? 'Six disks · one exact cube' : 'Rigid bodies & bound ports'}</span>
+              <span className="view-note">{effectivePair === 'sphere-diagram' ? 'Spherical regions · one exact state' : 'Rigid bodies & bound ports'}</span>
             </article>
             <article className={`view-panel diagram-panel ${layout === 'cube' ? 'hidden' : ''}`}>
               <div className="view-title"><span>02 / {effectivePair === 'cube-sphere' ? 'Spherical' : 'Port diagram'}</span><span className="subtle">{effectivePair === 'cube-sphere' ? 'Drag to orbit · click a region' : 'Click a port to inspect its piece'}</span></div>

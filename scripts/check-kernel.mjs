@@ -27,6 +27,7 @@ try {
     ['cube3', "R U R' U'", 'U', 'cube-port-diagram'],
     ['bandaged', 'U R', 'U', 'cube-port-diagram'],
     ['helicopter', 'UF_ab UL_af', 'UF_ab', 'helicopter-port-diagram'],
+    ['helicopter', 'UF_ab UL_af', 'UF_ab', 'helicopter-spherical'],
     ['cube3', 'U R F D L B', 'U', 'cube-spherical'],
     ['bandaged', 'U R', 'U', 'cube-spherical'],
   ]) {

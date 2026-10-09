@@ -258,6 +258,55 @@ test('renders the Helicopter preset through jumbling, inverse, picking, and save
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
 
+test('realizes Helicopter jumbling on a sphere with shared blocking, picking and replay', async ({ page }) => {
+  await page.getByLabel('Puzzle', { exact: true }).selectOption('helicopter');
+  await page.getByLabel('Geometry views').selectOption('cube-sphere');
+  const sphere = page.getByLabel('Spherical puzzle', { exact: true });
+  await expect(sphere).toBeVisible();
+  await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-realization-id', 'helicopter-spherical-v1');
+  await resting(page);
+  const initial = await page.getByTestId('state-digest').textContent();
+  await page.screenshot({ path: 'test-results/helicopter-spherical-solved.png', fullPage: true });
+  const bounds = await sphere.boundingBox();
+  await sphere.click({ position: { x: bounds!.width / 2, y: bounds!.height / 2 } });
+  await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-selected-piece', /^(corner|center|mechanism)\//);
+  const selected = await page.getByTestId('diagram-view').getAttribute('data-selected-piece');
+  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-selected-piece', selected!);
+  await page.getByRole('button', { name: 'Move UF_ab', exact: true }).click();
+  await resting(page);
+  const jumbled = await page.getByTestId('state-digest').textContent();
+  await page.getByRole('button', { name: 'Move UR_ad', exact: true }).click();
+  await expect(page.getByTestId('blocking-evidence')).toContainText('placement.blocked');
+  await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-blocked-pieces', 'center/Ufl');
+  await expect(page.getByTestId('state-digest')).toHaveText(jumbled!);
+  await page.getByRole('button', { name: '↶ Undo' }).click();
+  await resting(page);
+  await expect(page.getByTestId('state-digest')).toHaveText(initial!);
+  const algorithm = 'UF_ab DR_ab FR_ad DR_ba UF_ba';
+  await page.getByLabel('Algorithm', { exact: true }).fill(algorithm);
+  await page.getByRole('button', { name: 'Play algorithm →' }).click();
+  await resting(page);
+  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/helicopter/definition.json', '--algorithm', algorithm, '--json'], { encoding: 'utf8' }));
+  await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
+  await page.getByLabel('Geometry views').selectOption('sphere-diagram');
+  await resting(page);
+  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', 'helicopter-spherical-v1');
+  await page.screenshot({ path: 'test-results/helicopter-spherical-jumbled.png', fullPage: true });
+  const downloading = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save session ↗' }).click();
+  const saved = readFileSync((await (await downloading).path())!, 'utf8');
+  await page.getByLabel('Algorithm', { exact: true }).fill(`(${algorithm})'`);
+  await page.getByRole('button', { name: 'Play algorithm →' }).click();
+  await resting(page);
+  await expect(page.getByTestId('state-digest')).toHaveText(initial!);
+  await page.getByLabel('Geometry views').selectOption('cube-diagram');
+  await page.getByLabel('Open session file').setInputFiles({ name: 'helicopter-sphere.json', mimeType: 'application/json', buffer: Buffer.from(saved) });
+  await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
+  await expect(page.getByLabel('Geometry views')).toHaveValue('sphere-diagram');
+  await resting(page);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
 test('recreates views after context loss and repeated puzzle replacement', async ({ page }) => {
   const initial = await page.getByTestId('state-digest').textContent();
   const recovery = await page.locator('canvas').first().evaluate(async (canvas) => {
