@@ -81,7 +81,7 @@ export class DestinationOverlay {
           const material = new THREE.MeshBasicMaterial({
             color: part.role === 'body' ? 0x9fe6cf : this.colors[part.materialBindingId] ?? 0x9fe6cf,
             transparent: true,
-            opacity: part.role === 'body' ? 0.22 : 0.48,
+            opacity: part.role === 'body' ? 0.06 : 0.16,
             // Destinations often coincide with occupied surfaces, including the
             // back of the puzzle. Draw and pick them consistently through it.
             depthTest: false,
@@ -191,7 +191,7 @@ export class DestinationOverlay {
   }
 
   private emphasize(groups: DestinationGroup[]): void {
-    for (const group of this.groups) for (const mesh of group.meshes) mesh.material.opacity = groups.includes(group) ? Math.min(0.8, mesh.userData.baseOpacity + 0.25) : mesh.userData.baseOpacity;
+    for (const group of this.groups) for (const mesh of group.meshes) mesh.material.opacity = groups.includes(group) ? mesh.userData.baseOpacity + 0.14 : mesh.userData.baseOpacity;
   }
 
   dismiss(): void {

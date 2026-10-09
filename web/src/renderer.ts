@@ -17,6 +17,9 @@ export class RenderView {
   private readonly descriptor: SceneDescriptor;
   private readonly meshes: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>[] = [];
   private readonly assets = new Map<string, THREE.BufferGeometry>();
+  private readonly selectionEdges = new Map<string, THREE.EdgesGeometry>();
+  private readonly selectionOutlines = new Map<number, THREE.LineSegments>();
+  private readonly selectionMaterial = new THREE.LineBasicMaterial({ color: 0xffdb80, transparent: true, depthWrite: false });
   private readonly textures: THREE.Texture[] = [];
   private readonly labelSprites: THREE.Sprite[] = [];
   private readonly resizeObserver: ResizeObserver;
@@ -110,7 +113,7 @@ export class RenderView {
       });
       const mesh = new THREE.Mesh(this.assets.get(part.meshAssetId)!, material);
       mesh.matrixAutoUpdate = false;
-      mesh.userData = { visualPartId: part.visualPartId, pieceId: part.pieceId, baseColor: colors[part.materialBindingId] };
+      mesh.userData = { visualPartId: part.visualPartId, pieceId: part.pieceId, baseColor: material.color.getHex(), role: part.role, meshAssetId: part.meshAssetId };
       this.meshes.push(mesh);
       this.scene.add(mesh);
       if (part.label) {
@@ -213,6 +216,7 @@ export class RenderView {
     // Copy before any other WASM call. Destination storage is reused every frame.
     this.frameData.set(this.geometry.transforms() as Float32Array);
     for (let i = 0; i < this.meshes.length; i++) this.meshes[i].matrix.fromArray(this.frameData, i * 16);
+    for (const [index, outline] of this.selectionOutlines) outline.matrix.copy(this.meshes[index].matrix);
     for (const sprite of this.labelSprites) {
       const offset = sprite.userData.meshIndex * 16;
       sprite.position.set(this.frameData[offset + 12], this.frameData[offset + 13], this.frameData[offset + 14] + 0.02);
@@ -236,12 +240,40 @@ export class RenderView {
   sample(progress: number): void { this.geometry.sample(progress); this.updateTransforms(); }
   setDestinations(piece: string | undefined, destinations: PieceDestination[]): void { this.destinations.setDestinations(piece, destinations); }
   highlight(selected: string | undefined, blocked: string[]): void {
-    for (const mesh of this.meshes) {
+    for (let index = 0; index < this.meshes.length; index++) {
+      const mesh = this.meshes[index];
       const isBlocked = blocked.includes(mesh.userData.pieceId);
       const isSelected = mesh.userData.pieceId === selected;
-      mesh.material.emissive.setHex(isBlocked ? 0xff553e : isSelected ? 0x2bd4c6 : 0x000000);
-      mesh.material.emissiveIntensity = isBlocked ? 0.5 : isSelected ? 0.3 : 0;
+      mesh.material.color.setHex(mesh.userData.baseColor).multiplyScalar(selected && !isSelected && !isBlocked ? 0.65 : 1);
+      mesh.material.emissive.setHex(isBlocked ? 0xff553e : isSelected ? 0xffc75f : 0x000000);
+      mesh.material.emissiveIntensity = isBlocked ? 0.5 : isSelected ? 0.45 : 0;
+      // Opaque selected surfaces join the transparent pass at full opacity,
+      // after the destination ghosts. Depth testing still hides rear faces.
+      if (mesh.material.transparent !== isSelected) {
+        mesh.material.transparent = isSelected;
+        mesh.material.needsUpdate = true;
+      }
+      mesh.renderOrder = isSelected ? (mesh.userData.role === 'body' ? 20 : 21) : 0;
+      let outline = this.selectionOutlines.get(index);
+      if (isSelected && !outline) {
+        const asset = mesh.userData.meshAssetId as string;
+        let edges = this.selectionEdges.get(asset);
+        if (!edges) {
+          // Keep patch boundaries and sharp corners, without tracing the
+          // internal triangles of a tessellated spherical surface.
+          edges = new THREE.EdgesGeometry(mesh.geometry, 30);
+          this.selectionEdges.set(asset, edges);
+        }
+        outline = new THREE.LineSegments(edges, this.selectionMaterial);
+        outline.matrixAutoUpdate = false;
+        outline.matrix.copy(mesh.matrix);
+        outline.renderOrder = 22;
+        this.selectionOutlines.set(index, outline);
+        this.scene.add(outline);
+      }
+      if (outline) outline.visible = isSelected;
     }
+    for (const sprite of this.labelSprites) sprite.renderOrder = this.meshes[sprite.userData.meshIndex].userData.pieceId === selected ? 23 : 0;
     this.host.dataset.selectedPiece = selected ?? '';
     this.host.dataset.blockedPieces = blocked.join(',');
   }
@@ -270,6 +302,8 @@ export class RenderView {
     this.renderer.domElement.removeEventListener('webglcontextlost', this.contextLost);
     this.renderer.domElement.removeEventListener('webglcontextrestored', this.contextRestored);
     this.destinations.dispose();
+    this.selectionMaterial.dispose();
+    for (const edges of this.selectionEdges.values()) edges.dispose();
     for (const mesh of this.meshes) mesh.material.dispose();
     for (const sprite of this.labelSprites) sprite.material.dispose();
     for (const texture of this.textures) texture.dispose();
