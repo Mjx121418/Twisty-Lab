@@ -97,6 +97,32 @@
       "prefix": "UF_ab",
       "operation": "UL_af",
       "expectedStatus": "Committed"
+    },
+    {
+      "name": "Bagua 45-degree turn is legal",
+      "prefix": "",
+      "operation": "U+",
+      "expectedStatus": "Committed",
+      "source": "packages/bagua/definition.json",
+      "definitionDigest": "9e9c2c32a01e8aa431723e69df35e59f43e5778f3b377ce3e965d555b5c2a1e6"
+    },
+    {
+      "name": "Bagua quarter turn after 45 degrees is legal",
+      "prefix": "U+",
+      "operation": "R",
+      "expectedStatus": "Committed",
+      "source": "packages/bagua/definition.json",
+      "definitionDigest": "9e9c2c32a01e8aa431723e69df35e59f43e5778f3b377ce3e965d555b5c2a1e6"
+    },
+    {
+      "name": "Bagua jumbled corner crosses the next cut",
+      "prefix": "U+ R F-",
+      "operation": "U+",
+      "expectedStatus": "Blocked",
+      "reasonCode": "placement.blocked",
+      "implicatedPiece": "corner/07",
+      "source": "packages/bagua/definition.json",
+      "definitionDigest": "9e9c2c32a01e8aa431723e69df35e59f43e5778f3b377ce3e965d555b5c2a1e6"
     }
   ]
 }

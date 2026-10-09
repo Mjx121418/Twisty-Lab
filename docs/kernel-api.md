@@ -111,6 +111,8 @@ The public `SceneDescriptor`, `MeshAsset`, `VisualPart`, and `HitBinding` TypeSc
 
 `polyhedral-spherical` intersects catalog prototypes with the unit sphere and uses the existing catalog frames and rotation tracks. The Helicopter package provides twelve 45° disks, seven shared assets, 44 existing pieces, and 48 ports. Local mesh vertices lie on unit shells; the frame includes the uniform display scale, equal to `sphereRadius`. It retains the abstract model's volume, phase, catalog, and exclusion guards; a spherical outline can therefore show tangency for a request blocked by a volume-derived rule. See [the spherical Helicopter construction](spherical-helicopter.md). The copied example data includes `helicopter/helicopter-spherical.json`.
 
+Polyhedral model `ports` map each local port ID to 3–32 distinct model vertex indices. The indices may be unordered; they must describe a coplanar, strictly convex polygon on an exterior supporting plane. The interpreter orders its boundary, triangulates one shared mesh asset, and uses the arithmetic mean of its vertices as the port anchor. Malformed polygons produce `realization.catalog` diagnostics. This additive realization-schema extension retains API version 1 and buffer version 1; output remains indexed triangles and rigid transforms. The experimental [Bagua model](bagua-model.md) demonstrates 146 pieces and 198 polygonal ports, using the existing session/planning APIs and separate Euclidean/diagram documents. No Bagua-specific renderer API is required.
+
 Buffer version 1:
 
 - Positions and normals are packed `Float32` triples. `positionOffset` is an offset in scalar elements, and `vertexCount` counts vertices. Position and normal slices have the same offsets and lengths.
@@ -124,7 +126,7 @@ The renderer performs hit testing. Send the hit visual-part ID back to the inter
 
 ## Independent consumers and acceptance
 
-`examples/native/` is a separate CMake project that uses only an installed `TwistyKernel` package. `examples/canvas/` is a custom Canvas 2D renderer and DOM controller that uses only the assembled kernel package. It demonstrates reusable assets, C++ frame sampling, port picking, blocked requests, algorithms, and undo/redo with cube, bandaged, and Helicopter definitions.
+`examples/native/` is a separate CMake project that uses only an installed `TwistyKernel` package. `examples/canvas/` is a custom Canvas 2D renderer and DOM controller that uses only the assembled kernel package. It demonstrates reusable assets, C++ frame sampling, port picking, blocked requests, algorithms, and undo/redo with cube, bandaged, Helicopter and experimental Bagua definitions.
 
 ```sh
 npm run check:kernel
@@ -132,6 +134,6 @@ npm run check:kernel
 python3 -m http.server 8080 --directory build/kernel
 ```
 
-Open `/examples/canvas/` on that server. The ordinary production build also includes the example at `/kernel/examples/canvas/` for browser checks. `check:kernel` installs the native libraries, builds an external consumer, copies the WASM package to a temporary location without repository imports, and compares states, scenes, and endpoints for all three puzzles. Browser checks exercise the independent renderer/controller and verify that it loads only kernel-package modules.
+Open `/examples/canvas/` on that server. The ordinary production build also includes the example at `/kernel/examples/canvas/` for browser checks. `check:kernel` installs the native libraries, builds an external consumer, copies the WASM package to a temporary location without repository imports, and compares states, scenes, and endpoints for all four puzzles. Browser checks exercise the independent renderer/controller and verify that it loads only kernel-package modules.
 
 Further portability work is deferred in favor of the original puzzle and realization roadmap. A renderer-neutral adapter conformance suite, broader destination-platform CI, and additional language bindings remain possible later steps. A common C ABI, package-registry publication, worker orchestration, and dynamic native plugin loading are separate deliverables. The current portable API already supports custom native and browser renderers/controllers without changing the puzzle implementation.

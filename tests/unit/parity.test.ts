@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import createModule, { type MainModule, type Session } from '../../kernel/generated/twisty.mjs';
 
 const read = (path: string): string => readFileSync(path, 'utf8');
@@ -11,7 +11,7 @@ const snapshot = (value: Session): any => JSON.parse(value.snapshotJSON());
 const native = (args: string[]): any => JSON.parse(execFileSync('build/native/twisty', [...args, '--json'], { encoding: 'utf8' }));
 
 beforeAll(async () => { runtime = await createModule(); });
-afterAll(() => { for (const handle of handles) handle.delete(); });
+afterEach(() => { for (const handle of handles) handle.delete(); handles.length = 0; });
 
 describe('native / WebAssembly parity', () => {
   it.each([
@@ -20,6 +20,8 @@ describe('native / WebAssembly parity', () => {
     ['helicopter', 'helicopter-spherical', "UF_ab DR_ab FR_ad DR_ba UF_ba (UF_ab DR_ab FR_ad DR_ba UF_ba)'"],
     ['cube3', 'cube-spherical', "U R F D L B (U R F D L B)'"],
     ['bandaged', 'cube-spherical', "U R R' U' F F'"],
+    ['bagua', 'bagua-euclidean', '[[U+ R2:U+],[R R+ L-:D2]]'],
+    ['bagua', 'bagua-port-diagram', "U+ R' L' D2 R L U-"],
   ])('matches native %s assets and sampled %s frames', (name, kind, algorithm) => {
     const definition = `packages/${name}/definition.json`;
     const realization = `packages/${name}/${kind}.json`;
@@ -103,17 +105,42 @@ describe('native / WebAssembly parity', () => {
     expect(snapshot(restored).stateDigest).toEqual(snapshot(wasm).stateDigest);
   });
 
+  it('matches Bagua published sequences, cut blocking and replay', () => {
+    const path = 'packages/bagua/definition.json';
+    const wasm = new runtime.Session(read(path));
+    const restored = new runtime.Session(read(path));
+    try {
+      const origin = snapshot(wasm);
+      const algorithm = '[[U+ R2:U+],[R R+ L-:D2]]';
+      const result = JSON.parse(wasm.runJSON(algorithm, 'transactional', origin.revision));
+      const reference = native(['run', '--definition', path, '--algorithm', algorithm, '--policy', 'transactional']);
+      expect(result.status).toBe('Committed');
+      expect(result.snapshot).toEqual(reference.snapshot);
+      expect(result.transitions).toEqual(reference.transitions);
+      expect(JSON.parse(restored.loadJSON(wasm.saveJSON())).status).toBe('Loaded');
+      expect(snapshot(restored).stateDigest).toBe(snapshot(wasm).stateDigest);
+      expect(JSON.parse(wasm.runJSON(`(${algorithm})'`, 'transactional', snapshot(wasm).revision)).status).toBe('Committed');
+      expect(snapshot(wasm).stateDigest).toBe(origin.stateDigest);
+      const blocked = JSON.parse(wasm.runJSON('U+ R F- U+', 'transactional', snapshot(wasm).revision));
+      expect(blocked.reasonCode).toBe('placement.blocked');
+      expect(blocked.implicatedPieces).toContain('corner/07');
+      expect(snapshot(wasm).stateDigest).toBe(origin.stateDigest);
+    } finally { wasm.delete(); restored.delete(); }
+  });
+
   it('runs the same version-pinned portable fixtures', () => {
     const fixtures = JSON.parse(read('tests/fixtures/core.json'));
     for (const fixture of fixtures.cases) {
-      const value = session(fixture.source);
-      expect(snapshot(value).definitionDigest).toBe(fixture.definitionDigest);
-      expect(JSON.parse(value.runJSON(fixture.prefix, 'transactional', snapshot(value).revision)).status).toBe('Committed');
-      const result = JSON.parse(value.executeJSON(JSON.stringify({ operation: fixture.operation, parameters: {} }), snapshot(value).revision));
-      expect(result.status, fixture.name).toBe(fixture.expectedStatus);
-      if (fixture.reasonCode) expect(result.reasonCode).toBe(fixture.reasonCode);
-      if (fixture.implicatedPiece) expect(result.implicatedPieces).toContain(fixture.implicatedPiece);
-      if (fixture.unchangedParticipant) expect(result.transitions[0].pieceActions).toContainEqual(expect.objectContaining({ pieceId: fixture.unchangedParticipant, from: 'center:U', to: 'center:U' }));
+      const value = new runtime.Session(read(fixture.source));
+      try {
+        expect(snapshot(value).definitionDigest).toBe(fixture.definitionDigest);
+        expect(JSON.parse(value.runJSON(fixture.prefix, 'transactional', snapshot(value).revision)).status).toBe('Committed');
+        const result = JSON.parse(value.executeJSON(JSON.stringify({ operation: fixture.operation, parameters: {} }), snapshot(value).revision));
+        expect(result.status, fixture.name).toBe(fixture.expectedStatus);
+        if (fixture.reasonCode) expect(result.reasonCode).toBe(fixture.reasonCode);
+        if (fixture.implicatedPiece) expect(result.implicatedPieces).toContain(fixture.implicatedPiece);
+        if (fixture.unchangedParticipant) expect(result.transitions[0].pieceActions).toContainEqual(expect.objectContaining({ pieceId: fixture.unchangedParticipant, from: 'center:U', to: 'center:U' }));
+      } finally { value.delete(); }
     }
   });
 

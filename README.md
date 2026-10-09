@@ -8,9 +8,11 @@ The cube presets also support an [ideal spherical realization](docs/spherical-cu
 
 An experimental Helicopter Cube preset adds exact jumbling stops, placement-dependent blocking, a complete shape-graph verifier, and synchronized polyhedral, spherical, and port-diagram realizations. Its [spherical interpretation](docs/spherical-helicopter.md) has twelve 45° disks and reuses all 44 pieces, with the existing mechanism pieces visible as uncolored regions. It retains the core's volume-derived legality rules. Its [model specification](docs/helicopter-model.md) records the finite catalogs, geometric interpretation, external acceptance targets, and remaining independent review.
 
+An experimental [Bagua Cube](docs/bagua-model.md) preset adds 146 pieces, exact 45° face turns, placement-dependent blocking, polygonal stickers and synchronized cube/port-diagram views. Its finite catalog and published solving-guide fixtures pass headless checks; independent whole-model human review remains open. Select **Bagua Cube · experimental**; `+` / `−` buttons turn 45°, while face keys turn 90°.
+
 ## Run locally
 
-Use the existing development container or a compatible environment with C++20, CMake 3.25+, Ninja, Emscripten 6.0.11, Node 24, and npm. Follow [AGENTS.md](AGENTS.md): the container has a 4 GB memory budget, heavy workloads run sequentially, builds use at most two jobs, and browser tests use one worker. Do not modify `Dockerfile` without an explicit user request.
+Use the existing development container or a compatible environment with C++20, CMake 3.25+, Ninja, Emscripten 6.0.11, Node 24, and npm. Follow [AGENTS.md](AGENTS.md): the container has a 4 GB memory budget, heavy workloads run sequentially, builds now default to one job, and browser tests use one worker. Do not modify `Dockerfile` without an explicit user request. The Bagua authoring check uses bounded caches and a 384 MiB process ceiling; it adds a few minutes to the package check.
 
 ```sh
 npm ci
@@ -101,7 +103,7 @@ The browser's **Import definition** accepts sources or compiled finite definitio
 
 Regression fixtures pin a definition digest and specify a replay prefix, request, expected outcome, and optional blocking evidence or unchanged participant. Update a fixture's semantic pin deliberately when changing its rules. Its source path is an authoring convenience, not a replacement for the digest.
 
-`npm run check:packages` checks the compiled reference files, realization compatibility digests, and fixture pins without changing them. After reviewing a source change, regenerate packages with `python3 scripts/compile-packages.py --write`. Add `--update-fixtures` only when deliberately accepting the new semantic identity, then rerun the checks. Build the native CLI before using this script.
+`npm run check:packages` checks the compiled reference files, realization compatibility digests, and fixture pins without changing them. After reviewing a cube source change, regenerate its packages with `python3 scripts/compile-packages.py --write`. For Helicopter or Bagua, run the corresponding `scripts/helicopter_model.py` or `scripts/bagua_model.py` with `--write`; review the model's semantic pin in `review.json` as well. Add `--update-fixtures` to the package script only when deliberately accepting the new semantic identity, then rerun the checks. Build the native CLI before using these scripts.
 
 ## Build boundaries and memory ownership
 
@@ -133,11 +135,11 @@ Then run the checks sequentially:
 npm run check
 ```
 
-Native checks exercise hashes, canonical compilation, symmetry covariance, inverses, hidden variables, blocked paths, seeded walks, replay, realization endpoints and mesh continuity, spherical disk membership and radial meshes, spherical Helicopter coverage during jumbling, and the exhaustive Helicopter shape graph. Vitest compares native and WASM definitions, witnesses, state digests, Helicopter and spherical meshes and sampled frames, portable fixtures, exact serialization, and schemas. Kernel-package checks build an external installed native consumer and load a copied WASM package in Node, comparing all three puzzles and their spherical packages. Playwright serves the production bundle on port 4173 and checks synchronized views, spherical view switching, algorithms, jumbling and bandaging feedback, camera independence, picking, imports, saves, context/resource replacement, and the independent Canvas client with one worker. Run `npm run build` before running browser tests individually.
+Native checks exercise hashes, canonical compilation, symmetry covariance, inverses, hidden variables, blocked paths, seeded walks, replay, realization endpoints and mesh continuity, spherical disk membership and radial meshes, spherical Helicopter coverage during jumbling, and the exhaustive Helicopter shape graph. Bagua checks add published solving algorithms, a pure three-pair cycle, exact turn closure, overlap exclusions and convex polygonal ports. Vitest compares native and WASM definitions, witnesses, state digests, meshes and sampled frames, portable fixtures, exact serialization, and schemas. Kernel-package checks build an external installed native consumer and load a copied WASM package in Node, comparing all four puzzles and their available realizations. Playwright serves the production bundle on port 4173 and checks synchronized views, spherical view switching, algorithms, jumbling and bandaging feedback, camera independence, picking, imports, saves, context/resource replacement, and the independent Canvas client with one worker. Run `npm run build` before running browser tests individually.
 
 Dependencies are pinned in `package-lock.json`. The nlohmann JSON header is vendored with its MIT license so CMake builds do not need a network dependency fetch. Build and test outputs are ignored by Git.
 
-Independent review of the Helicopter model, Bagua, symbolic placement domains, richer goals, solvers, visual editors, exports, and shared sessions follow the verification gates in [the architecture proposal](twisty_puzzle_simulator_architecture.md). Further portability hardening is deferred while the original puzzle and realization roadmap takes priority.
+Independent review of the Helicopter and Bagua models, spherical Bagua, symbolic placement domains, richer goals, solvers, visual editors, exports, and shared sessions follow the verification gates in [the architecture proposal](twisty_puzzle_simulator_architecture.md). Further portability hardening is deferred while the original puzzle and realization roadmap takes priority.
 
 ## Acknowledgments
 

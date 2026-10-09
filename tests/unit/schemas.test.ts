@@ -37,5 +37,16 @@ it('validates shipped sources, compiled definitions, realizations, fixtures, and
     expect(JSON.parse(helicopter.runJSON('UF_ab UL_af', 'transactional', '0')).status).toBe('Committed');
     check('session', JSON.parse(helicopter.saveJSON()));
   } finally { helicopter.delete(); }
+  const baguaText = readFileSync('packages/bagua/definition.json', 'utf8');
+  check('definition', JSON.parse(baguaText));
+  for (const kind of ['euclidean', 'port-diagram']) {
+    check('realization', JSON.parse(readFileSync(`packages/bagua/bagua-${kind}.json`, 'utf8')));
+  }
+  const bagua = new module.Session(baguaText);
+  try {
+    check('state', JSON.parse(bagua.stateJSON()));
+    expect(JSON.parse(bagua.runJSON("U+ R' L' D2 R L U-", 'transactional', '0')).status).toBe('Committed');
+    check('session', JSON.parse(bagua.saveJSON()));
+  } finally { bagua.delete(); }
   check('fixture', JSON.parse(readFileSync('tests/fixtures/core.json', 'utf8')));
 });

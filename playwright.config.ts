@@ -13,7 +13,8 @@ export default defineConfig({
     launchOptions: { args: ['--enable-unsafe-swiftshader', '--disable-dev-shm-usage'] },
   },
   webServer: {
-    command: 'npm run preview',
+    // Keep the test server to one Node process under the container memory budget.
+    command: 'node node_modules/vite/bin/vite.js preview --host 0.0.0.0',
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

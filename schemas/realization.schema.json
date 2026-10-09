@@ -185,7 +185,7 @@
           "additionalProperties": {
             "type": "array",
             "minItems": 3,
-            "maxItems": 3,
+            "maxItems": 32,
             "uniqueItems": true,
             "items": {
               "type": "integer",

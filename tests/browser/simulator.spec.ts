@@ -16,6 +16,55 @@ async function resting(page: import('@playwright/test').Page): Promise<void> {
   await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-state-digest', digest!);
 }
 
+test('realizes Bagua turns, published pair cycles, blocking and saved sessions', async ({ page }) => {
+  await page.getByLabel('Puzzle', { exact: true }).selectOption('bagua');
+  await expect(page.getByRole('button', { name: 'Select corner/00', exact: true })).toBeVisible();
+  await expect(page.locator('canvas')).toHaveCount(2);
+  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', 'bagua-euclidean-v1');
+  await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-realization-id', 'bagua-port-diagram-v1');
+  await page.getByLabel('Animation speed').selectOption('0');
+  const initial = await page.getByTestId('state-digest').textContent();
+  await page.getByRole('button', { name: 'Move U+', exact: true }).click();
+  await resting(page);
+  const quarter = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/bagua/definition.json', '--algorithm', 'U+ R', '--json'], { encoding: 'utf8' }));
+  // Face keys retain quarter turns; Shift resolves the declared inverse ID.
+  await page.locator('h1').click();
+  await page.keyboard.press('r');
+  await resting(page);
+  await expect(page.getByTestId('state-digest')).toHaveText(quarter.snapshot.stateDigest);
+  await page.keyboard.press('Shift+R');
+  await page.getByRole('button', { name: 'Move U-', exact: true }).click();
+  await resting(page);
+  await expect(page.getByTestId('state-digest')).toHaveText(initial!);
+  const algorithm = '[[U+ R2:U+],[R R+ L-:D2]]';
+  await page.getByLabel('Algorithm', { exact: true }).fill(algorithm);
+  await page.getByRole('button', { name: 'Play algorithm →' }).click();
+  await resting(page);
+  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/bagua/definition.json', '--algorithm', algorithm, '--json'], { encoding: 'utf8' }));
+  await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
+  await page.getByRole('button', { name: 'Select kite-left/00', exact: true }).click();
+  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-selected-piece', 'kite-left/00');
+  await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-selected-piece', 'kite-left/00');
+  await page.screenshot({ path: 'test-results/bagua-pair-cycle.png', fullPage: true });
+  const downloading = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save session ↗' }).click();
+  const saved = readFileSync((await (await downloading).path())!, 'utf8');
+  await page.getByLabel('Algorithm', { exact: true }).fill(`(${algorithm})'`);
+  await page.getByRole('button', { name: 'Play algorithm →' }).click();
+  await resting(page);
+  await expect(page.getByTestId('state-digest')).toHaveText(initial!);
+  await page.getByLabel('Execution policy').selectOption('transactional');
+  await page.getByLabel('Algorithm', { exact: true }).fill('U+ R F- U+');
+  await page.getByRole('button', { name: 'Play algorithm →' }).click();
+  await expect(page.getByTestId('blocking-evidence')).toContainText('placement.blocked');
+  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-blocked-pieces', 'corner/07');
+  await expect(page.getByTestId('state-digest')).toHaveText(initial!);
+  await page.getByLabel('Open session file').setInputFiles({ name: 'bagua-session.json', mimeType: 'application/json', buffer: Buffer.from(saved) });
+  await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
+  await resting(page);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
 test('runs the same cube on a sphere, preserves state across views, and restores presentation', async ({ page }) => {
   const initial = await page.getByTestId('state-digest').textContent();
   await expect(page.getByLabel('Geometry views')).toHaveValue('cube-sphere');

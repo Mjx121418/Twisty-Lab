@@ -182,30 +182,55 @@ void Geometry::build_catalog(const Json &realization) {
         }
       });
     for (const auto &[port, vertices] : data.at("ports").items()) {
-      const auto face = vertices.get<std::vector<Index>>();
-      ensure(face.size() == 3 && std::set<Index>(face.begin(), face.end()).size() == 3 &&
+      auto face = vertices.get<std::vector<Index>>();
+      ensure(face.size() >= 3 && face.size() <= 32 &&
+                 std::set<Index>(face.begin(), face.end()).size() == face.size() &&
                  std::all_of(face.begin(), face.end(), [&](Index v) { return v < model.vertices.size(); }),
-             id + "/" + port, "A port must name three distinct model vertices.");
+             id + "/" + port, "A port must name 3–32 distinct model vertices.");
       Point anchor{};
       for (auto v : face)
-        anchor = add(anchor, scaled(model.vertices[v], 1.0 / 3));
-      auto n = unit(cross(sub(model.vertices[face[1]], model.vertices[face[0]]),
-                          sub(model.vertices[face[2]], model.vertices[face[0]])));
+        anchor = add(anchor, scaled(model.vertices[v], 1.0 / face.size()));
+      // Catalog indices need not follow the polygon boundary. Find a stable
+      // plane before sorting, including when the first three are collinear.
+      Point raw{};
+      for (std::size_t i = 1; i < face.size(); ++i)
+        for (std::size_t j = i + 1; j < face.size(); ++j) {
+          const auto candidate = cross(sub(model.vertices[face[i]], model.vertices[face[0]]),
+                                       sub(model.vertices[face[j]], model.vertices[face[0]]));
+          if (dot(candidate, candidate) > dot(raw, raw))
+            raw = candidate;
+        }
+      auto n = unit(raw);
       if (dot(n, sub(anchor, center)) < 0)
         n = scaled(n, -1);
+      for (auto v : face)
+        ensure(std::abs(dot(n, sub(model.vertices[v], anchor))) < 1e-10, id + "/" + port,
+               "Port vertices must be coplanar.");
       for (const auto &v : model.vertices)
         ensure(dot(n, sub(v, anchor)) < 1e-10, id + "/" + port,
                "Ports must lie on an exterior supporting face.");
+      const auto r = unit(sub(model.vertices[face[0]], anchor)), u = cross(n, r);
+      std::sort(face.begin(), face.end(), [&](Index a, Index b) {
+        const auto da = sub(model.vertices[a], anchor), db = sub(model.vertices[b], anchor);
+        return std::atan2(dot(da, u), dot(da, r)) < std::atan2(dot(db, u), dot(db, r));
+      });
+      for (std::size_t i = 0; i < face.size(); ++i)
+        ensure(dot(cross(sub(model.vertices[face[(i + 1) % face.size()]], model.vertices[face[i]]),
+                         sub(model.vertices[face[(i + 2) % face.size()]],
+                             model.vertices[face[(i + 1) % face.size()]])),
+                   n) > 1e-14,
+               id + "/" + port, "Port vertices must form a strictly convex polygon.");
       anchor = add(inset(anchor), scaled(n, lift));
       model.port_centers[port] = anchor;
       model.port_normals[port] = n;
       if (!diagram_ && !catalog_spherical_)
         asset(id + "/port/" + port, [&](const auto &triangle) {
-          std::array<Point, 3> points;
-          for (int i = 0; i < 3; ++i)
+          std::vector<Point> points(face.size());
+          for (std::size_t i = 0; i < face.size(); ++i)
             points[i] = add(anchor, scaled(sub(add(inset(model.vertices[face[i]]), scaled(n, lift)), anchor),
                                            1 - sticker_inset));
-          triangle(points[0], points[1], points[2], n);
+          for (std::size_t i = 1; i + 1 < points.size(); ++i)
+            triangle(points[0], points[i], points[i + 1], n);
         });
     }
     for (const auto &data : data.at("symmetries")) {

@@ -12,6 +12,9 @@ import helicopterSource from '../../packages/helicopter/definition.json?raw';
 import helicopterRealization from '../../packages/helicopter/helicopter-euclidean.json';
 import helicopterDiagram from '../../packages/helicopter/helicopter-port-diagram.json';
 import helicopterSphere from '../../packages/helicopter/helicopter-spherical.json';
+import baguaSource from '../../packages/bagua/definition.json?raw';
+import baguaRealization from '../../packages/bagua/bagua-euclidean.json';
+import baguaDiagram from '../../packages/bagua/bagua-port-diagram.json';
 import { KernelSession, loadRuntime, type Realization, type Result, type Snapshot, type Transition } from './kernel';
 import { RenderView } from './renderer';
 import { pieceDestinations, type PieceDestination } from './destinations';
@@ -20,6 +23,7 @@ const presets = [
   { id: 'cube3', label: '3 × 3 cube', source: cubeSource, realizations: [cubeRealization, cubeDiagram], spherical: cubeSphere },
   { id: 'bandaged-uf-ufr', label: 'Bandaged cube · UF + UFR', source: bandageSource, realizations: [bandageRealization, bandageDiagram], spherical: bandageSphere },
   { id: 'helicopter', label: 'Helicopter Cube · jumbling', source: helicopterSource, realizations: [helicopterRealization, helicopterDiagram], spherical: helicopterSphere },
+  { id: 'bagua', label: 'Bagua Cube · experimental', source: baguaSource, realizations: [baguaRealization, baguaDiagram], spherical: undefined },
 ];
 type Layout = 'both' | 'cube' | 'diagram';
 type ViewPair = 'cube-diagram' | 'sphere-diagram' | 'cube-sphere';
@@ -87,7 +91,8 @@ export function App() {
     pendingCameras.current = undefined;
     setSourceId(id); setSnapshot(initial); setVisualDigest(initial.stateDigest);
     setSelected(undefined); setEvidence(undefined); setLastScramble(''); setVisualError('');
-    setAlgorithm(initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' : "R U R' U'");
+    setAlgorithm(initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' :
+      initial.puzzleId === 'bagua-experimental-v1' ? "U+ R' L' D2 R L U-" : "R U R' U'");
     setGeneration((value) => value + 1);
   }
 
@@ -223,8 +228,9 @@ export function App() {
       } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
         event.preventDefault(); enqueue(() => event.shiftKey ? kernel.current!.redo() : kernel.current!.undo());
       } else if (!event.ctrlKey && !event.metaKey && !event.altKey && /^[urfdlb]$/i.test(event.key)) {
-        event.preventDefault(); const operation = event.key.toUpperCase() + (event.shiftKey ? "'" : '');
-        if (kernel.current?.definition.operations.some((move) => move.id === operation)) enqueue(() => kernel.current!.move(operation));
+        event.preventDefault();
+        const base = kernel.current?.definition.operations.find((move) => move.id === event.key.toUpperCase());
+        if (base) enqueue(() => kernel.current!.move(event.shiftKey ? base.inverse : base.id));
       }
     };
     window.addEventListener('keydown', keydown);
@@ -319,8 +325,12 @@ export function App() {
           </div>
 
           <section className="commands">
-            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
-            <div className="moves">{families.map((family) => <div className={`move-pair ${definition?.operations.some((op) => op.family === family && op.pieceGuards) ? 'many-moves' : ''}`} key={family}>{phaseRequests?.filter((operation) => operation.family === family).map((operation) => <button key={operation.id} aria-label={`Move ${operation.id === `${family}'` ? `${family} inverse` : operation.id}`} className={!legal.has(operation.id) ? 'may-block' : ''} disabled={!snapshot} onClick={() => enqueue(() => kernel.current!.move(operation.id))}>{operation.id === `${family}'` ? '′' : operation.id}</button>)}</div>)}
+            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : snapshot?.puzzleId === 'bagua-experimental-v1' ? '+ / −: 45° · face keys: 90° · Shift for inverse' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
+            <div className="moves">{families.map((family) => <div className={`move-pair ${(phaseRequests?.filter((op) => op.family === family).length ?? 0) > 2 ? 'many-moves' : ''}`} key={family}>{phaseRequests?.filter((operation) => operation.family === family).map((operation) => {
+              const inverse = operation.id === `${family}'` || operation.id === `${family}_inv`;
+              const half = operation.id === `${family}_half`;
+              return <button key={operation.id} aria-label={`Move ${inverse ? `${family} inverse` : half ? `${family} half turn` : operation.id}`} className={!legal.has(operation.id) ? 'may-block' : ''} disabled={!snapshot} onClick={() => enqueue(() => kernel.current!.move(operation.id))}>{inverse ? '′' : half ? `${family}2` : operation.id}</button>;
+            })}</div>)}
               <div className="history-controls"><button disabled={!snapshot?.canUndo} onClick={() => enqueue(() => kernel.current!.undo())}>↶ Undo</button><button disabled={!snapshot?.canRedo} onClick={() => enqueue(() => kernel.current!.redo())}>↷ Redo</button></div>
             </div>
             <div className="algorithm-row"><textarea aria-label="Algorithm" value={algorithm} onChange={(event) => setAlgorithm(event.target.value)} spellCheck={false} rows={2} />

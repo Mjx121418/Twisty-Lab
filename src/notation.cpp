@@ -86,7 +86,7 @@ private:
         const auto start = at_;
         while (at_ < text_.size() &&
                (std::isalpha(static_cast<unsigned char>(text_[at_])) || text_[at_] == '_' ||
-                text_[at_] == '/' || text_[at_] == '.' || text_[at_] == '-'))
+                text_[at_] == '/' || text_[at_] == '.' || text_[at_] == '-' || text_[at_] == '+'))
           ++at_;
         if (start == at_)
           fail("Expected an operation, group, or bracketed expression.");

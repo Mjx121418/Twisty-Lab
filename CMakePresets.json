@@ -5,8 +5,8 @@
     {"name": "wasm", "generator": "Ninja", "binaryDir": "${sourceDir}/build/wasm", "toolchainFile": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake", "cacheVariables": {"CMAKE_BUILD_TYPE": "Release", "CMAKE_CXX_FLAGS_RELEASE": "-O1 -DNDEBUG", "BUILD_TESTING": "OFF"}}
   ],
   "buildPresets": [
-    {"name": "native", "configurePreset": "native", "jobs": 2},
-    {"name": "wasm", "configurePreset": "wasm", "jobs": 2}
+    {"name": "native", "configurePreset": "native", "jobs": 1},
+    {"name": "wasm", "configurePreset": "wasm", "jobs": 1}
   ],
   "testPresets": [{"name": "native", "configurePreset": "native", "output": {"outputOnFailure": true}, "execution": {"jobs": 1}}]
 }

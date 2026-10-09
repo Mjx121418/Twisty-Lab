@@ -34,6 +34,13 @@ test('a separate Canvas renderer and controller consume only the portable kernel
   await page.getByRole('button', { name: 'Play algorithm' }).click();
   const origin = JSON.parse(execFileSync('build/native/twisty', ['inspect', '--definition', 'packages/helicopter/definition.json', '--json'], { encoding: 'utf8' }));
   await expect(page.locator('#digest')).toHaveText(origin.snapshot.stateDigest);
+  await page.getByLabel('Puzzle', { exact: true }).selectOption('bagua');
+  await expect(page.getByRole('status')).toHaveText('Ready');
+  await expect(page.getByRole('button', { name: 'U+', exact: true })).toBeVisible();
+  await page.getByLabel('Algorithm', { exact: true }).fill("U+ R' L' D2 R L U-");
+  await page.getByRole('button', { name: 'Play algorithm' }).click();
+  const bagua = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/bagua/definition.json', '--algorithm', "U+ R' L' D2 R L U-", '--json'], { encoding: 'utf8' }));
+  await expect(page.locator('#digest')).toHaveText(bagua.snapshot.stateDigest);
   expect(modules.some((url) => url.endsWith('/kernel/index.js'))).toBe(true);
   const kernelPath = new URL('kernel/', baseURL!).pathname;
   expect(modules.every((url) => new URL(url).pathname.startsWith(kernelPath))).toBe(true);
