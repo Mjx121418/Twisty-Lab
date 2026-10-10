@@ -57,8 +57,8 @@ def realization(definition,diagram,edge_teeth=12):
         kind=domain['id'];ports=len(domain['placements'][0]['portAttachment']);parts=[]
         if not diagram:
             if kind=='gear-edge':
-                cradle=shapes.join(box((0,.97,.97),(.38,.24,.24)),
-                                  box((0,1.20,.72),(.28,.15,.16)),box((0,.72,1.20),(.28,.16,.15)))
+                cradle=shapes.join(box((0,.97,.97),(.30,.24,.24)),
+                                  box((0,1.20,.72),(.23,.15,.16)),box((0,.72,1.20),(.23,.16,.15)))
                 parts.extend([('carrier','body',None,cradle),('cog','body',None,shapes.gear_shell(teeth=edge_teeth)),
                               ('bearing','body',None,shapes.bearing()),
                               ('axle','body',None,shapes.cylinder(N,(0,1.26,1.26),.084,.35)),

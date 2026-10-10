@@ -4,15 +4,22 @@ All dimensions and surfaces live here, outside the abstract compiler. The
 profiles are an editable construction prototype, not certified gear contacts.
 """
 from functools import lru_cache
-from math import atan2, cos, pi, sin, sqrt, tan
+from math import cos, pi, sin, sqrt, tan
 
 FACE = 1.48
 EDGE_AXIS = (0, 1 / sqrt(2), 1 / sqrt(2))
 RIGHT = (1, 0, 0)
 TRANSVERSE = (0, 1 / sqrt(2), -1 / sqrt(2))
 TEETH = 12
-ROOT_ANGLE = 23 * pi / 180
-TIP_ANGLE = 27 * pi / 180
+ROOT_ANGLE = 15 * pi / 180
+TIP_ANGLE = 18 * pi / 180
+CORNER_AXIS = (1 / sqrt(3),) * 3
+# The zero-angle tooth points down the UF cube edge from the UFR vertex.
+CORNER_RIGHT = (-2 / sqrt(6), 1 / sqrt(6), 1 / sqrt(6))
+CORNER_UP = (0, -1 / sqrt(2), 1 / sqrt(2))
+CORNER_ROOT_ANGLE = 14 * pi / 180
+CORNER_TIP_ANGLE = 18 * pi / 180
+CORNER_THICKNESS = .14
 
 
 def add(a, b):
@@ -44,19 +51,20 @@ def join(*meshes):
     return mesh(vertices, triangles)
 
 
-def tooth_angle(phi, teeth=TEETH):
-    # Six-tooth edges retain every other tooth of the original profile. Keeping
-    # the tooth width and seats avoids changing the existing corner mesh.
-    u = (phi * teeth / (2 * pi)) % 1 * (TEETH / teeth)
+def tooth_height(u):
     if u < .12 or u > .88:
-        height = 0
+        return 0
     elif u < .30:
-        height = (u - .12) / .18
+        return (u - .12) / .18
     elif u > .70:
-        height = (.88 - u) / .18
-    else:
-        height = 1
-    return ROOT_ANGLE + (TIP_ANGLE - ROOT_ANGLE) * height
+        return (.88 - u) / .18
+    return 1
+
+
+def tooth_angle(phi, teeth=TEETH):
+    # Six-tooth edges retain every other tooth of the twelve-tooth profile.
+    u = (phi * teeth / (2 * pi)) % 1 * (TEETH / teeth)
+    return ROOT_ANGLE + (TIP_ANGLE - ROOT_ANGLE) * tooth_height(u)
 
 
 def roof_outline(geared=True, count=96, teeth=TEETH):
@@ -147,72 +155,31 @@ def center_port():
     return mesh(vertices, [[0,i+1,(i+1)%8+1] for i in range(8)])
 
 
-def corner_distance(p):
-    distance = max(max(p)-FACE, .52-min(p))
-    # Cut complementary seats around each of this corner's three edge axes.
-    for missing in range(3):
-        axis = tuple(0 if i == missing else 1/sqrt(2) for i in range(3))
-        right = tuple(int(i == missing) for i in range(3))
-        transverse = cross(axis, right)
-        axial = dot(p, axis)
-        radial = add(p, scale(axis, -axial))
-        phi = atan2(dot(radial, transverse), dot(radial, right))
-        clearance = (axial + .20) * tan(tooth_angle(phi)) + .018
-        distance = max(distance, clearance - sqrt(dot(radial, radial)))
-    return distance
+def corner_outline(count=144):
+    """Six tooth centers alternate between cube edges and face interiors.
+
+    Angles 0, 120, and 240 degrees lie on UF, FR, and UR respectively;
+    60, 180, and 300 degrees point into F, R, and U. Projection onto the
+    cube surface preserves the three edge-aligned tooth centers exactly.
+    """
+    out = []
+    for i in range(count):
+        phi = 2 * pi * i / count
+        height = tooth_height((phi * 6 / (2 * pi) + .5) % 1)
+        angle = CORNER_ROOT_ANGLE + (CORNER_TIP_ANGLE - CORNER_ROOT_ANGLE) * height
+        tangent = add(scale(CORNER_RIGHT, cos(phi)), scale(CORNER_UP, sin(phi)))
+        direction = add(CORNER_AXIS, scale(tangent, tan(angle)))
+        out.append(scale(direction, FACE / max(direction)))
+    return out
 
 
 @lru_cache(maxsize=1)
 def corner_body():
-    """Marching tetrahedra on one small prototype, with shared edge vertices."""
-    cells, lo, hi = 26, .47, FACE+.05
-    width = cells + 1
-    points = [(lo+(hi-lo)*x/cells, lo+(hi-lo)*y/cells, lo+(hi-lo)*z/cells)
-              for x in range(width) for y in range(width) for z in range(width)]
-    values = [corner_distance(p) for p in points]
-    vertices, triangles, crossings = [], [], {}
-
-    def intersection(a, b):
-        key = (min(a,b), max(a,b))
-        if key not in crossings:
-            t = values[a] / (values[a] - values[b])
-            crossings[key] = len(vertices)
-            vertices.append(add(scale(points[a], 1-t), scale(points[b], t)))
-        return crossings[key]
-
-    def triangle(indices, outward):
-        a,b,c = (vertices[i] for i in indices)
-        n = cross(add(b, scale(a,-1)), add(c, scale(a,-1)))
-        if dot(n,n) < 1e-18:
-            return
-        if dot(n,outward) < 0:
-            indices[1],indices[2] = indices[2],indices[1]
-        triangles.append(indices)
-
-    tetrahedra = [(0,1,3,7),(0,3,2,7),(0,2,6,7),(0,6,4,7),(0,4,5,7),(0,5,1,7)]
-    for x in range(cells):
-        for y in range(cells):
-            for z in range(cells):
-                ids = [((x+dx)*width+y+dy)*width+z+dz
-                       for dx,dy,dz in [(0,0,0),(0,0,1),(0,1,0),(0,1,1),
-                                        (1,0,0),(1,0,1),(1,1,0),(1,1,1)]]
-                for tetra in tetrahedra:
-                    inside = [ids[i] for i in tetra if values[ids[i]] < 0]
-                    outside = [ids[i] for i in tetra if values[ids[i]] >= 0]
-                    if not inside or not outside:
-                        continue
-                    outward = add(scale(tuple(sum(points[i][k] for i in outside) for k in range(3)),1/len(outside)),
-                                  scale(tuple(sum(points[i][k] for i in inside) for k in range(3)),-1/len(inside)))
-                    if len(inside) == 2:
-                        a,b = inside
-                        c,d = outside
-                        ac,ad,bc,bd = [intersection(i,j) for i,j in [(a,c),(a,d),(b,c),(b,d)]]
-                        triangle([ac,ad,bd],outward)
-                        triangle([ac,bd,bc],outward)
-                    else:
-                        single,others = (inside[0],outside) if len(inside) == 1 else (outside[0],inside)
-                        triangle([intersection(single,i) for i in others],outward)
-    return mesh(vertices,triangles)
+    """A thick six-lobed roof folded across the corner's three cube faces."""
+    front = corner_outline()
+    back = [add(p, scale(CORNER_AXIS, -CORNER_THICKNESS)) for p in front]
+    center = (FACE, FACE, FACE)
+    return loft([back, front], add(center, scale(CORNER_AXIS, -CORNER_THICKNESS)), center)
 
 
 def corner_port(port):
