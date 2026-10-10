@@ -62,8 +62,11 @@ def tooth_height(u):
 
 
 def tooth_angle(phi, teeth=TEETH):
-    # Six-tooth edges retain every other tooth of the twelve-tooth profile.
-    u = (phi * teeth / (2 * pi)) % 1 * (TEETH / teeth)
+    # Center each tooth within its pitch interval, keeping the same angular
+    # width for both counts. Reflection across y=z sends phi to -phi.
+    u = (phi * teeth / (2 * pi)) % 1
+    if teeth != TEETH:
+        u = .5 + (u - .5) * (TEETH / teeth)
     return ROOT_ANGLE + (TIP_ANGLE - ROOT_ANGLE) * tooth_height(u)
 
 
