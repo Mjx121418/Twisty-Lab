@@ -65,7 +65,10 @@ def realization(definition,diagram,edge_teeth=12):
                               ('axle','body',None,shapes.cylinder(N,(0,1.26,1.26),.084,.35)),
                               ('hub','body',None,shapes.cylinder(N,(0,1.505,1.505),.105,.028,6))])
             elif kind=='corner': parts.append(('body','body',None,shapes.corner_body()))
-            elif kind=='center': parts.append(('body','body',None,shapes.center_body()))
+            elif kind=='center':
+                parts.append(('body','body',None,shapes.center_body()))
+                if edge_teeth==6:
+                    parts.append(('face-edges','body',None,shapes.face_edge_assembly()))
             else: parts.append(('body','body',None,shapes.gear_shell(False)))
         for port in range(ports):
             if diagram:
@@ -73,7 +76,10 @@ def realization(definition,diagram,edge_teeth=12):
             elif kind=='gear-edge': asset=shapes.gear_port(port,teeth=edge_teeth)
             elif kind=='edge': asset=shapes.gear_port(port,False)
             elif kind=='corner': asset=shapes.corner_port(port)
-            elif kind=='center': asset=shapes.center_port()
+            elif kind=='center':
+                asset=shapes.center_port()
+                if edge_teeth==6:
+                    asset=shapes.join(asset,shapes.face_edge_assembly(patches=True))
             else: raise ValueError(f'Unsupported gear-family domain: {kind}')
             parts.append((f'port-{port}','port',str(port),asset))
         configs=[]
