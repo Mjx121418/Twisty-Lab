@@ -54,6 +54,7 @@ test('configures arbitrary edge masks and enables ordinary turns on the plain sl
 });
 
 test('switches edge models without resetting state and restores the saved model', async ({ page }) => {
+  await expect(page.getByRole('link', { name: '38-piece construction ↗' })).toHaveAttribute('href', /\/gear-construction\.html$/);
   const initial = await page.getByTestId('state-digest').textContent();
   await page.getByRole('button', { name: 'Select edge/UF', exact: true }).click();
   await page.getByRole('button', { name: 'Move R', exact: true }).click(); await resting(page);

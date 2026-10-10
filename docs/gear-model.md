@@ -1,5 +1,7 @@
 # Experimental configurable Gear Cube
 
+The normal Gear Cube also has a separate [38-piece Boolean construction study](gear-compound-construction.md), based on three overlapping groups of 20-tooth and 6-tooth bevel gears. Its static viewer is available through **38-piece construction ↗**. The construction has twelve two-face extra edges with pockets for the small gears; it does not use face-mounted sections. Integrating its motion and extending it to Extreme are later steps.
+
 The **Gear Cube**, **Gear Cube Extreme**, and **Gear family · all plain** presets use the existing C++ `finite-placement-relations@1` backend. Their Euclidean and diagram views share a session. The gear checkboxes select which persistent edges have a cog; changing a checkbox creates a new solved definition and resets history. The configuration applies to piece identities, not fixed locations. **Edge model** switches between twelve-tooth and six-tooth geared edges while preserving the current state, selected piece, history, and cameras. The choice also applies to custom edge configurations and is saved in session presentation data.
 
 ## Exact rules and configuration

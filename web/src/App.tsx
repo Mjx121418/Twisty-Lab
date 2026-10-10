@@ -346,6 +346,7 @@ export function App() {
                 pendingCameras.current = new Map(realizationPair(activePreset, effectivePair, model).map((realization, index) => [realization.id, views.current[index]?.cameraState()]));
                 setGearModel(model);
               }}><option value="12">12 teeth · 60° spin</option><option value="6">6 teeth · 300° spin</option></select></label>}
+              {activePreset?.id === 'gear' && <a href={`${import.meta.env.BASE_URL}gear-construction.html`} target="_blank" rel="noreferrer">38-piece construction ↗</a>}
               <div className="segmented" aria-label="View layout">{(['both', 'cube', 'diagram'] as Layout[]).map((value) => <button key={value} aria-pressed={layout === value} onClick={() => requestLayout(value)}>{value === 'both' ? 'Both views' : value === 'cube' ? effectivePair === 'sphere-diagram' ? 'Sphere' : 'Cube' : effectivePair === 'cube-sphere' ? 'Sphere' : 'Diagram'}</button>)}</div>
             </div>
           </div>

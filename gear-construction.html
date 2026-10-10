@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gear Cube construction · TwistyLab</title>
+  </head>
+  <body>
+    <main>
+      <header><a href="./">← Simulator</a><h1>Gear Cube construction</h1><p>Static geometry study of the normal Gear Cube.</p></header>
+      <div class="controls">
+        <label>Show <select id="mode"><option value="pieces">38-piece assembly</option><option value="drivers">Overlapping bevel gears</option></select></label>
+        <label>Piece family <select id="family"><option value="all">All pieces</option><option value="center">Face pieces · 6</option><option value="corner">Vertex pieces · 8</option><option value="edge">Small gears · 12</option><option value="extra-edge">Extra edge pieces · 12</option></select></label>
+        <label>Gear group <select id="group" disabled><option value="all">All three groups</option><option value="UD">U / D · 20:6</option><option value="RL">R / L · 20:6</option><option value="FB">F / B · 20:6</option></select></label>
+        <label>Isolate <select id="piece"><option value="all">All pieces</option></select></label>
+        <label>Explode <input id="explode" type="range" min="0" max="1" step="0.01" value="0" /></label>
+        <button id="reset">Reset camera</button>
+      </div>
+      <p id="status" role="status">Loading the construction…</p>
+      <div id="view" aria-label="Gear construction model"></div>
+      <footer><p>Drag to rotate, scroll to zoom, click a piece to isolate it. Extra edges are two-face pieces with a pocket for the small gear and a bridge underneath.</p><p>Each large gear has 20 teeth: 12 belong to vertex pieces and 8 to extra edges. Bevel pitch angles are 73.30° and 16.70°. Tooth flanks and clearances are a prototype; this study does not certify a complete twisting path.</p></footer>
+    </main>
+    <script type="module" src="/web/src/gear-construction.ts"></script>
+  </body>
+</html>

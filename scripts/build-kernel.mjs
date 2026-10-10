@@ -16,10 +16,10 @@ if (process.argv.includes('--stage-web')) {
   await writeFile(new URL('package.json', output), JSON.stringify({
     name: '@twisty/kernel', version, type: 'module',
     exports: { '.': { types: './index.d.ts', import: './index.js' }, './runtime': './generated/twisty.mjs', './wasm': './generated/twisty.wasm' },
-    files: ['index.js', 'index.d.ts', 'generated', 'examples', 'README.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'bagua-verification.md', 'gear-model.md', 'gear-spherical-feasibility.md'],
+    files: ['index.js', 'index.d.ts', 'generated', 'examples', 'README.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'bagua-verification.md', 'gear-model.md', 'gear-spherical-feasibility.md', 'gear-compound-construction.md'],
   }, null, 2) + '\n');
   await cp(new URL('../docs/kernel-api.md', import.meta.url), new URL('README.md', output));
-  for (const file of ['spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'bagua-verification.md', 'gear-model.md', 'gear-spherical-feasibility.md']) {
+  for (const file of ['spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'bagua-verification.md', 'gear-model.md', 'gear-spherical-feasibility.md', 'gear-compound-construction.md']) {
     const guide = (await readFile(new URL(`../docs/${file}`, import.meta.url), 'utf8'))
       .replaceAll('../packages/', 'examples/canvas/data/').replaceAll('(kernel-api.md)', '(README.md)');
     await writeFile(new URL(file, output), guide);
@@ -37,5 +37,6 @@ if (process.argv.includes('--stage-web')) {
       await cp(new URL(`../packages/${puzzle}/${file}`, import.meta.url), new URL(file, directory));
     }
   }
+  await cp(new URL('../packages/gear-compound/', import.meta.url), new URL('examples/canvas/data/gear-compound/', output), { recursive: true });
   console.log(`Portable kernel ${version}: build/kernel`);
 }

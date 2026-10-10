@@ -12,6 +12,8 @@ An experimental [Bagua Cube](docs/bagua-model.md) preset adds 146 pieces, exact 
 
 An experimental [Gear Cube family](docs/gear-model.md) adds configurable geared/plain edges and a reusable articulated C++ interpreter. Choose Gear Cube, Extreme, or all plain, then use the twelve edge checkboxes to create a variant. **Edge model** offers twelve teeth with 60° cog spin or six teeth with 300° spin. Both use smaller edge cogs and larger six-tooth corners, with three corner teeth aligned to the adjacent cube edges. Switching models preserves state and history. Coupled layer rotations and local cog spin share one animation clock; Euclidean and diagram views use the same state. A true [spherical gear mechanism](docs/gear-spherical-feasibility.md) remains under construction: the existing sphere regions fail the contact/coverage audit.
 
+The normal Gear Cube's [38-piece construction study](docs/gear-compound-construction.md) derives its face, vertex, small-gear and twelve extra-edge meshes from overlapping bevel-gear solids. Open **38-piece construction ↗** in the Gear Cube controls to inspect the assembly, isolate pieces, or view the three parent-gear groups. This is a static geometry study; motion integration and Extreme are deferred.
+
 
 ## Run locally
 

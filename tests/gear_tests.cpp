@@ -245,6 +245,29 @@ void fixed_pivot() {
             std::abs(g.transforms()[13] - std::sqrt(.5)) < 1e-6,
         "World pivot follows circular arc rather than endpoint interpolation");
 }
+void compound_construction() {
+  Session s(read("packages/gear-compound/gear-compound-definition.json"));
+  const auto definition = Json::parse(s.definition_json());
+  check(definition.at("pieces").size() == 38, "Compound construction has 38 distinct pieces");
+  std::map<std::string, int> counts;
+  for (const auto &piece : definition.at("pieces"))
+    ++counts[piece.at("type").get<std::string>()];
+  check(counts == std::map<std::string, int>{{"center", 6}, {"corner", 8}, {"edge", 12}, {"extra-edge", 12}},
+        "Face, vertex, pinion and extra-edge counts match the Boolean construction");
+  check(definition.at("operations").empty(), "Construction study does not advertise unverified moves");
+  Geometry g(s.definition(), read("packages/gear-compound/gear-compound-euclidean.json"));
+  const auto scene = Json::parse(g.scene_json());
+  int bodies = 0;
+  for (const auto &part : scene.at("visualParts")) {
+    bodies += part.at("role") == "body";
+    check(Json::parse(g.bind_hit_json(part.at("visualPartId"))).at("pieceId") == part.at("pieceId"),
+          "Construction body and face patches retain their independent piece identities");
+  }
+  check(bodies == 38, "Each of the 38 physical pieces has its own body");
+  Session drivers(read("packages/gear-compound/drivers-definition.json"));
+  check(drivers.definition()->pieces.size() == 18, "Three groups contain six big and twelve small gears");
+  Geometry parents(drivers.definition(), read("packages/gear-compound/drivers-euclidean.json"));
+}
 } // namespace
 int main() {
   try {
@@ -257,6 +280,7 @@ int main() {
     coupled_midpoint();
     coupled_midpoint(true);
     fixed_pivot();
+    compound_construction();
     std::cout << "Gear rules and articulated motions verified\n";
   } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
