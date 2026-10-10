@@ -169,12 +169,12 @@ void coupled_midpoint(bool six_teeth = false) {
     throw std::runtime_error(id);
   };
   // At shared progress 1/2: the carrier turns 45 degrees, the outer layer
-  // turns 90 degrees, and the cog spins 30 or 120 degrees in its moving frame.
+  // turns 90 degrees, and the cog spins 30 or 150 degrees in its moving frame.
   check(std::abs(matrix("edge/UF/carrier", 5) - std::sqrt(.5)) < 1e-6,
         "Middle carrier uses half the outer angle");
   check(std::abs(matrix("corner/UFR/body", 5)) < 1e-6, "Outer corner uses its own rotation angle");
-  const double x = six_teeth ? -.5 : std::sqrt(.75);
-  const double z = six_teeth ? -std::sqrt(.75) : -.5;
+  const double x = six_teeth ? -std::sqrt(.75) : std::sqrt(.75);
+  const double z = -.5;
   check(std::abs(matrix("edge/UF/cog", 0) - x) < 1e-6 &&
             std::abs(matrix("edge/UF/cog", 1)) < 1e-6 && std::abs(matrix("edge/UF/cog", 2) - z) < 1e-6,
         "Cog combines carrier rotation and local spin rather than sharing the carrier frame");
