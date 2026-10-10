@@ -169,15 +169,23 @@ void coupled_midpoint(bool six_teeth = false) {
     throw std::runtime_error(id);
   };
   // At shared progress 1/2: the carrier turns 45 degrees, the outer layer
-  // turns 90 degrees, and the cog spins 30 or 60 degrees in its moving frame.
+  // turns 90 degrees, and the cog spins 30 or 120 degrees in its moving frame.
   check(std::abs(matrix("edge/UF/carrier", 5) - std::sqrt(.5)) < 1e-6,
         "Middle carrier uses half the outer angle");
   check(std::abs(matrix("corner/UFR/body", 5)) < 1e-6, "Outer corner uses its own rotation angle");
-  const double x = six_teeth ? .5 : std::sqrt(.75);
+  const double x = six_teeth ? -.5 : std::sqrt(.75);
   const double z = six_teeth ? -std::sqrt(.75) : -.5;
   check(std::abs(matrix("edge/UF/cog", 0) - x) < 1e-6 &&
             std::abs(matrix("edge/UF/cog", 1)) < 1e-6 && std::abs(matrix("edge/UF/cog", 2) - z) < 1e-6,
         "Cog combines carrier rotation and local spin rather than sharing the carrier frame");
+  g.set_state_json(s.state_json());
+  const auto inverse = move(s, "R'").at("transitions").at(0);
+  check(Json::parse(g.prepare_animation_json(inverse.dump())).at("status") == "Prepared",
+        "Prepare inverse coupled R");
+  g.sample(.5);
+  check(std::abs(matrix("edge/UF/cog", 0) - x) < 1e-6 &&
+            std::abs(matrix("edge/UF/cog", 1)) < 1e-6 && std::abs(matrix("edge/UF/cog", 2) - z) < 1e-6,
+        "Inverse retraces the signed cog rotation through its forward midpoint");
 }
 void fixed_pivot() {
   Json q0{{"key", "a"},

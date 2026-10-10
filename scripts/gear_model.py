@@ -51,7 +51,7 @@ def box(center,half):
     return mesh(vs,[[0,2,1],[0,3,2],[4,5,6],[4,6,7],[0,1,5],[0,5,4],[3,7,6],[3,6,2],[0,4,7],[0,7,3],[1,2,6],[1,6,5]])
 def realization(definition,diagram,edge_teeth=12):
     # Geometry maps exact phases to angles; tooth count never enters the core.
-    angle_scale={12:1,6:2}[edge_teeth]
+    angle_scale={12:1,6:4}[edge_teeth]
     assets={};bindings={};group=definition['symmetry']['members']
     for domain in definition['placementDomains']:
         kind=domain['id'];ports=len(domain['placements'][0]['portAttachment']);parts=[]
