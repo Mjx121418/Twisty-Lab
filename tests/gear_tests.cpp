@@ -178,18 +178,6 @@ void coupled_midpoint(bool six_teeth = false) {
   check(std::abs(matrix("edge/UF/cog", 0) - x) < 1e-6 &&
             std::abs(matrix("edge/UF/cog", 1)) < 1e-6 && std::abs(matrix("edge/UF/cog", 2) - z) < 1e-6,
         "Cog combines carrier rotation and local spin rather than sharing the carrier frame");
-  auto check_face_edges = [&] {
-    if (!six_teeth)
-      return;
-    // R moves its own face and the middle-slice U face by different angles.
-    // The small sections follow each center rather than the spinning edge cog.
-    for (const auto &face : {"R", "U"})
-      for (int i = 0; i < 16; ++i)
-        check(std::abs(matrix(std::string("center/") + face + "/face-edges", i) -
-                       matrix(std::string("center/") + face + "/body", i)) < 1e-6,
-              "Face edge sections remain rigidly attached to their center carrier");
-  };
-  check_face_edges();
   g.set_state_json(s.state_json());
   const auto inverse = move(s, "R'").at("transitions").at(0);
   check(Json::parse(g.prepare_animation_json(inverse.dump())).at("status") == "Prepared",
@@ -198,7 +186,6 @@ void coupled_midpoint(bool six_teeth = false) {
   check(std::abs(matrix("edge/UF/cog", 0) - x) < 1e-6 &&
             std::abs(matrix("edge/UF/cog", 1)) < 1e-6 && std::abs(matrix("edge/UF/cog", 2) - z) < 1e-6,
         "Inverse retraces the signed cog rotation through its forward midpoint");
-  check_face_edges();
 }
 void fixed_pivot() {
   Json q0{{"key", "a"},

@@ -158,51 +158,6 @@ def center_port():
     return mesh(vertices, [[0,i+1,(i+1)%8+1] for i in range(8)])
 
 
-def face_edge_outline():
-    """Two stationary teeth between the corner roofs on one side of a face.
-
-    The U-face prototype points toward UF. Its two tips sit alongside the
-    spinning UF cog; four quarter-turned copies complete the face assembly.
-    """
-    profile = [(-.55,.54), (.55,.54), (.62,.72), (.53,.87),
-               (.38,.89), (.32,1.005), (.20,1.005), (.12,.90), (0,.86),
-               (-.12,.90), (-.20,1.005), (-.32,1.005), (-.38,.89),
-               (-.53,.87), (-.62,.72)]
-    # Reverse the x/z outline so the roof normal points out of the U face.
-    return [(x,FACE,z) for x,z in reversed(profile)]
-
-
-def face_edge_piece():
-    front = face_edge_outline()
-    back = [add(p,(0,-.14,0)) for p in front]
-    return loft([back,front], (0,FACE-.14,.74), (0,FACE,.74))
-
-
-def face_edge_patch():
-    center = (0,FACE,.74)
-    vertices = [add(center,(0,.009,0))] + [
-        add(add(scale(p,.90),scale(center,.10)),(0,.009,0))
-        for p in face_edge_outline()]
-    count = len(vertices)-1
-    return mesh(vertices, [[0,i+1,(i+1)%count+1] for i in range(count)])
-
-
-def face_edge_assembly(patches=False):
-    """Four separate two-tooth sections fixed to one center carrier.
-
-    The combined asset has C4 symmetry, matching the abstract center's
-    orientation quotient without introducing extra independent occupants.
-    """
-    section = face_edge_patch() if patches else face_edge_piece()
-    copies = []
-    for turn in range(4):
-        vertices = []
-        for x,y,z in section['vertices']:
-            vertices.append([(x,y,z), (z,y,-x), (-x,y,-z), (-z,y,x)][turn])
-        copies.append(mesh(vertices,section['triangles']))
-    return join(*copies)
-
-
 def corner_outline(count=144):
     """Six tooth centers alternate between cube edges and face interiors.
 
