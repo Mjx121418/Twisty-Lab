@@ -384,7 +384,7 @@ export function App() {
             <div className="algorithm-row"><textarea aria-label="Algorithm" value={algorithm} onChange={(event) => setAlgorithm(event.target.value)} spellCheck={false} rows={2} />
               <div className="algorithm-actions"><select aria-label="Execution policy" value={policy} onChange={(event) => setPolicy(event.target.value)}><option value="interactive">Keep legal prefix</option><option value="transactional">All or nothing</option></select><button className="primary" disabled={!snapshot} onClick={() => { const notation = algorithm, execution = policy; enqueue(() => kernel.current!.run(notation, execution)); }}>Play algorithm →</button></div>
             </div>
-            <div className="playback-row"><label>Animation <select aria-label="Animation speed" value={duration} onChange={(event) => setDuration(Number(event.target.value))}><option value={0}>Off</option><option value={180}>Normal</option><option value={450}>Slow</option></select></label><span aria-live="polite">{busy ? playing : 'Ready for the next move'}</span></div>
+            <div className="playback-row"><label>Animation <select aria-label="Animation speed" value={duration} onChange={(event) => setDuration(Number(event.target.value))}><option value={0}>Off</option><option value={180}>Normal</option><option value={450}>Slow</option><option value={3000}>Inspect (3 s)</option></select></label><span aria-live="polite">{busy ? playing : 'Ready for the next move'}</span></div>
             <div className="progress-track"><div ref={progressBar} /></div>
           </section>
 

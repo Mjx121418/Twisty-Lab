@@ -5,14 +5,13 @@ import json
 from math import sin, cos, pi, sqrt, isclose
 from pathlib import Path
 import subprocess
+import gear_meshes as shapes
 
 ROOT = Path(__file__).resolve().parent.parent
 FACES = ['U', 'R', 'F', 'D', 'L', 'B']
 VECTORS = [(0,1,0),(1,0,0),(0,0,1),(0,-1,0),(-1,0,0),(0,0,-1)]
 EDGES = ['UF','UR','UB','UL','DF','DR','DB','DL','FR','FL','BR','BL']
 N = (0,1/sqrt(2),1/sqrt(2))
-X = (1,0,0)
-T = (0,1/sqrt(2),-1/sqrt(2))
 
 def same_geometry(actual, expected):
     """Only geometric floating values tolerate platform libm rounding."""
@@ -50,53 +49,37 @@ def mesh(vertices,triangles): return {'vertices':vertices,'triangles':triangles}
 def box(center,half):
     vs=[add(center,(half[0]*x,half[1]*y,half[2]*z)) for x,y,z in [(-1,-1,-1),(1,-1,-1),(1,1,-1),(-1,1,-1),(-1,-1,1),(1,-1,1),(1,1,1),(-1,1,1)]]
     return mesh(vs,[[0,2,1],[0,3,2],[4,5,6],[4,6,7],[0,1,5],[0,5,4],[3,7,6],[3,6,2],[0,4,7],[0,7,3],[1,2,6],[1,6,5]])
-def sticker(center,normal,size=.26):
-    right=(0,0,-1) if normal==(1,0,0) else (1,0,0)
-    up=cross(normal,right)
-    return mesh([add(center,add(mul(right,size*x),mul(up,size*y))) for x,y in [(-1,-1),(1,-1),(1,1),(-1,1)]],[[0,1,2],[0,2,3]])
-def cog():
-    vs=[];count=48;center=(0,1.10,1.10)
-    for level in [-.045,.045]:
-        for i in range(count):
-            r=.39 if i%4 in (1,2) else .335
-            a=2*pi*i/count
-            vs.append(add(add(center,mul(N,level)),add(mul(X,r*cos(a)),mul(T,r*sin(a)))))
-    vs.extend([add(center,mul(N,-.045)),add(center,mul(N,.045))])
-    triangles=[]
-    for i in range(count):
-        j=(i+1)%count
-        triangles.extend([[96,j,i],[97,i+count,j+count],[i,j,j+count],[i,j+count,i+count]])
-    return mesh(vs,[[a,c,b] for a,b,c in triangles])
-def cog_port(port):
-    center=add((0,1.10,1.10),mul(N,.049));start=port*pi+.035;end=(port+1)*pi-.035
-    vs=[center]+[add(center,add(mul(X,.30*cos(a)),mul(T,.30*sin(a)))) for a in [start+(end-start)*i/24 for i in range(25)]]
-    return mesh(vs,[[0,i+1,i] for i in range(1,25)]) # X cross T points opposite N
-
 def realization(definition,diagram):
     assets={};bindings={};group=definition['symmetry']['members']
     for domain in definition['placementDomains']:
         kind=domain['id'];ports=len(domain['placements'][0]['portAttachment']);parts=[]
-        centers={'corner':(1,1,1),'edge':(0,1,1),'center':(0,1,0),'gear-edge':(0,1,1)}
-        center=centers[kind]
         if not diagram:
-            carrier_center=(0,.89,.89) if kind=='gear-edge' else center
-            half=(.23,.23,.23) if kind=='gear-edge' else (.27,.27,.27)
-            parts.append(('carrier' if kind=='gear-edge' else 'body','body',None,box(carrier_center,half)))
-            if kind=='gear-edge': parts.append(('cog','body',None,cog()))
+            if kind=='gear-edge':
+                cradle=shapes.join(box((0,.97,.97),(.38,.24,.24)),
+                                  box((0,1.20,.72),(.28,.15,.16)),box((0,.72,1.20),(.28,.16,.15)))
+                parts.extend([('carrier','body',None,cradle),('cog','body',None,shapes.gear_shell()),
+                              ('bearing','body',None,shapes.bearing()),
+                              ('axle','body',None,shapes.cylinder(N,(0,1.26,1.26),.084,.35)),
+                              ('hub','body',None,shapes.cylinder(N,(0,1.505,1.505),.105,.028,6))])
+            elif kind=='corner': parts.append(('body','body',None,shapes.corner_body()))
+            elif kind=='center': parts.append(('body','body',None,shapes.center_body()))
+            else: parts.append(('body','body',None,shapes.gear_shell(False)))
         for port in range(ports):
             if diagram:
                 asset=mesh([(-.16,-.12,0),(.20,0,0),(-.16,.12,0)],[[0,1,2]])
-            elif kind=='gear-edge': asset=cog_port(port)
-            else:
-                f={'corner':['U','R','F'],'edge':['U','F'],'center':['U']}[kind][port]
-                normal=VECTORS[FACES.index(f)];asset=sticker(add(center,mul(normal,.275)),normal)
+            elif kind=='gear-edge': asset=shapes.gear_port(port)
+            elif kind=='edge': asset=shapes.gear_port(port,False)
+            elif kind=='corner': asset=shapes.corner_port(port)
+            elif kind=='center': asset=shapes.center_port()
+            else: raise ValueError(f'Unsupported gear-family domain: {kind}')
             parts.append((f'port-{port}','port',str(port),asset))
         configs=[]
         for name,role,port,asset in parts:
             aid=kind+'/'+name;assets[aid]=asset
             data={'id':name,'role':role,'meshAssetId':aid,'placementFrames':{},'operationTracks':{}}
             if port is not None: data['portId']=port
-            spinning=kind=='gear-edge' and name!='carrier'
+            if name in ['bearing','axle','hub']: data['materialBindingId']='hardware'
+            spinning=kind=='gear-edge' and (name=='cog' or name=='hub' or role=='port')
             for q in domain['placements']:
                 phase=int(q['key'][-1]) if kind=='gear-edge' else 0
                 m=frame(group,kind,q)
@@ -135,7 +118,7 @@ def realization(definition,diagram):
             'kind':'articulated-port-diagram' if diagram else 'articulated-euclidean',
             'compatibleDefinitionDigest':definition['definitionDigest'],
             'requiredCapabilities':['triangle-meshes','rigid-transforms'],
-            'assets':assets,'componentsByDomain':bindings,'fidelity':'schematic-port-diagram' if diagram else 'idealized-geared-kinematics'}
+            'assets':assets,'componentsByDomain':bindings,'fidelity':'schematic-port-diagram' if diagram else 'gear-contact-mesh-prototype'}
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--write',action='store_true');args=parser.parse_args()

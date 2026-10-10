@@ -5,7 +5,7 @@ import { copyFloatView, copyIndexView, type MainModule, type Realization, type S
 import { DestinationOverlay } from './destinationOverlay';
 import type { PieceDestination } from './destinations';
 const colors: Record<string, number> = {
-  U: 0xf1eee3, R: 0xe76561, F: 0x66c7a0, D: 0xf1cf67, L: 0xeea76d, B: 0x7fa5ed, body: 0x202a35, mechanism: 0x17212a,
+  U: 0xf1eee3, R: 0xe76561, F: 0x66c7a0, D: 0xf1cf67, L: 0xeea76d, B: 0x7fa5ed, body: 0x202a35, mechanism: 0x17212a, hardware: 0xaeb8c3,
 };
 
 export class RenderView {

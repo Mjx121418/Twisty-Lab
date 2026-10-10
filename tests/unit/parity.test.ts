@@ -30,7 +30,8 @@ describe('native / WebAssembly parity', () => {
   ])('matches native %s assets and sampled %s frames', (name, kind, algorithm) => {
     const definition = `packages/${name}/definition.json`;
     const realization = `packages/${name}/${kind}.json`;
-    const reference = JSON.parse(execFileSync('build/native/geometry_probe', [definition, realization, algorithm], { encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 }));
+    // Detailed authored meshes include expanded positions and normals in this probe.
+    const reference = JSON.parse(execFileSync('build/native/geometry_probe', [definition, realization, algorithm], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 }));
     const value = new runtime.Session(read(definition));
     const geometry = runtime.createGeometry(value, read(realization));
     if (!geometry) throw new Error('Geometry creation failed.');
