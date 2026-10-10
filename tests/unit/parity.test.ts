@@ -23,6 +23,10 @@ describe('native / WebAssembly parity', () => {
     ['bagua', 'bagua-euclidean', '[[U+ R2:U+],[R R+ L-:D2]]'],
     ['bagua', 'bagua-port-diagram', "U+ R' L' D2 R L U-"],
     ['bagua', 'bagua-spherical', "U+ R F- (U+ R F-)'"],
+    ['gear', 'gear-euclidean', "R U F (R U F)' R12"],
+    ['gear', 'gear-port-diagram', "R U F (R U F)'"],
+    ['gear-extreme', 'gear-extreme-euclidean', "Uq R F (Uq R F)'"],
+    ['gear-plain', 'gear-plain-port-diagram', "Rq Uq Fq (Rq Uq Fq)'"],
   ])('matches native %s assets and sampled %s frames', (name, kind, algorithm) => {
     const definition = `packages/${name}/definition.json`;
     const realization = `packages/${name}/${kind}.json`;

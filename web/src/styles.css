@@ -178,3 +178,7 @@ footer { border-top: 1px solid #293840; display: flex; justify-content: space-be
   .scramble-section > div { flex-basis: 100%; }
   footer { gap: 15px; }
 }
+
+.gear-configuration { margin: 0 0 1rem; padding: .75rem 1rem; border: 1px solid var(--border, #3d4c57); border-radius: .65rem; }
+.gear-configuration label { display: inline-flex; align-items: center; gap: .3rem; margin: .25rem .7rem .25rem 0; }
+.gear-configuration small { display: block; margin-top: .5rem; opacity: .8; }

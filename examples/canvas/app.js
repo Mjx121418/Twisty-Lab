@@ -70,7 +70,7 @@ async function install(puzzle) {
   document.querySelector('#status').textContent = 'Loading…';
   const [source, realization] = await Promise.all([
     fetch(`./data/${puzzle}/definition.json`).then((response) => response.text()),
-    fetch(`./data/${puzzle}/${puzzle === 'helicopter' || puzzle === 'bagua' ? puzzle : 'cube'}-port-diagram.json`).then((response) => response.text()),
+    fetch(`./data/${puzzle}/${puzzle === 'helicopter' || puzzle === 'bagua' || puzzle.startsWith('gear') ? puzzle : 'cube'}-port-diagram.json`).then((response) => response.text()),
   ]);
   if (epoch !== installEpoch) return;
   const next = new KernelSession(module, source);
@@ -90,7 +90,7 @@ async function install(puzzle) {
   selected = undefined; blocked = [];
   document.querySelector('#selection').textContent = 'No piece selected';
   document.querySelector('#notation').value = puzzle === 'helicopter' ? 'UF_ab UL_af' :
-    puzzle === 'bagua' ? "U+ R' L' D2 R L U-" : "R U R' U'";
+    puzzle === 'bagua' ? "U+ R' L' D2 R L U-" : puzzle === 'gear-plain' ? "Rq Uq Rq' Uq'" : puzzle.startsWith('gear') ? "R R'" : "R U R' U'";
   document.querySelector('#status').textContent = 'Ready';
   busy = false;
   refresh(); draw();

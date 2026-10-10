@@ -42,6 +42,7 @@ private:
   bool catalog_ = false;
   bool spherical_ = false;
   bool catalog_spherical_ = false;
+  bool articulated_ = false;
   using Frame = std::array<double, 16>;
   using Point = std::array<double, 3>;
   struct Model {
@@ -56,6 +57,14 @@ private:
     Point axis;
     double angle;
   };
+  struct Rotation { Point axis, pivot; double angle; bool local; };
+  struct Component {
+    Index domain;
+    std::vector<Frame> frames;
+    std::vector<std::vector<std::vector<Rotation>>> paths;
+  };
+  std::vector<Component> components_;
+  Index active_operation_ = 0;
   std::vector<Model> models_;
   std::vector<Index> model_of_domain_;
   std::vector<std::vector<Frame>> placement_frames_;
@@ -78,6 +87,9 @@ private:
   void build_catalog(const Json &);
   void build_spherical(const Json &);
   void build_catalog_spherical(const Json &);
+  void build_articulated(const Json &);
+  Frame articulated_resting(const Part &, const State &) const;
+  Frame articulated_sample(const Part &, double) const;
   Frame catalog_resting(const Part &, const State &) const;
   void validate_catalog_transport(Index operation) const;
 };

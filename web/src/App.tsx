@@ -16,21 +16,40 @@ import baguaSource from '../../packages/bagua/definition.json?raw';
 import baguaRealization from '../../packages/bagua/bagua-euclidean.json';
 import baguaDiagram from '../../packages/bagua/bagua-port-diagram.json';
 import baguaSphere from '../../packages/bagua/bagua-spherical.json';
+import gearSource from '../../packages/gear/source.json?raw';
+import gearExtremeSource from '../../packages/gear-extreme/source.json?raw';
+import gearPlainSource from '../../packages/gear-plain/source.json?raw';
+import gearEuclideanText from '../../packages/gear/gear-euclidean.json?raw';
+import gearDiagramText from '../../packages/gear/gear-port-diagram.json?raw';
+import gearManifest from '../../packages/gear/manifest.json';
+import gearExtremeManifest from '../../packages/gear-extreme/manifest.json';
+import gearPlainManifest from '../../packages/gear-plain/manifest.json';
 import { KernelSession, loadRuntime, type Realization, type Result, type Snapshot, type Transition } from './kernel';
 import { RenderView } from './renderer';
 import { pieceDestinations, type PieceDestination } from './destinations';
 
+type Preset = { id: string; label: string; source: string; realizations: Realization[]; spherical?: Realization };
+const gearEuclidean = JSON.parse(gearEuclideanText) as Realization;
+const gearDiagram = JSON.parse(gearDiagramText) as Realization;
+function gearPreset(id: string, label: string, source: string, digest: string): Preset {
+  return { id, label, source, realizations: [gearEuclidean, gearDiagram].map((template) =>
+    ({ ...template, id: `${id}-${template.kind}-v1`, compatibleDefinitionDigest: digest })) };
+}
+const gearEdges = ['UF', 'UR', 'UB', 'UL', 'DF', 'DR', 'DB', 'DL', 'FR', 'FL', 'BR', 'BL'];
 const presets = [
   { id: 'cube3', label: '3 × 3 cube', source: cubeSource, realizations: [cubeRealization, cubeDiagram], spherical: cubeSphere },
   { id: 'bandaged-uf-ufr', label: 'Bandaged cube · UF + UFR', source: bandageSource, realizations: [bandageRealization, bandageDiagram], spherical: bandageSphere },
   { id: 'helicopter', label: 'Helicopter Cube · jumbling', source: helicopterSource, realizations: [helicopterRealization, helicopterDiagram], spherical: helicopterSphere },
   { id: 'bagua', label: 'Bagua Cube · experimental', source: baguaSource, realizations: [baguaRealization, baguaDiagram], spherical: baguaSphere },
-];
+  gearPreset('gear', 'Gear Cube · experimental', gearSource, gearManifest.definitionDigest),
+  gearPreset('gear-extreme', 'Gear Cube Extreme · experimental', gearExtremeSource, gearExtremeManifest.definitionDigest),
+  gearPreset('gear-plain', 'Gear family · all plain', gearPlainSource, gearPlainManifest.definitionDigest),
+] as unknown as Preset[];
 type Layout = 'both' | 'cube' | 'diagram';
 type ViewPair = 'cube-diagram' | 'sphere-diagram' | 'cube-sphere';
 type Inspector = 'pieces' | 'history' | 'definition';
 
-function realizationPair(preset: typeof presets[number], pair: ViewPair): Realization[] {
+function realizationPair(preset: Preset, pair: ViewPair): Realization[] {
   const [cube, diagram] = preset.realizations;
   return (preset.spherical && pair === 'sphere-diagram' ? [preset.spherical, diagram] :
     preset.spherical && pair === 'cube-sphere' ? [cube, preset.spherical] : [cube, diagram]) as Realization[];
@@ -47,6 +66,7 @@ export function App() {
   const [snapshot, setSnapshot] = useState<Snapshot>();
   const [generation, setGeneration] = useState(0);
   const [sourceId, setSourceId] = useState('cube3');
+  const [customGear, setCustomGear] = useState<Preset>();
   const [layout, setLayout] = useState<Layout>('both');
   const [viewPair, setViewPair] = useState<ViewPair>('cube-sphere');
   const [inspector, setInspector] = useState<Inspector>('pieces');
@@ -80,12 +100,17 @@ export function App() {
   const animationFrame = useRef(0);
   const epoch = useRef(0);
   speedRef.current = duration;
-  const activePreset = presets.find((item) => item.realizations[0].compatibleDefinitionDigest === snapshot?.definitionDigest);
+  const availablePresets = customGear ? [...presets, customGear] : presets;
+  const activePreset = availablePresets.find((item) => item.realizations[0].compatibleDefinitionDigest === snapshot?.definitionDigest);
   const effectivePair = activePreset?.spherical ? viewPair : 'cube-diagram';
 
   function install(runtime: MainModule, source: string, id: string): void {
     const next = new KernelSession(runtime, source);
     const initial = next.snapshot();
+    const parsedSource = JSON.parse(source);
+    if (parsedSource.kind === 'gear-cube-prototypes') {
+      setCustomGear(gearPreset(id, id === 'gear-custom' ? 'Gear family · custom' : 'Gear family', source, initial.definitionDigest));
+    }
     kernel.current?.dispose(); kernel.current = next;
     commands.current = [];
     cameraCache.current = new Map();
@@ -93,7 +118,8 @@ export function App() {
     setSourceId(id); setSnapshot(initial); setVisualDigest(initial.stateDigest);
     setSelected(undefined); setEvidence(undefined); setLastScramble(''); setVisualError('');
     setAlgorithm(initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' :
-      initial.puzzleId === 'bagua-experimental-v1' ? "U+ R' L' D2 R L U-" : "R U R' U'");
+      initial.puzzleId === 'bagua-experimental-v1' ? "U+ R' L' D2 R L U-" :
+      parsedSource.kind === 'gear-cube-prototypes' ? (parsedSource.gearedEdges.length === 0 ? "Rq Uq Rq' Uq'" : "R R'") : "R U R' U'");
     setGeneration((value) => value + 1);
   }
 
@@ -111,7 +137,7 @@ export function App() {
   useEffect(() => {
     if (!module || !kernel.current || !cubeHost.current || !diagramHost.current) return;
     const session = kernel.current;
-    const preset = presets.find((item) => item.realizations[0].compatibleDefinitionDigest === session.definition.definitionDigest);
+    const preset = availablePresets.find((item) => item.realizations[0].compatibleDefinitionDigest === session.definition.definitionDigest);
     if (!preset) { setVisualError('No compatible realization is installed for this definition. The headless engine and inspector remain available.'); return; }
     const created: RenderView[] = [];
     const realizations = realizationPair(preset, viewPair);
@@ -230,8 +256,14 @@ export function App() {
         event.preventDefault(); enqueue(() => event.shiftKey ? kernel.current!.redo() : kernel.current!.undo());
       } else if (!event.ctrlKey && !event.metaKey && !event.altKey && /^[urfdlb]$/i.test(event.key)) {
         event.preventDefault();
-        const base = kernel.current?.definition.operations.find((move) => move.id === event.key.toUpperCase());
-        if (base) enqueue(() => kernel.current!.move(event.shiftKey ? base.inverse : base.id));
+        const face = event.key.toUpperCase(), inverse = event.shiftKey;
+        if (kernel.current?.definition.operations.some((move) => move.id === face)) enqueue(() => {
+          const session = kernel.current!;
+          const legal = new Set(session.snapshot().legalRequests.map((request) => request.operation));
+          const candidates = session.definition.operations.filter((move) => move.id === face || move.id === `${face}q`);
+          const base = candidates.find((move) => legal.has(inverse ? move.inverse : move.id)) ?? candidates.find((move) => move.id === face)!;
+          return session.move(inverse ? base.inverse : base.id);
+        });
       }
     };
     window.addEventListener('keydown', keydown);
@@ -293,8 +325,9 @@ export function App() {
       <main>
         <section className="workspace">
           <div className="workspace-toolbar">
-            <div><span className="eyebrow">PUZZLE WORKSPACE</span><select aria-label="Puzzle" value={sourceId} disabled={!module || busy} onChange={(event) => { const preset = presets.find((item) => item.id === event.target.value); if (preset && module) install(module, preset.source, preset.id); }}>
+            <div><span className="eyebrow">PUZZLE WORKSPACE</span><select aria-label="Puzzle" value={sourceId} disabled={!module || busy} onChange={(event) => { const preset = availablePresets.find((item) => item.id === event.target.value); if (preset && module) install(module, preset.source, preset.id); }}>
               {presets.map((preset) => <option key={preset.id} value={preset.id}>{preset.label}</option>)}
+              {sourceId === 'gear-custom' && <option value="gear-custom">Gear family · custom</option>}
               {sourceId === 'imported' && <option value="imported">Imported definition</option>}
             </select></div>
             <div className="view-options">
@@ -302,6 +335,20 @@ export function App() {
               <div className="segmented" aria-label="View layout">{(['both', 'cube', 'diagram'] as Layout[]).map((value) => <button key={value} aria-pressed={layout === value} onClick={() => requestLayout(value)}>{value === 'both' ? 'Both views' : value === 'cube' ? effectivePair === 'sphere-diagram' ? 'Sphere' : 'Cube' : effectivePair === 'cube-sphere' ? 'Sphere' : 'Diagram'}</button>)}</div>
             </div>
           </div>
+          {activePreset?.source.includes('gear-cube-prototypes') && <fieldset className="gear-configuration" disabled={busy}>
+            <legend>Geared edges · changing these starts a solved puzzle</legend>
+            {gearEdges.map((edge) => {
+              const source = JSON.parse(activePreset.source);
+              const checked = source.gearedEdges.includes(edge);
+              return <label key={edge}><input type="checkbox" aria-label={`Gear edge ${edge}`} checked={checked} onChange={() => {
+                if (!module) return;
+                const geared = new Set<string>(source.gearedEdges);
+                if (checked) geared.delete(edge); else geared.add(edge);
+                install(module, JSON.stringify({ ...source, puzzleId: 'gear-custom-experimental-v1', gearedEdges: gearEdges.filter((id) => geared.has(id)) }), 'gear-custom');
+              }} />{edge}</label>;
+            })}
+            <small>F = coupled half-turn; Fq = ordinary quarter-turn. Mixed middle slices block both. Spherical gear contacts are under investigation.</small>
+          </fieldset>}
 
           <div className={`views layout-${layout}`}>
             <article className={`view-panel cube-panel ${layout === 'diagram' ? 'hidden' : ''}`}>

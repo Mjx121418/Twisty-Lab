@@ -65,9 +65,23 @@ export type PolyhedralModel = {
   surfaceVertices?: number[][];
 };
 export type Realization = {
-  schemaVersion: number; id: string; kind: 'cube-euclidean' | 'cube-port-diagram' | 'cube-spherical' | 'polyhedral-euclidean' | 'polyhedral-port-diagram' | 'polyhedral-spherical';
+  schemaVersion: number; id: string; kind: 'cube-euclidean' | 'cube-port-diagram' | 'cube-spherical' | 'polyhedral-euclidean' | 'polyhedral-port-diagram' | 'polyhedral-spherical' | 'articulated-euclidean' | 'articulated-port-diagram';
   compatibleDefinitionDigest: string; requiredCapabilities: string[];
   models?: Record<string, PolyhedralModel>;
+  assets?: Record<string, { vertices: number[][]; triangles: number[][] }>;
+  componentsByDomain?: Record<string, ArticulatedComponent[]>;
+};
+export type RotationTrackStep = {
+  axis: [number, number, number]; pivot: [number, number, number]; angle: number; space: 'world' | 'local';
+};
+export type ArticulatedComponent = {
+  id: string; meshAssetId: string; role: 'body' | 'port'; portId?: string; materialBindingId?: string;
+  placementFrames: Record<string, number[]>; symmetries?: number[][];
+  operationTracks: Record<string, Record<string, RotationTrackStep[]>>;
+};
+export type GearCubeSource = {
+  schemaVersion: 1; semanticsVersion: string; kind: 'gear-cube-prototypes'; puzzleId: string;
+  gearedEdges: string[];
 };
 
 export class KernelSession {

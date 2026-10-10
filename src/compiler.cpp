@@ -142,6 +142,8 @@ std::vector<std::vector<Permutation>> enumerate_cosets(const std::vector<Permuta
 
 Json compile_source(const Json &source) {
   require_exact(source, "/");
+  if (source.value("kind", std::string{}) == "gear-cube-prototypes")
+    return compile_gear_source(source);
   if (source.at("kind") == "finite-definition") {
     const auto definition = load_definition(source);
     auto result = definition->canonical;

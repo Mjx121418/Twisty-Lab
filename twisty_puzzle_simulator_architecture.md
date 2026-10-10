@@ -851,3 +851,9 @@ Build structured blocking diagnostics and portable regression fixtures alongside
 Complete notation, seeded scrambles, headless APIs, synchronized views, linear history, and persistence within Milestones 2 through 6. The first release is complete only when the cube and reference bandaged variant work in both views and the clean-build acceptance checks pass.
 
 After the first release, verify and integrate one jumbling model, then the spherical cube and Bagua. Add solvers, deeper algebraic analysis, richer profiles, visual editors, exports, and shared sessions as later work. The initial core interfaces leave room for these extensions without requiring their full implementations.
+
+### Gear Cube family and articulated motion milestone
+
+The current priority is configurable geared/plain edges. The experimental gear-family compiler emits existing finite placement relations: each persistent edge owns either a plain placement or a carrier/cog phase placement, sharing location resources and bandage-style coupling guards. The abstract execution algorithm remains unchanged. A reusable articulated interpreter associates several rigid visual components with one piece and composes their authored world/local rotation tracks using shared animation progress. Three.js consumes the unchanged frame buffers.
+
+The Euclidean and diagram foundation, three reference configurations, and custom edge mask control are implemented. See [the gear specification](docs/gear-model.md). Physical mixed-mask constraints and independent mechanism review remain gates. The requested S2 deliverable is a true surface mechanism. A reproducible audit rejects directly reusing the existing cube regions with gear spin; deriving conjugate spherical contact boundaries is the next construction task. No projected preview substitutes for that gate. See [the spherical feasibility result](docs/gear-spherical-feasibility.md).

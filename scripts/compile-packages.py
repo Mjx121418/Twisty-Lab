@@ -45,6 +45,9 @@ for name in ['cube3', 'bandaged']:
 subprocess.run(['python3', str(root / 'scripts/helicopter_model.py')], check=True)
 digests['helicopter'] = json.loads((root / 'packages/helicopter/definition.json').read_text())['definitionDigest']
 subprocess.run(['python3', str(root / 'scripts/bagua_model.py')], check=True)
+subprocess.run(['python3', str(root / 'scripts/gear_model.py')], check=True)
+for name in ['gear', 'gear-extreme', 'gear-plain']:
+    digests[name] = json.loads((root / 'packages' / name / 'definition.json').read_text())['definitionDigest']
 digests['bagua'] = json.loads((root / 'packages/bagua/definition.json').read_text())['definitionDigest']
 fixture_path = root / 'tests/fixtures/core.json'
 fixtures = json.loads(fixture_path.read_text())

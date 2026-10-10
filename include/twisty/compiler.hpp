@@ -10,5 +10,7 @@ std::vector<Permutation> enumerate_group(const std::vector<Permutation> &, std::
 std::vector<std::vector<Permutation>> enumerate_cosets(const std::vector<Permutation> &group,
                                                        const std::vector<Permutation> &subgroup);
 Json compile_source(const Json &source);
+// Authoring a gear family still produces the existing geometry-free relation backend.
+Json compile_gear_source(const Json &source);
 Json compile_json(const std::string &source);
 } // namespace twisty

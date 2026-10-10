@@ -24,7 +24,9 @@
         "cube-spherical",
         "polyhedral-euclidean",
         "polyhedral-port-diagram",
-        "polyhedral-spherical"
+        "polyhedral-spherical",
+        "articulated-euclidean",
+        "articulated-port-diagram"
       ]
     },
     "compatibleDefinitionDigest": {
@@ -145,6 +147,53 @@
     "surfaceLift": {
       "type": "number",
       "exclusiveMinimum": 0
+    },
+    "assets": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 256,
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "vertices",
+          "triangles"
+        ],
+        "properties": {
+          "vertices": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 65536,
+            "items": {
+              "$ref": "#/$defs/point"
+            }
+          },
+          "triangles": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 262144,
+            "items": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "componentsByDomain": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 32,
+        "items": {
+          "$ref": "#/$defs/component"
+        }
+      }
     }
   },
   "$defs": {
@@ -206,6 +255,98 @@
           "minItems": 1,
           "items": {
             "$ref": "#/$defs/frame"
+          }
+        }
+      }
+    },
+    "rigidFrame": {
+      "type": "array",
+      "minItems": 16,
+      "maxItems": 16,
+      "items": {
+        "type": "number"
+      }
+    },
+    "rotationStep": {
+      "type": "object",
+      "required": [
+        "axis",
+        "pivot",
+        "angle",
+        "space"
+      ],
+      "properties": {
+        "axis": {
+          "$ref": "#/$defs/point"
+        },
+        "pivot": {
+          "$ref": "#/$defs/point"
+        },
+        "angle": {
+          "type": "number",
+          "minimum": -100,
+          "maximum": 100
+        },
+        "space": {
+          "enum": [
+            "world",
+            "local"
+          ]
+        }
+      }
+    },
+    "component": {
+      "type": "object",
+      "required": [
+        "id",
+        "meshAssetId",
+        "role",
+        "placementFrames",
+        "operationTracks"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "meshAssetId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "enum": [
+            "body",
+            "port"
+          ]
+        },
+        "portId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "placementFrames": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/rigidFrame"
+          }
+        },
+        "symmetries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/rigidFrame"
+          },
+          "maxItems": 32
+        },
+        "operationTracks": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "maxItems": 8,
+              "items": {
+                "$ref": "#/$defs/rotationStep"
+              }
+            }
           }
         }
       }
@@ -279,6 +420,24 @@
           "radialSegments",
           "portInset",
           "surfaceLift"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "enum": [
+              "articulated-euclidean",
+              "articulated-port-diagram"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "assets",
+          "componentsByDomain"
         ]
       }
     }

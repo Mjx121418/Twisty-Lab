@@ -27,13 +27,13 @@ target_include_directories(puzzle_core PUBLIC
 target_compile_features(puzzle_core PUBLIC cxx_std_20)
 target_link_libraries(puzzle_core PUBLIC json_headers project_options)
 
-add_library(puzzle_compiler src/compiler.cpp)
+add_library(puzzle_compiler src/compiler.cpp src/gear_compiler.cpp)
 target_link_libraries(puzzle_compiler PUBLIC puzzle_core)
 
 add_library(puzzle_session src/session.cpp src/notation.cpp)
 target_link_libraries(puzzle_session PUBLIC puzzle_compiler)
 
-add_library(puzzle_geometry src/geometry.cpp src/catalog_geometry.cpp src/spherical_geometry.cpp src/catalog_spherical_geometry.cpp)
+add_library(puzzle_geometry src/geometry.cpp src/catalog_geometry.cpp src/spherical_geometry.cpp src/catalog_spherical_geometry.cpp src/articulated_geometry.cpp)
 target_link_libraries(puzzle_geometry PUBLIC puzzle_core)
 
 add_library(puzzle_kernel INTERFACE)
@@ -78,6 +78,13 @@ else()
   add_executable(twisty src/cli.cpp)
   target_link_libraries(twisty PRIVATE puzzle_session)
   if(BUILD_TESTING)
+    add_executable(gear_tests tests/gear_tests.cpp)
+    target_link_libraries(gear_tests PRIVATE puzzle_kernel)
+    target_compile_definitions(gear_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+    add_test(NAME gear_and_articulated_realizations COMMAND gear_tests)
+    find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    add_test(NAME gear_spherical_candidate_audit
+      COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/gear_spherical_audit.py)
     add_executable(core_tests tests/core_tests.cpp)
     target_link_libraries(core_tests PRIVATE puzzle_session puzzle_geometry)
     target_compile_definitions(core_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
