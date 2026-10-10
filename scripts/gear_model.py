@@ -49,7 +49,9 @@ def mesh(vertices,triangles): return {'vertices':vertices,'triangles':triangles}
 def box(center,half):
     vs=[add(center,(half[0]*x,half[1]*y,half[2]*z)) for x,y,z in [(-1,-1,-1),(1,-1,-1),(1,1,-1),(-1,1,-1),(-1,-1,1),(1,-1,1),(1,1,1),(-1,1,1)]]
     return mesh(vs,[[0,2,1],[0,3,2],[4,5,6],[4,6,7],[0,1,5],[0,5,4],[3,7,6],[3,6,2],[0,4,7],[0,7,3],[1,2,6],[1,6,5]])
-def realization(definition,diagram):
+def realization(definition,diagram,edge_teeth=12):
+    # Geometry maps exact phases to angles; tooth count never enters the core.
+    angle_scale={12:1,6:2}[edge_teeth]
     assets={};bindings={};group=definition['symmetry']['members']
     for domain in definition['placementDomains']:
         kind=domain['id'];ports=len(domain['placements'][0]['portAttachment']);parts=[]
@@ -57,7 +59,7 @@ def realization(definition,diagram):
             if kind=='gear-edge':
                 cradle=shapes.join(box((0,.97,.97),(.38,.24,.24)),
                                   box((0,1.20,.72),(.28,.15,.16)),box((0,.72,1.20),(.28,.16,.15)))
-                parts.extend([('carrier','body',None,cradle),('cog','body',None,shapes.gear_shell()),
+                parts.extend([('carrier','body',None,cradle),('cog','body',None,shapes.gear_shell(teeth=edge_teeth)),
                               ('bearing','body',None,shapes.bearing()),
                               ('axle','body',None,shapes.cylinder(N,(0,1.26,1.26),.084,.35)),
                               ('hub','body',None,shapes.cylinder(N,(0,1.505,1.505),.105,.028,6))])
@@ -67,7 +69,7 @@ def realization(definition,diagram):
         for port in range(ports):
             if diagram:
                 asset=mesh([(-.16,-.12,0),(.20,0,0),(-.16,.12,0)],[[0,1,2]])
-            elif kind=='gear-edge': asset=shapes.gear_port(port)
+            elif kind=='gear-edge': asset=shapes.gear_port(port,teeth=edge_teeth)
             elif kind=='edge': asset=shapes.gear_port(port,False)
             elif kind=='corner': asset=shapes.corner_port(port)
             elif kind=='center': asset=shapes.center_port()
@@ -90,9 +92,9 @@ def realization(definition,diagram):
                     n=VECTORS[FACES.index(face)]
                     right={'R':(0,0,-1),'L':(0,0,1),'B':(-1,0,0)}.get(face,(1,0,0));up=cross(n,right)
                     cx,cy={'U':(0,3),'R':(3,0),'F':(0,0),'D':(0,-3),'L':(-3,0),'B':(6,0)}[face]
-                    m=rotation((0,0,1),phase*pi/3 if spinning else 0)
+                    m=rotation((0,0,1),phase*pi/3*angle_scale if spinning else 0)
                     m[12:15]=[cx+dot(position,right),cy+dot(position,up),0]
-                elif spinning: m=compose(m,rotation(N,phase*pi/3))
+                elif spinning: m=compose(m,rotation(N,phase*pi/3*angle_scale))
                 data['placementFrames'][q['key']]=m
             if kind=='center' and not diagram:
                 data['symmetries']=[rotation((0,1,0),i*pi/2) for i in range(1,4)]
@@ -109,12 +111,13 @@ def realization(definition,diagram):
                         delta=(int(target[-1])-int(q['key'][-1])+3)%6-3
                         if delta:
                             steps.append({'axis':[0,0,1] if diagram else N,'pivot':[0,0,0],
-                                          'angle':delta*pi/3,'space':'local'})
+                                          'angle':delta*pi/3*angle_scale,'space':'local'})
                     paths[q['key']]=steps
                 data['operationTracks'][op['id']]=paths
             configs.append(data)
         bindings[kind]=configs
-    return {'schemaVersion':1,'id':definition['puzzleId']+('-diagram-v1' if diagram else '-euclidean-v1'),
+    variant='-six-teeth' if edge_teeth==6 else ''
+    return {'schemaVersion':1,'id':definition['puzzleId']+variant+('-diagram-v1' if diagram else '-euclidean-v1'),
             'kind':'articulated-port-diagram' if diagram else 'articulated-euclidean',
             'compatibleDefinitionDigest':definition['definitionDigest'],
             'requiredCapabilities':['triangle-meshes','rigid-transforms'],
@@ -135,7 +138,9 @@ def main():
         definition=result['definition']
         documents={'source.json':source,'definition.json':definition,
                    'manifest.json':{'puzzleId':source['puzzleId'],'definitionDigest':definition['definitionDigest']},
-                   name+'-euclidean.json':realization(definition,False),name+'-port-diagram.json':realization(definition,True)}
+                   name+'-euclidean.json':realization(definition,False),name+'-port-diagram.json':realization(definition,True),
+                   name+'-six-teeth-euclidean.json':realization(definition,False,6),
+                   name+'-six-teeth-port-diagram.json':realization(definition,True,6)}
         for filename,data in documents.items():
             path=directory/filename
             if args.write: path.write_text(json.dumps(data,separators=(',',':'),sort_keys=True)+'\n')

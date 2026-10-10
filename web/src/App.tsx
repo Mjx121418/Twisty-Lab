@@ -21,6 +21,8 @@ import gearExtremeSource from '../../packages/gear-extreme/source.json?raw';
 import gearPlainSource from '../../packages/gear-plain/source.json?raw';
 import gearEuclideanText from '../../packages/gear/gear-euclidean.json?raw';
 import gearDiagramText from '../../packages/gear/gear-port-diagram.json?raw';
+import gearSixEuclideanText from '../../packages/gear/gear-six-teeth-euclidean.json?raw';
+import gearSixDiagramText from '../../packages/gear/gear-six-teeth-port-diagram.json?raw';
 import gearManifest from '../../packages/gear/manifest.json';
 import gearExtremeManifest from '../../packages/gear-extreme/manifest.json';
 import gearPlainManifest from '../../packages/gear-plain/manifest.json';
@@ -28,12 +30,17 @@ import { KernelSession, loadRuntime, type Realization, type Result, type Snapsho
 import { RenderView } from './renderer';
 import { pieceDestinations, type PieceDestination } from './destinations';
 
-type Preset = { id: string; label: string; source: string; realizations: Realization[]; spherical?: Realization };
+type GearModel = '12' | '6';
+type Preset = { id: string; label: string; source: string; realizations: Realization[]; spherical?: Realization; gearModels?: Record<GearModel, Realization[]> };
 const gearEuclidean = JSON.parse(gearEuclideanText) as Realization;
 const gearDiagram = JSON.parse(gearDiagramText) as Realization;
+const gearSixEuclidean = JSON.parse(gearSixEuclideanText) as Realization;
+const gearSixDiagram = JSON.parse(gearSixDiagramText) as Realization;
 function gearPreset(id: string, label: string, source: string, digest: string): Preset {
-  return { id, label, source, realizations: [gearEuclidean, gearDiagram].map((template) =>
-    ({ ...template, id: `${id}-${template.kind}-v1`, compatibleDefinitionDigest: digest })) };
+  const models = (templates: Realization[], variant = '') => templates.map((template) =>
+    ({ ...template, id: `${id}${variant}-${template.kind}-v1`, compatibleDefinitionDigest: digest }));
+  const gearModels = { '12': models([gearEuclidean, gearDiagram]), '6': models([gearSixEuclidean, gearSixDiagram], '-six-teeth') };
+  return { id, label, source, realizations: gearModels['12'], gearModels };
 }
 const gearEdges = ['UF', 'UR', 'UB', 'UL', 'DF', 'DR', 'DB', 'DL', 'FR', 'FL', 'BR', 'BL'];
 const presets = [
@@ -49,8 +56,8 @@ type Layout = 'both' | 'cube' | 'diagram';
 type ViewPair = 'cube-diagram' | 'sphere-diagram' | 'cube-sphere';
 type Inspector = 'pieces' | 'history' | 'definition';
 
-function realizationPair(preset: Preset, pair: ViewPair): Realization[] {
-  const [cube, diagram] = preset.realizations;
+function realizationPair(preset: Preset, pair: ViewPair, gearModel: GearModel = '12'): Realization[] {
+  const [cube, diagram] = preset.gearModels?.[gearModel] ?? preset.realizations;
   return (preset.spherical && pair === 'sphere-diagram' ? [preset.spherical, diagram] :
     preset.spherical && pair === 'cube-sphere' ? [cube, preset.spherical] : [cube, diagram]) as Realization[];
 }
@@ -69,6 +76,7 @@ export function App() {
   const [customGear, setCustomGear] = useState<Preset>();
   const [layout, setLayout] = useState<Layout>('both');
   const [viewPair, setViewPair] = useState<ViewPair>('cube-sphere');
+  const [gearModel, setGearModel] = useState<GearModel>('12');
   const [inspector, setInspector] = useState<Inspector>('pieces');
   const [algorithm, setAlgorithm] = useState("R U R' U'");
   const [policy, setPolicy] = useState('interactive');
@@ -140,7 +148,7 @@ export function App() {
     const preset = availablePresets.find((item) => item.realizations[0].compatibleDefinitionDigest === session.definition.definitionDigest);
     if (!preset) { setVisualError('No compatible realization is installed for this definition. The headless engine and inspector remain available.'); return; }
     const created: RenderView[] = [];
-    const realizations = realizationPair(preset, viewPair);
+    const realizations = realizationPair(preset, viewPair, gearModel);
     const cameras = cameraCache.current;
     const restoredCameras = pendingCameras.current;
     pendingCameras.current = undefined;
@@ -162,9 +170,9 @@ export function App() {
       created.forEach((view, index) => { cameras.set(realizations[index].id, view.cameraState()); view.dispose(); });
       views.current = [];
     };
-  }, [module, generation, viewPair]);
+  }, [module, generation, viewPair, gearModel]);
 
-  useEffect(() => { for (const view of views.current) view.highlight(selected, evidence?.implicatedPieces ?? []); }, [selected, evidence, generation, viewPair]);
+  useEffect(() => { for (const view of views.current) view.highlight(selected, evidence?.implicatedPieces ?? []); }, [selected, evidence, generation, viewPair, gearModel]);
 
   useEffect(() => {
     if (!kernel.current || !snapshot || !views.current.length) return;
@@ -175,7 +183,7 @@ export function App() {
       for (const view of views.current) view.setDestinations(undefined, []);
       setVisualError(`Destination preview unavailable: ${String(error)}`);
     }
-  }, [selected, snapshot, busy, generation, viewPair]);
+  }, [selected, snapshot, busy, generation, viewPair, gearModel]);
 
   function chooseDestination(destination: PieceDestination): void {
     const session = kernel.current;
@@ -286,14 +294,15 @@ export function App() {
     if (result.status !== 'Loaded') { setEvidence(result); return; }
     setSnapshot(kernel.current.snapshot()); setVisualDigest(kernel.current.snapshot().stateDigest); setEvidence(undefined);
     for (const view of views.current) view.setState(kernel.current.stateText());
-    const presentation = JSON.parse(text).presentation as { layout?: Layout; viewPair?: ViewPair; cameras?: unknown[] } | undefined;
+    const presentation = JSON.parse(text).presentation as { layout?: Layout; viewPair?: ViewPair; gearModel?: GearModel; cameras?: unknown[] } | undefined;
     if (presentation?.layout && ['both', 'cube', 'diagram'].includes(presentation.layout)) setLayout(presentation.layout);
     const pair = presentation?.viewPair && ['cube-diagram', 'sphere-diagram', 'cube-sphere'].includes(presentation.viewPair) ? presentation.viewPair : viewPair;
+    const model = presentation?.gearModel === '6' || presentation?.gearModel === '12' ? presentation.gearModel : gearModel;
     if (Array.isArray(presentation?.cameras)) {
-      if (pair === viewPair) presentation.cameras.forEach((camera, index) => views.current[index]?.restoreCamera(camera));
-      else if (activePreset) pendingCameras.current = new Map(realizationPair(activePreset, pair).map((realization, index) => [realization.id, presentation.cameras![index]]));
+      if (pair === viewPair && model === gearModel) presentation.cameras.forEach((camera, index) => views.current[index]?.restoreCamera(camera));
+      else if (activePreset) pendingCameras.current = new Map(realizationPair(activePreset, pair, model).map((realization, index) => [realization.id, presentation.cameras![index]]));
     }
-    setViewPair(pair);
+    setViewPair(pair); setGearModel(model);
   }
 
   const definition = kernel.current?.definition;
@@ -316,7 +325,7 @@ export function App() {
         <div className="top-actions">
           <button onClick={() => sourceInput.current?.click()} disabled={!snapshot || busy}>Import definition</button>
           <button onClick={() => sessionInput.current?.click()} disabled={!snapshot || busy}>Open session</button>
-          <button className="primary" disabled={!snapshot || busy} onClick={() => download(`${snapshot!.puzzleId}-session.json`, kernel.current!.save({ layout, viewPair: effectivePair, cameras: views.current.map((view) => view.cameraState()) }))}>Save session ↗</button>
+          <button className="primary" disabled={!snapshot || busy} onClick={() => download(`${snapshot!.puzzleId}-session.json`, kernel.current!.save({ layout, viewPair: effectivePair, ...(activePreset?.gearModels ? { gearModel } : {}), cameras: views.current.map((view) => view.cameraState()) }))}>Save session ↗</button>
         </div>
         <input ref={sourceInput} aria-label="Import definition file" className="file-input" type="file" accept=".json,application/json" onChange={(event) => { void importSource(event.target.files?.[0]); event.target.value = ''; }} />
         <input ref={sessionInput} aria-label="Open session file" className="file-input" type="file" accept=".json,application/json" onChange={(event) => { void importSession(event.target.files?.[0]); event.target.value = ''; }} />
@@ -332,6 +341,11 @@ export function App() {
             </select></div>
             <div className="view-options">
               {activePreset?.spherical && <label className="realization-choice"><span className="eyebrow">GEOMETRY VIEWS</span><select aria-label="Geometry views" value={effectivePair} disabled={busy} onChange={(event) => setViewPair(event.target.value as ViewPair)}><option value="cube-diagram">Cube + diagram</option><option value="sphere-diagram">Sphere + diagram</option><option value="cube-sphere">Cube + sphere</option></select></label>}
+              {activePreset?.gearModels && <label className="realization-choice"><span className="eyebrow">EDGE MODEL</span><select aria-label="Gear edge model" value={gearModel} disabled={busy} onChange={(event) => {
+                const model = event.target.value as GearModel;
+                pendingCameras.current = new Map(realizationPair(activePreset, effectivePair, model).map((realization, index) => [realization.id, views.current[index]?.cameraState()]));
+                setGearModel(model);
+              }}><option value="12">12 teeth · 60° spin</option><option value="6">6 teeth · 120° spin</option></select></label>}
               <div className="segmented" aria-label="View layout">{(['both', 'cube', 'diagram'] as Layout[]).map((value) => <button key={value} aria-pressed={layout === value} onClick={() => requestLayout(value)}>{value === 'both' ? 'Both views' : value === 'cube' ? effectivePair === 'sphere-diagram' ? 'Sphere' : 'Cube' : effectivePair === 'cube-sphere' ? 'Sphere' : 'Diagram'}</button>)}</div>
             </div>
           </div>

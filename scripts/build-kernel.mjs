@@ -32,7 +32,7 @@ if (process.argv.includes('--stage-web')) {
     const files = ['definition.json', `${prefix}-port-diagram.json`];
     if (puzzle === 'bagua') files.push('review.json', 'bagua-spherical.json');
     files.push(`${prefix}-${puzzle === 'bagua' || puzzle.startsWith('gear') ? 'euclidean' : 'spherical'}.json`);
-    if (puzzle.startsWith('gear')) files.push('source.json');
+    if (puzzle.startsWith('gear')) files.push('source.json', `${prefix}-six-teeth-euclidean.json`, `${prefix}-six-teeth-port-diagram.json`);
     for (const file of files) {
       await cp(new URL(`../packages/${puzzle}/${file}`, import.meta.url), new URL(file, directory));
     }

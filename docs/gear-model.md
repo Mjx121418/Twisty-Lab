@@ -1,6 +1,6 @@
 # Experimental configurable Gear Cube
 
-The **Gear Cube**, **Gear Cube Extreme**, and **Gear family · all plain** presets use the existing C++ `finite-placement-relations@1` backend. Their Euclidean and diagram views share a session. The gear checkboxes select which persistent edges have a cog; changing a checkbox creates a new solved definition and resets history. The configuration applies to piece identities, not fixed locations.
+The **Gear Cube**, **Gear Cube Extreme**, and **Gear family · all plain** presets use the existing C++ `finite-placement-relations@1` backend. Their Euclidean and diagram views share a session. The gear checkboxes select which persistent edges have a cog; changing a checkbox creates a new solved definition and resets history. The configuration applies to piece identities, not fixed locations. **Edge model** switches between twelve-tooth and six-tooth geared edges while preserving the current state, selected piece, history, and cameras. The choice also applies to custom edge configurations and is saved in session presentation data.
 
 ## Exact rules and configuration
 
@@ -10,7 +10,7 @@ There are 26 persistent pieces: eight corners, twelve edges, and six centers. A 
 
 The current **uniform-middle-slice-v1** policy models coupling as a bandage-style constraint:
 
-- `F` turns the front outer layer 180 degrees clockwise, its middle slice 90 degrees, and the opposite outer layer zero degrees. Middle-slice cogs spin 60 degrees relative to their carriers. All four edges currently in that middle slice must be geared.
+- `F` turns the front outer layer 180 degrees clockwise, its middle slice 90 degrees, and the opposite outer layer zero degrees. Middle-slice cogs advance one signed abstract phase step, whose angle belongs to the realization. All four edges currently in that middle slice must be geared.
 - `Fq` turns only the front layer 90 degrees clockwise. All four middle-slice edges must be plain. Geared edges in the outer layer ride with the layer without local spin.
 - A mixed middle slice blocks both requests. Blocking names an implicated persistent edge. Inverses use an apostrophe; numerical suffixes repeat primitives.
 
@@ -35,6 +35,10 @@ Registration checks rigid frames, mesh indices, complete domain/port bindings, p
 Three.js draws supplied assets and per-component matrices, using the same selection, picking, destination preview, and history controller as existing puzzles. It contains no gearing calculations. Custom renderers use the same portable API and buffer layout. See [the API contract](kernel-api.md).
 
 The Euclidean mesh is now an editable contact-shape prototype, authored in `scripts/gear_meshes.py`. Edge cogs have twelve tooth profiles and a roof formed by the two adjacent cube faces; the two colored patches spin with that roof. The fixed carrier, bearing, and axle are separate components, and a hexagonal hub rides with the cog. Corner bodies have complementary toothed seats around their three neighboring edge axes. Centers have chamfered caps, and plain edges use smooth two-face replacement shells. Select **Animation → Inspect (3 s)** to examine the motion slowly. These shapes are intended for direct browser inspection; the seats and clearances have not been certified through complete move paths. [The original Gear Cube photographs](https://www.cs.brandeis.edu/~storer/JimPuzzles/ZPAGES/zzzGearCube.html) were used as visual references; the meshes are procedurally authored here.
+
+The additional **6 teeth · 120° spin** model retains the corner meshes and their existing tooth profiles. It keeps every other edge tooth, preserving the original tooth width and corner seats. Per coupled move, the cog, its two colored patches, and its hub spin 120 degrees relative to the carrier in the same direction as the twelve-tooth model's 60-degree spin, as requested from the user's physical cube. Carrier and layer motions are shared by both models. Resting frames and signed animation tracks use the same phase-to-angle mapping in the Euclidean and diagram realizations, including inverse moves and phase wraparound.
+
+The `*-six-teeth-euclidean.json` and `*-six-teeth-port-diagram.json` documents pin the same definition digest as the original models. The abstract catalog still has six phases: the new geometric map is `phase × 120°`, so phases differing by three share a resting geometric frame for a fixed carrier orientation. The core and placement inspector retain the distinct exact phases. This interpretation does not establish a one-to-one correspondence between the full abstract catalog and physical orientations; physical state quotients and continuous tooth contacts remain subjects for review.
 
 ## Verification and spherical gate
 

@@ -44,8 +44,10 @@ def join(*meshes):
     return mesh(vertices, triangles)
 
 
-def tooth_angle(phi):
-    u = (phi * TEETH / (2 * pi)) % 1
+def tooth_angle(phi, teeth=TEETH):
+    # Six-tooth edges retain every other tooth of the original profile. Keeping
+    # the tooth width and seats avoids changing the existing corner mesh.
+    u = (phi * teeth / (2 * pi)) % 1 * (TEETH / teeth)
     if u < .12 or u > .88:
         height = 0
     elif u < .30:
@@ -57,11 +59,11 @@ def tooth_angle(phi):
     return ROOT_ANGLE + (TIP_ANGLE - ROOT_ANGLE) * height
 
 
-def roof_outline(geared=True, count=96):
+def roof_outline(geared=True, count=96, teeth=TEETH):
     out = []
     for i in range(count):
         phi = 2 * pi * i / count
-        angle = tooth_angle(phi) if geared else ROOT_ANGLE - .01
+        angle = tooth_angle(phi, teeth) if geared else ROOT_ANGLE - .01
         tangent = add(scale(RIGHT, cos(phi)), scale(TRANSVERSE, sin(phi)))
         direction = add(EDGE_AXIS, scale(tangent, tan(angle)))
         out.append(scale(direction, FACE / max(direction)))
@@ -85,15 +87,15 @@ def loft(rings, bottom_center, top_center):
     return mesh(vertices, triangles)
 
 
-def gear_shell(geared=True):
-    front = roof_outline(geared)
+def gear_shell(geared=True, teeth=TEETH):
+    front = roof_outline(geared, teeth=teeth)
     back = [add(p, scale(EDGE_AXIS, -.20)) for p in front]
     center = (0, FACE, FACE)
     return loft([back, front], add(center, scale(EDGE_AXIS, -.20)), center)
 
 
-def gear_port(port, geared=True):
-    outline = roof_outline(geared)
+def gear_port(port, geared=True, teeth=TEETH):
+    outline = roof_outline(geared, teeth=teeth)
     half = len(outline) // 2
     normal = (0, 1, 0) if port == 0 else (0, 0, 1)
     centroid = (0, FACE, FACE-.42) if port == 0 else (0, FACE-.42, FACE)

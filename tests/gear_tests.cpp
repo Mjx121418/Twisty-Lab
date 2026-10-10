@@ -80,10 +80,11 @@ void models() {
   check(mixed.validate_state_json(state.dump()).find("state.occupancy") != std::string::npos,
         "Overlapping edge placements rejected");
 }
-void animation(const std::string &package, const std::string &algorithm) {
+void animation(const std::string &package, const std::string &algorithm,
+               const std::string &variant = "") {
   Session s(read("packages/" + package + "/source.json"));
   for (const auto &kind : {"euclidean", "port-diagram"}) {
-    Geometry g(s.definition(), read("packages/" + package + "/" + package + "-" + kind + ".json"));
+    Geometry g(s.definition(), read("packages/" + package + "/" + package + variant + "-" + kind + ".json"));
     const auto scene = Json::parse(g.scene_json());
     const auto initial = g.transforms();
     const auto result = s.run(algorithm, "transactional", s.revision());
@@ -151,9 +152,10 @@ void invalid_geometry() {
     check(rejected, "Finite double inputs must not overflow Float32 buffers");
   }
 }
-void coupled_midpoint() {
+void coupled_midpoint(bool six_teeth = false) {
   Session s(read("packages/gear/source.json"));
-  Geometry g(s.definition(), read("packages/gear/gear-euclidean.json"));
+  Geometry g(s.definition(), read(six_teeth ? "packages/gear/gear-six-teeth-euclidean.json"
+                                         : "packages/gear/gear-euclidean.json"));
   const auto scene = Json::parse(g.scene_json());
   const auto transition = move(s, "R").at("transitions").at(0);
   check(Json::parse(g.prepare_animation_json(transition.dump())).at("status") == "Prepared",
@@ -167,12 +169,14 @@ void coupled_midpoint() {
     throw std::runtime_error(id);
   };
   // At shared progress 1/2: the carrier turns 45 degrees, the outer layer
-  // turns 90 degrees, and the cog spins 30 degrees in its moving frame.
+  // turns 90 degrees, and the cog spins 30 or 60 degrees in its moving frame.
   check(std::abs(matrix("edge/UF/carrier", 5) - std::sqrt(.5)) < 1e-6,
         "Middle carrier uses half the outer angle");
   check(std::abs(matrix("corner/UFR/body", 5)) < 1e-6, "Outer corner uses its own rotation angle");
-  check(std::abs(matrix("edge/UF/cog", 0) - std::sqrt(.75)) < 1e-6 &&
-            std::abs(matrix("edge/UF/cog", 1)) < 1e-6 && std::abs(matrix("edge/UF/cog", 2) + .5) < 1e-6,
+  const double x = six_teeth ? .5 : std::sqrt(.75);
+  const double z = six_teeth ? -std::sqrt(.75) : -.5;
+  check(std::abs(matrix("edge/UF/cog", 0) - x) < 1e-6 &&
+            std::abs(matrix("edge/UF/cog", 1)) < 1e-6 && std::abs(matrix("edge/UF/cog", 2) - z) < 1e-6,
         "Cog combines carrier rotation and local spin rather than sharing the carrier frame");
 }
 void fixed_pivot() {
@@ -239,8 +243,11 @@ int main() {
     models();
     animation("gear", "R U F (R U F)'");
     animation("gear-extreme", "Uq R F (Uq R F)'");
+    animation("gear", "R U F (R U F)' R12", "-six-teeth");
+    animation("gear-extreme", "Uq R F (Uq R F)'", "-six-teeth");
     invalid_geometry();
     coupled_midpoint();
+    coupled_midpoint(true);
     fixed_pivot();
     std::cout << "Gear rules and articulated motions verified\n";
   } catch (const std::exception &e) {
