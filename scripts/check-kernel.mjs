@@ -35,6 +35,8 @@ try {
     ['bagua', "U+ R F- (U+ R F-)'", 'U+', 'bagua-spherical'],
     ['gear', "R U F (R U F)'", 'R', 'gear-euclidean'],
     ['gear', "R U F (R U F)'", 'R', 'gear-normal-euclidean'],
+    ['gear-extreme', "Uq R F (Uq R F)'", 'Uq', 'gear-extreme-supplied-euclidean'],
+    ['gear-plain', "Rq Uq Fq (Rq Uq Fq)'", 'Rq', 'gear-plain-supplied-euclidean'],
     ['gear-extreme', "Uq R F (Uq R F)'", 'Uq', 'gear-extreme-port-diagram'],
   ]) {
     const directory = join(javascript, 'examples/canvas/data', puzzle);

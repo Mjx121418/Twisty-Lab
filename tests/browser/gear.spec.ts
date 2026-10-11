@@ -46,12 +46,37 @@ test('configures arbitrary edge masks and enables ordinary turns on the plain sl
   await page.getByRole('button', { name: 'Move R', exact: true }).click();
   await expect(page.getByTestId('blocking-evidence')).toContainText('placement.blocked');
   await page.getByLabel('Puzzle', { exact: true }).selectOption('gear-extreme');
+  await expect(page.getByLabel('Gear edge model')).toHaveValue('supplied');
+  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', 'gear-extreme-supplied-articulated-euclidean-v1');
   await expect(page.getByLabel('Gear edge FR')).not.toBeChecked();
   await expect(page.getByLabel('Gear edge UF')).toBeChecked();
+  await page.screenshot({ path: 'test-results/gear-extreme-supplied.png', fullPage: true });
   await page.getByTestId('cube-view').click({ position: { x: 4, y: 4 } });
   await page.keyboard.press('u'); await resting(page);
   const native = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/gear-extreme/source.json', '--algorithm', 'Uq', '--json'], { encoding: 'utf8' }));
   await expect(page.getByTestId('state-digest')).toHaveText(native.snapshot.stateDigest);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+test('uses the supplied rigid edge in custom masks and restores the supplied presentation', async ({ page }) => {
+  await page.getByLabel('Gear edge UF').uncheck();
+  await expect(page.getByLabel('Gear edge model')).toHaveValue('supplied');
+  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', 'gear-custom-supplied-articulated-euclidean-v1');
+  const initial = await page.getByTestId('state-digest').textContent();
+  await page.getByRole('button', { name: 'Select edge/UF', exact: true }).click();
+  await page.getByRole('button', { name: 'Move U', exact: true }).click(); await resting(page);
+  await expect(page.getByTestId('state-digest')).not.toHaveText(initial!);
+  for (const id of ['cube-view', 'diagram-view'])
+    await expect(page.getByTestId(id)).toHaveAttribute('data-selected-piece', 'edge/UF');
+  const downloading = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save session ↗' }).click();
+  const saved = readFileSync((await (await downloading).path())!, 'utf8');
+  expect(JSON.parse(saved).presentation.gearModel).toBe('supplied');
+  await page.getByLabel('Gear edge model').selectOption('12'); await resting(page);
+  await page.getByLabel('Open session file').setInputFiles({ name: 'gear-supplied.json', mimeType: 'application/json', buffer: Buffer.from(saved) });
+  await expect(page.getByLabel('Gear edge model')).toHaveValue('supplied'); await resting(page);
+  await page.getByRole('button', { name: '↶ Undo' }).click(); await resting(page);
+  await expect(page.getByTestId('state-digest')).toHaveText(initial!);
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
 

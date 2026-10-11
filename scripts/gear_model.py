@@ -53,6 +53,7 @@ def realization(definition,diagram,edge_teeth=12):
     # Geometry maps exact phases to angles; tooth count never enters the core.
     # Six-tooth cog: (20 / 6) × (π / 2) = 5 × (π / 3), or 300 degrees.
     angle_scale={12:1,6:5}[edge_teeth]
+    plain_meshes=None if diagram else json.loads((ROOT/'packages/gear-extreme/plain-edge-meshes.json').read_text())['assets']
     assets={};bindings={};group=definition['symmetry']['members']
     for domain in definition['placementDomains']:
         kind=domain['id'];ports=len(domain['placements'][0]['portAttachment']);parts=[]
@@ -66,12 +67,12 @@ def realization(definition,diagram,edge_teeth=12):
                               ('hub','body',None,shapes.cylinder(N,(0,1.505,1.505),.105,.028,6))])
             elif kind=='corner': parts.append(('body','body',None,shapes.corner_body()))
             elif kind=='center': parts.append(('body','body',None,shapes.center_body()))
-            else: parts.append(('body','body',None,shapes.gear_shell(False)))
+            else: parts.append(('body','body',None,plain_meshes['edge/body']))
         for port in range(ports):
             if diagram:
                 asset=mesh([(-.16,-.12,0),(.20,0,0),(-.16,.12,0)],[[0,1,2]])
             elif kind=='gear-edge': asset=shapes.gear_port(port,teeth=edge_teeth)
-            elif kind=='edge': asset=shapes.gear_port(port,False)
+            elif kind=='edge': asset=plain_meshes[f'edge/port-{port}']
             elif kind=='corner': asset=shapes.corner_port(port)
             elif kind=='center': asset=shapes.center_port()
             else: raise ValueError(f'Unsupported gear-family domain: {kind}')

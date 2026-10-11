@@ -25,6 +25,8 @@ describe('native / WebAssembly parity', () => {
     ['bagua', 'bagua-spherical', "U+ R F- (U+ R F-)'"],
     ['gear', 'gear-euclidean', "R U F (R U F)' R12"],
     ['gear', 'gear-normal-euclidean', "R U F (R U F)' R12"],
+    ['gear-extreme', 'gear-extreme-supplied-euclidean', "Uq R F (Uq R F)'"],
+    ['gear-plain', 'gear-plain-supplied-euclidean', "Rq Uq Fq (Rq Uq Fq)'"],
     ['gear', 'gear-port-diagram', "R U F (R U F)'"],
     ['gear', 'gear-six-teeth-euclidean', "R U F (R U F)' R12"],
     ['gear', 'gear-six-teeth-port-diagram', "R U F (R U F)' R12"],

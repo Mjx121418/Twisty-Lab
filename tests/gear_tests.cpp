@@ -301,6 +301,52 @@ void supplied_model() {
   }
   check(rejected, "Split patches still require complete local-port coverage");
 }
+void supplied_plain_edges() {
+  const auto meshes = Json::parse(read("packages/gear-extreme/plain-edge-meshes.json"));
+  for (const auto &package : {"gear-extreme", "gear-plain"}) {
+    Session s(read("packages/" + std::string(package) + "/source.json"));
+    const auto r = Json::parse(read("packages/" + std::string(package) + "/" + package +
+                                   "-supplied-euclidean.json"));
+    check(r.at("assets").at("edge/body") == meshes.at("assets").at("edge/body"),
+          "Supplied variants retain the imported plain-edge triangles");
+    Geometry g(s.definition(), r.dump());
+    const auto scene = Json::parse(g.scene_json());
+    int bodies = 0;
+    for (const auto &part : scene.at("visualParts"))
+      bodies += part.at("role") == "body";
+    check(bodies == (std::string(package) == "gear-extreme" ? 35 : 27),
+          "A plain edge replaces the entire two-body geared assembly");
+    for (const auto &piece : s.definition()->pieces)
+      if (s.definition()->domains[piece.domain].id == "edge") {
+        int components = 0;
+        for (const auto &part : scene.at("visualParts"))
+          if (part.at("pieceId").get<std::string>() == piece.id) {
+            ++components;
+            check(part.at("meshAssetId").get<std::string>().starts_with("edge/"),
+                  "Plain edges never instantiate carriers or cogs");
+          }
+        check(components == 3, "One rigid body and two labeled patches per plain edge");
+      }
+  }
+  auto source = Json::parse(read("packages/gear/source.json"));
+  source["gearedEdges"].erase(0); // UF becomes a plain piece away from the Extreme preset's plane.
+  Session custom(source.dump());
+  auto r = Json::parse(read("packages/gear/gear-supplied-euclidean.json"));
+  r["compatibleDefinitionDigest"] = custom.definition()->digest;
+  Geometry g(custom.definition(), r.dump());
+  const auto initial = g.transforms();
+  check(move(custom, "R").at("reasonCode") == "placement.blocked", "Mixed slice remains blocked");
+  const auto record = move(custom, "U").at("transitions").at(0);
+  check(Json::parse(g.prepare_animation_json(record.dump())).at("status") == "Prepared",
+        "Custom plain edge follows legal layer motion");
+  g.sample(1);
+  g.set_state_json(custom.state_json());
+  const auto inverse = move(custom, "U'").at("transitions").at(0);
+  check(Json::parse(g.prepare_animation_json(inverse.dump())).at("status") == "Prepared",
+        "Custom plain-edge inverse prepares");
+  g.sample(1);
+  check(close(initial, g.transforms()), "Custom rigid edges restore through inverse motion");
+}
 } // namespace
 int main() {
   try {
@@ -310,12 +356,15 @@ int main() {
     animation("gear", "R U F (R U F)' R12", "-six-teeth");
     animation("gear-extreme", "Uq R F (Uq R F)'", "-six-teeth");
     animation("gear", "R U F (R U F)' R12", "-normal", false);
+    animation("gear-extreme", "Uq R F (Uq R F)'", "-supplied", false);
+    animation("gear-plain", "Rq Uq Fq (Rq Uq Fq)'", "-supplied", false);
     invalid_geometry();
     coupled_midpoint();
     coupled_midpoint(true);
     coupled_midpoint(true, true);
     fixed_pivot();
     supplied_model();
+    supplied_plain_edges();
     std::cout << "Gear rules and articulated motions verified\n";
   } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Author the normal Gear Cube realization from the supplied triangle meshes.
+"""Author Gear Cube family realizations from the supplied triangle meshes.
 
 Geometry uses the same vertices/triangles JSON as other articulated models.
 The original binary asset has been converted and is no longer needed.
@@ -14,9 +14,10 @@ import gear_model as gear
 ROOT = Path(__file__).resolve().parent.parent
 MESHES = ROOT / 'packages/gear/normal-meshes.json'
 DESTINATION = ROOT / 'packages/gear/gear-normal-euclidean.json'
+PLAIN_MESHES = ROOT / 'packages/gear-extreme/plain-edge-meshes.json'
 
 
-def realization(definition, meshes):
+def realization(definition, meshes, plain_meshes=None):
     if meshes['schemaVersion'] != 1:
         raise ValueError('Unsupported normal Gear Cube mesh schema')
     # Reuse exact placement/track authoring and replace the procedural assets.
@@ -24,6 +25,10 @@ def realization(definition, meshes):
     templates = {domain: {part['id']: part for part in parts}
                  for domain, parts in result['componentsByDomain'].items()}
     result['assets'] = copy.deepcopy(meshes['assets'])
+    if plain_meshes is not None:
+        if plain_meshes['schemaVersion'] != 1:
+            raise ValueError('Unsupported plain-edge mesh schema')
+        result['assets'].update(copy.deepcopy(plain_meshes['assets']))
     result['componentsByDomain'] = {}
     specifications = {
         'corner': ['body', 'port-0', 'port-1', 'port-2'],
@@ -32,6 +37,8 @@ def realization(definition, meshes):
         # The normal definition also declares an unused plain-edge domain.
         'edge': ['carrier', 'carrier-port-0', 'carrier-port-1', 'cog', 'port-0', 'port-1'],
     }
+    if plain_meshes is not None:
+        specifications['edge'] = ['body', 'port-0', 'port-1']
     for domain, names in specifications.items():
         parts = result['componentsByDomain'].setdefault(domain, [])
         for name in names:
@@ -40,7 +47,8 @@ def realization(definition, meshes):
                 template_id = 'body'
             component = copy.deepcopy(templates[domain][template_id])
             component['id'] = name
-            component['meshAssetId'] = ('gear-edge' if domain == 'edge' else domain) + '/' + name
+            asset_domain = 'gear-edge' if domain == 'edge' and plain_meshes is None else domain
+            component['meshAssetId'] = asset_domain + '/' + name
             if name.startswith('carrier-port-') and domain == 'gear-edge':
                 carrier = templates[domain]['carrier']
                 component['placementFrames'] = copy.deepcopy(carrier['placementFrames'])
@@ -56,6 +64,10 @@ def realization(definition, meshes):
     result['componentsByDomain']['center'].append(ball)
     result.update(id='gear-normal-euclidean-v1', fidelity='supplied-low-poly-gear-cube',
                   modelProvenance=meshes['provenance'])
+    if plain_meshes is not None:
+        name = definition['puzzleId'].removesuffix('-experimental-v1')
+        result.update(id=name+'-supplied-articulated-euclidean-v1',
+                      modelProvenance={'shared': meshes['provenance'], 'plainEdge': plain_meshes['provenance']})
     return result
 
 
@@ -63,14 +75,19 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--write', action='store_true')
     args = parser.parse_args()
-    definition = json.loads((ROOT / 'packages/gear/definition.json').read_text())
     meshes = json.loads(MESHES.read_text())
-    result = realization(definition, meshes)
-    if args.write:
-        DESTINATION.write_text(json.dumps(result, sort_keys=True, separators=(',', ':')) + '\n')
-    elif not gear.same_geometry(json.loads(DESTINATION.read_text()), json.loads(json.dumps(result))):
-        raise RuntimeError('Normal Gear Cube realization is stale; run scripts/gear_normal.py --write')
-    print('Normal Gear Cube: 38 exterior parts + fixed ball; 13 shared mesh assets')
+    plain_meshes = json.loads(PLAIN_MESHES.read_text())
+    documents = [(DESTINATION, realization(json.loads((ROOT / 'packages/gear/definition.json').read_text()), meshes))]
+    for name in ['gear', 'gear-extreme', 'gear-plain']:
+        directory = ROOT / 'packages' / name
+        definition = json.loads((directory / 'definition.json').read_text())
+        documents.append((directory / (name+'-supplied-euclidean.json'), realization(definition, meshes, plain_meshes)))
+    for path, result in documents:
+        if args.write:
+            path.write_text(json.dumps(result, sort_keys=True, separators=(',', ':')) + '\n')
+        elif not gear.same_geometry(json.loads(path.read_text()), json.loads(json.dumps(result))):
+            raise RuntimeError(f'{path.relative_to(ROOT)} is stale; run scripts/gear_normal.py --write')
+        print(f'{path.relative_to(ROOT)}: supplied meshes and exact rotation tracks')
 
 
 if __name__ == '__main__':

@@ -1,8 +1,8 @@
 # Experimental configurable Gear Cube
 
-The normal **Gear Cube** uses the supplied low-poly model, created in a separate ChatGPT conversation and converted into the project's existing triangle-mesh JSON format. The original GLB and its importer are not retained. This replaces the previous Boolean-construction investigation and viewer. **Gear Cube Extreme** and **Gear family · all plain** retain the earlier mesh prototypes; adapting the new model to them is deferred.
+The **Gear Cube family** uses the supplied low-poly models, converted into the project's existing triangle-mesh JSON format. The normal model was created in a separate ChatGPT conversation; the complete Extreme model adds a plain edge. The original GLBs and their importers are not retained. This replaces the previous Boolean-construction investigation and viewer.
 
-All three presets use the existing C++ `finite-placement-relations@1` backend. Euclidean and diagram views share a session. The gear checkboxes select which persistent edges have a cog; changing a checkbox creates a new solved definition and resets history. The configuration applies to piece identities, not fixed locations. Extreme and custom configurations keep the **Edge model** selector for twelve-tooth or six-tooth prototypes; switching preserves state, selection, history, and cameras. The normal preset always uses the supplied six-tooth model and its corresponding phase diagram.
+All three presets use the existing C++ `finite-placement-relations@1` backend. Euclidean and diagram views share a session. The gear checkboxes select which persistent edges have a cog; changing a checkbox creates a new solved definition and resets history. The configuration applies to piece identities, not fixed locations. Extreme, all plain, and custom configurations default to **Supplied model** and keep the **Edge model** selector for the earlier twelve-tooth or six-tooth prototypes; switching preserves state, selection, history, and cameras. The normal preset always uses the supplied six-tooth model and its corresponding phase diagram. Every model choice uses the supplied plain edge for unchecked pieces.
 
 ## Exact rules and configuration
 
@@ -36,7 +36,7 @@ Registration checks rigid frames, mesh indices, complete domain/port bindings, p
 
 Three.js draws supplied assets and per-component matrices, using the same selection, picking, destination preview, and history controller as existing puzzles. It contains no gearing calculations. Custom renderers use the same portable API and buffer layout. See [the API contract](kernel-api.md).
 
-## Supplied normal Gear Cube model
+## Supplied Gear Cube family models
 
 The supplied model had five shared geometry prototypes: 8 corners, 6 centers, 12 edge bases, 12 six-tooth pinions, and 1 internal ball. The exterior has the requested 38 physical bodies. Each extra edge base and its pinion share one persistent abstract edge identity and occupancy resource, preserving the existing 26-piece exact definition and saved sessions.
 
@@ -48,12 +48,18 @@ Each edge base and its colored patches follow the carrier frame. Each six-tooth 
 
 The abstract catalog still has six phases: `phase × 300°` modulo 360° gives six resting frames for a fixed carrier orientation. Six signed phase steps complete five full cog revolutions. The imported realization pins the existing normal definition digest. Select **Animation → Inspect (3 s)** for direct browser review. The source explicitly sets `motion_clearance_verified: false`; neither the import nor endpoint checks certify continuous tooth contacts or physical clearances.
 
-Extreme and custom configurations retain the procedural meshes in `scripts/gear_meshes.py` and the `*-six-teeth-*` alternatives. Their twelve-tooth pinions use 60° local spin; six-tooth pinions use 300°. These are legacy shape prototypes, pending a separate model for Extreme.
+The supplied Extreme model has 8 corners, 6 centers, 8 edge bases, 8 six-tooth pinions, 4 `fixed_edge` bodies, and the internal ball. Its other 13 mesh assets match the normal model exactly. All surfaces and color regions in the reconstructed Extreme home assembly were compared with the complete source before removing the GLB.
+
+The new plain piece is stored in [plain-edge-meshes.json](../packages/gear-extreme/plain-edge-meshes.json): one plastic body (162 vertices, 164 triangles) and two colored patches (12 vertices, 10 triangles each). Its canonical UF coordinates use the proper rotation `(x,y,z) -> (-z,y,x)` and the same 1.48 scale. Color patches are bound to the abstract edge's two local port labels. A plain edge has exactly these three rigid components; it has no separate carrier, pinion, bearing, or local phase spin. All three components share the same placement frame and layer-rotation tracks, so they move together through both ordinary quarter turns and applicable coupled half turns.
+
+`scripts/gear_normal.py` combines the shared normal parts with this plain-edge prototype to produce `gear-supplied-euclidean.json`, `gear-extreme-supplied-euclidean.json`, and `gear-plain-supplied-euclidean.json`. The reference frontend uses the supplied template for every custom mask, pinning it to the custom compiled digest. Which pieces use the plain domain is determined by persistent abstract identity, so a plain piece retains its mesh as it moves to a new slot. The Extreme preset has 34 exterior bodies and one ball; an all-plain cube has 26 exterior bodies and one ball. Both retain 26 abstract identities.
+
+The optional older models retain procedural geared parts from `scripts/gear_meshes.py` and the `*-six-teeth-*` alternatives. Twelve-tooth pinions use 60° local spin; six-tooth pinions use 300°. Their plain domain also uses the new supplied mesh, so the plain-edge choice is consistent across all frontend presentations. Saved sessions record `gearModel: "supplied"`, `"12"`, or `"6"`; existing sessions remain loadable. Continuous tooth contact and clearance are still unverified.
 
 ## Verification and spherical gate
 
 Native tests cover fully geared, plain, Extreme, and mixed configurations; twelve-turn closure; inverse sequences; occupancy; pure blocking; shared component identity; circular motion about a non-origin pivot; intermediate motion; endpoint continuity; and rejection of an incorrect cog track. Native/WASM parity compares assets and frames. The external native and JavaScript consumers load articulated realizations without the reference application. Browser checks cover configurations, blocked and legal requests, synchronized animation, selection, and history.
 
-Run `python3 scripts/gear_normal.py` to check the normal realization; use `--write` to regenerate it from `normal-meshes.json`. `python3 scripts/gear_model.py` checks the legacy geometry and phase diagrams. Both run in `npm run check:packages`. The spherical candidate audit is `python3 scripts/gear_spherical_audit.py`.
+Run `python3 scripts/gear_normal.py` to check the supplied realizations; use `--write` to regenerate them from `normal-meshes.json` and `plain-edge-meshes.json`. `python3 scripts/gear_model.py` checks the older models (including the supplied plain edge) and phase diagrams. Both run in `npm run check:packages`. The spherical candidate audit is `python3 scripts/gear_spherical_audit.py`.
 
 A genuine S2 gear surface mechanism remains a separate construction gate. The existing cube regions fail a reproducible overlap audit when given the gear rotations. No spherical Gear Cube preset is advertised. See [the feasibility result](gear-spherical-feasibility.md).

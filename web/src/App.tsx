@@ -24,6 +24,7 @@ import gearDiagramText from '../../packages/gear/gear-port-diagram.json?raw';
 import gearSixEuclideanText from '../../packages/gear/gear-six-teeth-euclidean.json?raw';
 import gearSixDiagramText from '../../packages/gear/gear-six-teeth-port-diagram.json?raw';
 import gearNormalText from '../../packages/gear/gear-normal-euclidean.json?raw';
+import gearSuppliedText from '../../packages/gear/gear-supplied-euclidean.json?raw';
 import gearManifest from '../../packages/gear/manifest.json';
 import gearExtremeManifest from '../../packages/gear-extreme/manifest.json';
 import gearPlainManifest from '../../packages/gear-plain/manifest.json';
@@ -31,19 +32,20 @@ import { KernelSession, loadRuntime, type Realization, type Result, type Snapsho
 import { RenderView } from './renderer';
 import { pieceDestinations, type PieceDestination } from './destinations';
 
-type GearModel = '12' | '6';
+type GearModel = 'supplied' | '12' | '6';
 type Preset = { id: string; label: string; source: string; realizations: Realization[]; spherical?: Realization; gearModels?: Record<GearModel, Realization[]> };
 const gearEuclidean = JSON.parse(gearEuclideanText) as Realization;
 const gearDiagram = JSON.parse(gearDiagramText) as Realization;
 const gearSixEuclidean = JSON.parse(gearSixEuclideanText) as Realization;
 const gearSixDiagram = JSON.parse(gearSixDiagramText) as Realization;
 const gearNormal = JSON.parse(gearNormalText) as Realization;
+const gearSupplied = JSON.parse(gearSuppliedText) as Realization;
 function gearPreset(id: string, label: string, source: string, digest: string): Preset {
   const models = (templates: Realization[], variant = '') => templates.map((template) =>
     ({ ...template, id: `${id}${variant}-${template.kind}-v1`, compatibleDefinitionDigest: digest }));
-  const gearModels = { '12': models([gearEuclidean, gearDiagram]), '6': models([gearSixEuclidean, gearSixDiagram], '-six-teeth') };
+  const gearModels = { 'supplied': models([gearSupplied, gearSixDiagram], '-supplied'), '12': models([gearEuclidean, gearDiagram]), '6': models([gearSixEuclidean, gearSixDiagram], '-six-teeth') };
   if (id === 'gear') return { id, label, source, realizations: [gearNormal, gearModels['6'][1]] };
-  return { id, label, source, realizations: gearModels['12'], gearModels };
+  return { id, label, source, realizations: gearModels['supplied'], gearModels };
 }
 const gearEdges = ['UF', 'UR', 'UB', 'UL', 'DF', 'DR', 'DB', 'DL', 'FR', 'FL', 'BR', 'BL'];
 const presets = [
@@ -59,7 +61,7 @@ type Layout = 'both' | 'cube' | 'diagram';
 type ViewPair = 'cube-diagram' | 'sphere-diagram' | 'cube-sphere';
 type Inspector = 'pieces' | 'history' | 'definition';
 
-function realizationPair(preset: Preset, pair: ViewPair, gearModel: GearModel = '12'): Realization[] {
+function realizationPair(preset: Preset, pair: ViewPair, gearModel: GearModel = 'supplied'): Realization[] {
   const [cube, diagram] = preset.gearModels?.[gearModel] ?? preset.realizations;
   return (preset.spherical && pair === 'sphere-diagram' ? [preset.spherical, diagram] :
     preset.spherical && pair === 'cube-sphere' ? [cube, preset.spherical] : [cube, diagram]) as Realization[];
@@ -79,7 +81,7 @@ export function App() {
   const [customGear, setCustomGear] = useState<Preset>();
   const [layout, setLayout] = useState<Layout>('both');
   const [viewPair, setViewPair] = useState<ViewPair>('cube-sphere');
-  const [gearModel, setGearModel] = useState<GearModel>('12');
+  const [gearModel, setGearModel] = useState<GearModel>('supplied');
   const [inspector, setInspector] = useState<Inspector>('pieces');
   const [algorithm, setAlgorithm] = useState("R U R' U'");
   const [policy, setPolicy] = useState('interactive');
@@ -300,7 +302,7 @@ export function App() {
     const presentation = JSON.parse(text).presentation as { layout?: Layout; viewPair?: ViewPair; gearModel?: GearModel; cameras?: unknown[] } | undefined;
     if (presentation?.layout && ['both', 'cube', 'diagram'].includes(presentation.layout)) setLayout(presentation.layout);
     const pair = presentation?.viewPair && ['cube-diagram', 'sphere-diagram', 'cube-sphere'].includes(presentation.viewPair) ? presentation.viewPair : viewPair;
-    const model = presentation?.gearModel === '6' || presentation?.gearModel === '12' ? presentation.gearModel : gearModel;
+    const model = presentation?.gearModel === 'supplied' || presentation?.gearModel === '6' || presentation?.gearModel === '12' ? presentation.gearModel : gearModel;
     if (Array.isArray(presentation?.cameras)) {
       if (pair === viewPair && model === gearModel) presentation.cameras.forEach((camera, index) => views.current[index]?.restoreCamera(camera));
       else if (activePreset) pendingCameras.current = new Map(realizationPair(activePreset, pair, model).map((realization, index) => [realization.id, presentation.cameras![index]]));
@@ -348,7 +350,7 @@ export function App() {
                 const model = event.target.value as GearModel;
                 pendingCameras.current = new Map(realizationPair(activePreset, effectivePair, model).map((realization, index) => [realization.id, views.current[index]?.cameraState()]));
                 setGearModel(model);
-              }}><option value="12">12 teeth · 60° spin</option><option value="6">6 teeth · 300° spin</option></select></label>}
+              }}><option value="supplied">Supplied model · 6 teeth · 300° spin</option><option value="12">12 teeth · 60° spin</option><option value="6">6 teeth · 300° spin</option></select></label>}
               <div className="segmented" aria-label="View layout">{(['both', 'cube', 'diagram'] as Layout[]).map((value) => <button key={value} aria-pressed={layout === value} onClick={() => requestLayout(value)}>{value === 'both' ? 'Both views' : value === 'cube' ? effectivePair === 'sphere-diagram' ? 'Sphere' : 'Cube' : effectivePair === 'cube-sphere' ? 'Sphere' : 'Diagram'}</button>)}</div>
             </div>
           </div>

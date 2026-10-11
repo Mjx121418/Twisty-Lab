@@ -34,6 +34,8 @@ if (process.argv.includes('--stage-web')) {
     files.push(`${prefix}-${puzzle === 'bagua' || puzzle.startsWith('gear') ? 'euclidean' : 'spherical'}.json`);
     if (puzzle.startsWith('gear')) files.push('source.json', `${prefix}-six-teeth-euclidean.json`, `${prefix}-six-teeth-port-diagram.json`);
     if (puzzle === 'gear') files.push('gear-normal-euclidean.json', 'normal-meshes.json');
+    if (puzzle.startsWith('gear')) files.push(`${prefix}-supplied-euclidean.json`);
+    if (puzzle === 'gear-extreme') files.push('plain-edge-meshes.json');
     for (const file of files) {
       await cp(new URL(`../packages/${puzzle}/${file}`, import.meta.url), new URL(file, directory));
     }
