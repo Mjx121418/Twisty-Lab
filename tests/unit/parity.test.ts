@@ -1,4 +1,6 @@
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import createModule, { type MainModule, type Session } from '../../kernel/generated/twisty.mjs';
@@ -14,6 +16,54 @@ beforeAll(async () => { runtime = await createModule(); });
 afterEach(() => { for (const handle of handles) handle.delete(); handles.length = 0; });
 
 describe('native / WebAssembly parity', () => {
+  it('matches dynamic mixed-slice Gear Cube rules, animation and replay for UF/UR', () => {
+    const source = JSON.parse(read('packages/gear/source.json'));
+    source.puzzleId = 'gear-custom-experimental-v1'; source.gearedEdges = ['UF', 'UR'];
+    const text = JSON.stringify(source);
+    const directory = mkdtempSync(join(tmpdir(), 'gear-mask-'));
+    const path = join(directory, 'source.json'); writeFileSync(path, text);
+    const value = new runtime.Session(text), restored = new runtime.Session(text);
+    const compiled = JSON.parse(runtime.compileJSON(text));
+    const realization = JSON.parse(read('packages/gear/gear-supplied-euclidean.json'));
+    realization.compatibleDefinitionDigest = compiled.definition.definitionDigest;
+    const geometry = runtime.createGeometry(value, JSON.stringify(realization));
+    try {
+      expect(geometry).toBeTruthy();
+      expect(compiled).toEqual(native(['compile', '--definition', path]));
+      expect(snapshot(value).legalRequests.map((request: any) => request.operation).sort()).toEqual(
+        ['Uq', "Uq'", 'Dq', "Dq'", 'R', "R'", 'L', "L'", 'F', "F'", 'B', "B'"].sort());
+      const requests: string[] = [];
+      const initial = Array.from(geometry!.transforms() as Float32Array);
+      for (const face of ['F', 'U', 'R', 'D', 'L', 'B']) {
+        const before = snapshot(value);
+        const candidates = before.legalRequests.filter((request: any) => request.operation === face || request.operation === `${face}q`);
+        expect(candidates).toHaveLength(1);
+        const request = candidates[0];
+        expect(JSON.parse(value.planJSON(JSON.stringify(request), value.stateJSON())).status).toBe('Legal');
+        expect(snapshot(value)).toEqual(before);
+        const result = JSON.parse(value.executeJSON(JSON.stringify(request), before.revision));
+        expect(result.status).toBe('Committed'); requests.push(request.operation);
+        const reference = native(['run', '--definition', path, '--algorithm', requests.join(' '), '--policy', 'transactional']);
+        expect(result.transitions[0]).toEqual(reference.transitions.at(-1));
+        expect(snapshot(value)).toEqual(reference.snapshot);
+        expect(JSON.parse(geometry!.prepareAnimationJSON(result.transitionRecords[0])).status).toBe('Prepared');
+        geometry!.sample(.5); geometry!.sample(1);
+        const endpoint = Array.from(geometry!.transforms() as Float32Array);
+        geometry!.setStateJSON(value.stateJSON());
+        expect(Array.from(geometry!.transforms() as Float32Array)).toEqual(endpoint);
+      }
+      expect(JSON.parse(restored.loadJSON(value.saveJSON())).status).toBe('Loaded');
+      expect(snapshot(restored).stateDigest).toBe(snapshot(value).stateDigest);
+      for (let i = requests.length - 1; i >= 0; --i) {
+        const result = JSON.parse(value.undoJSON(snapshot(value).revision));
+        expect(result.status).toBe('Committed');
+        expect(JSON.parse(geometry!.prepareAnimationJSON(result.transitionRecords[0])).status).toBe('Prepared');
+        geometry!.sample(1);
+      }
+      expect(snapshot(value).solved).toBe(true);
+      expect(Array.from(geometry!.transforms() as Float32Array)).toEqual(initial);
+    } finally { geometry?.delete(); value.delete(); restored.delete(); rmSync(directory, { recursive: true, force: true }); }
+  });
   it.each([
     ['helicopter', 'helicopter-euclidean', "UF_ab UL_af (UF_ab UL_af)' UF_ad"],
     ['helicopter', 'helicopter-port-diagram', "UF_ab UL_af (UF_ab UL_af)' UF_ad"],
@@ -25,12 +75,12 @@ describe('native / WebAssembly parity', () => {
     ['bagua', 'bagua-spherical', "U+ R F- (U+ R F-)'"],
     ['gear', 'gear-euclidean', "R U F (R U F)' R12"],
     ['gear', 'gear-normal-euclidean', "R U F (R U F)' R12"],
-    ['gear-extreme', 'gear-extreme-supplied-euclidean', "Uq R F (Uq R F)'"],
+    ['gear-extreme', 'gear-extreme-supplied-euclidean', "Uq R Fq (Uq R Fq)'"],
     ['gear-plain', 'gear-plain-supplied-euclidean', "Rq Uq Fq (Rq Uq Fq)'"],
     ['gear', 'gear-port-diagram', "R U F (R U F)'"],
     ['gear', 'gear-six-teeth-euclidean', "R U F (R U F)' R12"],
     ['gear', 'gear-six-teeth-port-diagram', "R U F (R U F)' R12"],
-    ['gear-extreme', 'gear-extreme-euclidean', "Uq R F (Uq R F)'"],
+    ['gear-extreme', 'gear-extreme-euclidean', "Uq R Fq (Uq R Fq)'"],
     ['gear-plain', 'gear-plain-port-diagram', "Rq Uq Fq (Rq Uq Fq)'"],
   ])('matches native %s assets and sampled %s frames', (name, kind, algorithm) => {
     const definition = `packages/${name}/definition.json`;

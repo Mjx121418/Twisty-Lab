@@ -56,4 +56,7 @@ it('validates shipped sources, compiled definitions, realizations, fixtures, and
     const text = readFileSync(`packages/${name}/source.json`, 'utf8');
     expect(JSON.parse(module.compileJSON(text)).definition).toEqual(JSON.parse(readFileSync(`packages/${name}/definition.json`, 'utf8')));
   }
+  const guarded = JSON.parse(readFileSync('packages/gear/definition.json', 'utf8'));
+  guarded.ruleModule = 'finite-placement-relations@1';
+  expect(ajv.getSchema('urn:twisty:schema:definition:1')!(guarded)).toBe(false);
 });

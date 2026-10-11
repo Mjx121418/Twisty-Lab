@@ -41,7 +41,7 @@ Json compile_gear_source(const Json &source) {
   }
   auto output = base;
   output.erase("definitionDigest");
-  output["ruleModule"] = "finite-placement-relations@1";
+  output["ruleModule"] = "finite-placement-relations@2";
   output["operations"] = Json::array();
   Json gear_domain{{"id", "gear-edge"}, {"placements", Json::array()}};
   for (const auto &domain : base.at("placementDomains"))
@@ -71,7 +71,8 @@ Json compile_gear_source(const Json &source) {
         const auto id = face + (ordinary ? "q" : "") + (reversed ? "'" : "");
         const auto inverse_id = face + (ordinary ? "q" : "") + (reversed ? "" : "'");
         const auto &qop = quarter.at(face + (reversed ? "'" : ""));
-        Json rules = Json::object();
+        const auto &opposite_qop = quarter.at(face + (reversed ? "" : "'"));
+        Json rules = Json::object(), geared_middle = Json::array();
         for (const auto &domain : output.at("placementDomains")) {
           const auto type = domain.at("id").get<std::string>();
           const auto base_type = type == "gear-edge" ? "edge" : type;
@@ -80,17 +81,20 @@ Json compile_gear_source(const Json &source) {
             const auto key = placement.at("key").get<std::string>();
             const auto cell = placement.at("footprint").at(0).get<std::string>();
             const bool outer = cell.find(face) != std::string::npos;
-            const bool middle = !outer && cell.find(opposite(face)) == std::string::npos;
-            if (middle && ((ordinary && type == "gear-edge") || (!ordinary && type == "edge"))) {
+            const bool opposite_layer = cell.find(opposite(face)) != std::string::npos;
+            const bool middle = !outer && !opposite_layer;
+            if (middle && type == "gear-edge")
+              geared_middle.push_back(key);
+            if (middle && ordinary && type == "gear-edge") {
               blocked.push_back(key);
               continue;
             }
-            if (!outer && (ordinary || !middle))
+            if ((ordinary && !outer) || (!ordinary && middle && type != "gear-edge"))
               continue;
             auto from = type == "gear-edge" ? key.substr(5, key.size() - 8) : key;
-            auto to = qop.at("transports").at(base_type).at(from).get<std::string>();
-            if (!ordinary && outer)
-              to = qop.at("transports").at(base_type).at(to);
+            auto to = from;
+            if (outer || opposite_layer)
+              to = (outer ? qop : opposite_qop).at("transports").at(base_type).at(from).get<std::string>();
             if (type == "gear-edge") {
               int phase = key.back() - '0';
               if (middle) {
@@ -110,11 +114,18 @@ Json compile_gear_source(const Json &source) {
           }
           rules[type] = {{"blocked", blocked}, {"transports", transports}};
         }
-        output["operations"].push_back({{"id", id},
-                                        {"inverse", inverse_id},
-                                        {"family", face},
-                                        {"transport", id + ".coupled"},
-                                        {"placementRules", rules}});
+        Json operation{{"id", id},
+                       {"inverse", inverse_id},
+                       {"family", face},
+                       {"transport", id + ".coupled"},
+                       {"placementRules", rules}};
+        if (!ordinary)
+          operation["placementCountGuards"] = {{{"id", "geared-middle"},
+                                                {"placementDomainId", "gear-edge"},
+                                                {"placements", geared_middle},
+                                                {"min", 1},
+                                                {"max", 4}}};
+        output["operations"].push_back(std::move(operation));
       }
   Json initial = Json::object();
   for (const auto &piece : output.at("pieces"))
@@ -123,7 +134,7 @@ Json compile_gear_source(const Json &source) {
   output["provenance"] = {{"authoringKind", "gear-cube-prototypes"},
                           {"gearedEdges", source.at("gearedEdges")},
                           {"modelStatus", "experimental"},
-                          {"couplingPolicy", "uniform-middle-slice-v1"}};
+                          {"couplingPolicy", "any-geared-middle-slice-v2"}};
   const auto definition = load_definition(output);
   output = definition->canonical;
   output["definitionDigest"] = definition->digest;

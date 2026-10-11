@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { cp, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -23,6 +23,16 @@ try {
   const manifest = JSON.parse(await readFile(join(javascript, 'package.json'), 'utf8'));
   assert.equal(info.apiVersion, 1); assert.equal(info.frameBufferVersion, 1);
   assert.equal(info.version, manifest.version);
+  assert.ok(info.ruleModules.includes('finite-placement-relations@2'));
+  const customDirectory = join(javascript, 'examples/canvas/data/gear-custom');
+  await mkdir(customDirectory, { recursive: true });
+  const custom = JSON.parse(module.compileJSON(JSON.stringify({ schemaVersion: 1, semanticsVersion: '2.0.0',
+    kind: 'gear-cube-prototypes', puzzleId: 'gear-custom-experimental-v1', gearedEdges: ['UF', 'UR'] })));
+  assert.equal(custom.status, 'Compiled');
+  const customRealization = JSON.parse(await readFile(join(javascript, 'examples/canvas/data/gear/gear-supplied-euclidean.json'), 'utf8'));
+  customRealization.compatibleDefinitionDigest = custom.definition.definitionDigest;
+  await writeFile(join(customDirectory, 'definition.json'), JSON.stringify(custom.definition));
+  await writeFile(join(customDirectory, 'gear-custom-euclidean.json'), JSON.stringify(customRealization));
   for (const [puzzle, algorithm, firstMove, kind] of [
     ['cube3', "R U R' U'", 'U', 'cube-port-diagram'],
     ['bandaged', 'U R', 'U', 'cube-port-diagram'],
@@ -35,9 +45,10 @@ try {
     ['bagua', "U+ R F- (U+ R F-)'", 'U+', 'bagua-spherical'],
     ['gear', "R U F (R U F)'", 'R', 'gear-euclidean'],
     ['gear', "R U F (R U F)'", 'R', 'gear-normal-euclidean'],
-    ['gear-extreme', "Uq R F (Uq R F)'", 'Uq', 'gear-extreme-supplied-euclidean'],
+    ['gear-extreme', "Uq R Fq (Uq R Fq)'", 'Uq', 'gear-extreme-supplied-euclidean'],
     ['gear-plain', "Rq Uq Fq (Rq Uq Fq)'", 'Rq', 'gear-plain-supplied-euclidean'],
-    ['gear-extreme', "Uq R F (Uq R F)'", 'Uq', 'gear-extreme-port-diagram'],
+    ['gear-extreme', "Uq R Fq (Uq R Fq)'", 'Uq', 'gear-extreme-port-diagram'],
+    ['gear-custom', "F U R Dq L Bq (F U R Dq L Bq)'", 'F', 'gear-custom-euclidean'],
   ]) {
     const directory = join(javascript, 'examples/canvas/data', puzzle);
     const source = await readFile(join(directory, 'definition.json'), 'utf8');
@@ -56,6 +67,11 @@ try {
       assert.deepEqual(session.snapshot(), origin, 'Planning must not commit state/history.');
       assert.equal(session.plan({ operation: firstMove, parameters: { unsupported: 1 } }).status, 'Invalid');
       if (puzzle === 'bandaged') assert.equal(session.plan({ operation: 'R', parameters: {} }).reasonCode, 'footprint.partial_overlap');
+      if (puzzle === 'gear-custom') {
+        assert.equal(session.plan({ operation: 'U', parameters: {} }).reasonCode, 'placement.count');
+        assert.equal(session.plan({ operation: 'Uq', parameters: {} }).status, 'Legal');
+        assert.equal(session.plan({ operation: 'Fq', parameters: {} }).reasonCode, 'placement.blocked');
+      }
       if (puzzle === 'helicopter') {
         assert.equal(session.plan({ operation: 'UR_ad', parameters: {} }, JSON.stringify(preview.transition.afterState)).reasonCode, 'placement.blocked');
         assert.deepEqual(session.snapshot(), origin, 'Planning a different source state remains pure.');

@@ -24,7 +24,7 @@ def audit(count=4096):
         for face in slot: radial=add(radial,VECTORS[FACES.index(face)])
         radial=mul(radial,1/sqrt(dot(radial,radial)))
         outer='R' in slot;middle='R' not in slot and 'L' not in slot
-        orbit=-pi if outer else -pi/2 if middle else 0
+        orbit=-pi/2 if outer else pi/2 if not middle else 0
         spin=(1 if root[0]>0 else -1)*pi/3 if middle and piece['type']=='gear-edge' else 0
         shapes.append((piece['id'],frozenset(slot),radial,orbit,spin))
     results=[]

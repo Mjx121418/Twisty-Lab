@@ -59,9 +59,9 @@ void models() {
   Session restored(read("packages/gear/source.json"));
   check(restored.load(standard.save()).at("status") == "Loaded", "Gear replay loads");
   Session extreme(read("packages/gear-extreme/source.json"));
-  check(move(extreme, "U").at("reasonCode") == "placement.blocked", "Plain middle slice blocks geared U");
+  check(move(extreme, "U").at("reasonCode") == "placement.count", "Empty geared slice selects ordinary U");
   check(move(extreme, "Uq").at("status") == "Committed", "Extreme permits ordinary U");
-  check(extreme.run("R F Uq Dq (R F Uq Dq)' Uq'", "transactional", extreme.revision()).at("status") ==
+  check(extreme.run("R Fq (R Fq)' Uq Dq (Uq Dq)' Uq'", "transactional", extreme.revision()).at("status") ==
             "Committed",
         "Extreme coupling and inverse");
   check(extreme.snapshot().at("solved") == true, "Extreme restored");
@@ -71,17 +71,152 @@ void models() {
   auto source = Json::parse(read("packages/gear/source.json"));
   source["gearedEdges"].erase(0);
   Session mixed(source.dump());
-  check(move(mixed, "R").at("reasonCode") == "placement.blocked" &&
-            move(mixed, "Rq").at("reasonCode") == "placement.blocked",
-        "Mixed slice blocks incompatible transports");
-  check(move(mixed, "U").at("status") == "Committed", "Other uniform slices remain usable");
+  check(move(mixed, "Rq").at("reasonCode") == "placement.blocked",
+        "Any geared middle edge blocks the ordinary request");
+  check(move(mixed, "R").at("status") == "Committed", "Mixed slice permits the coupled request");
+  check(move(mixed, "U").at("status") == "Committed", "Other geared slices remain usable");
   auto state = Json::parse(mixed.state_json());
   state["placementOf"]["edge/UR"] = "gear-" + state["placementOf"]["edge/UF"].get<std::string>() + "/p0";
   check(mixed.validate_state_json(state.dump()).find("state.occupancy") != std::string::npos,
         "Overlapping edge placements rejected");
 }
-void animation(const std::string &package, const std::string &algorithm,
-               const std::string &variant = "", bool include_diagram = true) {
+void custom_coupling() {
+  const std::vector<std::string> faces{"U", "R", "F", "D", "L", "B"};
+  auto source = Json::parse(read("packages/gear/source.json"));
+  // Cover zero through four gears in a slice, gears in outer layers, and the
+  // user's adjacent UF/UR mask. Membership is always read from the current state.
+  std::vector<Json> masks{Json::array({"UF", "UR"})};
+  const std::vector<std::string> middle{"UF", "UB", "DF", "DB"};
+  for (int bits = 0; bits < 16; ++bits) {
+    Json mask = Json::array();
+    for (int i = 0; i < 4; ++i)
+      if (bits & (1 << i))
+        mask.push_back(middle[i]);
+    masks.push_back(mask);
+    mask.push_back("UR");
+    masks.push_back(mask);
+  }
+  for (const auto &mask : masks) {
+    source["gearedEdges"] = mask;
+    Session s(source.dump());
+    auto operation = [&](std::size_t axis) {
+      bool geared = false;
+      for (Index i = 0; i < s.definition()->pieces.size(); ++i) {
+        const auto &piece = s.definition()->pieces[i];
+        const auto &domain = s.definition()->domains[piece.domain];
+        if (domain.id != "gear-edge")
+          continue;
+        const auto &cell = domain.placements[s.state().placement_of[i]].footprint[0];
+        if (cell.find(faces[axis]) == std::string::npos &&
+            cell.find(faces[(axis + 3) % 6]) == std::string::npos)
+          geared = true;
+      }
+      const auto before = s.snapshot();
+      check(plan(*s.definition(), s.state(), faces[axis]).transition.has_value() == geared,
+            "Coupled request iff at least one current middle edge is geared");
+      check(plan(*s.definition(), s.state(), faces[axis] + "q").transition.has_value() == !geared,
+            "Ordinary request iff no current middle edge is geared");
+      check(s.snapshot() == before, "Conditional planning preserves state and history");
+      return faces[axis] + (geared ? "" : "q");
+    };
+    for (std::size_t axis = 0; axis < faces.size(); ++axis) {
+      const auto before = s.state();
+      const auto op = operation(axis);
+      check(move(s, op).at("status") == "Committed", "Every axis permits its selected turn");
+      check(move(s, op + "'").at("status") == "Committed" && s.state() == before,
+            "Selected turn has a legal exact inverse");
+    }
+    std::vector<std::string> walk;
+    for (int step = 0; step < 18; ++step) {
+      for (std::size_t axis = 0; axis < faces.size(); ++axis)
+        operation(axis);
+      const auto op = operation(static_cast<std::size_t>(step % 6));
+      const auto before = s.state();
+      const auto result = move(s, op);
+      check(result.at("status") == "Committed", "Dynamic custom-mask walk stays legal");
+      for (Index i = 0; i < s.definition()->pieces.size(); ++i) {
+        const auto &piece = s.definition()->pieces[i];
+        const auto &domain = s.definition()->domains[piece.domain];
+        if (domain.id != "gear-edge")
+          continue;
+        const auto &from = domain.placements[before.placement_of[i]];
+        const auto &to = domain.placements[s.state().placement_of[i]];
+        const auto axis = static_cast<std::size_t>(step % 6);
+        const auto &cell = from.footprint[0];
+        const bool middle = cell.find(faces[axis]) == std::string::npos &&
+                            cell.find(faces[(axis + 3) % 6]) == std::string::npos;
+        check((from.key.back() != to.key.back()) == (middle && op.find('q') == std::string::npos),
+              "Only geared middle edges receive local cog spin");
+      }
+      walk.push_back(op);
+    }
+    for (auto it = walk.rbegin(); it != walk.rend(); ++it)
+      check(move(s, *it + "'").at("status") == "Committed", "Dynamic coupling walk retraces");
+    check(s.snapshot().at("solved") == true, "Custom-mask inverse walk restores the home state");
+  }
+}
+void invalid_count_guards() {
+  auto compiled = Json::parse(read("packages/gear/definition.json"));
+  compiled.erase("definitionDigest");
+  auto invalid = [&](Json document, const std::string &reason) {
+    bool rejected = false;
+    try {
+      load_definition(std::move(document));
+    } catch (const DiagnosticError &e) {
+      rejected = e.code == reason;
+    }
+    check(rejected, "Invalid count guards fail with " + reason);
+  };
+  auto bad = compiled;
+  bad["ruleModule"] = "finite-placement-relations@1";
+  invalid(bad, "rule.fields");
+  auto &operations = compiled["operations"];
+  const auto index =
+      std::find_if(operations.begin(), operations.end(), [](const Json &op) { return op.at("id") == "R"; }) -
+      operations.begin();
+  for (const auto &field : {"domain", "placement", "duplicate", "bounds", "fraction"}) {
+    bad = compiled;
+    auto &guard = bad["operations"][index]["placementCountGuards"][0];
+    if (std::string(field) == "domain")
+      guard["placementDomainId"] = "missing";
+    else if (std::string(field) == "placement")
+      guard["placements"][0] = "missing";
+    else if (std::string(field) == "duplicate")
+      guard["placements"].push_back(guard["placements"][0]);
+    else if (std::string(field) == "bounds")
+      guard["min"] = 5;
+    else
+      guard["min"] = .5;
+    invalid(bad, std::string(field) == "fraction" ? "value.inexact" : "guard.count");
+  }
+  bad = compiled;
+  bad["operations"][index]["placementCountGuards"][0]["min"] = 2;
+  invalid(bad, "inverse.count_guard");
+  bad = compiled;
+  bad["operations"][index]["placementCountGuards"][0]["placements"].erase(0);
+  invalid(bad, "inverse.count_guard");
+  auto reordered = compiled;
+  for (auto &op : reordered["operations"])
+    if (op.contains("placementCountGuards"))
+      std::reverse(op["placementCountGuards"][0]["placements"].begin(),
+                   op["placementCountGuards"][0]["placements"].end());
+  check(load_definition(reordered)->digest == load_definition(compiled)->digest,
+        "Guard placement ordering does not change the semantic digest");
+  auto bounded = compiled;
+  for (auto &op : bounded["operations"])
+    if (op.at("id") == "R" || op.at("id") == "R'") {
+      op["placementCountGuards"][0]["min"] = 0;
+      op["placementCountGuards"][0]["max"] = 2;
+    }
+  const auto definition = load_definition(bounded);
+  const auto blocked = plan(*definition, definition->initial, "R");
+  check(!blocked.transition && blocked.blocked.at("reasonCode") == "placement.count" &&
+            blocked.blocked.at("evidence").at("count") == 4 &&
+            blocked.blocked.at("implicatedPieces").size() == 4,
+        "Inclusive upper bounds report the matching pieces and exact count");
+}
+void animation(const std::string &package, const std::string &algorithm, const std::string &variant = "",
+               bool include_diagram = true) {
   Session s(read("packages/" + package + "/source.json"));
   std::vector<std::string> kinds{"euclidean"};
   if (include_diagram)
@@ -120,7 +255,7 @@ void animation(const std::string &package, const std::string &algorithm,
 void invalid_geometry() {
   Session s(read("packages/gear/source.json"));
   auto r = Json::parse(read("packages/gear/gear-euclidean.json"));
-  r["componentsByDomain"]["gear-edge"][1]["operationTracks"]["R"]["gear-edge:U-F/p0"][1]["angle"] = .25;
+  r["componentsByDomain"]["gear-edge"][1]["operationTracks"]["R"]["gear-edge:U-F/p0"][0]["angle"] = .25;
   bool rejected = false;
   try {
     Geometry bad(s.definition(), r.dump());
@@ -144,7 +279,7 @@ void invalid_geometry() {
     else if (std::string(field) == "frame")
       r["componentsByDomain"]["gear-edge"][0]["placementFrames"]["gear-edge:U-F/p0"][12] = 1e100;
     else
-      r["componentsByDomain"]["gear-edge"][0]["operationTracks"]["R"]["gear-edge:U-F/p0"][0]["pivot"][0] =
+      r["componentsByDomain"]["gear-edge"][1]["operationTracks"]["R"]["gear-edge:U-F/p0"][0]["pivot"][0] =
           1e100;
     rejected = false;
     try {
@@ -157,10 +292,11 @@ void invalid_geometry() {
 }
 void coupled_midpoint(bool six_teeth = false, bool imported = false) {
   Session s(read("packages/gear/source.json"));
-  Geometry g(s.definition(), read(imported ? "packages/gear/gear-normal-euclidean.json"
-                                         : six_teeth ? "packages/gear/gear-six-teeth-euclidean.json"
-                                         : "packages/gear/gear-euclidean.json"));
+  Geometry g(s.definition(), read(imported    ? "packages/gear/gear-normal-euclidean.json"
+                                  : six_teeth ? "packages/gear/gear-six-teeth-euclidean.json"
+                                              : "packages/gear/gear-euclidean.json"));
   const auto scene = Json::parse(g.scene_json());
+  const auto initial = g.transforms();
   const auto transition = move(s, "R").at("transitions").at(0);
   check(Json::parse(g.prepare_animation_json(transition.dump())).at("status") == "Prepared",
         "Prepare coupled R");
@@ -172,23 +308,39 @@ void coupled_midpoint(bool six_teeth = false, bool imported = false) {
         return g.transforms()[i * 16 + entry];
     throw std::runtime_error(id);
   };
-  // At shared progress 1/2: the carrier turns 45 degrees, the outer layer
-  // turns 90 degrees, and the cog spins 30 or 150 degrees in its moving frame.
-  check(std::abs(matrix("edge/UF/carrier", 5) - std::sqrt(.5)) < 1e-6,
-        "Middle carrier uses half the outer angle");
-  check(std::abs(matrix("corner/UFR/body", 5)) < 1e-6, "Outer corner uses its own rotation angle");
+  // At shared progress 1/2: the middle carrier stays fixed, the opposite
+  // outer layers turn +/-45 degrees, and the cog spins 30 or 150 degrees.
+  check(std::abs(matrix("edge/UF/carrier", 5) - 1) < 1e-6, "Middle carrier stays fixed");
+  check(std::abs(matrix("corner/UFR/body", 5) - std::sqrt(.5)) < 1e-6 &&
+            std::abs(matrix("corner/UFR/body", 6) + std::sqrt(.5)) < 1e-6,
+        "Requested outer face turns clockwise");
+  // The opposite corner has a different home frame. Remove that frame to
+  // compare its world rotation with the requested face's motion.
+  const auto &parts = scene.at("visualParts");
+  for (std::size_t i = 0; i < parts.size(); ++i)
+    if (parts[i].at("visualPartId") == "corner/UFL/body") {
+      const auto &m = g.transforms();
+      double y = 0, z = 0;
+      for (int k = 0; k < 3; ++k) {
+        y += m[i * 16 + k * 4 + 1] * initial[i * 16 + k * 4 + 1];
+        z += m[i * 16 + k * 4 + 2] * initial[i * 16 + k * 4 + 1];
+      }
+      check(std::abs(y - std::sqrt(.5)) < 1e-6 && std::abs(z - std::sqrt(.5)) < 1e-6,
+            "Opposite outer face turns in the reverse world direction");
+    }
   const double x = six_teeth ? -std::sqrt(.75) : std::sqrt(.75);
-  const double z = -.5;
-  check(std::abs(matrix("edge/UF/cog", 0) - x) < 1e-6 &&
-            std::abs(matrix("edge/UF/cog", 1)) < 1e-6 && std::abs(matrix("edge/UF/cog", 2) - z) < 1e-6,
-        "Cog combines carrier rotation and local spin rather than sharing the carrier frame");
+  const double y = std::sqrt(.125);
+  const double z = -std::sqrt(.125);
+  check(std::abs(matrix("edge/UF/cog", 0) - x) < 1e-6 && std::abs(matrix("edge/UF/cog", 1) - y) < 1e-6 &&
+            std::abs(matrix("edge/UF/cog", 2) - z) < 1e-6,
+        "Cog spins in its stationary middle-layer carrier frame");
   g.set_state_json(s.state_json());
   const auto inverse = move(s, "R'").at("transitions").at(0);
   check(Json::parse(g.prepare_animation_json(inverse.dump())).at("status") == "Prepared",
         "Prepare inverse coupled R");
   g.sample(.5);
-  check(std::abs(matrix("edge/UF/cog", 0) - x) < 1e-6 &&
-            std::abs(matrix("edge/UF/cog", 1)) < 1e-6 && std::abs(matrix("edge/UF/cog", 2) - z) < 1e-6,
+  check(std::abs(matrix("edge/UF/cog", 0) - x) < 1e-6 && std::abs(matrix("edge/UF/cog", 1) - y) < 1e-6 &&
+            std::abs(matrix("edge/UF/cog", 2) - z) < 1e-6,
         "Inverse retraces the signed cog rotation through its forward midpoint");
 }
 void fixed_pivot() {
@@ -265,9 +417,10 @@ void supplied_model() {
   check(bodies == 39 && balls == 1 && edge_patches == 48,
         "Imported model has 38 exterior bodies, one core and two patches per edge port");
   const auto &parts = scene.at("visualParts");
-  auto ball_index = std::find_if(parts.begin(), parts.end(), [](const Json &part) {
-    return part.at("visualPartId") == "center/U/core-ball";
-  }) - parts.begin();
+  auto ball_index =
+      std::find_if(parts.begin(), parts.end(),
+                   [](const Json &part) { return part.at("visualPartId") == "center/U/core-ball"; }) -
+      parts.begin();
   const auto initial = g.transforms();
   const auto turn = move(s, "U").at("transitions").at(0);
   check(Json::parse(g.prepare_animation_json(turn.dump())).at("status") == "Prepared",
@@ -277,7 +430,7 @@ void supplied_model() {
     check(g.transforms()[ball_index * 16 + i] == initial[ball_index * 16 + i],
           "Internal ball stays fixed during the bound center's turn");
   for (const auto &filter : {Json::array(), Json::array({"missing"}), Json::array({"corner/UFR"}),
-                           Json::array({"center/U", "center/U"})}) {
+                             Json::array({"center/U", "center/U"})}) {
     auto bad = r;
     bad["componentsByDomain"]["center"].back()["pieceIds"] = filter;
     bool rejected = false;
@@ -290,9 +443,10 @@ void supplied_model() {
   }
   auto bad = r;
   auto &components = bad["componentsByDomain"]["gear-edge"];
-  components.erase(std::remove_if(components.begin(), components.end(), [](const Json &part) {
-    return part.value("portId", std::string{}) == "0";
-  }), components.end());
+  components.erase(
+      std::remove_if(components.begin(), components.end(),
+                     [](const Json &part) { return part.value("portId", std::string{}) == "0"; }),
+      components.end());
   bool rejected = false;
   try {
     Geometry invalid(s.definition(), bad.dump());
@@ -305,8 +459,8 @@ void supplied_plain_edges() {
   const auto meshes = Json::parse(read("packages/gear-extreme/plain-edge-meshes.json"));
   for (const auto &package : {"gear-extreme", "gear-plain"}) {
     Session s(read("packages/" + std::string(package) + "/source.json"));
-    const auto r = Json::parse(read("packages/" + std::string(package) + "/" + package +
-                                   "-supplied-euclidean.json"));
+    const auto r =
+        Json::parse(read("packages/" + std::string(package) + "/" + package + "-supplied-euclidean.json"));
     check(r.at("assets").at("edge/body") == meshes.at("assets").at("edge/body"),
           "Supplied variants retain the imported plain-edge triangles");
     Geometry g(s.definition(), r.dump());
@@ -335,7 +489,13 @@ void supplied_plain_edges() {
   r["compatibleDefinitionDigest"] = custom.definition()->digest;
   Geometry g(custom.definition(), r.dump());
   const auto initial = g.transforms();
-  check(move(custom, "R").at("reasonCode") == "placement.blocked", "Mixed slice remains blocked");
+  for (const auto &op : {"R", "R'"}) {
+    const auto record = move(custom, op).at("transitions").at(0);
+    check(Json::parse(g.prepare_animation_json(record.dump())).at("status") == "Prepared",
+          "Mixed-slice rigid edges have valid coupled tracks");
+    g.sample(1);
+  }
+  check(close(initial, g.transforms()), "Mixed-slice coupled motion restores through its inverse");
   const auto record = move(custom, "U").at("transitions").at(0);
   check(Json::parse(g.prepare_animation_json(record.dump())).at("status") == "Prepared",
         "Custom plain edge follows legal layer motion");
@@ -351,12 +511,14 @@ void supplied_plain_edges() {
 int main() {
   try {
     models();
+    custom_coupling();
+    invalid_count_guards();
     animation("gear", "R U F (R U F)'");
-    animation("gear-extreme", "Uq R F (Uq R F)'");
+    animation("gear-extreme", "Uq R Fq (Uq R Fq)'");
     animation("gear", "R U F (R U F)' R12", "-six-teeth");
-    animation("gear-extreme", "Uq R F (Uq R F)'", "-six-teeth");
+    animation("gear-extreme", "Uq R Fq (Uq R Fq)'", "-six-teeth");
     animation("gear", "R U F (R U F)' R12", "-normal", false);
-    animation("gear-extreme", "Uq R F (Uq R F)'", "-supplied", false);
+    animation("gear-extreme", "Uq R Fq (Uq R Fq)'", "-supplied", false);
     animation("gear-plain", "Rq Uq Fq (Rq Uq Fq)'", "-supplied", false);
     invalid_geometry();
     coupled_midpoint();

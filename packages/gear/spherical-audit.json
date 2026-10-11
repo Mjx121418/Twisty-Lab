@@ -12,13 +12,29 @@
     },
     {
       "progress": 0.25,
-      "uncoveredSamples": 74,
-      "overlappingSamples": 67,
+      "uncoveredSamples": 75,
+      "overlappingSamples": 69,
       "overlapWitness": {
         "point": [
-          0.035556201487108134,
-          0.04637676851845302,
-          0.998291015625
+          -0.11860667700426288,
+          0.3105899400492477,
+          0.943115234375
+        ],
+        "owners": [
+          "center/F",
+          "edge/UF"
+        ]
+      }
+    },
+    {
+      "progress": 0.5,
+      "uncoveredSamples": 113,
+      "overlappingSamples": 109,
+      "overlapWitness": {
+        "point": [
+          -0.08195198237596456,
+          -0.2704894219678632,
+          0.959228515625
         ],
         "owners": [
           "center/F",
@@ -27,49 +43,33 @@
       }
     },
     {
-      "progress": 0.5,
-      "uncoveredSamples": 109,
-      "overlappingSamples": 109,
-      "overlapWitness": {
-        "point": [
-          -0.3466841533364579,
-          -0.021119293285135565,
-          0.937744140625
-        ],
-        "owners": [
-          "edge/DF",
-          "edge/FL"
-        ]
-      }
-    },
-    {
       "progress": 0.75,
-      "uncoveredSamples": 126,
-      "overlappingSamples": 132,
+      "uncoveredSamples": 131,
+      "overlappingSamples": 128,
       "overlapWitness": {
         "point": [
-          0.004318438016788504,
-          -0.04920637384501901,
-          0.998779296875
+          0.034362724144559036,
+          0.28712894262529265,
+          0.957275390625
         ],
         "owners": [
-          "center/D",
-          "edge/DF"
+          "center/F",
+          "edge/UF"
         ]
       }
     },
     {
       "progress": 1,
-      "uncoveredSamples": 135,
-      "overlappingSamples": 131,
+      "uncoveredSamples": 134,
+      "overlappingSamples": 133,
       "overlapWitness": {
         "point": [
-          -0.11860667700426288,
-          0.3105899400492477,
-          0.943115234375
+          0.17371440711480146,
+          -0.28989168431942564,
+          0.941162109375
         ],
         "owners": [
-          "center/D",
+          "center/F",
           "edge/DF"
         ]
       }

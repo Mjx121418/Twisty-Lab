@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 
 async function resting(page: Page): Promise<void> {
   await expect(page.getByTestId('app')).toHaveAttribute('data-animating', 'false');
@@ -43,8 +43,12 @@ test('configures arbitrary edge masks and enables ordinary turns on the plain sl
   await page.getByLabel('Gear edge UF').uncheck();
   await expect(page.getByLabel('Puzzle', { exact: true })).toHaveValue('gear-custom');
   await expect(page.getByLabel('Gear edge UF')).not.toBeChecked();
-  await page.getByRole('button', { name: 'Move R', exact: true }).click();
+  const initial = await page.getByTestId('state-digest').textContent();
+  await page.getByRole('button', { name: 'Move Rq', exact: true }).click();
   await expect(page.getByTestId('blocking-evidence')).toContainText('placement.blocked');
+  await page.getByRole('button', { name: 'Move R', exact: true }).click();
+  await resting(page);
+  await expect(page.getByTestId('state-digest')).not.toHaveText(initial!);
   await page.getByLabel('Puzzle', { exact: true }).selectOption('gear-extreme');
   await expect(page.getByLabel('Gear edge model')).toHaveValue('supplied');
   await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', 'gear-extreme-supplied-articulated-euclidean-v1');
@@ -55,6 +59,54 @@ test('configures arbitrary edge masks and enables ordinary turns on the plain sl
   await page.keyboard.press('u'); await resting(page);
   const native = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/gear-extreme/source.json', '--algorithm', 'Uq', '--json'], { encoding: 'utf8' }));
   await expect(page.getByTestId('state-digest')).toHaveText(native.snapshot.stateDigest);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+test('allows all axes with only UF and UR geared and chooses coupling from current placements', async ({ page }, testInfo) => {
+  await page.getByLabel('Puzzle', { exact: true }).selectOption('gear-plain');
+  await page.getByLabel('Gear edge UF').check();
+  await page.getByLabel('Gear edge UR').check();
+  await page.getByLabel('Animation speed').selectOption('0');
+  for (const face of ['U', 'D', 'R', 'L', 'F', 'B']) {
+    const request = face === 'U' || face === 'D' ? `${face}q` : face;
+    const button = page.getByRole('button', { name: `Move ${request}`, exact: true });
+    await expect(button).not.toHaveClass(/may-block/);
+  }
+  await page.getByRole('button', { name: 'Select edge/UF', exact: true }).click();
+  const initial = await page.getByTestId('state-digest').textContent();
+  const source = JSON.parse(readFileSync('packages/gear/source.json', 'utf8'));
+  source.puzzleId = 'gear-custom-experimental-v1'; source.gearedEdges = ['UF', 'UR'];
+  const sourcePath = testInfo.outputPath('uf-ur-source.json');
+  writeFileSync(sourcePath, JSON.stringify(source));
+  const requests: string[] = [];
+  for (const face of ['F', 'U', 'R', 'D', 'L', 'B']) {
+    // Exactly one of the two directed requests is legal at every axis.
+    const candidates = page.getByRole('button', { name: new RegExp(`^Move ${face}q?$`) });
+    const states = await candidates.evaluateAll((buttons) => buttons.map((button) => ({
+      operation: button.getAttribute('aria-label')!.slice(5), legal: !button.classList.contains('may-block'),
+    })));
+    const legal = states.filter((state) => state.legal);
+    expect(legal).toHaveLength(1);
+    requests.push(legal[0].operation);
+    await page.getByTestId('cube-view').click({ position: { x: 4, y: 4 } });
+    await page.keyboard.press(face.toLowerCase()); await resting(page);
+    const native = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', sourcePath, '--algorithm', requests.join(' '), '--json'], { encoding: 'utf8' }));
+    await expect(page.getByTestId('state-digest')).toHaveText(native.snapshot.stateDigest);
+  }
+  await expect(page.getByTestId('state-digest')).not.toHaveText(initial!);
+  const downloading = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save session ↗' }).click();
+  const saved = JSON.parse(readFileSync((await (await downloading).path())!, 'utf8'));
+  expect(saved.logical.requests.map((request: { operation: string }) => request.operation)).toEqual(requests);
+  for (let i = 0; i < requests.length; ++i) {
+    await page.getByRole('button', { name: '↶ Undo' }).click(); await resting(page);
+  }
+  await expect(page.getByTestId('state-digest')).toHaveText(initial!);
+  await page.getByLabel('Gear edge UF').uncheck();
+  await expect(page.getByLabel('Algorithm', { exact: true })).toHaveValue("Rq Rq'");
+  await expect(page.getByRole('button', { name: 'Move Rq', exact: true })).not.toHaveClass(/may-block/);
+  await page.getByRole('button', { name: 'Play algorithm →' }).click(); await resting(page);
+  await expect(page.getByTestId('goal-status')).toHaveText('Solved');
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
 

@@ -41,6 +41,13 @@ struct Piece {
   Index home;
   std::map<std::string, std::string> labels;
 };
+struct PlacementCountGuard {
+  std::string id;
+  Index domain;
+  std::vector<std::uint8_t> placements;
+  Index minimum;
+  Index maximum;
+};
 struct Operation {
   std::string id;
   std::string inverse;
@@ -51,6 +58,7 @@ struct Operation {
   // Placement relations: 0 = stationary, 1 = participant, 2 = blocked.
   std::vector<std::vector<std::uint8_t>> roles;
   std::map<Index, Index> piece_guards;
+  std::vector<PlacementCountGuard> placement_count_guards;
   Json mechanism_guard = Json::object();
   Json mechanism_update = Json::object();
 };

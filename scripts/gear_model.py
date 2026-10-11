@@ -105,10 +105,11 @@ def realization(definition,diagram,edge_teeth=12):
                 for q in domain['placements']:
                     target=op['placementRules'][kind]['transports'].get(q['key'])
                     if target is None: continue
-                    outer=face in q['footprint'][0];steps=[]
-                    if not diagram:
+                    outer=face in q['footprint'][0]
+                    opposite=FACES[(FACES.index(face)+3)%6] in q['footprint'][0];steps=[]
+                    if not diagram and (outer or opposite):
                         steps.append({'axis':VECTORS[FACES.index(face)],'pivot':[0,0,0],
-                                      'angle':(1 if reversed else -1)*pi/2*(2 if outer and not ordinary else 1),'space':'world'})
+                                      'angle':(1 if reversed else -1)*pi/2*(1 if outer else -1),'space':'world'})
                     if spinning:
                         delta=(int(target[-1])-int(q['key'][-1])+3)%6-3
                         if delta:
@@ -129,7 +130,7 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument('--write',action='store_true');args=parser.parse_args()
     for name,geared in [('gear',EDGES),('gear-extreme',[e for e in EDGES if e not in ['FR','FL','BR','BL']]),('gear-plain',[])]:
         directory=ROOT/'packages'/name
-        source={'schemaVersion':1,'semanticsVersion':'1.0.0','kind':'gear-cube-prototypes',
+        source={'schemaVersion':1,'semanticsVersion':'2.0.0','kind':'gear-cube-prototypes',
                 'puzzleId':name+'-experimental-v1','gearedEdges':geared}
         # CLI takes a file; an explicit write creates source files before compilation.
         if args.write:

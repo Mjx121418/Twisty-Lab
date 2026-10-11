@@ -6,7 +6,7 @@
   "properties": {
     "schemaVersion": {"const": 1}, "semanticsVersion": {"type": "string", "minLength": 1},
     "kind": {"const": "finite-definition"}, "puzzleId": {"$ref": "#/$defs/id"},
-    "definitionDigest": {"$ref": "#/$defs/digest"}, "ruleModule": {"enum": ["finite-footprint@1", "finite-placement-relations@1"]},
+    "definitionDigest": {"$ref": "#/$defs/digest"}, "ruleModule": {"enum": ["finite-footprint@1", "finite-placement-relations@1", "finite-placement-relations@2"]},
     "cells": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
     "goal": {"type": "object", "required": ["kind"], "properties": {"kind": {"const": "home"}}},
     "pieceTypes": {
@@ -46,6 +46,15 @@
           "selectedCells": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
           "transports": {"type": "object", "additionalProperties": {"type": "object", "additionalProperties": {"$ref": "#/$defs/id"}}},
           "pieceGuards": {"type": "object", "additionalProperties": {"$ref": "#/$defs/id"}},
+          "placementCountGuards": {"type": "array", "maxItems": 64, "items": {
+            "type": "object", "required": ["id", "placementDomainId", "placements", "min", "max"],
+            "properties": {
+              "id": {"$ref": "#/$defs/id"}, "placementDomainId": {"$ref": "#/$defs/id"},
+              "placements": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+              "min": {"type": "integer", "minimum": 0, "maximum": 4096},
+              "max": {"type": "integer", "minimum": 0, "maximum": 4096}
+            }
+          }},
           "placementRules": {"type": "object", "additionalProperties": {
             "type": "object", "required": ["blocked", "transports"],
             "properties": {
@@ -65,7 +74,7 @@
       "if": {
         "properties": {
           "ruleModule": {
-            "const": "finite-placement-relations@1"
+            "enum": ["finite-placement-relations@1", "finite-placement-relations@2"]
           }
         }
       },
@@ -120,6 +129,10 @@
           }
         }
       }
+    },
+    {
+      "if": {"properties": {"ruleModule": {"enum": ["finite-footprint@1", "finite-placement-relations@1"]}}},
+      "then": {"properties": {"operations": {"items": {"not": {"required": ["placementCountGuards"]}}}}}
     }
   ],
   "$defs": {

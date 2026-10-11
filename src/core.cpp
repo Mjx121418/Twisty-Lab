@@ -43,7 +43,8 @@ std::shared_ptr<const Definition> load_definition(Json compiled) {
   ensure(compiled.at("kind") == "finite-definition", "definition.unsupported", "/kind",
          "Expected a finite definition.");
   ensure(compiled.at("ruleModule") == "finite-footprint@1" ||
-             compiled.at("ruleModule") == "finite-placement-relations@1",
+             compiled.at("ruleModule") == "finite-placement-relations@1" ||
+             compiled.at("ruleModule") == "finite-placement-relations@2",
          "rule.unsupported", "/ruleModule", "Unknown abstract rule module.");
   ensure(compiled.at("goal").at("kind") == "home", "goal.unsupported", "/goal",
          "Only the home-placement goal is supported.");
@@ -51,7 +52,9 @@ std::shared_ptr<const Definition> load_definition(Json compiled) {
          "definition.limit", "/", "Definition exceeds the initial finite model limits.");
   const auto claimed_digest = compiled.value("definitionDigest", std::string{});
   auto definition = std::make_shared<Definition>();
-  definition->placement_relations = compiled.at("ruleModule") == "finite-placement-relations@1";
+  const bool count_guards = compiled.at("ruleModule") == "finite-placement-relations@2";
+  definition->placement_relations =
+      count_guards || compiled.at("ruleModule") == "finite-placement-relations@1";
   definition->provenance = compiled.value("provenance", Json::object());
   compiled.erase("provenance");
   compiled.erase("definitionDigest");
@@ -72,6 +75,17 @@ std::shared_ptr<const Definition> load_definition(Json compiled) {
     if (operation.contains("placementRules"))
       for (auto &[_, rule] : operation["placementRules"].items())
         std::sort(rule["blocked"].begin(), rule["blocked"].end());
+    if (operation.contains("placementCountGuards")) {
+      auto &guards = operation["placementCountGuards"];
+      ensure(guards.is_array() && guards.size() <= 64, "guard.count", operation.at("id"),
+             "Placement count guards must be an array of at most 64 entries.");
+      sort_by_id(guards, "id");
+      for (auto &guard : guards) {
+        ensure(guard.at("placements").is_array(), "guard.count", operation.at("id"),
+               "Count guard placements must be an array.");
+        std::sort(guard["placements"].begin(), guard["placements"].end());
+      }
+    }
   }
   definition->id = compiled.at("puzzleId").get<std::string>();
   definition->canonical = compiled;
@@ -184,6 +198,32 @@ std::shared_ptr<const Definition> load_definition(Json compiled) {
              "Piece guard placement must belong to the piece domain.");
       operation.piece_guards.emplace(piece, domain.by_key.at(key.get<std::string>()));
     }
+    ensure(count_guards || !item.contains("placementCountGuards"), "rule.fields", operation.id,
+           "Placement count guards require finite-placement-relations@2.");
+    std::set<std::string> guard_ids;
+    for (const auto &guard : item.value("placementCountGuards", Json::array())) {
+      const auto id = guard.at("id").get<std::string>();
+      const auto domain_id = guard.at("placementDomainId").get<std::string>();
+      ensure(!id.empty() && guard_ids.insert(id).second && domains.contains(domain_id), "guard.count",
+             operation.id, "Count guards must have unique IDs and reference a declared domain.");
+      const auto domain = domains.at(domain_id);
+      const auto &catalog = definition->domains[domain];
+      ensure(guard.at("min").is_number_integer() && guard.at("max").is_number_integer() &&
+                 guard.at("min") >= 0 && guard.at("max") <= 4096 && guard.at("min") <= guard.at("max"),
+             "guard.count", operation.id, "Count bounds must be integers with 0 <= min <= max <= 4096.");
+      PlacementCountGuard parsed{id, domain, std::vector<std::uint8_t>(catalog.placements.size(), 0),
+                                 guard.at("min").get<Index>(), guard.at("max").get<Index>()};
+      ensure(!guard.at("placements").empty(), "guard.count", operation.id,
+             "A count guard must name at least one placement.");
+      for (const auto &key : guard.at("placements")) {
+        ensure(key.is_string() && catalog.by_key.contains(key.get<std::string>()), "guard.count",
+               operation.id, "Count guard placement must belong to its declared domain.");
+        const auto q = catalog.by_key.at(key.get<std::string>());
+        ensure(!parsed.placements[q], "guard.count", operation.id, "Duplicate count guard placement.");
+        parsed.placements[q] = 1;
+      }
+      operation.placement_count_guards.push_back(std::move(parsed));
+    }
     if (definition->placement_relations) {
       ensure(!item.contains("transports") && !item.contains("selectedCells"), "rule.fields", operation.id,
              "Placement relations use placementRules rather than selected-cell transports.");
@@ -287,6 +327,24 @@ std::shared_ptr<const Definition> load_definition(Json compiled) {
     }
     ensure(operation.piece_guards.size() == opposite.piece_guards.size(), "inverse.piece_guard", operation.id,
            "Inverse piece guards must cover the same pieces.");
+    ensure(operation.placement_count_guards.size() == opposite.placement_count_guards.size(),
+           "inverse.count_guard", operation.id, "Inverse count guards must cover the same constraints.");
+    for (std::size_t i = 0; i < operation.placement_count_guards.size(); ++i) {
+      const auto &guard = operation.placement_count_guards[i];
+      const auto &inverse = opposite.placement_count_guards[i];
+      ensure(guard.id == inverse.id && guard.domain == inverse.domain && guard.minimum == inverse.minimum &&
+                 guard.maximum == inverse.maximum,
+             "inverse.count_guard", operation.id, "Inverse count guard IDs, domains and bounds must agree.");
+      auto transported = std::vector<std::uint8_t>(guard.placements.size(), 0);
+      for (Index q = 0; q < guard.placements.size(); ++q)
+        if (guard.placements[q]) {
+          ensure(operation.roles[guard.domain][q] != 2, "inverse.count_guard", operation.id,
+                 "Counted placements must have an invertible transport.");
+          transported[operation.maps[guard.domain][q]] = 1;
+        }
+      ensure(transported == inverse.placements, "inverse.count_guard", operation.id,
+             "Inverse count guard must count exactly the transported placements.");
+    }
   }
   definition->initial = decode_state(*definition, compiled.at("initialState"));
   return definition;
@@ -402,6 +460,24 @@ Plan plan(const Definition &definition, const State &state, const std::string &i
                {"operationId", id},
                {"constraintId", "placement.guard"},
                {"implicatedPieces", Json::array({definition.pieces[piece].id})}}};
+  for (const auto &guard : operation.placement_count_guards) {
+    Json matches = Json::array();
+    for (Index piece = 0; piece < definition.pieces.size(); ++piece)
+      if (definition.pieces[piece].domain == guard.domain && guard.placements[state.placement_of[piece]])
+        matches.push_back(definition.pieces[piece].id);
+    if (matches.size() < guard.minimum || matches.size() > guard.maximum)
+      return {std::nullopt,
+              {{"status", "Blocked"},
+               {"reasonCode", "placement.count"},
+               {"operationId", id},
+               {"constraintId", guard.id},
+               {"implicatedPieces", matches},
+               {"evidence",
+                {{"count", matches.size()},
+                 {"min", guard.minimum},
+                 {"max", guard.maximum},
+                 {"placementDomainId", definition.domains[guard.domain].id}}}}};
+  }
   Transition transition{id, state, state, {}};
   const std::set<std::string> selected(operation.cells.begin(), operation.cells.end());
   for (Index i = 0; i < definition.pieces.size(); ++i) {

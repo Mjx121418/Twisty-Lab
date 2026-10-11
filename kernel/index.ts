@@ -54,11 +54,15 @@ export type HitBinding = {
 };
 export type CompiledDefinition = {
   kind: string; puzzleId: string; definitionDigest: string;
+  ruleModule: 'finite-footprint@1' | 'finite-placement-relations@1' | 'finite-placement-relations@2';
   pieceTypes: { id: string; placementDomainId: string; localPorts: string[] }[];
   placementDomains: { id: string; placements: { key: string; footprint: string[]; portAttachment: Record<string, { cell: string; attachment: string }> }[] }[];
   pieces: { id: string; type: string; homePlacement: string; portLabels: Record<string, string> }[];
-  operations: { id: string; inverse: string; family: string; selectedCells?: string[]; transport: string; pieceGuards?: Record<string, string> }[];
+  operations: { id: string; inverse: string; family: string; selectedCells?: string[]; transport: string; pieceGuards?: Record<string, string>; placementCountGuards?: PlacementCountGuard[] }[];
   symmetry?: { members?: number[][]; positionOrbits?: Record<string, { representative: string; stabilizer: number[][]; positions: { id: string }[] }> }; cells: string[]; provenance: unknown;
+};
+export type PlacementCountGuard = {
+  id: string; placementDomainId: string; placements: string[]; min: number; max: number;
 };
 export type PolyhedralModel = {
   vertices: number[][]; ports: Record<string, number[]>; symmetries: number[][];

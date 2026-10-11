@@ -132,7 +132,8 @@ export function App() {
     setSelected(undefined); setEvidence(undefined); setLastScramble(''); setVisualError('');
     setAlgorithm(initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' :
       initial.puzzleId === 'bagua-experimental-v1' ? "U+ R' L' D2 R L U-" :
-      parsedSource.kind === 'gear-cube-prototypes' ? (parsedSource.gearedEdges.length === 0 ? "Rq Uq Rq' Uq'" : "R R'") : "R U R' U'");
+      parsedSource.kind === 'gear-cube-prototypes' ? (parsedSource.gearedEdges.length === 0 ? "Rq Uq Rq' Uq'" :
+        initial.legalRequests.some((request) => request.operation === 'R') ? "R R'" : "Rq Rq'") : "R U R' U'");
     setGeneration((value) => value + 1);
   }
 
@@ -366,7 +367,7 @@ export function App() {
                 install(module, JSON.stringify({ ...source, puzzleId: 'gear-custom-experimental-v1', gearedEdges: gearEdges.filter((id) => geared.has(id)) }), 'gear-custom');
               }} />{edge}</label>;
             })}
-            <small>F = coupled half-turn; Fq = ordinary quarter-turn. Mixed middle slices block both. Spherical gear contacts are under investigation.</small>
+            <small>Face keys choose coupled turns when any middle-layer edge is geared, otherwise ordinary quarter-turns. F = coupled turn; Fq = ordinary turn.</small>
           </fieldset>}
 
           <div className={`views layout-${layout}`}>
