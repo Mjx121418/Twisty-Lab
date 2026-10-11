@@ -69,7 +69,8 @@ export type PolyhedralModel = {
   surfaceVertices?: number[][];
 };
 export type Realization = {
-  schemaVersion: number; id: string; kind: 'cube-euclidean' | 'cube-port-diagram' | 'cube-spherical' | 'polyhedral-euclidean' | 'polyhedral-port-diagram' | 'polyhedral-spherical' | 'articulated-euclidean' | 'articulated-port-diagram';
+  schemaVersion: number; id: string; kind: 'cube-euclidean' | 'cube-port-diagram' | 'cube-spherical' | 'polyhedral-euclidean' | 'polyhedral-port-diagram' | 'polyhedral-spherical' | 'articulated-euclidean' | 'articulated-port-diagram' | 'articulated-spherical';
+  radius?: number;
   compatibleDefinitionDigest: string; requiredCapabilities: string[];
   models?: Record<string, PolyhedralModel>;
   assets?: Record<string, { vertices: number[][]; triangles: number[][] }>;

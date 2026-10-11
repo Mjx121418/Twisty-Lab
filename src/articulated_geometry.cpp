@@ -114,6 +114,10 @@ Geometry::Frame Geometry::articulated_sample(const Part &part, double t) const {
 
 void Geometry::build_articulated(const Json &realization) {
   ensure(definition_->placement_relations, "/ruleModule", "Articulated models require placement relations.");
+  const bool spherical = realization.at("kind") == "articulated-spherical";
+  const double radius = spherical ? realization.at("radius").get<double>() : 0;
+  ensure(!spherical || (std::isfinite(radius) && radius > 0 && radius <= 100), "/radius",
+         "A spherical model requires a finite radius in (0,100].");
   struct Asset {
     std::vector<Point> vertices;
     struct Edge {
@@ -132,8 +136,12 @@ void Geometry::build_articulated(const Json &realization) {
                !data.at("triangles").empty() && data.at("triangles").size() <= 262144,
            id, "Mesh exceeds the articulated asset limits.");
     Asset asset;
-    for (const auto &v : data.at("vertices"))
-      asset.vertices.push_back(point(v));
+    for (const auto &v : data.at("vertices")) {
+      const auto p = point(v);
+      ensure(!spherical || dot(p, p) <= (radius + 1e-6) * (radius + 1e-6), id,
+             "A spherical mesh must fit within its declared radius.");
+      asset.vertices.push_back(p);
+    }
     const auto po = positions_.size(), io = indices_.size();
     std::map<std::pair<Index, Index>, std::vector<Point>> edges;
     for (const auto &triangle : data.at("triangles")) {
@@ -223,6 +231,9 @@ void Geometry::build_articulated(const Json &realization) {
       for (const auto &q : domain.placements) {
         ensure(port.empty() || q.ports.contains(port), id, "Component refers to an undeclared local port.");
         component.frames.push_back(frame(frames.at(q.key)));
+        const auto &m = component.frames.back();
+        ensure(!spherical || (m[12] == 0 && m[13] == 0 && m[14] == 0), id,
+               "Spherical component frames must rotate about the sphere origin.");
       }
       std::vector<Frame> symmetries{identity()};
       const auto declared = data.value("symmetries", Json::array());
@@ -273,6 +284,8 @@ void Geometry::build_articulated(const Json &realization) {
             ensure(length > 1e-12, id, "Rotation axis is degenerate.");
             axis = scale(axis, 1 / length);
             const auto pivot = point(step.at("pivot"));
+            ensure(!spherical || (pivot[0] == 0 && pivot[1] == 0 && pivot[2] == 0), id,
+                   "Spherical animation pivots must be the sphere origin.");
             const auto angle = step.at("angle").get<double>();
             const auto space = step.at("space").get<std::string>();
             ensure(std::isfinite(angle) && std::abs(angle) <= 100 && (space == "local" || space == "world"),
@@ -327,7 +340,9 @@ void Geometry::build_articulated(const Json &realization) {
       scene_["visualParts"].push_back(part);
     }
   }
-  scene_["ambientSpace"] = "R3";
+  scene_["ambientSpace"] = spherical ? "S2" : "R3";
+  if (spherical)
+    scene_["sphereRadius"] = radius;
   scene_["fidelity"] = realization.value("fidelity", std::string{"idealized-articulated"});
   scene_["catalogTransportVerified"] = true;
 }

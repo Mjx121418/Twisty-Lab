@@ -52,7 +52,7 @@ it('validates shipped sources, compiled definitions, realizations, fixtures, and
   for (const name of ['gear', 'gear-extreme', 'gear-plain']) {
     check('source', JSON.parse(readFileSync(`packages/${name}/source.json`, 'utf8')));
     check('definition', JSON.parse(readFileSync(`packages/${name}/definition.json`, 'utf8')));
-    for (const kind of ['euclidean', 'port-diagram']) check('realization', JSON.parse(readFileSync(`packages/${name}/${name}-${kind}.json`, 'utf8')));
+    for (const kind of ['euclidean', 'port-diagram', 'spherical']) check('realization', JSON.parse(readFileSync(`packages/${name}/${name}-${kind}.json`, 'utf8')));
     const text = readFileSync(`packages/${name}/source.json`, 'utf8');
     expect(JSON.parse(module.compileJSON(text)).definition).toEqual(JSON.parse(readFileSync(`packages/${name}/definition.json`, 'utf8')));
   }

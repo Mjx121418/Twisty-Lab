@@ -24,6 +24,7 @@ try {
   assert.equal(info.apiVersion, 1); assert.equal(info.frameBufferVersion, 1);
   assert.equal(info.version, manifest.version);
   assert.ok(info.ruleModules.includes('finite-placement-relations@2'));
+  assert.ok(info.realizationKinds.includes('articulated-spherical'));
   const customDirectory = join(javascript, 'examples/canvas/data/gear-custom');
   await mkdir(customDirectory, { recursive: true });
   const custom = JSON.parse(module.compileJSON(JSON.stringify({ schemaVersion: 1, semanticsVersion: '2.0.2',
@@ -33,6 +34,9 @@ try {
   customRealization.compatibleDefinitionDigest = custom.definition.definitionDigest;
   await writeFile(join(customDirectory, 'definition.json'), JSON.stringify(custom.definition));
   await writeFile(join(customDirectory, 'gear-custom-euclidean.json'), JSON.stringify(customRealization));
+  const customSphere = JSON.parse(await readFile(join(javascript, 'examples/canvas/data/gear/gear-spherical.json'), 'utf8'));
+  customSphere.compatibleDefinitionDigest = custom.definition.definitionDigest;
+  await writeFile(join(customDirectory, 'gear-custom-spherical.json'), JSON.stringify(customSphere));
   for (const [puzzle, algorithm, firstMove, kind] of [
     ['cube3', "R U R' U'", 'U', 'cube-port-diagram'],
     ['bandaged', 'U R', 'U', 'cube-port-diagram'],
@@ -45,10 +49,14 @@ try {
     ['bagua', "U+ R F- (U+ R F-)'", 'U+', 'bagua-spherical'],
     ['gear', "R U F (R U F)'", 'R', 'gear-euclidean'],
     ['gear', "R U F (R U F)'", 'R', 'gear-normal-euclidean'],
+    ['gear', "F U R (F U R)'", 'F', 'gear-spherical'],
+    ['gear-extreme', "Uq R Fq (Uq R Fq)'", 'Uq', 'gear-extreme-spherical'],
+    ['gear-plain', "Rq Uq Fq (Rq Uq Fq)'", 'Rq', 'gear-plain-spherical'],
     ['gear-extreme', "Uq R Fq (Uq R Fq)'", 'Uq', 'gear-extreme-supplied-euclidean'],
     ['gear-plain', "Rq Uq Fq (Rq Uq Fq)'", 'Rq', 'gear-plain-supplied-euclidean'],
     ['gear-extreme', "Uq R Fq (Uq R Fq)'", 'Uq', 'gear-extreme-port-diagram'],
     ['gear-custom', "F U R Dq L Bq (F U R Dq L Bq)'", 'F', 'gear-custom-euclidean'],
+    ['gear-custom', "F U R Dq L Bq (F U R Dq L Bq)'", 'F', 'gear-custom-spherical'],
   ]) {
     const directory = join(javascript, 'examples/canvas/data', puzzle);
     const source = await readFile(join(directory, 'definition.json'), 'utf8');

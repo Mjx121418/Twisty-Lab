@@ -26,7 +26,8 @@
         "polyhedral-port-diagram",
         "polyhedral-spherical",
         "articulated-euclidean",
-        "articulated-port-diagram"
+        "articulated-port-diagram",
+        "articulated-spherical"
       ]
     },
     "compatibleDefinitionDigest": {
@@ -429,7 +430,8 @@
           "kind": {
             "enum": [
               "articulated-euclidean",
-              "articulated-port-diagram"
+              "articulated-port-diagram",
+              "articulated-spherical"
             ]
           }
         }
@@ -440,6 +442,10 @@
           "componentsByDomain"
         ]
       }
+    },
+    {
+      "if": {"properties": {"kind": {"const": "articulated-spherical"}}},
+      "then": {"required": ["radius"], "properties": {"radius": {"exclusiveMinimum": 0, "maximum": 100}}}
     }
   ]
 }

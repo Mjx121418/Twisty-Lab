@@ -1,8 +1,10 @@
-# Spherical Gear Cube: construction gate
+# Spherical Gear Cube: supplied view and construction gate
 
-The requested target is a surface mechanism on S2 whose contacts and cuts realize the geared constraints. It requires a continuous partition and compatible gear contacts, including blocking. Radially projecting a Euclidean display does not establish this mechanism.
+The supplied spherical Gear Cube model is now available for normal, Extreme, all plain, and custom configurations through `articulated-spherical`. It uses the supplied S2 assembly's curved meshes, six-tooth pinions, and the existing exact state and motion tracks. See [model storage and conversion](gear-model.md#supplied-spherical-model). The interpreter verifies radial preservation and catalog endpoints; continuous coverage, contacts, and clearance are not yet certified.
 
-## Candidate tested
+A surface mechanism on S2 whose contacts and cuts realize the geared constraints requires a continuous partition and compatible gear contacts, including blocking. Radially preserving a display does not establish this mechanism. The historical audit below concerns an earlier disk-region candidate, not the supplied mesh.
+
+## Historical candidate tested
 
 The first candidate reused the existing cube's six 70-degree disk regions. On the unit sphere a face disk is `n dot p > cos(70 degrees)`. The set of containing disks identifies one of the 26 center, edge, or corner regions. This candidate has complete, disjoint coverage at the solved state.
 
@@ -16,4 +18,4 @@ This is a counterexample to **reusing the existing cube regions with cog spin**,
 
 A new construction must split edge carriers and cogs into actual surface regions and derive conjugate tooth/contact boundaries from their relative rotations. It must maintain coverage and separation over each complete primitive path, establish the intended gear ratio through contacts, preserve labeled ports and exact resting phases, and demonstrate the blocked transitions. Mixed geared/plain configurations need compatible replacement regions rather than deleting a spinning surface.
 
-Validate continuous paths analytically or with certified bounds. Sampled tests can disprove a candidate and catch regressions, but do not certify all intermediate configurations. Until these checks pass, the package provides Euclidean and diagram views only, with the existing cube/sphere default retained for other puzzles.
+Validate continuous paths analytically or with certified bounds. Sampled tests can disprove a candidate and catch regressions, but do not certify all intermediate configurations. The supplied spherical view is available for review in the default **Cube + sphere** pair; these additional checks remain the gate for claiming a verified spherical gear mechanism.

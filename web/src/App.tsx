@@ -25,6 +25,7 @@ import gearSixEuclideanText from '../../packages/gear/gear-six-teeth-euclidean.j
 import gearSixDiagramText from '../../packages/gear/gear-six-teeth-port-diagram.json?raw';
 import gearNormalText from '../../packages/gear/gear-normal-euclidean.json?raw';
 import gearSuppliedText from '../../packages/gear/gear-supplied-euclidean.json?raw';
+import gearSphericalText from '../../packages/gear/gear-spherical.json?raw';
 import gearManifest from '../../packages/gear/manifest.json';
 import gearExtremeManifest from '../../packages/gear-extreme/manifest.json';
 import gearPlainManifest from '../../packages/gear-plain/manifest.json';
@@ -40,12 +41,14 @@ const gearSixEuclidean = JSON.parse(gearSixEuclideanText) as Realization;
 const gearSixDiagram = JSON.parse(gearSixDiagramText) as Realization;
 const gearNormal = JSON.parse(gearNormalText) as Realization;
 const gearSupplied = JSON.parse(gearSuppliedText) as Realization;
+const gearSpherical = JSON.parse(gearSphericalText) as Realization;
 function gearPreset(id: string, label: string, source: string, digest: string): Preset {
   const models = (templates: Realization[], variant = '') => templates.map((template) =>
     ({ ...template, id: `${id}${variant}-${template.kind}-v1`, compatibleDefinitionDigest: digest }));
   const gearModels = { 'supplied': models([gearSupplied, gearSixDiagram], '-supplied'), '12': models([gearEuclidean, gearDiagram]), '6': models([gearSixEuclidean, gearSixDiagram], '-six-teeth') };
-  if (id === 'gear') return { id, label, source, realizations: [gearNormal, gearModels['6'][1]] };
-  return { id, label, source, realizations: gearModels['supplied'], gearModels };
+  const spherical = { ...gearSpherical, id: `${id}-spherical-v1`, compatibleDefinitionDigest: digest };
+  if (id === 'gear') return { id, label, source, realizations: [gearNormal, gearModels['6'][1]], spherical };
+  return { id, label, source, realizations: gearModels['supplied'], gearModels, spherical };
 }
 const gearEdges = ['UF', 'UR', 'UB', 'UL', 'DF', 'DR', 'DB', 'DL', 'FR', 'FL', 'BR', 'BL'];
 const presets = [

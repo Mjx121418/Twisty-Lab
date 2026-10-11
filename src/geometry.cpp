@@ -93,7 +93,8 @@ Geometry::Geometry(std::shared_ptr<const Definition> definition, const std::stri
   const auto kind = realization.at("kind").get<std::string>();
   if (kind != "cube-euclidean" && kind != "cube-port-diagram" && kind != "cube-spherical" &&
       kind != "polyhedral-euclidean" && kind != "polyhedral-port-diagram" && kind != "polyhedral-spherical" &&
-      kind != "articulated-euclidean" && kind != "articulated-port-diagram")
+      kind != "articulated-euclidean" && kind != "articulated-port-diagram" &&
+      kind != "articulated-spherical")
     throw DiagnosticError("realization.unsupported", "/kind", "Unknown realization kind.");
   diagram_ = kind.ends_with("port-diagram");
   catalog_ = kind.starts_with("polyhedral-");

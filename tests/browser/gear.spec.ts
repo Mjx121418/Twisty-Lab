@@ -40,6 +40,9 @@ test('animates coupled gears in synchronized views with shared selection and his
 });
 
 test('normal F advances UR in the outward cog direction and undo restores it', async ({ page }) => {
+  await expect(page.getByLabel('Geometry views')).toHaveValue('cube-sphere');
+  await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-realization-id', 'gear-spherical-v1');
+  await expect(page.getByLabel('Spherical puzzle', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Select edge/UR', exact: true }).click();
   const placement = page.locator('.piece-detail code');
   await expect(placement).toHaveText('gear-edge:U-R/p0');
@@ -179,6 +182,7 @@ test('R and L spin the single UF gear identically in every edge model', async ({
 
 test('switches edge models without resetting state and restores the saved model', async ({ page }) => {
   // Normal Gear Cube uses the supplied model; legacy alternatives remain on Extreme.
+  await page.getByLabel('Geometry views').selectOption('cube-diagram');
   await page.getByLabel('Puzzle', { exact: true }).selectOption('gear-extreme');
   const initial = await page.getByTestId('state-digest').textContent();
   await page.getByRole('button', { name: 'Select edge/UF', exact: true }).click();
@@ -215,5 +219,42 @@ test('switches edge models without resetting state and restores the saved model'
   await expect(page.getByLabel('Puzzle', { exact: true })).toHaveValue('gear-custom');
   await expect(page.getByLabel('Gear edge model')).toHaveValue('6');
   await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', /six-teeth/);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+test('uses spherical geared and plain parts across presets, custom masks and saved views', async ({ page }) => {
+  await expect(page.getByLabel('Geometry views')).toHaveValue('cube-sphere');
+  await expect(page.getByLabel('Spherical puzzle', { exact: true })).toBeVisible();
+  await page.screenshot({ path: 'test-results/gear-spherical-home.png', fullPage: true });
+  await page.getByLabel('Puzzle', { exact: true }).selectOption('gear-extreme');
+  await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-realization-id', 'gear-extreme-spherical-v1');
+  await page.getByRole('button', { name: 'Select edge/FR', exact: true }).click();
+  await expect(page.locator('.piece-detail')).toContainText('edge:F-R');
+  const origin = await page.getByTestId('state-digest').textContent();
+  await page.getByRole('button', { name: 'Move Uq', exact: true }).click(); await resting(page);
+  await expect(page.getByTestId('state-digest')).not.toHaveText(origin!);
+  await page.getByLabel('Geometry views').selectOption('sphere-diagram'); await resting(page);
+  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', 'gear-extreme-spherical-v1');
+  await page.getByRole('button', { name: '↶ Undo' }).click(); await resting(page);
+  await expect(page.getByTestId('state-digest')).toHaveText(origin!);
+  await page.getByLabel('Gear edge FR').check();
+  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', 'gear-custom-spherical-v1');
+  await page.getByRole('button', { name: 'Select edge/FR', exact: true }).click();
+  await expect(page.locator('.piece-detail code')).toHaveText('gear-edge:F-R/p0');
+  await page.getByRole('button', { name: 'Move U', exact: true }).click(); await resting(page);
+  await expect(page.locator('.piece-detail code')).toHaveText('gear-edge:F-R/p1');
+  const turned = await page.getByTestId('state-digest').textContent();
+  const downloading = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save session ↗' }).click();
+  const saved = readFileSync((await (await downloading).path())!, 'utf8');
+  expect(JSON.parse(saved).presentation.viewPair).toBe('sphere-diagram');
+  await page.getByLabel('Geometry views').selectOption('cube-diagram');
+  await page.getByLabel('Open session file').setInputFiles({ name: 'gear-sphere.json', mimeType: 'application/json', buffer: Buffer.from(saved) });
+  await resting(page);
+  await expect(page.getByLabel('Geometry views')).toHaveValue('sphere-diagram');
+  await expect(page.getByLabel('Spherical puzzle', { exact: true })).toBeVisible();
+  await expect(page.getByTestId('state-digest')).toHaveText(turned!);
+  await page.getByLabel('Puzzle', { exact: true }).selectOption('gear-plain'); await resting(page);
+  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', 'gear-plain-spherical-v1');
   await expect(page.getByRole('alert')).toHaveCount(0);
 });

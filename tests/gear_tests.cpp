@@ -93,8 +93,8 @@ void cog_directions() {
   // than assuming home orientations or checking only self-consistent endpoints.
   // Swap the target slot's occupant back into UF when necessary. Such states
   // need not be reachable by a scramble; all declared placements require tracks.
-  for (const auto &variant :
-       {"gear-normal-euclidean", "gear-supplied-euclidean", "gear-six-teeth-euclidean", "gear-euclidean"}) {
+  for (const auto &variant : {"gear-normal-euclidean", "gear-supplied-euclidean", "gear-six-teeth-euclidean",
+                              "gear-euclidean", "gear-spherical"}) {
     Geometry g(definition, read("packages/gear/" + std::string(variant) + ".json"));
     const auto parts = Json::parse(g.scene_json()).at("visualParts");
     const double travel =
@@ -201,6 +201,64 @@ void cog_directions() {
     }
   }
 }
+void spherical_models() {
+  for (const auto &[name, algorithm] :
+       std::vector<std::pair<std::string, std::string>>{{"gear", "F U R L D B (F U R L D B)'"},
+                                                        {"gear-extreme", "Uq R Fq (Uq R Fq)'"},
+                                                        {"gear-plain", "Rq Uq Fq (Rq Uq Fq)'"}}) {
+    Session s(read("packages/" + name + "/source.json"));
+    const auto before = s.snapshot();
+    Geometry g(s.definition(), read("packages/" + name + "/" + name + "-spherical.json"));
+    const auto scene = Json::parse(g.scene_json());
+    check(scene.at("ambientSpace") == "S2" && scene.at("sphereRadius") == 2.05,
+          "Portable spherical scene metadata");
+    check(s.snapshot() == before, "Spherical realization leaves the abstract session untouched");
+    const auto initial = g.transforms();
+    const auto result = s.run(algorithm, "transactional", s.revision());
+    check(result.at("status") == "Committed", "Spherical geared/plain operations remain legal");
+    for (const auto &transition : result.at("transitions")) {
+      check(Json::parse(g.prepare_animation_json(transition.dump())).at("status") == "Prepared",
+            "Spherical animation prepares");
+      for (double progress : {.125, .5, .875, 1.}) {
+        g.sample(progress);
+        for (std::size_t i = 0; i < g.transforms().size(); i += 16) {
+          const auto &m = g.transforms();
+          check(m[i + 12] == 0 && m[i + 13] == 0 && m[i + 14] == 0,
+                "Every spherical component keeps the sphere origin");
+          for (int column = 0; column < 3; ++column) {
+            double norm = 0;
+            for (int row = 0; row < 3; ++row)
+              norm += m[i + column * 4 + row] * m[i + column * 4 + row];
+            check(std::abs(norm - 1) < 1e-6, "Spherical rotations preserve vertex radii");
+          }
+        }
+      }
+    }
+    check(s.snapshot().at("solved") == true && close(initial, g.transforms()),
+          "Spherical inverse restores state and frame");
+  }
+  Session s(read("packages/gear/source.json"));
+  const auto valid = Json::parse(read("packages/gear/gear-spherical.json"));
+  for (int error = 0; error < 4; ++error) {
+    auto bad = valid;
+    if (error == 0)
+      bad["radius"] = 0;
+    if (error == 1)
+      bad["assets"]["corner/body"]["vertices"][0][0] = 3;
+    if (error == 2)
+      bad["componentsByDomain"]["gear-edge"][0]["placementFrames"]["gear-edge:U-F/p0"][12] = .1;
+    if (error == 3)
+      bad["componentsByDomain"]["gear-edge"][3]["operationTracks"]["R"]["gear-edge:U-F/p0"][0]["pivot"][0] =
+          .1;
+    bool rejected = false;
+    try {
+      Geometry g(s.definition(), bad.dump());
+    } catch (const DiagnosticError &e) {
+      rejected = e.code == "realization.articulated";
+    }
+    check(rejected, "Spherical registration rejects invalid radius, bounds, translated frames and pivots");
+  }
+}
 void opposite_coupling() {
   for (const auto &package : {"gear", "gear-extreme", "gear-plain"}) {
     const auto definition =
@@ -221,7 +279,7 @@ void opposite_coupling() {
     Session s(source.dump());
     for (const auto &variant :
          {"gear-euclidean", "gear-six-teeth-euclidean", "gear-normal-euclidean", "gear-supplied-euclidean",
-          "gear-port-diagram", "gear-six-teeth-port-diagram"}) {
+          "gear-port-diagram", "gear-six-teeth-port-diagram", "gear-spherical"}) {
       if (single_edge && std::string(variant) == "gear-normal-euclidean")
         continue;
       auto realization = Json::parse(read("packages/gear/" + std::string(variant) + ".json"));
@@ -745,6 +803,7 @@ void supplied_plain_edges() {
 int main() {
   try {
     cog_directions();
+    spherical_models();
     opposite_coupling();
     models();
     custom_coupling();
