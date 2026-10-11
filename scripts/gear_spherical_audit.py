@@ -7,7 +7,7 @@ import argparse
 import json
 from math import cos, sin, sqrt, pi
 from pathlib import Path
-from gear_model import FACES, VECTORS, add, mul, dot, cross, frame, same_geometry
+from gear_model import FACES, VECTORS, add, mul, dot, cross, same_geometry
 
 ROOT=Path(__file__).resolve().parent.parent
 
@@ -19,13 +19,13 @@ def audit(count=4096):
     c=cos(70*pi/180);shapes=[]
     for piece in definition['pieces']:
         q=next(q for q in domains[piece['type']]['placements'] if q['key']==piece['homePlacement'])
-        slot=q['footprint'][0];root=frame(definition['symmetry']['members'],piece['type'],q)
+        slot=q['footprint'][0]
         radial=(0,0,0)
         for face in slot: radial=add(radial,VECTORS[FACES.index(face)])
         radial=mul(radial,1/sqrt(dot(radial,radial)))
         outer='R' in slot;middle='R' not in slot and 'L' not in slot
         orbit=-pi/2 if outer else pi/2 if not middle else 0
-        spin=(1 if root[0]>0 else -1)*pi/3 if middle and piece['type']=='gear-edge' else 0
+        spin=pi/3 if middle and piece['type']=='gear-edge' else 0
         shapes.append((piece['id'],frozenset(slot),radial,orbit,spin))
     results=[]
     for t in [0,.25,.5,.75,1]:

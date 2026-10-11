@@ -12,29 +12,29 @@
     },
     {
       "progress": 0.25,
-      "uncoveredSamples": 75,
-      "overlappingSamples": 69,
+      "uncoveredSamples": 72,
+      "overlappingSamples": 67,
       "overlapWitness": {
         "point": [
-          -0.11860667700426288,
-          0.3105899400492477,
-          0.943115234375
+          0.0616396880581066,
+          -0.3210083253816716,
+          0.945068359375
         ],
         "owners": [
           "center/F",
-          "edge/UF"
+          "edge/DF"
         ]
       }
     },
     {
       "progress": 0.5,
-      "uncoveredSamples": 113,
-      "overlappingSamples": 109,
+      "uncoveredSamples": 111,
+      "overlappingSamples": 113,
       "overlapWitness": {
         "point": [
-          -0.08195198237596456,
-          -0.2704894219678632,
-          0.959228515625
+          0.01653257478174155,
+          -0.2951034441889879,
+          0.955322265625
         ],
         "owners": [
           "center/F",
@@ -44,29 +44,29 @@
     },
     {
       "progress": 0.75,
-      "uncoveredSamples": 131,
-      "overlappingSamples": 128,
+      "uncoveredSamples": 133,
+      "overlappingSamples": 125,
       "overlapWitness": {
         "point": [
-          0.034362724144559036,
-          0.28712894262529265,
-          0.957275390625
+          -0.020212005863919455,
+          -0.25933401459541966,
+          0.965576171875
         ],
         "owners": [
           "center/F",
-          "edge/UF"
+          "edge/DF"
         ]
       }
     },
     {
       "progress": 1,
-      "uncoveredSamples": 134,
-      "overlappingSamples": 133,
+      "uncoveredSamples": 135,
+      "overlappingSamples": 130,
       "overlapWitness": {
         "point": [
-          0.17371440711480146,
-          -0.28989168431942564,
-          0.941162109375
+          -0.12285213704221776,
+          -0.3104219381204221,
+          0.942626953125
         ],
         "owners": [
           "center/F",

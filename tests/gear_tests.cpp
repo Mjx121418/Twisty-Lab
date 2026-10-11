@@ -29,6 +29,178 @@ bool close(const std::vector<float> &a, const std::vector<float> &b, double tole
       return false;
   return true;
 }
+using Vector = std::array<double, 3>;
+Vector face_normal(char face) {
+  switch (face) {
+  case 'R':
+    return {1, 0, 0};
+  case 'L':
+    return {-1, 0, 0};
+  case 'U':
+    return {0, 1, 0};
+  case 'D':
+    return {0, -1, 0};
+  case 'F':
+    return {0, 0, 1};
+  case 'B':
+    return {0, 0, -1};
+  default:
+    throw std::runtime_error("Unknown face");
+  }
+}
+Vector cross(Vector a, Vector b) {
+  return {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]};
+}
+double dot(Vector a, Vector b) {
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+Vector rotate(Vector v, Vector n, double angle) {
+  const auto tangent = cross(n, v);
+  Vector result{};
+  for (int i = 0; i < 3; ++i)
+    result[i] =
+        v[i] * std::cos(angle) + tangent[i] * std::sin(angle) + n[i] * dot(n, v) * (1 - std::cos(angle));
+  return result;
+}
+void cog_directions() {
+  Session s(read("packages/gear/source.json"));
+  const auto definition = s.definition();
+  const auto piece = static_cast<Index>(std::find_if(definition->pieces.begin(), definition->pieces.end(),
+                                                     [](const Piece &p) { return p.id == "edge/UF"; }) -
+                                        definition->pieces.begin());
+  const auto domain_id = definition->pieces[piece].domain;
+  const auto &domain = definition->domains[domain_id];
+  check(domain.placements.size() == 144,
+        "Audit both edge orientations and all six phases in all twelve slots");
+  for (const auto &op : definition->operations)
+    for (Index q = 0; q < domain.placements.size(); ++q) {
+      if (op.roles[domain_id][q] != 1)
+        continue;
+      const auto &from = domain.placements[q];
+      const auto &to = domain.placements[op.maps[domain_id][q]];
+      const auto n = face_normal(op.family[0]);
+      const auto a = face_normal(from.footprint[0][0]), b = face_normal(from.footprint[0][1]);
+      const bool middle = dot(n, a) == 0 && dot(n, b) == 0;
+      const int step = middle ? (op.id.back() == '\'' ? -1 : 1) : 0;
+      check(to.key.back() - '0' == (from.key.back() - '0' + step + 6) % 6,
+            "Outward cog phase direction: " + op.id + " at " + from.key);
+      if (middle)
+        check(from.ports.at("0").second[0] == to.ports.at("0").second[0] &&
+                  from.ports.at("1").second[0] == to.ports.at("1").second[0],
+              "Driven cog retains its carrier orientation");
+    }
+  // Exercise every catalog placement in a valid non-overlapping state, rather
+  // than assuming home orientations or checking only self-consistent endpoints.
+  // Swap the target slot's occupant back into UF when necessary. Such states
+  // need not be reachable by a scramble; all declared placements require tracks.
+  for (const auto &variant :
+       {"gear-normal-euclidean", "gear-supplied-euclidean", "gear-six-teeth-euclidean", "gear-euclidean"}) {
+    Geometry g(definition, read("packages/gear/" + std::string(variant) + ".json"));
+    const auto parts = Json::parse(g.scene_json()).at("visualParts");
+    const double travel =
+        std::string(variant) == "gear-euclidean" ? std::numbers::pi / 3 : 5 * std::numbers::pi / 3;
+    std::vector<std::pair<std::size_t, bool>> components;
+    for (std::size_t i = 0; i < parts.size(); ++i)
+      if (parts[i].at("pieceId") == "edge/UF") {
+        const auto id = parts[i].at("visualPartId").get<std::string>();
+        const bool spinning = id == "edge/UF/cog" || id == "edge/UF/hub" ||
+                              (parts[i].at("role") == "port" && id.find("carrier-port") == std::string::npos);
+        components.emplace_back(i, spinning);
+      }
+    for (Index q = 0; q < domain.placements.size(); ++q) {
+      auto state = definition->initial;
+      const auto &placement = domain.placements[q];
+      for (Index i = 0; i < definition->pieces.size(); ++i)
+        if (i != piece && definition->pieces[i].domain == domain_id &&
+            domain.placements[state.placement_of[i]].footprint == placement.footprint)
+          state.placement_of[i] = definition->pieces[piece].home;
+      state.placement_of[piece] = q;
+      const auto validation = validate_state(*definition, state);
+      check(validation.empty(), "Direction audit uses valid catalog states: " + validation.dump());
+      const auto a = face_normal(placement.footprint[0][0]), b = face_normal(placement.footprint[0][1]);
+      Vector radial{};
+      for (int i = 0; i < 3; ++i)
+        radial[i] = (a[i] + b[i]) / std::sqrt(2.);
+      for (const auto &op : definition->operations) {
+        const auto normal = face_normal(op.family[0]);
+        if (op.id.find('q') != std::string::npos || dot(normal, radial) != 0)
+          continue;
+        const auto planned = plan(*definition, state, op.id);
+        check(planned.transition.has_value(), "Every coupled middle-edge direction can be planned");
+        g.set_state_json(encode_state(*definition, state).dump());
+        const auto initial = g.transforms();
+        check(
+            Json::parse(g.prepare_animation_json(encode_transition(*definition, *planned.transition).dump()))
+                    .at("status") == "Prepared",
+            "Prepare catalog direction audit");
+        const double direction = op.id.back() == '\'' ? -1 : 1;
+        for (double progress : {.125, .25, .5, .75, .875, 1.}) {
+          g.sample(progress);
+          const auto &actual = g.transforms();
+          const double eased = progress * progress * (3 - 2 * progress);
+          for (const auto &[part, spinning] : components)
+            for (int column = 0; column < 4; ++column) {
+              const Vector source{initial[part * 16 + column * 4], initial[part * 16 + column * 4 + 1],
+                                  initial[part * 16 + column * 4 + 2]};
+              const auto expected = spinning ? rotate(source, radial, direction * travel * eased) : source;
+              for (int row = 0; row < 3; ++row)
+                check(std::abs(actual[part * 16 + column * 4 + row] - expected[row]) < 1e-6,
+                      std::string(variant) + ": complete cog travel/carrier stability for " + op.id + " at " +
+                          placement.key);
+            }
+          if (progress == .125) {
+            // Independent pitch-contact direction oracle. At the +a face the
+            // face velocity is (-a) x radial; at -a it is a x radial.
+            // Measure the pinion's world rotation from sampled matrices, then
+            // compare its tangents at BOTH contacts. This detects a wrong spin
+            // despite matching authored phases, inverses or animation endpoints.
+            const auto cog = std::find_if(components.begin(), components.end(), [&](const auto &component) {
+                               return parts[component.first].at("visualPartId") == "edge/UF/cog";
+                             })->first;
+            double delta[3][3]{};
+            for (int r = 0; r < 3; ++r)
+              for (int c = 0; c < 3; ++c)
+                for (int k = 0; k < 3; ++k)
+                  delta[r][c] += actual[cog * 16 + k * 4 + r] * initial[cog * 16 + k * 4 + c];
+            const Vector spin{delta[2][1] - delta[1][2], delta[0][2] - delta[2][0],
+                              delta[1][0] - delta[0][1]};
+            for (double side : {-1., 1.}) {
+              Vector contact{};
+              for (int i = 0; i < 3; ++i)
+                contact[i] = side * normal[i];
+              const char face =
+                  side == 1 ? op.family[0] : std::string("DLBURF")[std::string("URFDLB").find(op.family[0])];
+              std::size_t driver_part = parts.size();
+              for (std::size_t i = 0; i < parts.size(); ++i) {
+                const auto id = parts[i].at("visualPartId").get<std::string>();
+                if (id.starts_with("corner/") && id.ends_with("/body") &&
+                    id.substr(7, 3).find(face) != std::string::npos) {
+                  driver_part = i;
+                  break;
+                }
+              }
+              check(driver_part != parts.size(), "Find a corner on each driving face");
+              double driver_delta[3][3]{};
+              for (int r = 0; r < 3; ++r)
+                for (int c = 0; c < 3; ++c)
+                  for (int k = 0; k < 3; ++k)
+                    driver_delta[r][c] +=
+                        actual[driver_part * 16 + k * 4 + r] * initial[driver_part * 16 + k * 4 + c];
+              const Vector driver{driver_delta[2][1] - driver_delta[1][2],
+                                  driver_delta[0][2] - driver_delta[2][0],
+                                  driver_delta[1][0] - driver_delta[0][1]};
+              check(-direction * dot(driver, contact) > 0,
+                    "Each driving face turns in the requested direction");
+              check(dot(cross(spin, contact), cross(driver, radial)) > 0,
+                    "Cog and both driving faces agree on contact direction: " + op.id + " at " +
+                        placement.key);
+            }
+          }
+        }
+      }
+    }
+  }
+}
 void opposite_coupling() {
   for (const auto &package : {"gear", "gear-extreme", "gear-plain"}) {
     const auto definition =
@@ -572,6 +744,7 @@ void supplied_plain_edges() {
 } // namespace
 int main() {
   try {
+    cog_directions();
     opposite_coupling();
     models();
     custom_coupling();

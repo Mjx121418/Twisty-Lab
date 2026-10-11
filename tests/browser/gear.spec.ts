@@ -39,6 +39,29 @@ test('animates coupled gears in synchronized views with shared selection and his
   await page.screenshot({ path: 'test-results/gear-cube.png', fullPage: true });
 });
 
+test('normal F advances UR in the outward cog direction and undo restores it', async ({ page }) => {
+  await page.getByRole('button', { name: 'Select edge/UR', exact: true }).click();
+  const placement = page.locator('.piece-detail code');
+  await expect(placement).toHaveText('gear-edge:U-R/p0');
+  const initial = await page.getByTestId('state-digest').textContent();
+  await page.getByRole('button', { name: 'Move F', exact: true }).click(); await resting(page);
+  await expect(placement).toHaveText('gear-edge:U-R/p1');
+  for (const edge of ['UR', 'UL', 'DR', 'DL']) {
+    await page.getByRole('button', { name: `Select edge/${edge}`, exact: true }).click();
+    await expect(placement).toHaveText(/\/p1$/);
+  }
+  await page.getByRole('button', { name: 'Select edge/UR', exact: true }).click();
+  await page.screenshot({ path: 'test-results/gear-normal-F-UR.png', fullPage: true });
+  await page.getByRole('button', { name: '↶ Undo' }).click(); await resting(page);
+  await expect(placement).toHaveText('gear-edge:U-R/p0');
+  await expect(page.getByTestId('state-digest')).toHaveText(initial!);
+  await page.getByRole('button', { name: 'Move F inverse', exact: true }).click(); await resting(page);
+  await expect(placement).toHaveText('gear-edge:U-R/p5');
+  await page.getByRole('button', { name: '↶ Undo' }).click(); await resting(page);
+  await expect(page.getByTestId('state-digest')).toHaveText(initial!);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
 test('configures arbitrary edge masks and enables ordinary turns on the plain slice', async ({ page }) => {
   await page.getByLabel('Gear edge UF').uncheck();
   await expect(page.getByLabel('Puzzle', { exact: true })).toHaveValue('gear-custom');

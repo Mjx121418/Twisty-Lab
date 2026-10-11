@@ -16,6 +16,53 @@ beforeAll(async () => { runtime = await createModule(); });
 afterEach(() => { for (const handle of handles) handle.delete(); handles.length = 0; });
 
 describe('native / WebAssembly parity', () => {
+  it('spins every driven cog about its outward axis on every face, including F at UR', () => {
+    const value = session('packages/gear/source.json');
+    const geometry = runtime.createGeometry(value, read('packages/gear/gear-normal-euclidean.json'));
+    expect(geometry).toBeTruthy();
+    const definition = JSON.parse(read('packages/gear/definition.json'));
+    const placements = new Map<string, any>(definition.placementDomains.find((d: any) => d.id === 'gear-edge').placements.map((q: any) => [q.key, q]));
+    const normal: Record<string, number[]> = { R: [1, 0, 0], L: [-1, 0, 0], U: [0, 1, 0], D: [0, -1, 0], F: [0, 0, 1], B: [0, 0, -1] };
+    const cross = (a: number[], b: number[]): number[] => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+    const dot = (a: number[], b: number[]): number => a.reduce((sum, x, i) => sum + x * b[i], 0);
+    const rotate = (v: number[], n: number[], angle: number): number[] => v.map((x, i) => x * Math.cos(angle) + cross(n, v)[i] * Math.sin(angle) + n[i] * dot(n, v) * (1 - Math.cos(angle)));
+    try {
+      const parts = JSON.parse(geometry!.sceneJSON()).visualParts;
+      const cogParts = parts.flatMap((part: any, index: number) => part.visualPartId === `${part.pieceId}/cog` ? [{ index, pieceId: part.pieceId }] : []);
+      expect(cogParts).toHaveLength(12);
+      for (const scramble of ['', 'R U F L D B']) {
+        if (scramble) expect(JSON.parse(value.runJSON(scramble, 'transactional', snapshot(value).revision)).status).toBe('Committed');
+        for (const face of ['U', 'R', 'F', 'D', 'L', 'B']) for (const suffix of ['', "'"]) {
+          const state = JSON.parse(value.stateJSON());
+          geometry!.setStateJSON(value.stateJSON());
+          const initial = Array.from(geometry!.transforms() as Float32Array);
+          const result = JSON.parse(value.executeJSON(JSON.stringify({ operation: `${face}${suffix}`, parameters: {} }), snapshot(value).revision));
+          expect(result.status).toBe('Committed');
+          expect(JSON.parse(geometry!.prepareAnimationJSON(result.transitionRecords[0])).status).toBe('Prepared');
+          for (const progress of [.125, .25, .5, .75, .875, 1]) {
+            geometry!.sample(progress);
+            const actual = geometry!.transforms() as Float32Array;
+            for (const { index, pieceId } of cogParts) {
+              const placement = placements.get(state.placementOf[pieceId])!;
+              const slot = placement.footprint[0] as string;
+              const radial = normal[slot[0]].map((x, i) => (x + normal[slot[1]][i]) / Math.sqrt(2));
+              if (dot(normal[face], radial) !== 0) continue;
+              const phase = (Number(placement.key.at(-1)) + (suffix ? -1 : 1) + 6) % 6;
+              expect(result.transitions[0].afterState.placementOf[pieceId]).toBe(`${placement.key.slice(0, -1)}${phase}`);
+              const travel = (suffix ? -1 : 1) * 5 * Math.PI / 3 * progress * progress * (3 - 2 * progress);
+              for (let column = 0; column < 4; ++column) {
+                const expected = rotate(initial.slice(index * 16 + column * 4, index * 16 + column * 4 + 3), radial, travel);
+                for (let row = 0; row < 3; ++row)
+                  expect(Math.abs(actual[index * 16 + column * 4 + row] - expected[row]), `${face}${suffix} ${pieceId} at ${placement.key}, t=${progress}`).toBeLessThan(1e-6);
+              }
+            }
+          }
+          expect(JSON.parse(value.undoJSON(snapshot(value).revision)).status).toBe('Committed');
+          expect(JSON.parse(value.stateJSON())).toEqual(state);
+        }
+      }
+    } finally { geometry?.delete(); }
+  });
   it('matches complete R/L motion and inverses with only UF geared', () => {
     const source = JSON.parse(read('packages/gear/source.json')); source.gearedEdges = ['UF'];
     const text = JSON.stringify(source);

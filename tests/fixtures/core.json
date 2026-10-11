@@ -140,7 +140,7 @@
       "prefix": "",
       "operation": "R",
       "expectedStatus": "Committed",
-      "definitionDigest": "ade40957fd97f3ea2ca65b6eb8af8a430b01e5a1e44b8980b392cd683c6859ad"
+      "definitionDigest": "60d22e4d45835c6b409d10f0f40bb82d370bf769aadbe110c76fb17fa8909032"
     },
     {
       "name": "gear Rq is blocked",
@@ -148,7 +148,7 @@
       "prefix": "",
       "operation": "Rq",
       "expectedStatus": "Blocked",
-      "definitionDigest": "ade40957fd97f3ea2ca65b6eb8af8a430b01e5a1e44b8980b392cd683c6859ad",
+      "definitionDigest": "60d22e4d45835c6b409d10f0f40bb82d370bf769aadbe110c76fb17fa8909032",
       "reasonCode": "placement.blocked"
     },
     {
@@ -157,7 +157,7 @@
       "prefix": "",
       "operation": "Uq",
       "expectedStatus": "Committed",
-      "definitionDigest": "6999d6ea40f906a1d4987fb80d6a996faf68959eb37638fa3d302e22edca521c"
+      "definitionDigest": "cc627e3568fb9a45a0d582743da915e310e0330b354b33d8a4ab430deb9cdef7"
     },
     {
       "name": "gear-extreme U is blocked",
@@ -165,7 +165,7 @@
       "prefix": "",
       "operation": "U",
       "expectedStatus": "Blocked",
-      "definitionDigest": "6999d6ea40f906a1d4987fb80d6a996faf68959eb37638fa3d302e22edca521c",
+      "definitionDigest": "cc627e3568fb9a45a0d582743da915e310e0330b354b33d8a4ab430deb9cdef7",
       "reasonCode": "placement.count"
     }
   ]

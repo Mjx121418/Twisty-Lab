@@ -26,7 +26,7 @@ try {
   assert.ok(info.ruleModules.includes('finite-placement-relations@2'));
   const customDirectory = join(javascript, 'examples/canvas/data/gear-custom');
   await mkdir(customDirectory, { recursive: true });
-  const custom = JSON.parse(module.compileJSON(JSON.stringify({ schemaVersion: 1, semanticsVersion: '2.0.1',
+  const custom = JSON.parse(module.compileJSON(JSON.stringify({ schemaVersion: 1, semanticsVersion: '2.0.2',
     kind: 'gear-cube-prototypes', puzzleId: 'gear-custom-experimental-v1', gearedEdges: ['UF', 'UR'] })));
   assert.equal(custom.status, 'Compiled');
   const customRealization = JSON.parse(await readFile(join(javascript, 'examples/canvas/data/gear/gear-supplied-euclidean.json'), 'utf8'));
