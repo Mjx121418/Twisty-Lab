@@ -169,6 +169,7 @@
             }
           },
           "radialNormalTriangles": {
+            "description": "Triangle indices with smooth signed radial normals about the local origin, for any articulated realization kind.",
             "type": "array",
             "maxItems": 262144,
             "uniqueItems": true,

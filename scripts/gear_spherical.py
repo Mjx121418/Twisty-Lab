@@ -25,7 +25,7 @@ def spherical_normals(assets, radius):
 
 def realization(definition, meshes):
     # Both geared and plain templates are present in the converted source.
-    result = gear_normal.realization(definition, meshes, meshes)
+    result = gear_normal.realization(definition, meshes, meshes, symmetry_mesh=False)
     original_triangles = sum(len(a['triangles']) for a in result['assets'].values())
     ball = result['assets']['core-ball']
     result['assets'] = gear_spherical_mesh.remesh(result['assets'], meshes['radius'])

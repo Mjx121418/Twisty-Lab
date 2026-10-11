@@ -6,6 +6,7 @@ from math import sin, cos, pi, sqrt, isclose
 from pathlib import Path
 import subprocess
 import gear_meshes as shapes
+import gear_cubic_mesh
 
 ROOT = Path(__file__).resolve().parent.parent
 FACES = ['U', 'R', 'F', 'D', 'L', 'B']
@@ -54,6 +55,8 @@ def realization(definition,diagram,edge_teeth=12):
     # Six-tooth cog: (20 / 6) × (π / 2) = 5 × (π / 3), or 300 degrees.
     angle_scale={12:1,6:5}[edge_teeth]
     plain_meshes=None if diagram else json.loads((ROOT/'packages/gear-extreme/plain-edge-meshes.json').read_text())['assets']
+    if plain_meshes is not None:
+        plain_meshes=gear_cubic_mesh.remesh(plain_meshes)
     assets={};bindings={};group=definition['symmetry']['members']
     for domain in definition['placementDomains']:
         kind=domain['id'];ports=len(domain['placements'][0]['portAttachment']);parts=[]

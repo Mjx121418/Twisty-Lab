@@ -150,8 +150,8 @@ void Geometry::build_articulated(const Json &realization) {
     const auto po = positions_.size(), io = indices_.size();
     std::vector<bool> radial_triangles(data.at("triangles").size(), false);
     const auto radial = data.value("radialNormalTriangles", Json::array());
-    ensure(radial.is_array() && radial.size() <= radial_triangles.size() && (spherical || radial.empty()), id,
-           "Radial normals require distinct triangle indices in a spherical realization.");
+    ensure(radial.is_array() && radial.size() <= radial_triangles.size(), id,
+           "Radial normals require a list of distinct triangle indices.");
     for (const auto &entry : radial) {
       ensure(entry.is_number_integer() && entry.get<std::int64_t>() >= 0 &&
                  entry.get<std::uint64_t>() < radial_triangles.size(),
@@ -246,10 +246,11 @@ void Geometry::build_articulated(const Json &realization) {
         for (const auto &entry : filter) {
           ensure(entry.is_string(), id, "pieceIds entries must be strings.");
           const auto piece_id = entry.get<std::string>();
-          ensure(selected.insert(piece_id).second &&
-                     std::any_of(definition_->pieces.begin(), definition_->pieces.end(),
-                                 [&](const auto &piece) { return piece.id == piece_id && piece.domain == d; }),
-                 id, "pieceIds must name distinct existing pieces in this domain.");
+          ensure(
+              selected.insert(piece_id).second &&
+                  std::any_of(definition_->pieces.begin(), definition_->pieces.end(),
+                              [&](const auto &piece) { return piece.id == piece_id && piece.domain == d; }),
+              id, "pieceIds must name distinct existing pieces in this domain.");
         }
         ensure(port.empty(), id, "Port bindings must cover every piece in their domain.");
       }

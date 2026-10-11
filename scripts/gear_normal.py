@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 
 import gear_model as gear
+import gear_cubic_mesh
 
 ROOT = Path(__file__).resolve().parent.parent
 MESHES = ROOT / 'packages/gear/normal-meshes.json'
@@ -17,7 +18,7 @@ DESTINATION = ROOT / 'packages/gear/gear-normal-euclidean.json'
 PLAIN_MESHES = ROOT / 'packages/gear-extreme/plain-edge-meshes.json'
 
 
-def realization(definition, meshes, plain_meshes=None):
+def realization(definition, meshes, plain_meshes=None, *, symmetry_mesh=True):
     if meshes['schemaVersion'] != 1:
         raise ValueError('Unsupported normal Gear Cube mesh schema')
     # Reuse exact placement/track authoring and replace the procedural assets.
@@ -68,6 +69,15 @@ def realization(definition, meshes, plain_meshes=None):
         name = definition['puzzleId'].removesuffix('-experimental-v1')
         result.update(id=name+'-supplied-articulated-euclidean-v1',
                       modelProvenance={'shared': meshes['provenance'], 'plainEdge': plain_meshes['provenance']})
+    if symmetry_mesh:
+        ball = result['assets']['core-ball']
+        result['assets'], provenance = gear_cubic_mesh.author(result['assets'])
+        assert result['assets']['core-ball'] == ball
+        result['modelProvenance'] = {**result['modelProvenance'], 'symmetryMeshing': provenance}
+    # The fixed ball is spherical in both ambient spaces. Keep its source
+    # geometry and request radial normals through the portable interpreter.
+    ball = result['assets']['core-ball']
+    ball['radialNormalTriangles'] = list(range(len(ball['triangles'])))
     return result
 
 

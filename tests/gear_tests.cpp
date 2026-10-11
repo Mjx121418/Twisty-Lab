@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <numbers>
+#include <set>
 #include <sstream>
 using namespace twisty;
 namespace {
@@ -766,6 +767,17 @@ void supplied_model() {
   for (int i = 0; i < 16; ++i)
     check(g.transforms()[ball_index * 16 + i] == initial[ball_index * 16 + i],
           "Internal ball stays fixed during the bound center's turn");
+  for (const auto &mask : {Json::object(), Json::array({320}), Json::array({0, 0})}) {
+    auto bad = r;
+    bad["assets"]["core-ball"]["radialNormalTriangles"] = mask;
+    bool rejected = false;
+    try {
+      Geometry invalid(s.definition(), bad.dump());
+    } catch (const DiagnosticError &e) {
+      rejected = e.code == "realization.articulated";
+    }
+    check(rejected, "Euclidean radial shading rejects malformed, out-of-range and duplicate masks");
+  }
   for (const auto &filter : {Json::array(), Json::array({"missing"}), Json::array({"corner/UFR"}),
                              Json::array({"center/U", "center/U"})}) {
     auto bad = r;
@@ -793,13 +805,19 @@ void supplied_model() {
   check(rejected, "Split patches still require complete local-port coverage");
 }
 void supplied_plain_edges() {
-  const auto meshes = Json::parse(read("packages/gear-extreme/plain-edge-meshes.json"));
+  const auto shared = Json::parse(read("packages/gear/gear-supplied-euclidean.json"));
   for (const auto &package : {"gear-extreme", "gear-plain"}) {
     Session s(read("packages/" + std::string(package) + "/source.json"));
     const auto r =
         Json::parse(read("packages/" + std::string(package) + "/" + package + "-supplied-euclidean.json"));
-    check(r.at("assets").at("edge/body") == meshes.at("assets").at("edge/body"),
-          "Supplied variants retain the imported plain-edge triangles");
+    for (const auto &part : {"edge/body", "edge/port-0", "edge/port-1"})
+      check(r.at("assets").at(part) == shared.at("assets").at(part),
+            "Supplied variants share the same symmetry-meshed plain edge");
+    for (const auto &suffix : {"-euclidean.json", "-six-teeth-euclidean.json"}) {
+      const auto older = Json::parse(read("packages/" + std::string(package) + "/" + package + suffix));
+      check(older.at("assets").at("edge/body") == r.at("assets").at("edge/body"),
+            "Legacy model choices use the same symmetry-meshed plain edge");
+    }
     Geometry g(s.definition(), r.dump());
     const auto scene = Json::parse(g.scene_json());
     int bodies = 0;
@@ -844,6 +862,88 @@ void supplied_plain_edges() {
   g.sample(1);
   check(close(initial, g.transforms()), "Custom rigid edges restore through inverse motion");
 }
+void cubic_mesh_symmetries() {
+  using PointKey = std::array<long long, 3>;
+  using TriangleKey = std::array<PointKey, 3>;
+  const auto original = Json::parse(read("packages/gear/normal-meshes.json"));
+  for (const auto &file : {"gear-normal-euclidean", "gear-supplied-euclidean"}) {
+    const auto r = Json::parse(read("packages/gear/" + std::string(file) + ".json"));
+    const auto &assets = r.at("assets");
+    for (const auto &field : {"vertices", "triangles"})
+      check(assets.at("core-ball").at(field) == original.at("assets").at("core-ball").at(field),
+            "Cubic remeshing leaves the central ball geometry exactly unchanged");
+    Geometry geometry(load_definition(Json::parse(read("packages/gear/definition.json"))), r.dump());
+    const auto scene = Json::parse(geometry.scene_json());
+    for (const auto &asset : scene.at("meshAssets")) {
+      if (asset.at("id") != "core-ball")
+        continue;
+      check(asset.at("indexCount") == 960, "Smooth ball retains its original 320 triangles");
+      const auto start = asset.at("positionOffset").get<std::size_t>();
+      const auto end = start + asset.at("vertexCount").get<std::size_t>() * 3;
+      for (auto v = start; v < end; v += 3) {
+        double radius = 0;
+        for (int k = 0; k < 3; ++k)
+          radius += geometry.positions()[v + k] * geometry.positions()[v + k];
+        radius = std::sqrt(radius);
+        for (int k = 0; k < 3; ++k)
+          check(std::abs(geometry.normals()[v + k] - geometry.positions()[v + k] / radius) < 1e-6,
+                "Cubic ball supplies smooth outward normals through the portable buffer");
+      }
+    }
+    auto triangles = [](const Json &asset, int transform) {
+      std::set<TriangleKey> result;
+      for (const auto &face : asset.at("triangles")) {
+        TriangleKey triangle;
+        for (int i = 0; i < 3; ++i) {
+          auto p = asset.at("vertices").at(face[i].get<std::size_t>()).get<Vector>();
+          if (transform == 0)
+            p[0] = -p[0];
+          if (transform == 1)
+            std::swap(p[1], p[2]);
+          if (transform == 2)
+            p = {p[1], p[2], p[0]};
+          if (transform == 3)
+            p = {p[2], p[1], -p[0]};
+          for (int k = 0; k < 3; ++k)
+            triangle[i][k] = std::llround(p[k] * 1e8);
+        }
+        if (transform == 0 || transform == 1)
+          std::swap(triangle[0], triangle[2]);
+        auto canonical = triangle;
+        for (int i = 0; i < 2; ++i) {
+          std::rotate(triangle.begin(), triangle.begin() + 1, triangle.end());
+          canonical = std::min(canonical, triangle);
+        }
+        result.insert(canonical);
+      }
+      return result;
+    };
+    for (const auto &[name, asset] : assets.items()) {
+      if (name == "core-ball")
+        continue;
+      if (name.starts_with("corner/")) {
+        auto target = name;
+        if (name.find("port-") != std::string::npos)
+          target.back() = '0' + (name.back() - '0' + 1) % 3;
+        check(triangles(asset, 2) == triangles(assets.at(target), -1),
+              "Cubic corner triangle connectivity respects its threefold rotation and port labels");
+      } else if (name.starts_with("center/")) {
+        check(triangles(asset, 3) == triangles(asset, -1),
+              "Cubic center triangle connectivity respects quarter turns");
+        check(triangles(asset, 0) == triangles(asset, -1),
+              "Cubic center triangle connectivity respects reflection winding");
+      } else {
+        check(triangles(asset, 0) == triangles(asset, -1),
+              "Cubic edge triangle connectivity respects end reflection and winding");
+        auto target = name;
+        if (name.find("port-") != std::string::npos)
+          target.back() = name.back() == '0' ? '1' : '0';
+        check(triangles(asset, 1) == triangles(assets.at(target), -1),
+              "Cubic edge triangle connectivity respects face reflection and port exchange");
+      }
+    }
+  }
+}
 } // namespace
 int main() {
   try {
@@ -867,6 +967,7 @@ int main() {
     fixed_pivot();
     supplied_model();
     supplied_plain_edges();
+    cubic_mesh_symmetries();
     std::cout << "Gear rules and articulated motions verified\n";
   } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
