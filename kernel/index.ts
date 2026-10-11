@@ -73,7 +73,7 @@ export type Realization = {
   radius?: number;
   compatibleDefinitionDigest: string; requiredCapabilities: string[];
   models?: Record<string, PolyhedralModel>;
-  assets?: Record<string, { vertices: number[][]; triangles: number[][] }>;
+  assets?: Record<string, { vertices: number[][]; triangles: number[][]; radialNormalTriangles?: number[] }>;
   componentsByDomain?: Record<string, ArticulatedComponent[]>;
 };
 export type RotationTrackStep = {

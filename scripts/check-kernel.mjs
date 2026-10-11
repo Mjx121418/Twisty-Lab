@@ -66,6 +66,20 @@ try {
     const geometry = module.createGeometry(session.native, realization);
     assert.ok(geometry);
     try {
+      if (puzzle.startsWith('gear') && kind.endsWith('-spherical')) {
+        const scene = JSON.parse(geometry.sceneJSON());
+        const positions = Array.from(geometry.positions());
+        const normals = Array.from(geometry.normals());
+        for (const asset of scene.meshAssets.filter((asset) => asset.id.includes('port-'))) {
+          const end = asset.positionOffset + asset.vertexCount * 3;
+          for (let v = asset.positionOffset; v < end; v += 3) {
+            const radius = Math.hypot(...positions.slice(v, v + 3));
+            for (let axis = 0; axis < 3; ++axis)
+              assert.ok(Math.abs(normals[v + axis] - positions[v + axis] / radius) < 1e-6,
+                'Independent clients receive smooth radial sticker normals.');
+          }
+        }
+      }
       const origin = session.snapshot();
       assert.equal(session.validateState(session.stateText()).status, 'Valid');
       assert.equal(session.validateState('{}').status, 'Invalid');

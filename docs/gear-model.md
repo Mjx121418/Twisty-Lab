@@ -74,6 +74,8 @@ Before removing the binary, the reconstructed Extreme home assembly's surface ar
 
 `scripts/gear_spherical.py` combines these meshes with the existing placement frames and full signed 300° cog tracks to produce the three `*-spherical.json` documents. Spherical component frames have zero translation and every rotation pivot is the sphere origin, preserving radial distances during animation. The reference application uses its existing trackball controls, selection, destination preview, undo/redo, and saved-view settings. Switching to **Sphere + diagram** also works. This addition changes no abstract definitions, rules, semantic digests, or saved logical states.
 
+Spherical shell triangles now use smooth radial vertex normals, while tooth and cut walls retain flat normals. Authoring identifies shell triangles by their radial bands, including chord-interpolated sticker-border vertices, and records `radialNormalTriangles` in each realization asset. This classification is invariant under the piece rotations; registration checks the centers' quarter-turn shading symmetry. The C++ interpreter supplies these normals through the existing portable buffer. The shared prototype count remains **10,258 triangles**: positions, indices, silhouettes, colored borders, and motion tracks are unchanged. No subdivision or per-frame normal calculation is required.
+
 The supplied mesh is available for browser review. Its catalog transports and radial motion are checked; continuous surface coverage, tooth contact, and clearance remain unverified. The earlier rejected 70° disk candidate is a different construction. See [spherical status and the historical audit](gear-spherical-feasibility.md).
 
 ## Verification

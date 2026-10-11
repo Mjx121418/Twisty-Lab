@@ -212,6 +212,43 @@ void spherical_models() {
     const auto scene = Json::parse(g.scene_json());
     check(scene.at("ambientSpace") == "S2" && scene.at("sphereRadius") == 2.05,
           "Portable spherical scene metadata");
+    bool sharp_wall = false;
+    for (const auto &asset : scene.at("meshAssets")) {
+      const auto id = asset.at("id").get<std::string>();
+      const auto start = asset.at("positionOffset").get<std::size_t>();
+      const auto end = start + asset.at("vertexCount").get<std::size_t>() * 3;
+      for (auto i = start; i < end; i += 9) {
+        if (id.find("port-") != std::string::npos || id == "core-ball")
+          for (auto v = i; v < i + 9; v += 3) {
+            double length = 0;
+            for (int k = 0; k < 3; ++k)
+              length += g.positions()[v + k] * g.positions()[v + k];
+            length = std::sqrt(length);
+            for (int k = 0; k < 3; ++k)
+              check(std::abs(g.normals()[v + k] - g.positions()[v + k] / length) < 1e-6,
+                    "Spherical stickers and ball have smooth outward radial normals");
+          }
+        if (id == "corner/body") {
+          double lo = 100, hi = 0;
+          for (auto v = i; v < i + 9; v += 3) {
+            double length = 0;
+            for (int k = 0; k < 3; ++k)
+              length += g.positions()[v + k] * g.positions()[v + k];
+            length = std::sqrt(length);
+            lo = std::min(lo, length);
+            hi = std::max(hi, length);
+          }
+          if (lo < 1.94 && hi > 2.03) {
+            sharp_wall = true;
+            for (int k = 0; k < 3; ++k)
+              check(g.normals()[i + k] == g.normals()[i + 3 + k] &&
+                        g.normals()[i + k] == g.normals()[i + 6 + k],
+                    "Cut walls keep a constant sharp face normal");
+          }
+        }
+      }
+    }
+    check(sharp_wall, "Spherical model retains its cut walls");
     check(s.snapshot() == before, "Spherical realization leaves the abstract session untouched");
     const auto initial = g.transforms();
     const auto result = s.run(algorithm, "transactional", s.revision());
@@ -239,7 +276,7 @@ void spherical_models() {
   }
   Session s(read("packages/gear/source.json"));
   const auto valid = Json::parse(read("packages/gear/gear-spherical.json"));
-  for (int error = 0; error < 4; ++error) {
+  for (int error = 0; error < 7; ++error) {
     auto bad = valid;
     if (error == 0)
       bad["radius"] = 0;
@@ -250,13 +287,21 @@ void spherical_models() {
     if (error == 3)
       bad["componentsByDomain"]["gear-edge"][3]["operationTracks"]["R"]["gear-edge:U-F/p0"][0]["pivot"][0] =
           .1;
+    if (error == 4)
+      bad["assets"]["corner/body"]["radialNormalTriangles"][0] =
+          bad["assets"]["corner/body"]["triangles"].size();
+    if (error == 5)
+      bad["assets"]["corner/body"]["radialNormalTriangles"].push_back(
+          bad["assets"]["corner/body"]["radialNormalTriangles"][0]);
+    if (error == 6)
+      bad["assets"]["center/body"]["radialNormalTriangles"].erase(0);
     bool rejected = false;
     try {
       Geometry g(s.definition(), bad.dump());
     } catch (const DiagnosticError &e) {
       rejected = e.code == "realization.articulated";
     }
-    check(rejected, "Spherical registration rejects invalid radius, bounds, translated frames and pivots");
+    check(rejected, "Spherical registration rejects invalid geometry, normal masks and shading symmetries");
   }
 }
 void opposite_coupling() {

@@ -120,8 +120,13 @@ void Geometry::build_articulated(const Json &realization) {
          "A spherical model requires a finite radius in (0,100].");
   struct Asset {
     std::vector<Point> vertices;
+    struct Surface {
+      Point normal;
+      bool radial;
+    };
     struct Edge {
       Point a, b, normal;
+      bool radial;
     };
     std::vector<Edge> boundary;
   };
@@ -143,8 +148,22 @@ void Geometry::build_articulated(const Json &realization) {
       asset.vertices.push_back(p);
     }
     const auto po = positions_.size(), io = indices_.size();
-    std::map<std::pair<Index, Index>, std::vector<Point>> edges;
+    std::vector<bool> radial_triangles(data.at("triangles").size(), false);
+    const auto radial = data.value("radialNormalTriangles", Json::array());
+    ensure(radial.is_array() && radial.size() <= radial_triangles.size() && (spherical || radial.empty()), id,
+           "Radial normals require distinct triangle indices in a spherical realization.");
+    for (const auto &entry : radial) {
+      ensure(entry.is_number_integer() && entry.get<std::int64_t>() >= 0 &&
+                 entry.get<std::uint64_t>() < radial_triangles.size(),
+             id, "Radial normal triangle index is outside the asset.");
+      const auto index = entry.get<Index>();
+      ensure(!radial_triangles[index], id, "Radial normal triangle indices must be distinct.");
+      radial_triangles[index] = true;
+    }
+    std::map<std::pair<Index, Index>, std::vector<Asset::Surface>> edges;
+    std::size_t triangle_index = 0;
     for (const auto &triangle : data.at("triangles")) {
+      const bool smooth = radial_triangles[triangle_index++];
       ensure(triangle.is_array() && triangle.size() == 3, id, "Expected triangle indices.");
       for (const auto &v : triangle)
         ensure(v.is_number_integer() && v.get<std::int64_t>() >= 0 && v.get<std::uint64_t>() <= UINT32_MAX,
@@ -157,29 +176,42 @@ void Geometry::build_articulated(const Json &realization) {
       const auto length = std::sqrt(dot(normal, normal));
       ensure(length > 1e-12, id, "A triangle is degenerate.");
       normal = scale(normal, 1 / length);
+      const auto center = add(add(asset.vertices[tri[0]], asset.vertices[tri[1]]), asset.vertices[tri[2]]);
+      const double direction = dot(normal, center) < 0 ? -1 : 1;
+      ensure(!smooth || std::abs(dot(normal, center)) > 1e-12, id,
+             "A radial surface must have an inward or outward orientation.");
       // Coplanar internal triangulation edges cancel; creases and polygon
       // boundaries retain their directed edge and outward normal.
       for (int i = 0; i < 3; ++i) {
         const auto a = tri[i], b = tri[(i + 1) % 3];
         auto &opposite = edges[{b, a}];
-        const auto found = std::find_if(opposite.begin(), opposite.end(),
-                                        [&](Point n) { return dot(n, normal) > 1 - 1e-10; });
+        const auto found = std::find_if(opposite.begin(), opposite.end(), [&](const Asset::Surface &s) {
+          return s.radial == smooth && dot(s.normal, normal) > 1 - 1e-10;
+        });
         if (found != opposite.end())
           opposite.erase(found);
         else
-          edges[{a, b}].push_back(normal);
+          edges[{a, b}].push_back({normal, smooth});
       }
       for (auto v : tri) {
         indices_.push_back(static_cast<Index>((positions_.size() - po) / 3));
         for (double value : asset.vertices[v])
           positions_.push_back(static_cast<float>(value));
-        for (double value : normal)
+        auto shading_normal = normal;
+        if (smooth) {
+          const auto &p = asset.vertices[v];
+          const auto radius = std::sqrt(dot(p, p));
+          ensure(radius > 1e-12, id, "A radial normal requires a vertex away from the origin.");
+          shading_normal = scale(p, direction / radius);
+        }
+        for (double value : shading_normal)
           normals_.push_back(static_cast<float>(value));
       }
     }
     for (const auto &[edge, normals] : edges)
-      for (const auto &normal : normals)
-        asset.boundary.push_back({asset.vertices[edge.first], asset.vertices[edge.second], normal});
+      for (const auto &surface : normals)
+        asset.boundary.push_back(
+            {asset.vertices[edge.first], asset.vertices[edge.second], surface.normal, surface.radial});
     scene_["meshAssets"].push_back({{"id", id},
                                     {"positionOffset", po},
                                     {"vertexCount", (positions_.size() - po) / 3},
@@ -257,8 +289,8 @@ void Geometry::build_articulated(const Json &realization) {
           ensure(std::any_of(mesh.boundary.begin(), mesh.boundary.end(),
                              [&](const Asset::Edge &other) {
                                const auto da = add(a, scale(other.a, -1)), db = add(b, scale(other.b, -1));
-                               return dot(da, da) < 1e-12 && dot(db, db) < 1e-12 &&
-                                      dot(n, other.normal) > 1 - 1e-10;
+                               return edge.radial == other.radial && dot(da, da) < 1e-12 &&
+                                      dot(db, db) < 1e-12 && dot(n, other.normal) > 1 - 1e-10;
                              }),
                  id, "A symmetry must preserve oriented mesh boundaries and normals.");
         }
