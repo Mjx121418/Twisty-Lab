@@ -6,6 +6,7 @@ import math
 from pathlib import Path
 import gear_model as gear
 import gear_normal
+import gear_spherical_mesh
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -25,11 +26,32 @@ def spherical_normals(assets, radius):
 def realization(definition, meshes):
     # Both geared and plain templates are present in the converted source.
     result = gear_normal.realization(definition, meshes, meshes)
+    original_triangles = sum(len(a['triangles']) for a in result['assets'].values())
+    ball = result['assets']['core-ball']
+    result['assets'] = gear_spherical_mesh.remesh(result['assets'], meshes['radius'])
+    assert result['assets']['core-ball'] == ball
+    triangles = sum(len(a['triangles']) for a in result['assets'].values())
+    assert triangles <= original_triangles, 'Symmetry remeshing must not increase the triangle budget'
+    for prefix in ['corner/', 'center/', 'edge/', 'gear-edge/carrier', 'gear-edge/cog',
+                   'gear-edge/port-']:
+        before = sum(len(a['triangles']) for name, a in meshes['assets'].items()
+                     if name.startswith(prefix))
+        after = sum(len(a['triangles']) for name, a in result['assets'].items()
+                    if name.startswith(prefix))
+        assert 0 < after <= before, f'{prefix} must retain a nonempty mesh within its triangle budget'
+    groups = gear_spherical_mesh.verify(result['assets'])
     spherical_normals(result['assets'], meshes['radius'])
     name = definition['puzzleId'].removesuffix('-experimental-v1')
     result.update(id=name+'-spherical-v1', kind='articulated-spherical',
                   radius=meshes['radius'], fidelity='supplied-spherical-gear-mesh',
-                  modelProvenance=meshes['provenance'])
+                  modelProvenance={**meshes['provenance'], 'symmetryMeshing': {
+                      'method': 'Fundamental sectors, planar-star simplification, symmetric cog shells, then rotation/reflection copies',
+                      'groups': groups, 'sourcePrototypeTriangles': original_triangles,
+                      'prototypeTriangles': triangles, 'coordinateWeldDigits': 10,
+                      'cogSurface': {'parameterization': 'gnomonic', 'radialBands': 3,
+                                     'rimInset': gear_spherical_mesh.COG_RIM_WIDTH,
+                                     'seamHalfWidth': gear_spherical_mesh.COG_SEAM_HALF_WIDTH},
+                      'centralBallPreserved': True}})
     return result
 
 
@@ -46,7 +68,8 @@ def main():
             path.write_text(json.dumps(result, sort_keys=True, separators=(',', ':'))+'\n')
         elif not gear.same_geometry(json.loads(path.read_text()), json.loads(json.dumps(result))):
             raise RuntimeError(f'{path.relative_to(ROOT)} is stale; run scripts/gear_spherical.py --write')
-        print(f'{path.relative_to(ROOT)}: supplied spherical meshes and 300-degree cog tracks')
+        count = result['modelProvenance']['symmetryMeshing']['prototypeTriangles']
+        print(f'{path.relative_to(ROOT)}: {count} symmetry-meshed triangles and 300-degree cog tracks')
 
 
 if __name__ == '__main__':
