@@ -26,7 +26,7 @@ try {
   assert.ok(info.ruleModules.includes('finite-placement-relations@2'));
   const customDirectory = join(javascript, 'examples/canvas/data/gear-custom');
   await mkdir(customDirectory, { recursive: true });
-  const custom = JSON.parse(module.compileJSON(JSON.stringify({ schemaVersion: 1, semanticsVersion: '2.0.0',
+  const custom = JSON.parse(module.compileJSON(JSON.stringify({ schemaVersion: 1, semanticsVersion: '2.0.1',
     kind: 'gear-cube-prototypes', puzzleId: 'gear-custom-experimental-v1', gearedEdges: ['UF', 'UR'] })));
   assert.equal(custom.status, 'Compiled');
   const customRealization = JSON.parse(await readFile(join(javascript, 'examples/canvas/data/gear/gear-supplied-euclidean.json'), 'utf8'));
@@ -68,6 +68,8 @@ try {
       assert.equal(session.plan({ operation: firstMove, parameters: { unsupported: 1 } }).status, 'Invalid');
       if (puzzle === 'bandaged') assert.equal(session.plan({ operation: 'R', parameters: {} }).reasonCode, 'footprint.partial_overlap');
       if (puzzle === 'gear-custom') {
+        assert.deepEqual(session.plan({ operation: 'R', parameters: {} }).transition.afterState,
+          session.plan({ operation: 'L', parameters: {} }).transition.afterState);
         assert.equal(session.plan({ operation: 'U', parameters: {} }).reasonCode, 'placement.count');
         assert.equal(session.plan({ operation: 'Uq', parameters: {} }).status, 'Legal');
         assert.equal(session.plan({ operation: 'Fq', parameters: {} }).reasonCode, 'placement.blocked');

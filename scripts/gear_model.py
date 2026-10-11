@@ -130,7 +130,7 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument('--write',action='store_true');args=parser.parse_args()
     for name,geared in [('gear',EDGES),('gear-extreme',[e for e in EDGES if e not in ['FR','FL','BR','BL']]),('gear-plain',[])]:
         directory=ROOT/'packages'/name
-        source={'schemaVersion':1,'semanticsVersion':'2.0.0','kind':'gear-cube-prototypes',
+        source={'schemaVersion':1,'semanticsVersion':'2.0.1','kind':'gear-cube-prototypes',
                 'puzzleId':name+'-experimental-v1','gearedEdges':geared}
         # CLI takes a file; an explicit write creates source files before compilation.
         if args.write:

@@ -8,6 +8,11 @@ const std::vector<std::string> faces{"U", "R", "F", "D", "L", "B"};
 std::string opposite(const std::string &face) {
   return faces[(std::find(faces.begin(), faces.end(), face) - faces.begin() + 3) % 6];
 }
+std::string coupled_axis(const std::string &face) {
+  // Both requests in a pair drive the same outer faces in the same directions.
+  // Their middle cogs must therefore use the same abstract phase convention.
+  return faces[(std::find(faces.begin(), faces.end(), face) - faces.begin()) % 3];
+}
 std::string gear_key(const std::string &base, int phase) {
   return "gear-" + base + "/p" + std::to_string(phase);
 }
@@ -105,7 +110,7 @@ Json compile_gear_source(const Json &source) {
                 const auto frame = std::find_if(group.begin(), group.end(), [&](const Json &p) {
                   return faces[p.at(0).get<int>()] == first && faces[p.at(2).get<int>()] == second;
                 });
-                const int sign = faces[frame->at(1).get<int>()] == face ? 1 : -1;
+                const int sign = faces[frame->at(1).get<int>()] == coupled_axis(face) ? 1 : -1;
                 phase = (phase + (reversed ? -sign : sign) + 6) % 6;
               }
               to = gear_key(to, phase);

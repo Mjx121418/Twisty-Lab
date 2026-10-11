@@ -132,6 +132,28 @@ test('uses the supplied rigid edge in custom masks and restores the supplied pre
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
 
+test('R and L spin the single UF gear identically in every edge model', async ({ page }) => {
+  await page.getByLabel('Puzzle', { exact: true }).selectOption('gear-plain');
+  await page.getByLabel('Gear edge UF').check();
+  await page.getByLabel('Animation speed').selectOption('0');
+  await page.getByRole('button', { name: 'Select edge/UF', exact: true }).click();
+  const initial = await page.getByTestId('state-digest').textContent();
+  for (const model of ['supplied', '12', '6']) {
+    await page.getByLabel('Gear edge model').selectOption(model); await resting(page);
+    await page.getByRole('button', { name: 'Move R', exact: true }).click(); await resting(page);
+    const expected = await page.getByTestId('state-digest').textContent();
+    await page.getByRole('button', { name: '↶ Undo' }).click(); await resting(page);
+    await expect(page.getByTestId('state-digest')).toHaveText(initial!);
+    await page.getByRole('button', { name: 'Move L', exact: true }).click(); await resting(page);
+    await expect(page.getByTestId('state-digest')).toHaveText(expected!);
+    for (const id of ['cube-view', 'diagram-view'])
+      await expect(page.getByTestId(id)).toHaveAttribute('data-selected-piece', 'edge/UF');
+    await page.getByRole('button', { name: '↶ Undo' }).click(); await resting(page);
+    await expect(page.getByTestId('state-digest')).toHaveText(initial!);
+  }
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
 test('switches edge models without resetting state and restores the saved model', async ({ page }) => {
   // Normal Gear Cube uses the supplied model; legacy alternatives remain on Extreme.
   await page.getByLabel('Puzzle', { exact: true }).selectOption('gear-extreme');

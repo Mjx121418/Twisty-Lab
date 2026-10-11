@@ -16,6 +16,34 @@ beforeAll(async () => { runtime = await createModule(); });
 afterEach(() => { for (const handle of handles) handle.delete(); handles.length = 0; });
 
 describe('native / WebAssembly parity', () => {
+  it('matches complete R/L motion and inverses with only UF geared', () => {
+    const source = JSON.parse(read('packages/gear/source.json')); source.gearedEdges = ['UF'];
+    const text = JSON.stringify(source);
+    const a = new runtime.Session(text), b = new runtime.Session(text);
+    const realization = JSON.parse(read('packages/gear/gear-supplied-euclidean.json'));
+    realization.compatibleDefinitionDigest = snapshot(a).definitionDigest;
+    const ga = runtime.createGeometry(a, JSON.stringify(realization));
+    const gb = runtime.createGeometry(b, JSON.stringify(realization));
+    try {
+      expect(ga).toBeTruthy(); expect(gb).toBeTruthy();
+      for (const suffix of ['', "'"]) {
+        const left = JSON.parse(a.executeJSON(JSON.stringify({ operation: `R${suffix}`, parameters: {} }), snapshot(a).revision));
+        const right = JSON.parse(b.executeJSON(JSON.stringify({ operation: `L${suffix}`, parameters: {} }), snapshot(b).revision));
+        expect(left.status).toBe('Committed'); expect(right.status).toBe('Committed');
+        expect(left.transitions[0].afterState).toEqual(right.transitions[0].afterState);
+        expect(snapshot(a).stateDigest).toBe(snapshot(b).stateDigest);
+        expect(JSON.parse(ga!.prepareAnimationJSON(left.transitionRecords[0])).status).toBe('Prepared');
+        expect(JSON.parse(gb!.prepareAnimationJSON(right.transitionRecords[0])).status).toBe('Prepared');
+        for (const progress of [0, .125, .25, .5, .75, .875, 1]) {
+          ga!.sample(progress); gb!.sample(progress);
+          const ma = ga!.transforms() as Float32Array, mb = gb!.transforms() as Float32Array;
+          expect(ma.length).toBe(mb.length);
+          for (let i = 0; i < ma.length; ++i) expect(Math.abs(ma[i] - mb[i])).toBeLessThan(1e-6);
+        }
+      }
+      expect(snapshot(a).solved).toBe(true); expect(snapshot(b).solved).toBe(true);
+    } finally { ga?.delete(); gb?.delete(); a.delete(); b.delete(); }
+  });
   it('matches dynamic mixed-slice Gear Cube rules, animation and replay for UF/UR', () => {
     const source = JSON.parse(read('packages/gear/source.json'));
     source.puzzleId = 'gear-custom-experimental-v1'; source.gearedEdges = ['UF', 'UR'];

@@ -29,6 +29,64 @@ bool close(const std::vector<float> &a, const std::vector<float> &b, double tole
       return false;
   return true;
 }
+void opposite_coupling() {
+  for (const auto &package : {"gear", "gear-extreme", "gear-plain"}) {
+    const auto definition =
+        load_definition(Json::parse(read("packages/" + std::string(package) + "/definition.json")));
+    for (const auto &[face, opposite] :
+         std::vector<std::pair<std::string, std::string>>{{"R", "L"}, {"U", "D"}, {"F", "B"}})
+      for (const auto &suffix : {"", "'"}) {
+        const auto &a = definition->operations[definition->operation_ids.at(face + suffix)];
+        const auto &b = definition->operations[definition->operation_ids.at(opposite + suffix)];
+        check(a.maps == b.maps && a.roles == b.roles,
+              "Opposite coupled requests agree on every exact placement transport");
+      }
+  }
+  auto source = Json::parse(read("packages/gear/source.json"));
+  for (bool single_edge : {false, true}) {
+    if (single_edge)
+      source["gearedEdges"] = {"UF"};
+    Session s(source.dump());
+    for (const auto &variant :
+         {"gear-euclidean", "gear-six-teeth-euclidean", "gear-normal-euclidean", "gear-supplied-euclidean",
+          "gear-port-diagram", "gear-six-teeth-port-diagram"}) {
+      if (single_edge && std::string(variant) == "gear-normal-euclidean")
+        continue;
+      auto realization = Json::parse(read("packages/gear/" + std::string(variant) + ".json"));
+      realization["compatibleDefinitionDigest"] = s.definition()->digest;
+      Geometry a(s.definition(), realization.dump()), b(s.definition(), realization.dump());
+      for (const auto &[face, opposite] :
+           std::vector<std::pair<std::string, std::string>>{{"R", "L"}, {"U", "D"}, {"F", "B"}})
+        for (const auto &suffix : {"", "'"}) {
+          const auto left = plan(*s.definition(), s.state(), face + suffix);
+          const auto right = plan(*s.definition(), s.state(), opposite + suffix);
+          check(left.transition.has_value() == right.transition.has_value(),
+                "Opposite coupled requests have identical legality");
+          if (!left.transition)
+            continue;
+          check(left.transition->after == right.transition->after,
+                "Opposite coupled requests restore the same exact cog phase");
+          a.set_state_json(s.state_json());
+          b.set_state_json(s.state_json());
+          check(Json::parse(
+                    a.prepare_animation_json(encode_transition(*s.definition(), *left.transition).dump()))
+                            .at("status") == "Prepared" &&
+                    Json::parse(b.prepare_animation_json(
+                                    encode_transition(*s.definition(), *right.transition).dump()))
+                            .at("status") == "Prepared",
+                "Prepare both opposite-face animations");
+          // Intermediate samples distinguish the full signed winding even when
+          // two rotation paths have the same resting endpoint.
+          for (double progress : {0., .125, .25, .5, .75, .875, 1.}) {
+            a.sample(progress);
+            b.sample(progress);
+            check(close(a.transforms(), b.transforms(), 1e-6),
+                  "Opposite coupled requests have identical component motion and winding");
+          }
+        }
+    }
+  }
+}
 void models() {
   Session standard(read("packages/gear/source.json"));
   auto origin = standard.snapshot();
@@ -116,6 +174,10 @@ void custom_coupling() {
             "Coupled request iff at least one current middle edge is geared");
       check(plan(*s.definition(), s.state(), faces[axis] + "q").transition.has_value() == !geared,
             "Ordinary request iff no current middle edge is geared");
+      if (geared)
+        check(plan(*s.definition(), s.state(), faces[axis]).transition->after ==
+                  plan(*s.definition(), s.state(), faces[(axis + 3) % 6]).transition->after,
+              "Opposite coupled moves stay identical as the pieces change placement");
       check(s.snapshot() == before, "Conditional planning preserves state and history");
       return faces[axis] + (geared ? "" : "q");
     };
@@ -510,6 +572,7 @@ void supplied_plain_edges() {
 } // namespace
 int main() {
   try {
+    opposite_coupling();
     models();
     custom_coupling();
     invalid_count_guards();
