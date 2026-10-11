@@ -23,6 +23,7 @@ import gearEuclideanText from '../../packages/gear/gear-euclidean.json?raw';
 import gearDiagramText from '../../packages/gear/gear-port-diagram.json?raw';
 import gearSixEuclideanText from '../../packages/gear/gear-six-teeth-euclidean.json?raw';
 import gearSixDiagramText from '../../packages/gear/gear-six-teeth-port-diagram.json?raw';
+import gearNormalText from '../../packages/gear/gear-normal-euclidean.json?raw';
 import gearManifest from '../../packages/gear/manifest.json';
 import gearExtremeManifest from '../../packages/gear-extreme/manifest.json';
 import gearPlainManifest from '../../packages/gear-plain/manifest.json';
@@ -36,10 +37,12 @@ const gearEuclidean = JSON.parse(gearEuclideanText) as Realization;
 const gearDiagram = JSON.parse(gearDiagramText) as Realization;
 const gearSixEuclidean = JSON.parse(gearSixEuclideanText) as Realization;
 const gearSixDiagram = JSON.parse(gearSixDiagramText) as Realization;
+const gearNormal = JSON.parse(gearNormalText) as Realization;
 function gearPreset(id: string, label: string, source: string, digest: string): Preset {
   const models = (templates: Realization[], variant = '') => templates.map((template) =>
     ({ ...template, id: `${id}${variant}-${template.kind}-v1`, compatibleDefinitionDigest: digest }));
   const gearModels = { '12': models([gearEuclidean, gearDiagram]), '6': models([gearSixEuclidean, gearSixDiagram], '-six-teeth') };
+  if (id === 'gear') return { id, label, source, realizations: [gearNormal, gearModels['6'][1]] };
   return { id, label, source, realizations: gearModels['12'], gearModels };
 }
 const gearEdges = ['UF', 'UR', 'UB', 'UL', 'DF', 'DR', 'DB', 'DL', 'FR', 'FL', 'BR', 'BL'];
@@ -346,7 +349,6 @@ export function App() {
                 pendingCameras.current = new Map(realizationPair(activePreset, effectivePair, model).map((realization, index) => [realization.id, views.current[index]?.cameraState()]));
                 setGearModel(model);
               }}><option value="12">12 teeth · 60° spin</option><option value="6">6 teeth · 300° spin</option></select></label>}
-              {activePreset?.id === 'gear' && <a href={`${import.meta.env.BASE_URL}gear-construction.html`} target="_blank" rel="noreferrer">38-piece construction ↗</a>}
               <div className="segmented" aria-label="View layout">{(['both', 'cube', 'diagram'] as Layout[]).map((value) => <button key={value} aria-pressed={layout === value} onClick={() => requestLayout(value)}>{value === 'both' ? 'Both views' : value === 'cube' ? effectivePair === 'sphere-diagram' ? 'Sphere' : 'Cube' : effectivePair === 'cube-sphere' ? 'Sphere' : 'Diagram'}</button>)}</div>
             </div>
           </div>

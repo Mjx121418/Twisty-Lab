@@ -75,6 +75,8 @@ export type RotationTrackStep = {
   axis: [number, number, number]; pivot: [number, number, number]; angle: number; space: 'world' | 'local';
 };
 export type ArticulatedComponent = {
+  /** Optional body-only filter; ports bind every piece, possibly in several patches. */
+  pieceIds?: string[];
   id: string; meshAssetId: string; role: 'body' | 'port'; portId?: string; materialBindingId?: string;
   placementFrames: Record<string, number[]>; symmetries?: number[][];
   operationTracks: Record<string, Record<string, RotationTrackStep[]>>;

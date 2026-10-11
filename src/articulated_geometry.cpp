@@ -197,7 +197,22 @@ void Geometry::build_articulated(const Json &realization) {
       ensure(!id.empty() && ((port.empty() && role == "body") || (!port.empty() && role == "port")), id,
              "A body has no port ID; a port component must declare one.");
       if (!port.empty())
-        ensure(ports.insert(port).second, id, "Each local port has exactly one component.");
+        ports.insert(port);
+      if (data.contains("pieceIds")) {
+        const auto &filter = data.at("pieceIds");
+        ensure(filter.is_array() && !filter.empty() && filter.size() <= definition_->pieces.size(), id,
+               "pieceIds must be a nonempty list of pieces in this domain.");
+        std::set<std::string> selected;
+        for (const auto &entry : filter) {
+          ensure(entry.is_string(), id, "pieceIds entries must be strings.");
+          const auto piece_id = entry.get<std::string>();
+          ensure(selected.insert(piece_id).second &&
+                     std::any_of(definition_->pieces.begin(), definition_->pieces.end(),
+                                 [&](const auto &piece) { return piece.id == piece_id && piece.domain == d; }),
+                 id, "pieceIds must name distinct existing pieces in this domain.");
+        }
+        ensure(port.empty(), id, "Port bindings must cover every piece in their domain.");
+      }
       Component component;
       component.domain = d;
       const auto &frames = data.at("placementFrames");
@@ -285,11 +300,15 @@ void Geometry::build_articulated(const Json &realization) {
     std::set<std::string> expected;
     for (const auto &[port, _] : domain.placements[0].ports)
       expected.insert(port);
-    ensure(ports == expected, domain.id, "Components must bind every labeled port exactly once.");
+    ensure(ports == expected, domain.id, "Components must bind every labeled port at least once.");
   }
   for (Index p = 0; p < definition_->pieces.size(); ++p) {
     const auto &piece = definition_->pieces[p];
     for (const auto &[index, data] : bindings[piece.domain]) {
+      if (data.contains("pieceIds") &&
+          std::none_of(data.at("pieceIds").begin(), data.at("pieceIds").end(),
+                       [&](const Json &entry) { return entry.get<std::string>() == piece.id; }))
+        continue;
       const auto port = data.value("portId", std::string{}), role = data.at("role").get<std::string>();
       const auto id = piece.id + "/" + data.at("id").get<std::string>();
       parts_.push_back({p, port, role, "", id, index});

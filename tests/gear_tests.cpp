@@ -81,9 +81,12 @@ void models() {
         "Overlapping edge placements rejected");
 }
 void animation(const std::string &package, const std::string &algorithm,
-               const std::string &variant = "") {
+               const std::string &variant = "", bool include_diagram = true) {
   Session s(read("packages/" + package + "/source.json"));
-  for (const auto &kind : {"euclidean", "port-diagram"}) {
+  std::vector<std::string> kinds{"euclidean"};
+  if (include_diagram)
+    kinds.push_back("port-diagram");
+  for (const auto &kind : kinds) {
     Geometry g(s.definition(), read("packages/" + package + "/" + package + variant + "-" + kind + ".json"));
     const auto scene = Json::parse(g.scene_json());
     const auto initial = g.transforms();
@@ -152,9 +155,10 @@ void invalid_geometry() {
     check(rejected, "Finite double inputs must not overflow Float32 buffers");
   }
 }
-void coupled_midpoint(bool six_teeth = false) {
+void coupled_midpoint(bool six_teeth = false, bool imported = false) {
   Session s(read("packages/gear/source.json"));
-  Geometry g(s.definition(), read(six_teeth ? "packages/gear/gear-six-teeth-euclidean.json"
+  Geometry g(s.definition(), read(imported ? "packages/gear/gear-normal-euclidean.json"
+                                         : six_teeth ? "packages/gear/gear-six-teeth-euclidean.json"
                                          : "packages/gear/gear-euclidean.json"));
   const auto scene = Json::parse(g.scene_json());
   const auto transition = move(s, "R").at("transitions").at(0);
@@ -245,28 +249,57 @@ void fixed_pivot() {
             std::abs(g.transforms()[13] - std::sqrt(.5)) < 1e-6,
         "World pivot follows circular arc rather than endpoint interpolation");
 }
-void compound_construction() {
-  Session s(read("packages/gear-compound/gear-compound-definition.json"));
-  const auto definition = Json::parse(s.definition_json());
-  check(definition.at("pieces").size() == 38, "Compound construction has 38 distinct pieces");
-  std::map<std::string, int> counts;
-  for (const auto &piece : definition.at("pieces"))
-    ++counts[piece.at("type").get<std::string>()];
-  check(counts == std::map<std::string, int>{{"center", 6}, {"corner", 8}, {"edge", 12}, {"extra-edge", 12}},
-        "Face, vertex, pinion and extra-edge counts match the Boolean construction");
-  check(definition.at("operations").empty(), "Construction study does not advertise unverified moves");
-  Geometry g(s.definition(), read("packages/gear-compound/gear-compound-euclidean.json"));
+void supplied_model() {
+  Session s(read("packages/gear/source.json"));
+  auto r = Json::parse(read("packages/gear/gear-normal-euclidean.json"));
+  Geometry g(s.definition(), r.dump());
   const auto scene = Json::parse(g.scene_json());
-  int bodies = 0;
+  int bodies = 0, balls = 0, edge_patches = 0;
   for (const auto &part : scene.at("visualParts")) {
     bodies += part.at("role") == "body";
-    check(Json::parse(g.bind_hit_json(part.at("visualPartId"))).at("pieceId") == part.at("pieceId"),
-          "Construction body and face patches retain their independent piece identities");
+    if (part.at("visualPartId") == "center/U/core-ball")
+      ++balls;
+    if (part.at("pieceId").get<std::string>().starts_with("edge/") && part.at("role") == "port")
+      ++edge_patches;
   }
-  check(bodies == 38, "Each of the 38 physical pieces has its own body");
-  Session drivers(read("packages/gear-compound/drivers-definition.json"));
-  check(drivers.definition()->pieces.size() == 18, "Three groups contain six big and twelve small gears");
-  Geometry parents(drivers.definition(), read("packages/gear-compound/drivers-euclidean.json"));
+  check(bodies == 39 && balls == 1 && edge_patches == 48,
+        "Imported model has 38 exterior bodies, one core and two patches per edge port");
+  const auto &parts = scene.at("visualParts");
+  auto ball_index = std::find_if(parts.begin(), parts.end(), [](const Json &part) {
+    return part.at("visualPartId") == "center/U/core-ball";
+  }) - parts.begin();
+  const auto initial = g.transforms();
+  const auto turn = move(s, "U").at("transitions").at(0);
+  check(Json::parse(g.prepare_animation_json(turn.dump())).at("status") == "Prepared",
+        "Prepare imported gear motion");
+  g.sample(.5);
+  for (int i = 0; i < 16; ++i)
+    check(g.transforms()[ball_index * 16 + i] == initial[ball_index * 16 + i],
+          "Internal ball stays fixed during the bound center's turn");
+  for (const auto &filter : {Json::array(), Json::array({"missing"}), Json::array({"corner/UFR"}),
+                           Json::array({"center/U", "center/U"})}) {
+    auto bad = r;
+    bad["componentsByDomain"]["center"].back()["pieceIds"] = filter;
+    bool rejected = false;
+    try {
+      Geometry invalid(s.definition(), bad.dump());
+    } catch (const DiagnosticError &e) {
+      rejected = e.code == "realization.articulated";
+    }
+    check(rejected, "Body filters must identify distinct existing pieces in their domain");
+  }
+  auto bad = r;
+  auto &components = bad["componentsByDomain"]["gear-edge"];
+  components.erase(std::remove_if(components.begin(), components.end(), [](const Json &part) {
+    return part.value("portId", std::string{}) == "0";
+  }), components.end());
+  bool rejected = false;
+  try {
+    Geometry invalid(s.definition(), bad.dump());
+  } catch (const DiagnosticError &e) {
+    rejected = e.code == "realization.articulated";
+  }
+  check(rejected, "Split patches still require complete local-port coverage");
 }
 } // namespace
 int main() {
@@ -276,11 +309,13 @@ int main() {
     animation("gear-extreme", "Uq R F (Uq R F)'");
     animation("gear", "R U F (R U F)' R12", "-six-teeth");
     animation("gear-extreme", "Uq R F (Uq R F)'", "-six-teeth");
+    animation("gear", "R U F (R U F)' R12", "-normal", false);
     invalid_geometry();
     coupled_midpoint();
     coupled_midpoint(true);
+    coupled_midpoint(true, true);
     fixed_pivot();
-    compound_construction();
+    supplied_model();
     std::cout << "Gear rules and articulated motions verified\n";
   } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';

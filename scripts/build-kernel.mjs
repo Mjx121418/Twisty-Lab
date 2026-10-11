@@ -16,10 +16,10 @@ if (process.argv.includes('--stage-web')) {
   await writeFile(new URL('package.json', output), JSON.stringify({
     name: '@twisty/kernel', version, type: 'module',
     exports: { '.': { types: './index.d.ts', import: './index.js' }, './runtime': './generated/twisty.mjs', './wasm': './generated/twisty.wasm' },
-    files: ['index.js', 'index.d.ts', 'generated', 'examples', 'README.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'bagua-verification.md', 'gear-model.md', 'gear-spherical-feasibility.md', 'gear-compound-construction.md'],
+    files: ['index.js', 'index.d.ts', 'generated', 'examples', 'README.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'bagua-verification.md', 'gear-model.md', 'gear-spherical-feasibility.md'],
   }, null, 2) + '\n');
   await cp(new URL('../docs/kernel-api.md', import.meta.url), new URL('README.md', output));
-  for (const file of ['spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'bagua-verification.md', 'gear-model.md', 'gear-spherical-feasibility.md', 'gear-compound-construction.md']) {
+  for (const file of ['spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'bagua-verification.md', 'gear-model.md', 'gear-spherical-feasibility.md']) {
     const guide = (await readFile(new URL(`../docs/${file}`, import.meta.url), 'utf8'))
       .replaceAll('../packages/', 'examples/canvas/data/').replaceAll('(kernel-api.md)', '(README.md)');
     await writeFile(new URL(file, output), guide);
@@ -33,10 +33,10 @@ if (process.argv.includes('--stage-web')) {
     if (puzzle === 'bagua') files.push('review.json', 'bagua-spherical.json');
     files.push(`${prefix}-${puzzle === 'bagua' || puzzle.startsWith('gear') ? 'euclidean' : 'spherical'}.json`);
     if (puzzle.startsWith('gear')) files.push('source.json', `${prefix}-six-teeth-euclidean.json`, `${prefix}-six-teeth-port-diagram.json`);
+    if (puzzle === 'gear') files.push('gear-normal-euclidean.json', 'normal-meshes.json');
     for (const file of files) {
       await cp(new URL(`../packages/${puzzle}/${file}`, import.meta.url), new URL(file, directory));
     }
   }
-  await cp(new URL('../packages/gear-compound/', import.meta.url), new URL('examples/canvas/data/gear-compound/', output), { recursive: true });
   console.log(`Portable kernel ${version}: build/kernel`);
 }

@@ -24,17 +24,17 @@ describe('native / WebAssembly parity', () => {
     ['bagua', 'bagua-port-diagram', "U+ R' L' D2 R L U-"],
     ['bagua', 'bagua-spherical', "U+ R F- (U+ R F-)'"],
     ['gear', 'gear-euclidean', "R U F (R U F)' R12"],
+    ['gear', 'gear-normal-euclidean', "R U F (R U F)' R12"],
     ['gear', 'gear-port-diagram', "R U F (R U F)'"],
     ['gear', 'gear-six-teeth-euclidean', "R U F (R U F)' R12"],
     ['gear', 'gear-six-teeth-port-diagram', "R U F (R U F)' R12"],
     ['gear-extreme', 'gear-extreme-euclidean', "Uq R F (Uq R F)'"],
     ['gear-plain', 'gear-plain-port-diagram', "Rq Uq Fq (Rq Uq Fq)'"],
-    ['gear-compound', 'gear-compound-euclidean', ''],
   ])('matches native %s assets and sampled %s frames', (name, kind, algorithm) => {
-    const definition = `packages/${name}/${name === 'gear-compound' ? 'gear-compound-' : ''}definition.json`;
+    const definition = `packages/${name}/definition.json`;
     const realization = `packages/${name}/${kind}.json`;
     // Detailed authored meshes include expanded positions and normals in this probe.
-    const reference = JSON.parse(execFileSync('build/native/geometry_probe', [definition, realization, algorithm], { encoding: 'utf8', maxBuffer: (name === 'gear-compound' ? 32 : 16) * 1024 * 1024 }));
+    const reference = JSON.parse(execFileSync('build/native/geometry_probe', [definition, realization, algorithm], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 }));
     const value = new runtime.Session(read(definition));
     const geometry = runtime.createGeometry(value, read(realization));
     if (!geometry) throw new Error('Geometry creation failed.');

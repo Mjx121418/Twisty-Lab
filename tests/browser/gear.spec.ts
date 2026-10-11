@@ -16,6 +16,8 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('animates coupled gears in synchronized views with shared selection and history', async ({ page }) => {
+  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', 'gear-normal-euclidean-v1');
+  await expect(page.getByLabel('Gear edge model')).toHaveCount(0);
   const initial = await page.getByTestId('state-digest').textContent();
   await page.getByRole('button', { name: 'Select edge/UF', exact: true }).click();
   for (const id of ['cube-view', 'diagram-view']) await expect(page.getByTestId(id)).toHaveAttribute('data-selected-piece', 'edge/UF');
@@ -54,7 +56,8 @@ test('configures arbitrary edge masks and enables ordinary turns on the plain sl
 });
 
 test('switches edge models without resetting state and restores the saved model', async ({ page }) => {
-  await expect(page.getByRole('link', { name: '38-piece construction ↗' })).toHaveAttribute('href', /\/gear-construction\.html$/);
+  // Normal Gear Cube uses the supplied model; legacy alternatives remain on Extreme.
+  await page.getByLabel('Puzzle', { exact: true }).selectOption('gear-extreme');
   const initial = await page.getByTestId('state-digest').textContent();
   await page.getByRole('button', { name: 'Select edge/UF', exact: true }).click();
   await page.getByRole('button', { name: 'Move R', exact: true }).click(); await resting(page);
@@ -84,7 +87,7 @@ test('switches edge models without resetting state and restores the saved model'
   await page.getByRole('button', { name: '↶ Undo' }).click(); await resting(page);
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
   await page.getByLabel('Gear edge model').selectOption('12'); await resting(page);
-  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', 'gear-articulated-euclidean-v1');
+  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', 'gear-extreme-articulated-euclidean-v1');
   await page.getByLabel('Gear edge model').selectOption('6');
   await page.getByLabel('Gear edge UF').uncheck();
   await expect(page.getByLabel('Puzzle', { exact: true })).toHaveValue('gear-custom');
