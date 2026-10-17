@@ -7,12 +7,16 @@ std::vector<std::string> parse_notation(const Definition &, const std::string &t
 class Session {
 public:
   explicit Session(const std::string &source);
+  // A fresh logical session sharing immutable compiled data; no history is copied.
+  explicit Session(std::shared_ptr<const Execution>);
   // For relational packages this is interpreter/inspector metadata, not an
   // argument to legacy free planning/validation functions. Use execution().
   std::shared_ptr<const Definition> definition() const {
     return definition_;
   }
-  std::shared_ptr<const Execution> execution() const { return execution_; }
+  std::shared_ptr<const Execution> execution() const {
+    return execution_;
+  }
   const State &state() const {
     return state_;
   }

@@ -80,6 +80,11 @@ public:
   bool solved(std::span<const Index> state) const;
   Plan plan(Index request, std::span<const Index> state, std::span<const Index> choices) const;
   bool state_predicate(Ref root, std::span<const Index> state) const;
+  // Optional diagnostics use this same evaluator, without adding guard kinds.
+  // Values are 0/1 for nodes reachable from root; -1 marks unevaluated nodes.
+  // This inspects a predicate, not request permission or assignment validity.
+  std::vector<std::int8_t> predicate_trace(Ref root, std::span<const Index> state,
+                                           std::span<const Index> choices = {}) const;
 
 private:
   ProgramData data_;

@@ -15,11 +15,17 @@ try {
     join(root, 'examples/relational/coupled.pzl.json'), '--emit', oracle], { stdio: 'inherit' });
   const migrationCases = join(temporary, 'cube-migration.json');
   execFileSync(join(dirname(native), 'cube_relational_tests'), ['--emit', migrationCases], { stdio: 'inherit' });
-  const { createKernel, KernelSession, ExperimentalRelationalPuzzle, createRelationalCubeSource } = await import(pathToFileURL(sdk).href);
+  const helicopterCases = join(temporary, 'helicopter-migration.json');
+  execFileSync(join(dirname(native), 'helicopter_relational_tests'), ['--emit', helicopterCases], { stdio: 'inherit' });
+  const gearCases = join(temporary, 'gear-migration.json');
+  execFileSync(join(dirname(native), 'gear_relational_tests'), ['--emit', gearCases], { stdio: 'inherit' });
+  const baguaCases = join(temporary, 'bagua-migration.json');
+  execFileSync(join(dirname(native), 'bagua_relational_tests'), ['--emit', baguaCases], { stdio: 'inherit' });
+  const { createKernel, KernelSession, ExperimentalRelationalPuzzle, createRelationalCubeSource, createRelationalGearSource } = await import(pathToFileURL(sdk).href);
   const module = await createKernel();
   const info = JSON.parse(module.kernelInfoJSON());
   assert.equal(info.experimentalAPIs.relational, 1);
-  assert.deepEqual(info.relationalLibraries, ['cube3', 'bandaged-uf-ufr']);
+  assert.deepEqual(info.relationalLibraries, ['cube3', 'bandaged-uf-ufr', 'gear-family']);
   assert.equal(JSON.parse(module.compileRelationalJSON('{}')).status, 'Invalid');
   let count = 0;
   for (const suite of JSON.parse(await readFile(oracle, 'utf8'))) {
@@ -45,6 +51,39 @@ try {
       }
     } finally { puzzle.dispose(); }
   }
+  const helicopter = JSON.parse(await readFile(helicopterCases, 'utf8'));
+  const helicopterPuzzle = new ExperimentalRelationalPuzzle(module, helicopter.source);
+  let helicopterCount = 0;
+  try {
+    assert.deepEqual(helicopterPuzzle.preview, helicopter.preview);
+    const foreignAxis = [...helicopter.preview.program.initialPlacements];
+    foreignAxis[helicopter.preview.bindings.pieces.indexOf('mechanism/UF')] =
+      helicopter.preview.bindings.placements.indexOf('mechanism/edge/UR/a');
+    assert.deepEqual(helicopterPuzzle.query({ op: 'validate', state: foreignAxis }), { status: 'Invalid' });
+    for (let i = 0; i < helicopter.queries.length; ++i) {
+      assert.deepEqual(helicopterPuzzle.query(helicopter.queries[i]), helicopter.expected[i], JSON.stringify(helicopter.queries[i]));
+      ++helicopterCount;
+    }
+  } finally { helicopterPuzzle.dispose(); }
+  let gearCount = 0;
+  for (const suite of JSON.parse(await readFile(gearCases, 'utf8'))) {
+    assert.deepEqual(createRelationalGearSource(module, JSON.parse(suite.wrapper)), { source: JSON.parse(suite.source), catalog: suite.catalog });
+    const puzzle = new ExperimentalRelationalPuzzle(module, suite.source);
+    try {
+      assert.deepEqual(puzzle.preview, suite.preview);
+      for (let i = 0; i < suite.queries.length; ++i) {
+        assert.deepEqual(puzzle.query(suite.queries[i]), suite.expected[i], JSON.stringify(suite.queries[i]));
+        ++gearCount;
+      }
+    } finally { puzzle.dispose(); }
+  }
+  const bagua = JSON.parse(await readFile(baguaCases, 'utf8'));
+  const baguaPuzzle = new ExperimentalRelationalPuzzle(module, bagua.source);
+  try {
+    assert.deepEqual(baguaPuzzle.preview, bagua.preview);
+    for (let i = 0; i < bagua.queries.length; ++i)
+      assert.deepEqual(baguaPuzzle.query(bagua.queries[i]), bagua.expected[i], JSON.stringify(bagua.queries[i]));
+  } finally { baguaPuzzle.dispose(); }
   const source = await readFile(join(root, 'examples/relational/coupled.pzl.json'), 'utf8');
   const puzzle = new ExperimentalRelationalPuzzle(module, source);
   try {
@@ -55,14 +94,15 @@ try {
     assert.equal(puzzle.query({ op: 'discover', state: [0, 2, 4], request: 'none', candidateLimit: 100, resultLimit: 10 }).complete, true);
     assert.equal(puzzle.query({ op: 'plan', state: [0, 2, 4], request: 'fixed', choices: [] }).status, 'Invalid');
   } finally { puzzle.dispose(); }
-  for (const name of ['cube3', 'bandaged']) {
+  for (const name of ['cube3', 'bandaged', 'helicopter', 'gear', 'gear-extreme', 'gear-plain', 'bagua']) {
     const path = join(root, 'packages', name, 'relational-package.json');
     const text = await readFile(path, 'utf8');
     const session = new KernelSession(module, text);
-    const restored = new KernelSession(module, text);
-    const legacy = new KernelSession(module, await readFile(join(root, 'packages', name, 'definition.json'), 'utf8'));
+    const restored = new KernelSession(module, session);
+    let legacy;
+    let restoredDisposed = false;
     try {
-      const algorithm = "U R R' U'";
+      const algorithm = name === 'bagua' ? "U+ R' L' D2 R L U-" : name === 'helicopter' ? 'UF_ab UL_af' : name === 'gear' ? "R U F (R U F)'" : name === 'gear-extreme' ? "Uq R Fq (Uq R Fq)'" : name === 'gear-plain' ? "Rq Uq Fq (Rq Uq Fq)'" : "U R R' U'";
       const reference = JSON.parse(execFileSync(join(dirname(native), 'twisty'), ['run', '--definition', path,
         '--algorithm', algorithm, '--policy', 'transactional', '--json'], { encoding: 'utf8' }));
       const result = session.run(algorithm, 'transactional');
@@ -73,6 +113,7 @@ try {
       const saved = JSON.parse(session.save());
       assert.equal(saved.schemaVersion, 2);
       assert.ok(saved.logical.requests.every((r) => Array.isArray(r.choices)));
+      assert.equal(restored.snapshot().revision, '0', 'Sharing a definition must start a fresh history.');
       assert.equal(restored.load(JSON.stringify(saved)).status, 'Loaded');
       assert.equal(restored.snapshot().stateDigest, session.snapshot().stateDigest);
       assert.equal(session.undo().status, 'Committed');
@@ -82,18 +123,34 @@ try {
       delete saved.logical.requests[0].choices;
       assert.equal(restored.load(JSON.stringify(saved)).status, 'Invalid');
       assert.deepEqual(restored.snapshot(), before);
+      restored.dispose();
+      restoredDisposed = true;
+      legacy = new KernelSession(module, await readFile(join(root, 'packages', name, 'definition.json'), 'utf8'));
       assert.equal(legacy.run(algorithm, 'transactional').status, 'Committed');
       legacy.undo();
       const conversion = session.convertLegacy(legacy.save({ marker: 'preserved' }), legacy.definitionText);
       assert.equal(conversion.status, 'Converted');
       assert.deepEqual(conversion.session.presentation, { marker: 'preserved' });
-      assert.equal(restored.load(JSON.stringify(conversion.session)).status, 'Loaded');
-      assert.deepEqual(restored.snapshot().state, legacy.snapshot().state);
-      assert.equal(restored.redo().status, 'Committed');
-      assert.equal(restored.snapshot().stateDigest, reference.snapshot.stateDigest);
-    } finally { session.dispose(); restored.dispose(); legacy.dispose(); }
+      assert.equal(session.load(JSON.stringify(conversion.session)).status, 'Loaded');
+      assert.deepEqual(session.snapshot().state, legacy.snapshot().state);
+      assert.equal(session.redo().status, 'Committed');
+      assert.equal(session.snapshot().stateDigest, reference.snapshot.stateDigest);
+    } finally { session.dispose(); if (!restoredDisposed) restored.dispose(); legacy?.dispose(); }
+    const reloaded = new KernelSession(module, session.definitionText);
+    try {
+      assert.equal(reloaded.definitionText, session.definitionText, 'Persisted definition bytes changed on reload.');
+      assert.equal(reloaded.snapshot().solved, true);
+    } finally { reloaded.dispose(); }
+    if (name === 'bagua') {
+      const compiled = JSON.parse(module.compileExecutionJSON(text));
+      assert.equal(compiled.status, 'Compiled', JSON.stringify(compiled.diagnostics));
+      assert.deepEqual(compiled.definition, session.definition);
+    }
   }
-  console.log('Cube/bandage portable sessions preserve full native/WASM witnesses, replay, and explicit legacy conversion.');
+  console.log(`Gear migration: ${gearCount} WASM results preserve coupling, phases and per-domain event witnesses.`);
+  console.log(`Bagua migration: ${bagua.queries.length} WASM results preserve occupancy, blocking, movements and witnesses.`);
+  console.log('All production presets preserve full native/WASM witnesses, replay, and explicit legacy conversion.');
   console.log(`Portable relational API: ${count} WASM results match the independent source oracle and native consumer.`);
+  console.log(`Helicopter migration: ${helicopterCount} WASM results match the previous executor's phases, states, legality and full witnesses.`);
   console.log(`Cube/bandage migration: ${migrationCount} WASM results match the current executor's states, legality and full event witnesses.`);
 } finally { await rm(temporary, { recursive: true, force: true }); }

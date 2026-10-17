@@ -73,7 +73,11 @@ std::vector<Boundary> boundaries(int type, double threshold) {
     bounds.push_back({{-1, 0, 0}, -threshold});
   } else
     bounds.push_back({{1, 0, 0}, threshold});
-  if (type < 2) {
+  if (type == 4 || type == 5) {
+    // Union of the UF edge's port and the adjacent UFR corner's port.
+    // Retain the exterior cap boundary and remove their shared internal cut.
+    bounds.push_back({{0, type == 4 ? 1.0 : -1.0, 0}, -threshold});
+  } else if (type < 2) {
     bounds.push_back({{0, 1, 0}, -threshold});
     bounds.push_back({{0, -1, 0}, -threshold});
   } else
@@ -173,6 +177,73 @@ Patch tessellate(int type, double threshold, int segments, int rings, double ins
     ensure(inside(p, bounds, 1e-10), "/mesh", "Patch crosses a disk cut.");
   return patch;
 }
+
+// Split one already-inset union mesh at its internal small circle. Both port
+// halves use identical intersection vertices, so their picking seam is hidden
+// without increasing the density of the sphere mesh.
+std::array<Patch, 2> split_joined(const Patch &patch, double threshold, double sign) {
+  auto points = patch.points;
+  std::map<std::pair<std::uint32_t, std::uint32_t>, std::uint32_t> intersections;
+  const auto distance = [&](Point p) { return sign * p[1] - threshold; };
+  const auto intersection = [&](std::uint32_t a, std::uint32_t b) {
+    if (std::abs(distance(points[a])) < 1e-12)
+      return a;
+    if (std::abs(distance(points[b])) < 1e-12)
+      return b;
+    if (b < a)
+      std::swap(a, b);
+    const auto key = std::pair{a, b};
+    if (intersections.contains(key))
+      return intersections.at(key);
+    double low = 0, high = 1;
+    Point p{};
+    for (int step = 0; step < 60; ++step) {
+      const auto t = (low + high) / 2;
+      p = add(scaled(points[a], 1 - t), scaled(points[b], t));
+      p = scaled(p, 1 / std::sqrt(dot(p, p)));
+      if ((distance(p) > 0) == (distance(points[a]) > 0))
+        low = t;
+      else
+        high = t;
+    }
+    const auto index = static_cast<std::uint32_t>(points.size());
+    points.push_back(p);
+    intersections.emplace(key, index);
+    return index;
+  };
+  std::array<Patch, 2> result;
+  std::array<std::map<std::uint32_t, std::uint32_t>, 2> local;
+  for (std::size_t triangle = 0; triangle < patch.indices.size(); triangle += 3)
+    for (int side = 0; side < 2; ++side) {
+      std::vector<std::uint32_t> polygon;
+      const auto inside_half = [&](std::uint32_t i) {
+        return side == 0 ? distance(points[i]) <= 1e-12 : distance(points[i]) >= -1e-12;
+      };
+      for (int vertex = 0; vertex < 3; ++vertex) {
+        const auto a = patch.indices[triangle + vertex], b = patch.indices[triangle + (vertex + 1) % 3];
+        if (inside_half(a))
+          polygon.push_back(a);
+        if (inside_half(a) != inside_half(b))
+          polygon.push_back(intersection(a, b));
+      }
+      polygon.erase(std::unique(polygon.begin(), polygon.end()), polygon.end());
+      if (polygon.size() > 1 && polygon.front() == polygon.back())
+        polygon.pop_back();
+      for (std::size_t i = 1; i + 1 < polygon.size(); ++i) {
+        const auto a = points[polygon[0]], b = points[polygon[i]], c = points[polygon[i + 1]];
+        if (dot(cross(add(b, scaled(a, -1)), add(c, scaled(a, -1))), a) < 1e-14)
+          continue;
+        for (const auto index : {polygon[0], polygon[i], polygon[i + 1]}) {
+          if (!local[side].contains(index)) {
+            local[side][index] = static_cast<std::uint32_t>(result[side].points.size());
+            result[side].points.push_back(points[index]);
+          }
+          result[side].indices.push_back(local[side].at(index));
+        }
+      }
+    }
+  return result;
+}
 } // namespace
 
 void Geometry::build_spherical(const Json &realization) {
@@ -210,12 +281,41 @@ void Geometry::build_spherical(const Json &realization) {
   for (const auto &face : {"U", "R", "F", "D", "L", "B"})
     scene_["diskCenters"][face] = face_normal(face);
 
-  std::array<Patch, 4> patches;
-  const std::array<std::string, 4> names{"center", "edge", "corner-positive", "corner-negative"};
+  const bool compound = std::any_of(definition_->pieces.begin(), definition_->pieces.end(),
+                                    [](const auto &piece) { return piece.type == "bandage"; });
+  std::vector<Patch> patches, colored_patches;
+  const std::vector<std::string> names{"center",
+                                       "edge",
+                                       "corner-positive",
+                                       "corner-negative",
+                                       "bandage/edge-positive",
+                                       "bandage/corner-positive",
+                                       "bandage/edge-negative",
+                                       "bandage/corner-negative"};
   for (int type = 0; type < 4; ++type) {
-    patches[type] = tessellate(type, threshold, segments, rings, 0);
+    patches.push_back(tessellate(type, threshold, segments, rings, 0));
+    colored_patches.push_back(tessellate(type, threshold, segments, rings, inset));
+  }
+  if (compound)
+    for (int sign : {1, -1}) {
+      const auto type = sign == 1 ? 4 : 5;
+      const auto body = split_joined(tessellate(type, threshold, segments, rings, 0), threshold, sign);
+      auto joined_inset = inset;
+      auto ports = split_joined(tessellate(type, threshold, segments, rings, joined_inset), threshold, sign);
+      // Near the lower angular-radius limit the corner is very small. Keep
+      // both logical ports visible instead of insetting the union past it.
+      for (int attempt = 0; ports[1].points.empty() && attempt < 12; ++attempt) {
+        joined_inset *= .5;
+        ports = split_joined(tessellate(type, threshold, segments, rings, joined_inset), threshold, sign);
+      }
+      ensure(!ports[0].points.empty() && !ports[1].points.empty(), "/portInset",
+             "Compound inset removed a picking port.");
+      patches.insert(patches.end(), body.begin(), body.end());
+      colored_patches.insert(colored_patches.end(), ports.begin(), ports.end());
+    }
+  for (std::size_t type = 0; type < patches.size(); ++type) {
     for (const bool port : {false, true}) {
-      const auto patch = port ? tessellate(type, threshold, segments, rings, inset) : patches[type];
+      const auto &patch = port ? colored_patches[type] : patches[type];
       const auto position_offset = positions_.size(), index_offset = indices_.size();
       for (auto point : patch.points) {
         const auto position = scaled(point, port ? radius : radius - lift);
@@ -257,20 +357,26 @@ void Geometry::build_spherical(const Json &realization) {
                  : companions.size() == 1
                      ? 1
                      : (dot(y, face_normal(home.ports.at(companions[1]).second)) > 0 ? 2 : 3);
+      const bool joined = piece.type == "bandage" && port != "3";
+      if (joined) {
+        ensure(port == "0" || port == "1" || port == "2" || port == "4", piece.id, "Unknown compound port.");
+        type = port == "0" ? 4 : port == "2" ? 5 : port == "1" ? 6 : 7;
+      }
       ensure(std::abs(dot(x, z)) < 1e-12 && std::abs(dot(y, y) - 1) < 1e-12, piece.id,
              "Port axes must be perpendicular.");
       const auto frame_index = static_cast<Index>(spherical_frames_.size());
       auto &frames = spherical_frames_.emplace_back();
       for (const auto &placement : domain.placements) {
         const auto target_z = face_normal(placement.ports.at(port).second);
-        const auto target_x = companions.empty()
-                                  ? (std::abs(target_z[0]) > 0.5 ? Point{0, 0, -1} : Point{1, 0, 0})
-                                  : face_normal(placement.ports.at(companions[0]).second);
+        const auto target_x =
+            joined ? face_normal(placement.ports.at(port == "0" || port == "2" ? "1" : "0").second)
+            : companions.empty() ? (std::abs(target_z[0]) > 0.5 ? Point{0, 0, -1} : Point{1, 0, 0})
+                                 : face_normal(placement.ports.at(companions[0]).second);
         const auto target_y = cross(target_z, target_x);
         const auto target_frame = frame(target_x, target_y, target_z);
         ensure(std::abs(dot(target_x, target_z)) < 1e-12 && std::abs(dot(target_y, target_y) - 1) < 1e-12,
                placement.key, "Invalid port frame.");
-        if (companions.size() == 2)
+        if (companions.size() == 2 && !joined)
           ensure(dot(target_y, face_normal(placement.ports.at(companions[1]).second)) * (type == 2 ? 1 : -1) >
                      1 - 1e-12,
                  placement.key, "Corner handedness changed.");

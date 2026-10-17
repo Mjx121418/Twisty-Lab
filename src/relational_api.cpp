@@ -1,3 +1,4 @@
+#include "json_input.hpp"
 #include "twisty/relational_completion.hpp"
 #include <algorithm>
 
@@ -184,11 +185,8 @@ std::string Puzzle::query_json(const std::string &text) const {
   return report([&]() {
     if (text.size() > 1024 * 1024)
       throw flat::Error("flat.limit", "Query exceeds 1 MiB");
-    return query(puzzle_, Json::parse(text, [](int depth, Json::parse_event_t, Json &) {
-                   if (depth > 64)
-                     throw flat::Error("flat.limit", "Query nesting exceeds 64");
-                   return true;
-                 }));
+    detail::check_json_depth(text, 64, [] { throw flat::Error("flat.limit", "Query nesting exceeds 64"); });
+    return query(puzzle_, Json::parse(text));
   });
 }
 std::string compile_json(const std::string &source) {

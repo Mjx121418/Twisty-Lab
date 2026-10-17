@@ -1,8 +1,8 @@
 #include "twisty/relational_compiler.hpp"
+#include "json_input.hpp"
 #include <algorithm>
 #include <map>
 #include <set>
-#include <tuple>
 
 namespace twisty::relational {
 namespace {
@@ -56,9 +56,65 @@ public:
   std::map<std::vector<Index>, Index> sets;
   std::map<std::vector<Index>, Ref> nodes;
   std::map<std::vector<std::pair<Index, Index>>, Index> maps;
-  std::map<std::string, Json> definitions;
+  // The source is immutable and outlives lowering. Keep aliases as references
+  // instead of duplicating a large authoring graph in the compiler scratch.
+  std::map<std::string, const Json *> definitions;
   std::set<std::string> expanding;
+  std::set<std::string> shaping;
+  struct Shape {
+    bool request = false;
+    bool choice = false;
+    Index height = 0;
+  };
+  std::map<std::string, Shape> definition_shapes;
+  std::map<std::pair<std::string, std::string>, Ref> compiled_definitions;
   std::size_t expanded_nodes = 0, table_entries = 0;
+
+  Shape shape(const Json &j, Index depth = 0) {
+    expect(depth <= 128, "Expression expansion exceeds the compiler limit");
+    if (j.is_boolean())
+      return {};
+    expect(j.is_object() && j.size() == 1, "A predicate must have exactly one operator");
+    const auto op = j.begin().key();
+    const auto &value = j.begin().value();
+    if (op == "request")
+      return {true, false, 0};
+    if (op == "chosen")
+      return {false, true, 0};
+    if (op == "at" || op == "occupiedBy")
+      return {};
+    if (op == "ref") {
+      const auto id = name(value);
+      expect(definitions.contains(id), "Unknown predicate: " + id);
+      if (!definition_shapes.contains(id)) {
+        expect(shaping.insert(id).second, "Recursive predicate: " + id);
+        definition_shapes[id] = shape(*definitions.at(id), depth + 1);
+        shaping.erase(id);
+      }
+      auto result = definition_shapes.at(id);
+      ++result.height;
+      expect(depth + result.height <= 128, "Expression expansion exceeds the compiler limit");
+      return result;
+    }
+    Shape result;
+    if (op == "not")
+      result = shape(value, depth + 1);
+    else {
+      expect(op == "all" || op == "any" || op == "implies" || op == "iff" || op == "count",
+             "Unknown predicate operator: " + op);
+      const auto &children = op == "count" ? value.at("of") : value;
+      expect(children.is_array(), "Predicate operands must be an array");
+      for (const auto &child : children) {
+        const auto dependency = shape(child, depth + 1);
+        result.request = result.request || dependency.request;
+        result.choice = result.choice || dependency.choice;
+        result.height = std::max(result.height, dependency.height);
+      }
+    }
+    ++result.height;
+    expect(depth + result.height <= 128, "Expression expansion exceeds the compiler limit");
+    return result;
+  }
 
   Index finite_set(std::vector<Index> values) {
     std::sort(values.begin(), values.end());
@@ -180,9 +236,20 @@ public:
     if (op == "ref") {
       const auto id = name(value);
       expect(definitions.contains(id), "Unknown predicate: " + id);
+      const auto dependency = shape(j);
+      expect(depth + dependency.height <= 128, "Expression expansion exceeds the compiler limit");
+      // Check dependency kinds before consulting the shared cache. A choice
+      // hidden in an alias must still fail in state-only context. Pure state
+      // predicates can then share lowering across invariants and relations.
+      expect(!state_only || (!dependency.request && !dependency.choice),
+             "A state-only predicate cannot read requests or movement choices");
+      const auto key = std::pair{id, dependency.request ? request : std::string{}};
+      if (const auto found = compiled_definitions.find(key); found != compiled_definitions.end())
+        return found->second;
       expect(expanding.insert(id).second, "Recursive predicate: " + id);
-      const auto ref = sub(definitions.at(id));
+      const auto ref = sub(*definitions.at(id));
       expanding.erase(id);
+      compiled_definitions.emplace(key, ref);
       return ref;
     }
     if (op == "not")
@@ -283,7 +350,7 @@ CompiledPuzzle compile_checked(const Json &source) {
     expect(source.at("predicates").is_object(), "Expected named predicates");
     for (auto it = source.at("predicates").begin(); it != source.at("predicates").end(); ++it) {
       expect(!it.key().empty(), "Empty predicate name");
-      c.definitions.emplace(it.key(), it.value());
+      c.definitions.emplace(it.key(), &it.value());
     }
   }
   const auto &requests = source.at("requests");
@@ -435,11 +502,9 @@ CompiledPuzzle compile_text(const std::string &source) {
     throw flat::Error("language.limit", "Source exceeds 8 MiB");
   // Bound nesting before constructing the DOM, including unreferenced source data.
   try {
-    auto parsed = Json::parse(source, [](int depth, Json::parse_event_t, Json &) {
-      if (depth > 256)
-        throw flat::Error("language.limit", "Source nesting exceeds 256");
-      return true;
-    });
+    detail::check_json_depth(source, 256,
+                             [] { throw flat::Error("language.limit", "Source nesting exceeds 256"); });
+    auto parsed = Json::parse(source);
     return compile(parsed);
   } catch (const Json::exception &error) {
     throw flat::Error("language.invalid", error.what());

@@ -1,34 +1,34 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { MainModule } from '../../kernel/index';
-import cubeSource from '../../packages/cube3/source.json?raw';
-import bandageSource from '../../packages/bandaged/source.json?raw';
-import cubeRealization from '../../packages/cube3/cube-euclidean.json';
-import cubeDiagram from '../../packages/cube3/cube-port-diagram.json';
-import cubeSphere from '../../packages/cube3/cube-spherical.json';
-import bandageRealization from '../../packages/bandaged/cube-euclidean.json';
-import bandageDiagram from '../../packages/bandaged/cube-port-diagram.json';
-import bandageSphere from '../../packages/bandaged/cube-spherical.json';
-import helicopterSource from '../../packages/helicopter/definition.json?raw';
-import helicopterRealization from '../../packages/helicopter/helicopter-euclidean.json';
-import helicopterDiagram from '../../packages/helicopter/helicopter-port-diagram.json';
-import helicopterSphere from '../../packages/helicopter/helicopter-spherical.json';
-import baguaSource from '../../packages/bagua/definition.json?raw';
-import baguaRealization from '../../packages/bagua/bagua-euclidean.json';
-import baguaDiagram from '../../packages/bagua/bagua-port-diagram.json';
-import baguaSphere from '../../packages/bagua/bagua-spherical.json';
-import gearSource from '../../packages/gear/source.json?raw';
-import gearExtremeSource from '../../packages/gear-extreme/source.json?raw';
-import gearPlainSource from '../../packages/gear-plain/source.json?raw';
-import gearEuclideanText from '../../packages/gear/gear-euclidean.json?raw';
-import gearDiagramText from '../../packages/gear/gear-port-diagram.json?raw';
-import gearSixEuclideanText from '../../packages/gear/gear-six-teeth-euclidean.json?raw';
-import gearSixDiagramText from '../../packages/gear/gear-six-teeth-port-diagram.json?raw';
-import gearNormalText from '../../packages/gear/gear-normal-euclidean.json?raw';
-import gearSuppliedText from '../../packages/gear/gear-supplied-euclidean.json?raw';
-import gearSphericalText from '../../packages/gear/gear-spherical.json?raw';
-import gearManifest from '../../packages/gear/manifest.json';
-import gearExtremeManifest from '../../packages/gear-extreme/manifest.json';
-import gearPlainManifest from '../../packages/gear-plain/manifest.json';
+import cubeSource from '../../packages/cube3/relational-package.json?raw';
+import bandageSource from '../../packages/bandaged/relational-package.json?raw';
+import cubeRealization from '../../packages/cube3/relational-cube-euclidean.json';
+import cubeDiagram from '../../packages/cube3/relational-cube-port-diagram.json';
+import cubeSphere from '../../packages/cube3/relational-cube-spherical.json';
+import bandageRealization from '../../packages/bandaged/relational-cube-euclidean.json';
+import bandageDiagram from '../../packages/bandaged/relational-cube-port-diagram.json';
+import bandageSphere from '../../packages/bandaged/relational-cube-spherical.json';
+import helicopterSource from '../../packages/helicopter/relational-package.json?raw';
+import helicopterRealization from '../../packages/helicopter/relational-helicopter-euclidean.json';
+import helicopterDiagram from '../../packages/helicopter/relational-helicopter-port-diagram.json';
+import helicopterSphere from '../../packages/helicopter/relational-helicopter-spherical.json';
+import baguaSource from '../../packages/bagua/relational-package.json?raw';
+import baguaRealization from '../../packages/bagua/relational-bagua-euclidean.json';
+import baguaDiagram from '../../packages/bagua/relational-bagua-port-diagram.json';
+import baguaSphere from '../../packages/bagua/relational-bagua-spherical.json';
+import gearSource from '../../packages/gear/relational-source.json?raw';
+import gearExtremeSource from '../../packages/gear-extreme/relational-source.json?raw';
+import gearPlainSource from '../../packages/gear-plain/relational-source.json?raw';
+import gearEuclideanText from '../../packages/gear/relational-gear-euclidean.json?raw';
+import gearDiagramText from '../../packages/gear/relational-gear-port-diagram.json?raw';
+import gearSixEuclideanText from '../../packages/gear/relational-gear-six-teeth-euclidean.json?raw';
+import gearSixDiagramText from '../../packages/gear/relational-gear-six-teeth-port-diagram.json?raw';
+import gearNormalText from '../../packages/gear/relational-gear-normal-euclidean.json?raw';
+import gearSuppliedText from '../../packages/gear/relational-gear-supplied-euclidean.json?raw';
+import gearSphericalText from '../../packages/gear/relational-gear-spherical.json?raw';
+import gearManifest from '../../packages/gear/relational-manifest.json';
+import gearExtremeManifest from '../../packages/gear-extreme/relational-manifest.json';
+import gearPlainManifest from '../../packages/gear-plain/relational-manifest.json';
 import { KernelSession, loadRuntime, type Realization, type Result, type Snapshot, type Transition } from './kernel';
 import { RenderView } from './renderer';
 import { pieceDestinations, type PieceDestination } from './destinations';
@@ -124,7 +124,7 @@ export function App() {
     const next = new KernelSession(runtime, source);
     const initial = next.snapshot();
     const parsedSource = JSON.parse(source);
-    if (parsedSource.kind === 'gear-cube-prototypes') {
+    if (['gear-cube-prototypes', 'relational-gear-prototypes'].includes(parsedSource.kind)) {
       setCustomGear(gearPreset(id, id === 'gear-custom' ? 'Gear family · custom' : 'Gear family', source, initial.definitionDigest));
     }
     kernel.current?.dispose(); kernel.current = next;
@@ -135,7 +135,7 @@ export function App() {
     setSelected(undefined); setEvidence(undefined); setLastScramble(''); setVisualError('');
     setAlgorithm(initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' :
       initial.puzzleId === 'bagua-experimental-v1' ? "U+ R' L' D2 R L U-" :
-      parsedSource.kind === 'gear-cube-prototypes' ? (parsedSource.gearedEdges.length === 0 ? "Rq Uq Rq' Uq'" :
+      ['gear-cube-prototypes', 'relational-gear-prototypes'].includes(parsedSource.kind) ? (parsedSource.gearedEdges.length === 0 ? "Rq Uq Rq' Uq'" :
         initial.legalRequests.some((request) => request.operation === 'R') ? "R R'" : "Rq Rq'") : "R U R' U'");
     setGeneration((value) => value + 1);
   }
@@ -290,7 +290,7 @@ export function App() {
   async function importSource(file?: File): Promise<void> {
     if (!file || !module) return;
     try {
-      if (file.size > 4 * 1024 * 1024) throw new Error('Definition import is limited to 4 MiB.');
+      if (file.size > 16 * 1024 * 1024) throw new Error('Definition import is limited to 16 MiB.');
       install(module, await file.text(), 'imported');
     } catch (error: unknown) {
       setEvidence({ status: 'Invalid', diagnostics: [{ reasonCode: 'source.invalid', source: file.name, message: String(error) }] });
@@ -319,7 +319,8 @@ export function App() {
   const legal = new Set(snapshot?.legalRequests.map((request) => request.operation));
   // Choose requests for the displayed source phase; core legalRequests remains
   // the authority for legality, including blockers on these same requests.
-  const phaseRequests = definition?.operations.filter((operation) => Object.entries(operation.pieceGuards ?? {}).every(([piece, placement]) => snapshot?.state.placementOf[piece] === placement));
+  const candidates = snapshot?.candidateRequests && new Set(snapshot.candidateRequests.map((request) => request.operation));
+  const phaseRequests = definition?.operations.filter((operation) => candidates ? candidates.has(operation.id) : Object.entries(operation.pieceGuards ?? {}).every(([piece, placement]) => snapshot?.state.placementOf[piece] === placement));
   const families = Array.from(new Set(definition?.operations.map((operation) => operation.family) ?? []));
   const faceOrder = ['U', 'R', 'F', 'D', 'L', 'B'];
   families.sort((a, b) => (faceOrder.includes(a) ? faceOrder.indexOf(a) : 6) - (faceOrder.includes(b) ? faceOrder.indexOf(b) : 6) || a.localeCompare(b));
@@ -358,7 +359,7 @@ export function App() {
               <div className="segmented" aria-label="View layout">{(['both', 'cube', 'diagram'] as Layout[]).map((value) => <button key={value} aria-pressed={layout === value} onClick={() => requestLayout(value)}>{value === 'both' ? 'Both views' : value === 'cube' ? effectivePair === 'sphere-diagram' ? 'Sphere' : 'Cube' : effectivePair === 'cube-sphere' ? 'Sphere' : 'Diagram'}</button>)}</div>
             </div>
           </div>
-          {activePreset?.source.includes('gear-cube-prototypes') && <fieldset className="gear-configuration" disabled={busy}>
+          {activePreset && ['gear-cube-prototypes', 'relational-gear-prototypes'].includes(JSON.parse(activePreset.source).kind) && <fieldset className="gear-configuration" disabled={busy}>
             <legend>Geared edges · changing these starts a solved puzzle</legend>
             {gearEdges.map((edge) => {
               const source = JSON.parse(activePreset.source);

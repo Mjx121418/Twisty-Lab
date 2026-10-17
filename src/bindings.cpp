@@ -29,14 +29,20 @@ std::string kernel_info_json() {
 Geometry *create_geometry(const Session &session, const std::string &realization) {
   return new Geometry(session.execution(), realization);
 }
+Session *create_session_from_definition(const Session &session) {
+  return new Session(session.execution());
+}
 } // namespace
 EMSCRIPTEN_BINDINGS(twisty) {
   function("compileJSON", &compile);
   function("compileExecutionJSON", &compile_execution);
   function("compileRelationalJSON", &twisty::relational::compile_json);
   function("relationalCubeModuleJSON", &twisty::relational::cube_module_json);
+  function("relationalGearModuleJSON", &twisty::relational::gear_module_json);
   function("kernelInfoJSON", &kernel_info_json);
   function("createGeometry", &create_geometry, return_value_policy::take_ownership());
+  function("createSessionFromDefinition", &create_session_from_definition,
+           return_value_policy::take_ownership());
   class_<twisty::relational::Puzzle>("RelationalPuzzle")
       .constructor<std::string>()
       .function("inspectJSON", &twisty::relational::Puzzle::inspect_json)

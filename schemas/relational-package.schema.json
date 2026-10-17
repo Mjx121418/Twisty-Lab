@@ -29,17 +29,52 @@
         "pieces",
         "placements",
         "requests",
-        "resources",
-        "symmetry"
+        "resources"
       ],
       "properties": {
         "kind": {
-          "const": "relational-cube-bindings"
+          "enum": [
+            "relational-cube-bindings",
+            "relational-port-bindings",
+            "relational-articulated-bindings"
+          ]
         },
         "version": {
           "const": 1
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "relational-cube-bindings"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "symmetry",
+              "faceLabels"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "relational-articulated-bindings"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "events",
+              "moveInverses"
+            ]
+          }
+        }
+      ]
     }
   }
 }

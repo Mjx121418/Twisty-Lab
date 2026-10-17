@@ -3,6 +3,23 @@ import { readFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
 import createModule from '../../kernel/generated/twisty.mjs';
 
+it('shares immutable definitions while keeping histories and ownership independent', async () => {
+  const module = await createModule();
+  const original = new module.Session(readFileSync('packages/cube3/relational-package.json', 'utf8'));
+  const origin = original.stateJSON();
+  expect(JSON.parse(original.executeJSON('{"operation":"U","parameters":{}}', '0')).status).toBe('Committed');
+  const fresh = module.createSessionFromDefinition(original);
+  if (!fresh) throw new Error('Shared session factory returned no handle.');
+  try {
+    expect(fresh.stateJSON()).toBe(origin);
+    expect(fresh.revision()).toBe('0');
+    expect(JSON.parse(fresh.snapshotJSON()).history).toEqual([]);
+    original.delete();
+    expect(JSON.parse(fresh.executeJSON('{"operation":"F","parameters":{}}', '0')).status).toBe('Committed');
+    expect(fresh.stateJSON()).not.toBe(origin);
+  } finally { fresh.delete(); }
+});
+
 it('validates the experimental relational AST and compiles the example', async () => {
   const ajv = new Ajv({ allErrors: true, strict: false });
   const validate = ajv.compile(JSON.parse(readFileSync('schemas/relational-puzzle.schema.json', 'utf8')));
@@ -33,6 +50,49 @@ it('validates the experimental relational AST and compiles the example', async (
       expect(validateSession(saved)).toBe(false);
     } finally { session.delete(); }
   }
+  const validateGear = ajv.compile(JSON.parse(readFileSync('schemas/relational-gear-source.schema.json', 'utf8')));
+  for (const name of ['gear', 'gear-extreme', 'gear-plain']) {
+    const wrapper = JSON.parse(readFileSync(`packages/${name}/relational-source.json`, 'utf8'));
+    expect(validateGear(wrapper), JSON.stringify(validateGear.errors)).toBe(true);
+    const packageDocument = JSON.parse(readFileSync(`packages/${name}/relational-package.json`, 'utf8'));
+    expect(validatePackage(packageDocument), JSON.stringify(validatePackage.errors)).toBe(true);
+    expect(validate(packageDocument.source), JSON.stringify(validate.errors)).toBe(true);
+    expect(JSON.parse(module.relationalGearModuleJSON(JSON.stringify(wrapper)))).toEqual({ source: packageDocument.source, catalog: packageDocument.catalog });
+    const session = new module.Session(JSON.stringify(wrapper));
+    try {
+      const operation = name === 'gear' ? 'R' : name === 'gear-extreme' ? 'Uq' : 'Rq';
+      const result = JSON.parse(session.runJSON(operation, 'transactional', '0'));
+      expect(result.status).toBe('Committed');
+      expect(result.transitions[0].pieceActions.every((a: { event: string }) => a.event.endsWith('.motion'))).toBe(true);
+      expect(validateSession(JSON.parse(session.saveJSON())), JSON.stringify(validateSession.errors)).toBe(true);
+    } finally { session.delete(); }
+  }
+  const malformedGear = JSON.parse(readFileSync('packages/gear/relational-source.json', 'utf8'));
+  malformedGear.gearedEdges = ['UF', 'UF'];
+  expect(validateGear(malformedGear)).toBe(false);
+  expect(JSON.parse(module.compileExecutionJSON(JSON.stringify(malformedGear))).status).toBe('Invalid');
+  const helicopter = readFileSync('packages/helicopter/relational-package.json', 'utf8');
+  const packageDocument = JSON.parse(helicopter);
+  expect(validatePackage(packageDocument), JSON.stringify(validatePackage.errors)).toBe(true);
+  expect(validate(packageDocument.source), JSON.stringify(validate.errors)).toBe(true);
+  const session = new module.Session(helicopter);
+  try {
+    const origin = JSON.parse(session.snapshotJSON());
+    expect(origin.candidateRequests).toHaveLength(60);
+    expect(JSON.parse(session.runJSON('UF_ab UL_af', 'transactional', '0')).status).toBe('Committed');
+    const saved = JSON.parse(session.saveJSON());
+    expect(validateSession(saved), JSON.stringify(validateSession.errors)).toBe(true);
+    const definition = JSON.parse(session.definitionJSON());
+    expect(definition.pieceTypes).toHaveLength(3);
+    for (const kind of ['euclidean', 'port-diagram', 'spherical']) {
+      const realization = JSON.parse(readFileSync(`packages/helicopter/relational-helicopter-${kind}.json`, 'utf8'));
+      expect(realization.compatibleDefinitionDigest).toBe(definition.definitionDigest);
+    }
+  } finally { session.delete(); }
+  const baguaPackage = JSON.parse(readFileSync('packages/bagua/relational-package.json', 'utf8'));
+  expect(validatePackage(baguaPackage), JSON.stringify(validatePackage.errors)).toBe(true);
+  expect(validate(baguaPackage.source), JSON.stringify(validate.errors)).toBe(true);
+
 });
 
 it('validates shipped sources, compiled definitions, realizations, fixtures, and generated saves', async () => {

@@ -11,7 +11,7 @@ describe('selected-piece destinations', () => {
   it.each([
     ['cube3', 'relational-package.json', 'corner/UFR', ['F', "F'", 'R', "R'", 'U', "U'"]],
     ['bandaged', 'relational-package.json', 'bandage/UF-UFR', ['F', "F'", 'U', "U'"]],
-    ['helicopter', 'definition.json', 'corner/BDL', ['BL_ab', 'BL_ac', 'BL_ad', 'BL_ae', 'BL_af', 'DB_ab', 'DB_ac', 'DB_ad', 'DB_ae', 'DB_af', 'DL_ab', 'DL_ac', 'DL_ad', 'DL_ae', 'DL_af']],
+    ['helicopter', 'relational-package.json', 'corner/BDL', ['BL_ab', 'BL_ac', 'BL_ad', 'BL_ae', 'BL_af', 'DB_ab', 'DB_ac', 'DB_ad', 'DB_ae', 'DB_af', 'DL_ab', 'DL_ac', 'DL_ad', 'DL_ae', 'DL_af']],
   ])('plans only legal participating moves for %s', (puzzle, source, pieceId, expected) => {
     const session = new KernelSession(runtime, read(`packages/${puzzle}/${source}`));
     try {

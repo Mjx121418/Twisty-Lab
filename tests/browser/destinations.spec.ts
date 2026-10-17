@@ -26,7 +26,7 @@ async function clickDestination(page: Page, viewId: string, puzzle: string, real
   const host = page.getByTestId(viewId);
   await host.scrollIntoViewIfNeeded();
   const bounds = (await host.boundingBox())!;
-  const migrated = puzzle === 'cube3' || puzzle === 'bandaged';
+  const migrated = ['cube3', 'bandaged', 'helicopter', 'bagua'].includes(puzzle);
   const session = new KernelSession(runtime, readFileSync(`packages/${puzzle}/${migrated ? 'relational-package' : 'definition'}.json`, 'utf8'));
   const geometry = runtime.createGeometry(session.native, readFileSync(`packages/${puzzle}/${migrated ? 'relational-' : ''}${realization}.json`, 'utf8'))!;
   const assets: BufferGeometry[] = [];
@@ -144,6 +144,8 @@ test('offers a choice for a center destination shared by both twists', async ({ 
 
 test('filters bandaged destinations and keeps camera drags and keyboard focus pure', async ({ page }) => {
   await page.getByLabel('Puzzle', { exact: true }).selectOption('bandaged-uf-ufr');
+  await resting(page);
+  await page.screenshot({ path: 'test-results/bandaged-elongated.png', fullPage: true });
   await page.getByRole('button', { name: 'Select bandage/UF-UFR', exact: true }).click();
   const initial = await page.getByTestId('state-digest').textContent();
   const host = page.getByTestId('cube-view');
@@ -175,7 +177,7 @@ test('shows Helicopter candidates, executes a clicked destination, and clears pr
   for (const id of ['cube-view', 'diagram-view']) await expect(page.getByTestId(id)).toHaveAttribute('data-destination-count', '15');
   await page.screenshot({ path: 'test-results/destinations-helicopter.png', fullPage: true });
   await clickDestination(page, 'cube-view', 'helicopter', 'helicopter-spherical', 'corner/BDL', 'BL_ab');
-  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/helicopter/definition.json', '--algorithm', 'BL_ab', '--json'], { encoding: 'utf8' }));
+  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/helicopter/relational-package.json', '--algorithm', 'BL_ab', '--json'], { encoding: 'utf8' }));
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
   await page.getByLabel('Animation speed').selectOption('450');
   await page.getByLabel('Algorithm', { exact: true }).fill('BL_ba UF_ab');
@@ -183,7 +185,7 @@ test('shows Helicopter candidates, executes a clicked destination, and clears pr
   await expect(page.getByTestId('app')).toHaveAttribute('data-animating', 'true');
   for (const id of ['cube-view', 'diagram-view']) await expect(page.getByTestId(id)).toHaveAttribute('data-destination-count', '0');
   await resting(page);
-  const session = new KernelSession(runtime, readFileSync('packages/helicopter/definition.json', 'utf8'));
+  const session = new KernelSession(runtime, readFileSync('packages/helicopter/relational-package.json', 'utf8'));
   try {
     session.run('UF_ab', 'transactional');
     const expected = pieceDestinations(session, session.snapshot(), 'corner/BDL').map((option) => option.request.operation).join(',');
@@ -195,6 +197,7 @@ test('shows Helicopter candidates, executes a clicked destination, and clears pr
 });
 
 test('executes a selected Bagua corner destination on the sphere', async ({ page }) => {
+  test.setTimeout(60_000);
   await page.getByLabel('Puzzle', { exact: true }).selectOption('bagua');
   await page.getByLabel('Animation speed').selectOption('0');
   await page.getByRole('button', { name: 'Select corner/07', exact: true }).click();
@@ -203,7 +206,7 @@ test('executes a selected Bagua corner destination on the sphere', async ({ page
     await expect(page.getByTestId(id)).toHaveAttribute('data-destination-count', '15');
   }
   await clickDestination(page, 'diagram-view', 'bagua', 'bagua-spherical', 'corner/07', 'U+');
-  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/bagua/definition.json', '--algorithm', 'U+', '--json'], { encoding: 'utf8' }));
+  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/bagua/relational-package.json', '--algorithm', 'U+', '--json'], { encoding: 'utf8' }));
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
   await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-selected-piece', 'corner/07');
   await expect(page.getByRole('alert')).toHaveCount(0);

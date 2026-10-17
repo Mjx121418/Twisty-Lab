@@ -53,8 +53,9 @@ function refresh() {
   const legal = new Set(snapshot.legalRequests.map((request) => request.operation));
   const controls = document.querySelector('#moves');
   controls.replaceChildren();
+  const candidates = snapshot.candidateRequests && new Set(snapshot.candidateRequests.map((request) => request.operation));
   for (const operation of session.definition.operations) {
-    if (!Object.entries(operation.pieceGuards ?? {}).every(([piece, placement]) => snapshot.state.placementOf[piece] === placement)) continue;
+    if (candidates ? !candidates.has(operation.id) : !Object.entries(operation.pieceGuards ?? {}).every(([piece, placement]) => snapshot.state.placementOf[piece] === placement)) continue;
     const button = document.createElement('button');
     button.textContent = operation.id;
     button.disabled = busy;
@@ -69,8 +70,8 @@ async function install(puzzle) {
   document.querySelectorAll('button, select').forEach((element) => { element.disabled = true; });
   document.querySelector('#status').textContent = 'Loading…';
   const [source, realization] = await Promise.all([
-    fetch(`./data/${puzzle}/${puzzle === 'cube3' || puzzle === 'bandaged' ? 'relational-package' : 'definition'}.json`).then((response) => response.text()),
-    fetch(`./data/${puzzle}/${puzzle === 'helicopter' || puzzle === 'bagua' || puzzle.startsWith('gear') ? puzzle : 'relational-cube'}-port-diagram.json`).then((response) => response.text()),
+    fetch(`./data/${puzzle}/relational-package.json`).then((response) => response.text()),
+    fetch(`./data/${puzzle}/${puzzle === 'helicopter' ? 'relational-helicopter' : puzzle.startsWith('gear') ? `relational-${puzzle}` : puzzle === 'bagua' ? 'relational-bagua' : 'relational-cube'}-port-diagram.json`).then((response) => response.text()),
   ]);
   if (epoch !== installEpoch) return;
   const next = new KernelSession(module, source);

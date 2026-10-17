@@ -98,7 +98,7 @@ Geometry::Frame Geometry::articulated_resting(const Part &part, const State &sta
 Geometry::Frame Geometry::articulated_sample(const Part &part, double t) const {
   const auto &component = components_[part.frame_index];
   auto result = articulated_resting(part, before_);
-  const auto &path = component.paths[active_operation_][before_.placement_of[part.piece]];
+  const auto &path = component.paths[active_piece_operations_[part.piece]][before_.placement_of[part.piece]];
   for (const auto &step : path) {
     const auto r = rotation(step.axis, step.pivot, step.angle * t);
     result = step.local ? multiply(result, r) : multiply(r, result);

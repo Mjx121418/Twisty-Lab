@@ -62,8 +62,9 @@ void test_package(const std::string &name) {
   check(scene.at("ambientSpace") == "S2" && scene.at("surfaceTransportVerified") == true,
         "Sphere declares its ambient space and verified port transport");
   check(scene.at("definitionDigest").get<std::string>() == d->digest, "Sphere pins existing cube semantics");
-  check(scene.at("visualParts").size() == 108 && scene.at("meshAssets").size() == 8,
-        "54 labeled ports share four body and four port assets");
+  check(scene.at("visualParts").size() == 108 &&
+            scene.at("meshAssets").size() == (name == "bandaged" ? 16 : 8),
+        "54 labeled ports share ordinary and optional joined compound assets");
   std::map<std::string, Json> assets;
   std::map<std::string, Index> pieces;
   for (Index i = 0; i < d->pieces.size(); ++i)
@@ -107,6 +108,42 @@ void test_package(const std::string &name) {
       }
       check(dot(outward, a) > 0, "Every triangle is nondegenerate and faces outward");
     }
+  }
+  if (name == "bandaged") {
+    const auto seam = [&](const std::string &port) {
+      std::vector<Point> points;
+      for (std::size_t i = 0; i < scene.at("visualParts").size(); ++i) {
+        const auto &part = scene.at("visualParts")[i];
+        if (part.at("pieceId") != "bandage/UF-UFR" || part.at("role") != "port" || part.at("portId") != port)
+          continue;
+        const auto &asset = assets.at(part.at("meshAssetId").get<std::string>());
+        for (std::size_t v = 0; v < asset.at("vertexCount").get<std::size_t>(); ++v) {
+          const auto p = point(g, asset, g.transforms(), i, v);
+          if (std::abs(p[0] / radius - threshold) < 3e-7)
+            points.push_back(p);
+        }
+      }
+      return points;
+    };
+    for (const auto &pair : {std::pair{"0", "2"}, std::pair{"1", "4"}}) {
+      const auto a = seam(pair.first), b = seam(pair.second);
+      check(a.size() >= 4 && a.size() == b.size(), "Compound spherical seam lost its shared boundary");
+      for (const auto &p : a)
+        check(std::any_of(b.begin(), b.end(),
+                          [&](const auto &q) {
+                            const auto delta = difference(p, q);
+                            return dot(delta, delta) < 1e-12;
+                          }),
+              "Compound spherical ports leave an internal gap");
+    }
+    std::size_t rendered = 0, largest = 0;
+    for (const auto &[id, asset] : assets)
+      if (!id.starts_with("bandage/"))
+        largest = std::max(largest, asset.at("indexCount").get<std::size_t>());
+    for (const auto &part : scene.at("visualParts"))
+      if (part.at("pieceId") == "bandage/UF-UFR")
+        rendered += assets.at(part.at("meshAssetId").get<std::string>()).at("indexCount").get<std::size_t>();
+    check(rendered <= 10 * largest, "Joined compound increased the rendered triangle budget");
   }
   auto check_resting = [&](const State &state) {
     g.set_state_json(encode_state(*d, state).dump());
@@ -210,6 +247,15 @@ void test_package(const std::string &name) {
     check(plan(*d, d->initial, "R").blocked.at("reasonCode") == "footprint.partial_overlap",
           "Sphere retains core bandage blocking");
   check(session.save() == untouched, "Sampling geometry never edits the session, history, or revision");
+  for (const double angle : {55.0, 85.0}) {
+    auto endpoint = package;
+    endpoint["diskAngleDegrees"] = angle;
+    Geometry valid(d, endpoint.dump());
+    const auto boundary_scene = Json::parse(valid.scene_json());
+    for (const auto &asset : boundary_scene.at("meshAssets"))
+      check(asset.at("vertexCount").get<std::size_t>() >= 3 && asset.at("indexCount").get<std::size_t>() >= 3,
+            "Valid disk-radius endpoint removed a visible port");
+  }
   for (const double angle : {45.0, 90.0, 420.0}) {
     auto invalid = package;
     invalid["diskAngleDegrees"] = angle;

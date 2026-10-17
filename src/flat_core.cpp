@@ -19,6 +19,7 @@ class Evaluation {
   const ProgramData &data;
   std::span<const Index> state, choices;
   std::vector<std::int8_t> values;
+  bool exhaustive = false;
   struct Frame {
     Ref ref;
     Index next = 0, count = 0;
@@ -42,6 +43,12 @@ public:
         require(node.input < inputs.size(), "flat.input", "Predicate input is unavailable");
         const auto &set = data.finite_sets[node.set];
         values[frame.ref] = std::binary_search(set.begin(), set.end(), inputs[node.input]);
+      } else if (!exhaustive &&
+                 (frame.count > node.upper || frame.count + node.child_count - frame.next < node.lower)) {
+        values[frame.ref] = 0;
+      } else if (!exhaustive && frame.count >= node.lower &&
+                 frame.count + node.child_count - frame.next <= node.upper) {
+        values[frame.ref] = 1;
       } else if (frame.next < node.child_count) {
         const auto child = data.child_references[node.first_child + frame.next];
         if (values[child] == -1) {
@@ -57,6 +64,13 @@ public:
       stack.pop_back();
     }
     return values[root];
+  }
+  std::vector<std::int8_t> trace(Ref root) {
+    // Diagnostic proofs need every reachable value, including branches whose
+    // truth cannot affect the root. Normal permission checks may stop early.
+    exhaustive = true;
+    get(root);
+    return std::move(values);
   }
 };
 } // namespace
@@ -171,7 +185,14 @@ bool Program::state_predicate(Ref root, std::span<const Index> state) const {
   // A public state-only predicate is useful to the separate profile binder.
   require(root < data_.predicates.size() + 2, "flat.input", "Unknown predicate root");
   require(valid(state), "flat.state", "Source state violates the invariant");
-  return Evaluation(data_, state, {}).get(root);
+  return Evaluation(data_, state, {}).trace(root)[root] == 1;
+}
+std::vector<std::int8_t> Program::predicate_trace(Ref root, std::span<const Index> state,
+                                                  std::span<const Index> choices) const {
+  require(root < data_.predicates.size() + 2, "flat.input", "Unknown predicate root");
+  check_state_shape(state);
+  require(choices.size() <= 4096, "flat.input", "Too many choice inputs");
+  return Evaluation(data_, state, choices).trace(root);
 }
 Plan Program::plan(Index request_id, std::span<const Index> state, std::span<const Index> choices) const {
   require(request_id < data_.requests.size(), "flat.request", "Unknown request index");

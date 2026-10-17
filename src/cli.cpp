@@ -1,4 +1,5 @@
 #include "twisty/session.hpp"
+#include <array>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -6,21 +7,27 @@
 
 using namespace twisty;
 namespace {
-std::string read(const std::string &filename) {
+std::string read(const std::string &filename, std::size_t limit = 4 * 1024 * 1024) {
   std::ifstream stream(filename);
   if (!stream)
     throw DiagnosticError("file.read", filename, "Cannot read file.");
-  std::ostringstream output;
-  output << stream.rdbuf();
-  if (output.str().size() > 4 * 1024 * 1024)
-    throw DiagnosticError("document.limit", filename, "Input is limited to 4 MiB.");
-  return output.str();
+  std::string output;
+  std::array<char, 8192> chunk;
+  while (stream) {
+    stream.read(chunk.data(), chunk.size());
+    const auto count = static_cast<std::size_t>(stream.gcount());
+    if (count > limit - output.size())
+      throw DiagnosticError("document.limit", filename,
+                            "Input is limited to " + std::to_string(limit / (1024 * 1024)) + " MiB.");
+    output.append(chunk.data(), count);
+  }
+  return output;
 }
 void write(const std::string &filename, const Json &json) {
   std::ofstream stream(filename);
   if (!stream)
     throw DiagnosticError("file.write", filename, "Cannot write file.");
-  stream << json.dump(2) << '\n';
+  stream << json.dump(json.value("kind", std::string{}) == "relational-definition" ? -1 : 2) << '\n';
 }
 } // namespace
 int main(int argc, char **argv) {
@@ -81,7 +88,8 @@ int main(int argc, char **argv) {
                                    [](const Json &row) { return row.at("passed").get<bool>(); });
       result = {{"status", all ? "Passed" : "Failed"}, {"cases", results}};
     } else {
-      const auto source = read(option("--definition", "packages/cube3/relational-package.json"));
+      const auto source =
+          read(option("--definition", "packages/cube3/relational-package.json"), 16 * 1024 * 1024);
       if (command == "compile")
         result = compile_execution_json(source);
       else {
@@ -126,7 +134,8 @@ int main(int argc, char **argv) {
     else
       std::cout << result.dump(2) << '\n';
     const auto status = result.at("status").get<std::string>();
-    return status == "Invalid" || status == "Blocked" || status == "Failed" ? 1 : 0;
+    return status == "Invalid" || status == "Blocked" || status == "Failed" || status == "ChoiceRequired" ? 1
+                                                                                                          : 0;
   } catch (const std::exception &error) {
     std::cerr << diagnostic_result(error).dump(2) << '\n';
     return 2;

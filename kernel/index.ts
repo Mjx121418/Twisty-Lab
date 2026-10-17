@@ -5,7 +5,8 @@ export type KernelInfo = {
   apiVersion: number; version: string; documentSchemaVersion: number; frameBufferVersion: number;
   experimentalAPIs?: { relational?: number };
   relationalLibraries?: string[];
-  relationalDefinitionVersion?: number; sessionSchemaVersions?: number[];
+  relationalCatalogKinds?: string[];
+  relationalDefinitionVersion?: number; sessionSchemaVersions?: number[]; sessionFeatures?: string[];
   ruleModules: string[]; realizationKinds: string[]; geometryCapabilities: string[];
 };
 export type KernelOptions = { wasmURL?: string | URL; locateFile?: (filename: string, directory: string) => string };
@@ -23,6 +24,7 @@ export type Request = { operation: string; parameters: Record<string, never>; ch
 export type Snapshot = {
   puzzleId: string; definitionDigest: string; stateDigest: string; revision: string;
   state: State; solved: boolean; legalRequests: Request[];
+  candidateRequests?: Request[];
   history: string[]; cursor: number; canUndo: boolean; canRedo: boolean;
 };
 export type Transition = {
@@ -130,13 +132,32 @@ export type RelationalCubeCatalog = {
   placements: Record<string, { resources: string[]; ports: Record<string, { cell: string; attachment: string }> }>;
   requests: Record<string, { inverse: string; family: string; event: string; profile: string }>;
 };
+export type RelationalPortCatalog = Omit<RelationalCubeCatalog, 'kind' | 'faceLabels' | 'symmetry' | 'requests'> & {
+  kind: 'relational-port-bindings'; symmetry?: number[][];
+  requests: Record<string, { inverse: string; family: string; event: string; profile: string; unavailablePlacements: string[] }>;
+};
+export type RelationalArticulatedCatalog = Omit<RelationalPortCatalog, 'kind'> & {
+  kind: 'relational-articulated-bindings';
+  events: Record<string, { domain: string; request: string }>;
+  moveInverses: Record<string, Record<string, string>>;
+};
+export type RelationalGearSource = {
+  kind: 'relational-gear-prototypes'; formatVersion: 1; puzzleId: string; gearedEdges: string[];
+};
+export function createRelationalGearSource(module: MainModule, source: RelationalGearSource): {
+  source: RelationalSource; catalog: RelationalArticulatedCatalog;
+} {
+  return JSON.parse(module.relationalGearModuleJSON(JSON.stringify(source))) as {
+    source: RelationalSource; catalog: RelationalArticulatedCatalog;
+  };
+}
 export type RelationalPackage = {
   kind: 'relational-package'; formatVersion: 1;
-  source: RelationalSource; catalog: RelationalCubeCatalog;
+  source: RelationalSource; catalog: RelationalCubeCatalog | RelationalPortCatalog | RelationalArticulatedCatalog;
 };
 export type RelationalDefinition = CompiledDefinition & {
   kind: 'relational-definition'; formatVersion: 1; predicateVersion: 1;
-  source: RelationalSource; catalog: RelationalCubeCatalog;
+  source: RelationalSource; catalog: RelationalCubeCatalog | RelationalPortCatalog | RelationalArticulatedCatalog;
   program: RelationalPreview['program']; bindings: RelationalPreview['bindings'];
 };
 export function createRelationalCubeSource(module: MainModule, bandaged = false): {
@@ -194,7 +215,18 @@ export class KernelSession {
   readonly definition: CompiledDefinition;
   readonly definitionText: string;
 
-  constructor(module: MainModule, source: string) {
+  private readonly module: MainModule;
+  constructor(module: MainModule, source: string | KernelSession) {
+    this.module = module;
+    if (source instanceof KernelSession) {
+      if (source.module !== module) throw new Error('A shared definition must belong to the same kernel runtime.');
+      const shared = module.createSessionFromDefinition(source.native);
+      if (!shared) throw new Error('Cannot create a session from the shared definition.');
+      this.native = shared;
+      this.definitionText = source.definitionText;
+      this.definition = source.definition;
+      return;
+    }
     try {
       this.native = new module.Session(source);
     } catch (error: unknown) {

@@ -17,8 +17,12 @@ class Execution {
 public:
   static std::shared_ptr<const Execution> from_source(const std::string &);
   static std::shared_ptr<const Execution> legacy(std::shared_ptr<const Definition>);
-  std::shared_ptr<const Definition> definition() const { return definition_; }
-  bool relational() const { return static_cast<bool>(puzzle_); }
+  std::shared_ptr<const Definition> definition() const {
+    return definition_;
+  }
+  bool relational() const {
+    return static_cast<bool>(puzzle_);
+  }
   Json definition_json() const;
   State decode(const Json &) const;
   void validate(const State &) const;
@@ -27,16 +31,25 @@ public:
   ExecutionPlan inverse(const CompletedTransition &) const;
   Json encode(const CompletedTransition &) const;
   Json legal(const State &) const;
+  // Available default completions, including candidates rejected by the relation.
+  Json candidates(const State &) const;
+  bool articulated_events() const {
+    return articulated_events_;
+  }
+  // Resolves an opaque participation event to a certified interpreter track.
+  Index event_operation(Index piece, const std::string &event) const;
 
 private:
   explicit Execution(std::shared_ptr<const Definition> definition) : definition_(std::move(definition)) {}
-  Execution(const Json &source, const Json &catalog);
+  Execution(Json source, Json catalog);
   std::shared_ptr<const Definition> definition_;
   std::optional<relational::CompiledPuzzle> puzzle_;
   std::vector<std::vector<Index>> global_of_local_;
   std::vector<Index> local_of_global_;
   std::vector<Index> flat_piece_of_display_, display_piece_of_flat_;
   std::map<std::string, Index> request_ids_;
+  bool articulated_events_ = false;
+  std::map<std::pair<Index, std::string>, Index> event_operations_;
   std::vector<std::map<std::string, std::string>> inverse_moves_;
   flat::State flatten(const State &) const;
   State display(const flat::State &) const;

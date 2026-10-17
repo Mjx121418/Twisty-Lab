@@ -211,12 +211,123 @@ void language_and_completion() {
             R"({"op":"plan","state":[0.5],"request":"u","choices":["idle"]})"))["status"] == "Invalid",
         "Exact state API accepted a floating placement");
 }
+void shared_named_predicates() {
+  using namespace twisty::relational;
+  auto source = toy();
+  source["predicates"] = {{"leaf", {{"at", {{"piece", "p"}, {"placements", {"d/0"}}}}}}};
+  std::string previous = "leaf";
+  for (int level = 0; level < 6; ++level) {
+    Json children = Json::array();
+    for (int child = 0; child < 32; ++child)
+      children.push_back({{"ref", previous}});
+    const auto id = "level" + std::to_string(level);
+    source["predicates"][id] = {{"any", children}};
+    previous = id;
+  }
+  source["goal"] = {{"ref", previous}};
+  source["requests"][0]["relation"] = {{"ref", previous}};
+  auto compiled = compile(source);
+  check(compiled.program.solved(State{0}) && !compiled.program.solved(State{1}) &&
+            compiled.program.data().predicates.size() < 16,
+        "Shared predicate DAG was expanded as a tree");
+  source = toy();
+  source["predicates"] = {
+      {"conditional",
+       {{"implies", Json::array({Json{{"request", {"u"}}},
+                                 Json{{"chosen", {{"domain", "d"}, {"moves", {"flip"}}}}}})}}}};
+  source["requests"][0]["relation"] = {{"ref", "conditional"}};
+  auto second = source["requests"][0];
+  second["id"] = "v";
+  source["requests"].push_back(second);
+  compiled = compile(source);
+  check(!compiled.program.plan(0, State{0}, Choices{0}).transition &&
+            compiled.program.plan(1, State{0}, Choices{0}).transition.has_value(),
+        "Named request predicate lost specialization");
+  source = toy();
+  source["predicates"] = {{"choice", {{"chosen", {{"domain", "d"}, {"moves", {"flip"}}}}}}};
+  source["requests"][0]["relation"] = {{"ref", "choice"}};
+  source["requests"][0]["profiles"][0]["when"] = {{"ref", "choice"}};
+  rejects([&] { compile(source); }, "language.invalid");
+  source = toy();
+  source["predicates"] = Json::object();
+  previous = "p000";
+  source["predicates"][previous] = true;
+  for (int i = 1; i < 140; ++i) {
+    auto id = "p" + std::to_string(1000 + i).substr(1);
+    source["predicates"][id] = {{"ref", previous}};
+    previous = id;
+  }
+  rejects([&] { compile(source); }, "language.invalid");
+}
+void rejection_proofs() {
+  using namespace twisty::relational;
+  auto source = toy();
+  source["domains"][0]["pieces"].push_back({{"id", "other"}, {"initial", "1"}});
+  const Json home = {{"at", {{"piece", "p"}, {"placements", {"d/0"}}}}};
+  const Json other = {{"at", {{"piece", "other"}, {"placements", {"d/1"}}}}};
+  const Json chosen = {{"chosen", {{"domain", "d"}, {"moves", {"flip"}}}}};
+  source["requests"][0]["relation"] = {{"all", {{{"not", home}}, {{"implies", {chosen, {{"not", other}}}}}}}};
+  auto compiled = compile(source);
+  check(rejection_inputs(compiled.program, 0, State{0, 1}, Choices{0}) == std::vector<Index>{0},
+        "Rejection proof included an inactive interaction");
+  check(rejection_inputs(compiled.program, 0, State{0, 1}, Choices{1}) == std::vector<Index>({0, 1}),
+        "Rejection proof missed simultaneous blockers");
+  check(rejection_inputs(compiled.program, 0, State{1, 0}, Choices{1}).empty(),
+        "Accepted relation reported blockers");
+  source["requests"][0]["relation"] = {{"count", {{"min", 0}, {"max", 1}, {"of", {home, home}}}}};
+  compiled = compile(source);
+  check(!compiled.program.plan(0, State{0, 1}, Choices{0}).transition &&
+            rejection_inputs(compiled.program, 0, State{0, 1}, Choices{0}) == std::vector<Index>{0},
+        "Rejection proof lost repeated-child multiplicity");
+  const auto trace =
+      compiled.program.predicate_trace(compiled.program.data().requests[0].relation, State{0, 1}, Choices{0});
+  check(trace.at(compiled.program.data().requests[0].relation) == 0,
+        "Predicate trace disagrees with planning");
+  rejects([&] { compiled.program.predicate_trace(9999, State{0, 1}, Choices{0}); }, "flat.input");
+  rejects([&] { compiled.program.predicate_trace(true_ref, State{0}); }, "flat.state");
+  source["requests"][0]["relation"] = {{"any", {home, other, chosen}}};
+  compiled = compile(source);
+  const auto complete_trace =
+      compiled.program.predicate_trace(compiled.program.data().requests[0].relation, State{0, 1}, Choices{1});
+  check(std::count(complete_trace.begin(), complete_trace.end(), 1) >= 5,
+        "Short-circuit evaluation omitted diagnostic branches");
+  rejects(
+      [&] {
+        compiled.program.state_predicate(compiled.program.data().requests[0].relation, State{0, 1});
+      },
+      "flat.input");
+}
+void bounded_json() {
+  using namespace twisty::relational;
+  auto source = toy();
+  const auto id = std::string(300, '[') + R"({ "quoted\" \\ } ])";
+  source["id"] = id;
+  check(compile_text(source.dump()).bindings.puzzle_id == id,
+        "Quoted brackets or escapes changed JSON depth tracking");
+  const auto deep = std::string(300, '[') + "0" + std::string(300, ']');
+  rejects([&] { compile_text(deep); }, "language.limit");
+  rejects([&] { compile_text(R"({"id":"unterminated)"); }, "language.invalid");
+  source = toy();
+  Json predicate = {{"all", Json::array()}};
+  for (int i = 1; i < 127; ++i)
+    predicate = {{"all", Json::array({predicate})}};
+  source["requests"][0]["relation"] = predicate;
+  check(compile_text(source.dump()).program.plan(0, State{0}, Choices{0}).transition.has_value(),
+        "Nesting boundary changed for an empty deepest container");
+  Puzzle puzzle(toy().dump());
+  const auto rejected = Json::parse(puzzle.query_json(deep));
+  check(rejected.at("status") == "Invalid" && rejected.at("diagnostics")[0].at("code") == "flat.limit",
+        "Query nesting limit was lost");
+}
 } // namespace
 int main() {
   try {
     execution();
     malformed_programs();
     language_and_completion();
+    rejection_proofs();
+    shared_named_predicates();
+    bounded_json();
     std::cout << checks << " flat-core/compiler/completion checks passed\n";
     return 0;
   } catch (const std::exception &e) {

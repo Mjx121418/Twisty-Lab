@@ -31,10 +31,87 @@ void invalid_unchanged(Session &session, const Json &document) {
   check(Json::parse(session.load_json(document.dump())).at("status") == "Invalid", "Invalid replay accepted");
   check(session.snapshot() == before, "Failed replay mutated session");
 }
+void elongated_bandage(Session &session, Geometry &geometry) {
+  const auto scene = Json::parse(geometry.scene_json());
+  std::map<std::string, Json> assets, ports;
+  std::size_t body_count = 0, body_index = 0, index = 0;
+  for (const auto &asset : scene.at("meshAssets"))
+    assets[asset.at("id").get<std::string>()] = asset;
+  for (const auto &part : scene.at("visualParts")) {
+    if (part.at("pieceId") == "bandage/UF-UFR") {
+      if (part.at("role") == "body") {
+        ++body_count;
+        body_index = index;
+      } else
+        ports[part.at("portId").get<std::string>()] = {{"index", index}, {"asset", part.at("meshAssetId")}};
+    }
+    ++index;
+  }
+  check(body_count == 1 && ports.size() == 5, "Elongated piece must have one body and five picking ports");
+  check(assets.at("bandage/body").at("vertexCount") == 24 && assets.at("bandage/body").at("indexCount") == 36,
+        "Elongated cuboid exceeded its shared mesh budget");
+  const auto definition = session.definition();
+  const auto catalog = relational::cube_module(true).catalog;
+  const auto labels = catalog.at("faceLabels").get<std::vector<std::string>>();
+  const auto world = [&](const std::string &port, std::size_t vertex) {
+    std::array<double, 3> point{};
+    const auto offset =
+        assets.at(ports.at(port).at("asset").get<std::string>()).at("positionOffset").get<std::size_t>();
+    const auto matrix = ports.at(port).at("index").get<std::size_t>() * 16;
+    for (int row = 0; row < 3; ++row) {
+      point[row] = geometry.transforms()[matrix + 12 + row];
+      for (int column = 0; column < 3; ++column)
+        point[row] += geometry.transforms()[matrix + column * 4 + row] *
+                      geometry.positions()[offset + vertex * 3 + column];
+    }
+    return point;
+  };
+  for (const auto &rotation : catalog.at("symmetry")) {
+    auto state = definition->initial;
+    for (Index p = 0; p < definition->pieces.size(); ++p) {
+      const auto &piece = definition->pieces[p];
+      const auto &domain = definition->domains[piece.domain];
+      auto key = domain.id + ":";
+      for (const auto &[port, attachment] : domain.placements[piece.home].ports) {
+        (void)port;
+        if (!key.ends_with(':'))
+          key += '-';
+        const auto label = std::find(labels.begin(), labels.end(), attachment.second) - labels.begin();
+        key += labels.at(rotation.at(label).get<Index>());
+      }
+      state.placement_of[p] = domain.by_key.at(key);
+    }
+    geometry.set_state_json(encode_state(*definition, state).dump());
+    for (const auto &pair : {std::pair{"0", "2"}, std::pair{"1", "4"}}) {
+      int shared = 0;
+      for (std::size_t a = 0; a < 4; ++a)
+        for (std::size_t b = 0; b < 4; ++b) {
+          const auto x = world(pair.first, a), y = world(pair.second, b);
+          double distance = 0;
+          for (int axis = 0; axis < 3; ++axis)
+            distance += (x[axis] - y[axis]) * (x[axis] - y[axis]);
+          if (distance < 1e-12)
+            ++shared;
+        }
+      check(shared == 2, "Joined stickers have a gap or overlap in a compound placement");
+    }
+    const auto offset = body_index * 16;
+    for (int a = 0; a < 3; ++a)
+      for (int b = 0; b < 3; ++b) {
+        double dot = 0;
+        for (int row = 0; row < 3; ++row)
+          dot += geometry.transforms()[offset + a * 4 + row] * geometry.transforms()[offset + b * 4 + row];
+        check(std::abs(dot - (a == b ? 1 : 0)) < 1e-6, "Elongated placement frame is not rigid");
+      }
+  }
+  geometry.set_state_json(session.state_json());
+}
 void model(bool bandaged) {
   const std::string name = bandaged ? "bandaged" : "cube3";
   const auto source = bundle(bandaged).dump();
   Session session(source), previous(read("packages/" + name + "/definition.json"));
+  check(previous.definition_json() == previous.execution()->definition_json().dump(),
+        "Legacy definition serialization lost provenance");
   const auto initial = session.snapshot();
   check(session.execution()->relational(), "New package selected old executor");
   check(initial.at("state") == previous.snapshot().at("state"), "Initial identities changed");
@@ -42,11 +119,22 @@ void model(bool bandaged) {
   check(Json::parse(session.definition_json()).at("kind") == "relational-definition",
         "Definition format missing");
   Session restored(session.definition_json());
+  check(session.definition_json() == session.execution()->definition_json().dump(),
+        "Memory-bounded definition serialization changed canonical bytes");
   check(restored.snapshot() == initial, "Compiled definition round trip differs");
   auto damaged_definition = Json::parse(session.definition_json());
   damaged_definition["program"]["goalRoot"] = 0;
   check(compile_execution_json(damaged_definition.dump()).at("status") == "Invalid",
         "Tampered compiled program accepted");
+  for (const auto *field : {"source", "catalog"}) {
+    auto changed = Json::parse(session.definition_json());
+    if (std::string(field) == "source")
+      changed["source"]["goal"] = false;
+    else
+      changed["catalog"]["unrecognizedMetadata"] = true;
+    check(compile_execution_json(changed.dump()).at("status") == "Invalid",
+          "Moved source/catalog bypassed the persisted digest check");
+  }
   auto state = initial.at("state");
   state["placementOf"]["unknown"] = "center:U";
   check(Json::parse(session.validate_state_json(state.dump())).at("status") == "Invalid",
@@ -74,6 +162,8 @@ void model(bool bandaged) {
     check(mismatch, "Old realization pin was silently rebound");
     realization["compatibleDefinitionDigest"] = session.definition()->digest;
     Geometry geometry(session.execution(), realization.dump());
+    if (bandaged && std::string(kind) == "cube-euclidean")
+      elongated_bandage(session, geometry);
     Geometry independent(session.definition_json(), realization.dump());
     check(geometry.positions() == independent.positions(), "Independent interpreter assets differ");
     check(Json::parse(geometry.prepare_animation_json(witness.dump())).at("status") == "Prepared",
@@ -211,12 +301,41 @@ void alternative() {
   Session unsolved(goal_package.dump());
   check(!unsolved.snapshot().at("solved").get<bool>(), "Relational session used the old home goal");
 }
+void shared_definition() {
+  const auto deep = std::string(520, '[') + "0" + std::string(520, ']');
+  check(compile_execution_json(deep).at("diagnostics")[0].at("reasonCode") == "document.depth",
+        "Execution document nesting limit was lost");
+  std::shared_ptr<const Execution> context;
+  {
+    Session original(bundle(false).dump());
+    context = original.execution();
+    check(original.execute("U", "0").at("status") == "Committed", "Shared definition setup failed");
+    Session fresh(context);
+    check(fresh.execution() == context && fresh.revision() == "0" &&
+              fresh.state() == context->definition()->initial,
+          "Shared session copied mutable state or history");
+    check(fresh.execute("F", "0").at("status") == "Committed" && original.revision() == "1" &&
+              fresh.state() != original.state(),
+          "Shared sessions did not keep independent histories");
+  }
+  Session surviving(context);
+  check(surviving.execute("R", "0").at("status") == "Committed",
+        "Definition did not survive its original session");
+  bool rejected = false;
+  try {
+    Session invalid(std::shared_ptr<const Execution>{});
+  } catch (const std::exception &) {
+    rejected = true;
+  }
+  check(rejected, "Null shared definition accepted");
+}
 } // namespace
 int main() {
   try {
     model(false);
     model(true);
     alternative();
+    shared_definition();
     std::cout << checks << " relational session/interpreter checks passed\n";
   } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';

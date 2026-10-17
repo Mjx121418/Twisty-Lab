@@ -3,6 +3,7 @@
 #include <sstream>
 #include <twisty/relational_compiler.hpp>
 #include <twisty/relational_cube.hpp>
+#include <twisty/relational_gear.hpp>
 
 // A standalone consumer, also used by the independent source-semantics oracle.
 int main(int argc, char **argv) {
@@ -20,6 +21,10 @@ int main(int argc, char **argv) {
       throw std::runtime_error("Cannot open puzzle source");
     std::ostringstream source;
     source << file.rdbuf();
+    if (argc == 3 && std::string(argv[2]) == "--gear-module") {
+      std::cout << twisty::relational::gear_module_json(source.str()) << '\n';
+      return 0;
+    }
     twisty::relational::Puzzle puzzle(source.str());
     if (argc == 3) {
       if (std::string(argv[2]) != "--inspect")

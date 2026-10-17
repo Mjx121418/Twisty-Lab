@@ -1,6 +1,6 @@
 # Experimental relational language and flat executor
 
-This implements the initial milestones of the [migration plan](abstract-language-core-plan.md): an expanded JSON AST, a portable C++ compiler, a domain-free executor, a separate completion helper, and migrated cube/bandage definitions. Those two presets now use relational sessions and interpreters in the reference app and independent clients, with comparison tests against the legacy executor. The interacting puzzles retain their explicit legacy packages during migration.
+This implements the initial milestones of the [migration plan](abstract-language-core-plan.md): an expanded JSON AST, a portable C++ compiler, a domain-free executor, a separate completion helper, and migrated cube/bandage/Helicopter/Bagua/Gear definitions. These presets now use relational sessions and interpreters in the reference app and independent clients, with comparison tests against the legacy executor. All production presets select the flat executor. Explicit legacy document kinds remain available for checked conversion and comparison.
 
 The new path is available through `Twisty::flat_core` (standard C++ library only), `Twisty::relational` (compiler, completion helpers, and JSON facade), and the WASM `RelationalPuzzle` class. It is advertised as `experimentalAPIs.relational = 1`. Public API 2 adds persisted relational packages and complete-tuple session replay through `Twisty::execution`; frame-buffer version 1 is unchanged. The experimental preview remains a separate inspection format without its own semantic digest or replay codec.
 
@@ -19,7 +19,7 @@ Selections decode the supplied choices. Local requirements and interaction claus
 - Binding selects an explicitly named profile or an author-declared default whose state-only `when` predicate holds. Without either, it requests a choice. It never picks the first profile or claims a profile exhausts the relation. A selected tuple still needs execution permission.
 - Discovery streams candidate tuples under separate candidate and result limits. `complete: false` means the search stopped early. An empty incomplete result proves nothing about the existence of a permitted tuple. `complete: true` means every tuple was checked. This is a small bounded exploration helper, not a general-purpose solver.
 
-Distinct choices remain distinct even when their targets coincide. Every permitted transition includes its request, concrete choices, original and target states, and `{piece, from, to, event}` records. An interpreter binds those event IDs to motion tracks; endpoints alone cannot determine winding. The migrated cube interpreter supports its uniform face-rotation tracks; general per-piece event adapters remain ahead.
+Distinct choices remain distinct even when their targets coincide. Every permitted transition includes its request, concrete choices, original and target states, and `{piece, from, to, event}` records. An interpreter binds those event IDs to motion tracks; endpoints alone cannot determine winding. Uniform catalogs bind face/stop tracks; articulated catalogs bind per-domain events independently.
 
 ## JSON AST version 1
 
@@ -80,7 +80,7 @@ Empty `all` is true; empty `any` is false; impossible count intervals are false.
 
 Top-level `relations: [{id, predicate}]` are conjoined with each request's `relation` and selected local requirements. The request leaf lets a relation refer to `u`. Invariant, goal, local requirements, and profile conditions are state-only; they cannot read a choice or request. The invariant defaults to placement compatibility alone. The goal defaults to the initial assignment and never restricts permission. Profile declarations select candidates and do not add clauses to the relation.
 
-The AST is the initial expanded form. The cube/bandage authoring library now supplies finite symmetry expansion and exact profiles. Textual `.pzl` syntax, imports, general reusable domain modules/templates, automatic profile derivation, source-level conflict compositions, and the interacting-puzzle libraries remain subsequent work. No runtime callbacks or puzzle-specific predicate handlers are used here.
+The AST is the initial expanded form. The cube/bandage authoring library now supplies finite symmetry expansion and exact profiles. Textual `.pzl` syntax, imports, general reusable domain modules/templates, automatic profile derivation, source-level conflict compositions, remain subsequent work. No runtime callbacks or puzzle-specific predicate handlers are used here.
 
 ## Cube and bandage migration
 
@@ -119,7 +119,7 @@ python3 scripts/relational-packages.py --write
 python3 scripts/relational-packages.py
 ```
 
-`twisty_relational --cube-module` and `--bandaged-module` print the source/catalog pair. The package checker includes their reproducibility check. Existing schema-1 definitions, realization digests, and saved histories are retained for the production application until the session/codec/interpreter migration; these ASTs do not silently replace those documents.
+`twisty_relational --cube-module` and `--bandaged-module` print the source/catalog pair. The package checker includes their reproducibility check. Existing schema-1 definitions and their pins remain available as explicit legacy imports and comparison oracles. Production cube/bandage sessions use the new packages; old histories require explicit conversion.
 
 ## Native use
 
@@ -136,6 +136,8 @@ if (choices) {
 ```
 
 `Program` validates its data at construction and exposes only const execution data. Each query owns its scratch; a const program can be shared across threads. The compiler package and its metadata should be treated as immutable. Native input/program errors throw `flat::Error` with a `code`. A well-formed but forbidden tuple returns a `Plan` rejection. No session state is mutated by planning, binding, discovery, or goal tests.
+
+For optional native diagnostics, `Program::predicate_trace(root, state, choices)` returns an owned vector indexed by predicate reference: evaluated values are 0 or 1, with −1 for unvisited nodes. It checks input shape, not invariants or request permission. The separate `relational::rejection_inputs()` helper follows a sufficient Boolean proof for a rejected relation and returns owned state-input indices; it adds no predicate kinds or completion policy to the core.
 
 The independently linkable example accepts a source path and one JSON query per stdin line, or `--inspect` for the compiler preview:
 
@@ -195,4 +197,51 @@ The cube/bandage abstract parity gate now also gates their explicit `relational-
 
 Public API 2 adds persisted relational definitions and session schema 2 with complete choices. Planning, interactive/transactional algorithms, revision checks, seeded scrambles, undo/redo, and history loading share this execution context. The interpreter also shares it and validates the concrete tuple and event witness. The existing standalone preview format and its version remain experimental and unchanged. See [the session contracts and explicit legacy-save converter](kernel-api.md#relational-sessions-in-api-2).
 
-The adapter currently accepts the parity-gated cube binding catalog and its constant default profiles/uniform face tracks. It is not a general realization compiler for every raw AST. Interacting puzzle libraries, their completion/inverse catalogs, general frame adapters, richer source diagnostics, and textual/module syntax remain ahead. The new core's two predicate opcodes and disjoint placement layout are unchanged.
+The adapter accepts the parity-gated cube catalog and the uniform port catalog used by Helicopter. It requires reciprocal named moves and one uniform event per request. It is not a general realization compiler for every raw AST. Richer source diagnostics and textual/module syntax remain ahead. Articulated catalogs now bind local events to certified request tracks. The new core's two predicate opcodes and disjoint placement layout are unchanged.
+
+
+## Helicopter migration
+
+[The Helicopter AST](../packages/helicopter/relational.pzl.json) is authored offline by `scripts/helicopter_relational.py` from the same exact rational catalog as the original model. No legacy compiler or planner is called to generate its movement tables. The separate [port catalog](../packages/helicopter/relational-bindings.json) and compact `relational-package.json` load through the portable API without Python.
+
+Its three authoring domains have 144 center, 240 corner, and 36 mechanism placements. All 44 identities survive, including twelve distinct mechanism pieces. Ordinary membership invariants restrict each mechanism to its own three axis phases. The compiler flattens the disjoint catalogs to 420 placements; domain names never enter the core. Shared lowering produces 8,847 predicate nodes, 53,061 child references, 276 sparse maps, and 7,920 action records. Occupancy and exclusion use shared location predicates and capacity counts. Each of 180 directed stop requests relates its three local choices and prohibits occupied unavailable locations. A mechanism move's source-phase requirement also applies to explicitly supplied tuples.
+
+The declared default profile is available only in its source phase. `snapshot.candidateRequests` lists the 60 bound defaults before checking permission; `legalRequests` keeps only permitted candidates. This lets controls show five destinations per current grip while retaining blocked requests for explanations. Neither list is exhaustive discovery of arbitrary completions. Request selection remains outside the core.
+
+`relational-port-bindings` version 1 preserves ports, frames, inverse names, and uniform stop events. `unavailablePlacements` certifies the interpreter's cut sections; it is frame metadata, never a runtime guard. Existing polyhedral, spherical, and port-diagram meshes and sampled tracks are unchanged. New `relational-helicopter-*.json` files carry the new semantic pin and the merged mechanism authoring-domain binding. Saves use schema 2; old saves use the explicit checked converter.
+
+The native migration gate exhausts all local transport entries, all unavailable placement labels, and single-piece substitutions, then checks all directed requests along 33 sampled states and exercises every source phase. It compares exact targets and full participation/event witnesses, axis restrictions, goals, inverse completions, all three interpreters, replay and legacy conversion. Exported cases compare the same independent legacy expectations against WASM. This is not exhaustive enumeration of the labeled state graph; the existing separate shape-graph verifier remains in the regression suite.
+
+Build `helicopter_relational_tests` and `twisty` before regenerating with `python3 scripts/helicopter_relational.py --write`. Generation runs the native parity gate before repinning realizations. Omit `--write` for the reproducibility check. Gear variants/custom masks and Bagua are also migrated.
+
+
+## Gear family migration
+
+The portable `gear_module(gearedEdges, puzzleId)` authoring library in `<twisty/relational_gear.hpp>` derives ordinary ASTs from the new cube library and exact finite face-label permutations. It never calls the old compiler or executor. Normal, Extreme, all-plain, and custom masks retain 26 identities and 198 flat placements: six center, 24 corner, 24 plain-edge, and 144 geared-edge placements. An empty plain/geared authoring domain is allowed. Gear identity is persistent; phase has six exact values.
+
+Each domain supplies ordinary and coupled local movements. For each requested face and inverse, `R` selects the authored tuple and counts geared identities occupying the middle slice: ordinary requests require zero; coupled requests require one through four. Coupled tables turn both opposite faces, leave middle carriers fixed, and advance each driven cog phase with its intrinsic handedness. Occupancy is an ordinary count invariant shared across plain and geared edge domains. No new predicate opcode, guard class, core domain field, or automatic propagation rule is needed.
+
+Runtime authoring uses `{kind: "relational-gear-prototypes", formatVersion: 1, puzzleId, gearedEdges}`. This is a new explicit source kind; `gear-cube-prototypes` continues to mean legacy execution when explicitly imported. C++ `gear_module_source()`, WASM `relationalGearModuleJSON(sourceText)`, and TypeScript `createRelationalGearSource(kernel, source)` expose the library. The standalone native consumer accepts `source.json --gear-module`. `kernelInfoJSON().relationalLibraries` includes `gear-family`. Static ASTs and complete packages remain loadable without using the factory.
+
+`relational-articulated-bindings` version 1 adds `moveInverses[domain][localMove]` and `events[event] = {domain, request}`. Inverse names must be reciprocal. An event certifies exactly the local movement selected by that request's declared default profile in the named domain. All local moves need such a certificate; these profiles select concrete moves in each slot. Event names are separate from legacy transport labels and contain no geometry. The kernel checks bindings when loading, rather than deriving a rotation from endpoints.
+
+The interpreter verifies each certificate against the existing per-domain/per-placement tracks, then selects a track separately for every participant's recorded event. Different domains can execute different local movements in one permitted tuple; explicit idle choices leave their pieces stationary. Inverses and replay use recorded local choices. A separate synthetic gate exercises an alternative tuple whose corners follow R while other domains follow F, including animation, inverse restoration, and saved replay. This prevents the adapter from silently using one global request track for every piece.
+
+All procedural, supplied, six/twelve-tooth, diagram, and spherical meshes and authored rotations are unchanged. New `relational-*` realization files carry new pins. The 300°/60° winding distinction remains in interpreter data; events and exact source placements choose the whole authored path, including self-loops. Legacy save conversion compares the bound transport and complete participants after validating both replays.
+
+Regenerate with `python3 scripts/gear_relational.py --write`, which runs the native migration gate before repinning. The default checks generated sources, catalogs, manifests, and all realization pins. The gate compares all local tables, source mutations, requests along sampled walks, exact phase/event witnesses, and seven existing geometric models across 29 masks, including UF-only and UF/UR. It does not enumerate the full reachable labeled state graph or every mask's entire state graph. Exported cases also compare native and WASM compiler output and execution.
+
+
+## Bagua migration
+
+Bagua uses eight authoring domains, 146 identities, 2,232 disjoint placements, and 30 complete requests. Exact offline geometry authoring still constructs the finite catalog and exclusion resources. `scripts/bagua_relational.py` lowers those data to ordinary placement memberships, shared occupancy predicates, capacity counts, and cross-domain obstruction relations. Runtime permission, validity, and goals use the same flat executor as every other preset. The port catalog retains unavailable-placement certificates for the interpreter, not executable guards.
+
+The module compiles to 54,618 predicate nodes, 129,997 child references, 240 sparse maps, and 4,380 action records. Named source predicates share lowering across state and relation contexts, with request-dependent aliases specialized as needed; sharing does not weaken cycle, depth, or state-only checks. Boolean evaluation stops when a count bound is decided. Diagnostic traces remain exhaustive over reachable nodes so rejection proofs retain all relevant inputs. No predicate opcodes or puzzle-specific executor rules were added.
+
+Generation runs the parity gate against fresh temporary authoring files before updating sources and realization pins. It compares all local transports and blocked placements, representative catalog substitutions for every family, all home-cell orientations for other identities, sampled pair mutations and walks, full witnesses, inverses, replay, explicit legacy conversion, and unchanged assets and sampled poses in all three views. This is finite regression coverage, not a proof covering every reachable state. Build `bagua_relational_tests` and `twisty`, then use `python3 scripts/bagua_relational.py --write`; omit the flag for reproducibility checking.
+
+Imports use a string-aware linear depth scan followed by the normal JSON parser. This avoids quadratic discard scans in the callback parser while preserving its nesting boundary, quoted escapes, and syntax validation. In this container, Bagua first-session construction fell from roughly 17 seconds to 1.4 seconds in WASM; a 30-turn published sequence takes about 0.3 seconds.
+
+The compact AST stays within the existing 8 MiB language limit; the complete package is approximately 9.3 MiB. Session/geometry handles share immutable compiled definitions. Creating a second session from an existing one starts with fresh state/history and avoids recompilation. Execution documents use a separate 16 MiB limit; the WASM heap ceiling remains 256 MiB.
+
+All production presets and the independent Canvas client now load relational packages. Explicit legacy kinds are retained for compatibility imports, checked session conversion, and independent regression oracles. They are never an automatic fallback for a rejected or invalid relational package. Removing the remaining compatibility implementation is a separate breaking cleanup; textual syntax and general authoring modules/templates also remain future language work.

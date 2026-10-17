@@ -20,7 +20,7 @@ Opposite disks are disjoint. Every point belongs to at least one disk because th
 
 Increasing the angular radius enlarges the moving caps and the corner regions while shrinking the center regions. It preserves the same 26 regions and 54 labeled ports throughout the permitted angular-radius interval. The standard cube keeps its 26 pieces; the bandaged cube keeps its 25 pieces, with two constituent regions bound to its composite piece.
 
-Within a region, the face with the largest coordinate assigns its colored port. This subdivides centers into one port, edges into two, and corners into three: 54 labeled ports in total. Labels are attached to persistent pieces; the interpreter obtains their current cell and face from the abstract placement. A bandaged piece binds the five ports of its two constituent regions to one PieceId, retaining the same core footprint guard.
+Within a region, the face with the largest coordinate assigns its colored port. This subdivides centers into one port, edges into two, and corners into three: 54 labeled ports in total. Labels are attached to persistent pieces; the interpreter obtains their current cell and face from the abstract placement. A bandaged piece binds the five ports of its two constituent regions to one PieceId, preserving its logical occupancy and blocking semantics.
 
 ## Moves and verification
 
@@ -34,12 +34,21 @@ Native tests independently check disk membership and port dominance in multiple 
 
 ## Meshes and API
 
-Four local port prototypes cover centers, edges, and the two corner handednesses. Each has a full dark backing surface and an inset colored surface, giving eight reusable assets and 108 visual parts. Their frames are proper rotations about the sphere origin, calculated in C++. No stateful geometry or motion calculation is added to the renderer.
+Four local port prototypes cover centers, edges, and the two corner handednesses. Each has a full dark backing surface and an inset colored surface, giving eight reusable assets and 108 visual parts for the ordinary cube. The bandaged cube adds four joined prototypes (eight assets including backings) while retaining the same 54 picking ports and 108 parts. Their frames are proper rotations about the sphere origin, calculated in C++. No stateful geometry or motion calculation is added to the renderer.
 
 The builder intersects spherical half-space boundaries, includes their exact intersection directions, and tessellates each patch in a gnomonic chart. The default uses 64 angular samples plus boundary intersections, five radial rings, a chart inset of 0.04, and a backing-shell offset of 0.02. The clearance keeps the colored triangle faces outside the entire dark shell, which is checked by the native tests. Vertices and normals are radial; rendered triangles approximate the smooth surface and small-circle cuts.
 
-Realization documents are [cube3/cube-spherical.json](../packages/cube3/cube-spherical.json) and [bandaged/cube-spherical.json](../packages/bandaged/cube-spherical.json). Configurable angular radii range from 55° to 85°, maintaining a margin inside the cube-topology interval `acos(1/sqrt(3)) < alpha < 90°`. Registration also validates radius, inset, shell offset, and tessellation limits. It rejects incompatible definitions or invalid geometric transports.
+Production realization documents are [cube3/relational-cube-spherical.json](../packages/cube3/relational-cube-spherical.json) and [bandaged/relational-cube-spherical.json](../packages/bandaged/relational-cube-spherical.json). Configurable angular radii range from 55° to 85°, maintaining a margin inside the cube-topology interval `acos(1/sqrt(3)) < alpha < 90°`. Registration also validates radius, inset, shell offset, and tessellation limits. It rejects incompatible definitions or invalid geometric transports.
 
-The public API advertises `cube-spherical`; scene metadata adds `ambientSpace: "S2"`, `diskCenters`, `sphereRadius`, `diskAngleDegrees`, and `fidelity: "spherical-surface-model"`. Buffer version 1 and public API version 1 remain compatible. A custom renderer uses the same positions, normals, indices, transforms, and hit-binding methods described in [kernel-api.md](kernel-api.md).
+The public API advertises `cube-spherical`; scene metadata adds `ambientSpace: "S2"`, `diskCenters`, `sphereRadius`, `diskAngleDegrees`, and `fidelity: "spherical-surface-model"`. Frame-buffer version 1 is unchanged in public API 2. A custom renderer uses the same positions, normals, indices, transforms, and hit-binding methods described in [kernel-api.md](kernel-api.md).
 
-This realizes the exact cube port action on an ideal cut surface. Solid piece thickness, internal supports, manufactured hardware, and continuous collision certification need separate geometric models and evidence. The Helicopter preset retains its existing realizations.
+This realizes the exact cube port action on an ideal cut surface. Solid piece thickness, internal supports, manufactured hardware, and continuous collision certification need separate geometric models and evidence. Helicopter and Bagua provide their separate spherical realizations.
+
+
+## Elongated bandaged piece
+
+The UF–UFR compound is one rigid cuboid in the Euclidean view, measuring 1.94 × 0.94 × 0.94 in the existing cell coordinates. Its shared body mesh has 24 vertices and 12 triangles. The two white and two green sticker halves meet along their internal edges; all five abstract ports retain distinct hit bindings. Every placement uses a rigid frame derived from the edge-to-corner direction and its face attachment.
+
+The spherical version is the union of the corresponding two regions. For each pair of adjacent same-color ports, the interpreter removes the internal cut before applying the colored inset. It tessellates this larger region once and splits its triangles at the original small circle with shared boundary vertices. The two selectable halves therefore meet without an internal black seam. Near the 55° radius limit, the union inset is reduced when needed to keep the small corner port visible. External disk boundaries and exact port memberships remain intact, and all frames continue rotating about the sphere origin. This reuses the existing mesh density and reduces the compound's rendered triangle count. The diagram keeps five separate labeled squares.
+
+The abstract definition, 25 persistent identities, ports, placements, and history format are unchanged by this geometry update. Native checks cover all 24 rigid cuboid placements, joined sticker edges, spherical memberships and shared seam vertices, and endpoint continuity.

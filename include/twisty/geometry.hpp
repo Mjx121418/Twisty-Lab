@@ -66,7 +66,7 @@ private:
     std::vector<std::vector<std::vector<Rotation>>> paths;
   };
   std::vector<Component> components_;
-  Index active_operation_ = 0;
+  std::vector<Index> active_piece_operations_;
   std::vector<Model> models_;
   std::vector<Index> model_of_domain_;
   std::vector<std::vector<Frame>> placement_frames_;

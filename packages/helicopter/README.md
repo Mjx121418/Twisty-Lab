@@ -1,7 +1,9 @@
 # Experimental Helicopter Cube package
 
-`definition.json` contains only abstract placements, resources, ports, guards, and transports. `review.json` pins its semantic digest and supplies shape symmetries and published acceptance counts for the headless verifier.
+The production preset uses `relational-package.json`: the abstract AST in `relational.pzl.json` plus separate `relational-bindings.json` port/event metadata. Three authoring domains flatten to 420 placements and preserve all 44 identities. General predicates express jumble obstruction, occupancy, and each mechanism's own axis phases.
 
-`helicopter-euclidean.json` and `helicopter-port-diagram.json` contain the separate polyhedral models, labeled port faces, placement frames, and angular tracks used by the C++ interpreter. The Three.js browser preset displays both realizations.
+`relational-helicopter-{euclidean,port-diagram,spherical}.json` contain the existing separate meshes, labeled ports, placement frames, and angular tracks, pinned to the new semantics. They are loaded by the C++ interpreter and drawn by renderer clients. The abstract package contains no geometry.
 
-See [the model specification](../../docs/helicopter-model.md) for scope, exact authoring, stop notation, geometric interpretation, verification, and remaining independent review. Regenerate deliberately with `python3 scripts/helicopter_model.py --write`; the default command checks all four files without changing them.
+`definition.json` and the original realizations remain explicit legacy imports and comparison oracles. `review.json` pins that model for its independent shape-graph verifier. Legacy saves require the kernel's explicit checked conversion API before loading into the new preset.
+
+See the [relational migration](../../docs/relational-core.md#helicopter-migration) and [original model specification](../../docs/helicopter-model.md). Check reproducibility with `python3 scripts/helicopter_relational.py`; regenerate deliberately with `--write` after building `twisty` and `helicopter_relational_tests`. Regeneration runs the parity gate before repinning. The original exact authoring outputs remain checked by `scripts/helicopter_model.py`.

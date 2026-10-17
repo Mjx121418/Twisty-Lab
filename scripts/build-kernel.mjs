@@ -32,7 +32,7 @@ if (process.argv.includes('--stage-web')) {
   await cp(new URL('../examples/relational/', import.meta.url), new URL('examples/relational/', output), { recursive: true });
   await mkdir(new URL('schemas/', output));
   await cp(new URL('../schemas/relational-puzzle.schema.json', import.meta.url), new URL('schemas/relational-puzzle.schema.json', output));
-  for (const file of ['relational-package.schema.json', 'session-v2.schema.json', 'definition.schema.json'])
+  for (const file of ['relational-package.schema.json', 'relational-gear-source.schema.json', 'session-v2.schema.json', 'definition.schema.json'])
     await cp(new URL(`../schemas/${file}`, import.meta.url), new URL(`schemas/${file}`, output));
   for (const puzzle of ['cube3', 'bandaged', 'helicopter', 'bagua', 'gear', 'gear-extreme', 'gear-plain']) {
     const directory = new URL(`examples/canvas/data/${puzzle}/`, output);
@@ -41,12 +41,19 @@ if (process.argv.includes('--stage-web')) {
     const files = ['definition.json', `${prefix}-port-diagram.json`];
     if (puzzle === 'cube3' || puzzle === 'bandaged') files.push('relational.pzl.json', 'relational-bindings.json',
       'relational-package.json', 'relational-cube-euclidean.json', 'relational-cube-port-diagram.json', 'relational-cube-spherical.json');
-    if (puzzle === 'bagua') files.push('review.json', 'bagua-spherical.json');
+    if (puzzle === 'helicopter') files.push('relational.pzl.json', 'relational-bindings.json',
+      'relational-package.json', 'relational-helicopter-euclidean.json', 'relational-helicopter-port-diagram.json', 'relational-helicopter-spherical.json');
+    if (puzzle === 'bagua') files.push('review.json', 'bagua-spherical.json', 'relational.pzl.json', 'relational-bindings.json',
+      'relational-package.json', 'relational-bagua-euclidean.json', 'relational-bagua-port-diagram.json', 'relational-bagua-spherical.json');
     files.push(`${prefix}-${puzzle === 'bagua' || puzzle.startsWith('gear') ? 'euclidean' : 'spherical'}.json`);
     if (puzzle.startsWith('gear')) files.push('source.json', `${prefix}-six-teeth-euclidean.json`, `${prefix}-six-teeth-port-diagram.json`);
     if (puzzle === 'gear') files.push('gear-normal-euclidean.json', 'normal-meshes.json', 'spherical-meshes.json');
     if (puzzle.startsWith('gear')) files.push(`${prefix}-supplied-euclidean.json`, `${prefix}-spherical.json`);
     if (puzzle === 'gear-extreme') files.push('plain-edge-meshes.json');
+    if (puzzle.startsWith('gear')) {
+      files.push('relational-source.json', 'relational.pzl.json', 'relational-bindings.json', 'relational-package.json', 'relational-manifest.json');
+      files.push(...files.filter((file) => file.startsWith(puzzle + '-') && file.endsWith('.json')).map((file) => 'relational-' + file));
+    }
     for (const file of files) {
       await cp(new URL(`../packages/${puzzle}/${file}`, import.meta.url), new URL(file, directory));
     }

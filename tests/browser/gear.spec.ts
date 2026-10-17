@@ -22,11 +22,11 @@ test('animates coupled gears in synchronized views with shared selection and his
   await page.getByRole('button', { name: 'Select edge/UF', exact: true }).click();
   for (const id of ['cube-view', 'diagram-view']) await expect(page.getByTestId(id)).toHaveAttribute('data-selected-piece', 'edge/UF');
   await page.getByRole('button', { name: 'Move Rq', exact: true }).click();
-  await expect(page.getByTestId('blocking-evidence')).toContainText('placement.blocked');
+  await expect(page.getByTestId('blocking-evidence')).toContainText('relation.rejected');
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
   await page.getByRole('button', { name: 'Move R', exact: true }).click();
   await resting(page);
-  const native = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/gear/source.json', '--algorithm', 'R', '--json'], { encoding: 'utf8' }));
+  const native = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/gear/relational-source.json', '--algorithm', 'R', '--json'], { encoding: 'utf8' }));
   await expect(page.getByTestId('state-digest')).toHaveText(native.snapshot.stateDigest);
   for (const id of ['cube-view', 'diagram-view']) await expect(page.getByTestId(id)).toHaveAttribute('data-selected-piece', 'edge/UF');
   await page.getByRole('button', { name: '↶ Undo' }).click(); await resting(page);
@@ -71,7 +71,7 @@ test('configures arbitrary edge masks and enables ordinary turns on the plain sl
   await expect(page.getByLabel('Gear edge UF')).not.toBeChecked();
   const initial = await page.getByTestId('state-digest').textContent();
   await page.getByRole('button', { name: 'Move Rq', exact: true }).click();
-  await expect(page.getByTestId('blocking-evidence')).toContainText('placement.blocked');
+  await expect(page.getByTestId('blocking-evidence')).toContainText('relation.rejected');
   await page.getByRole('button', { name: 'Move R', exact: true }).click();
   await resting(page);
   await expect(page.getByTestId('state-digest')).not.toHaveText(initial!);
@@ -83,7 +83,7 @@ test('configures arbitrary edge masks and enables ordinary turns on the plain sl
   await page.screenshot({ path: 'test-results/gear-extreme-supplied.png', fullPage: true });
   await page.getByTestId('cube-view').click({ position: { x: 4, y: 4 } });
   await page.keyboard.press('u'); await resting(page);
-  const native = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/gear-extreme/source.json', '--algorithm', 'Uq', '--json'], { encoding: 'utf8' }));
+  const native = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/gear-extreme/relational-source.json', '--algorithm', 'Uq', '--json'], { encoding: 'utf8' }));
   await expect(page.getByTestId('state-digest')).toHaveText(native.snapshot.stateDigest);
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
@@ -100,7 +100,7 @@ test('allows all axes with only UF and UR geared and chooses coupling from curre
   }
   await page.getByRole('button', { name: 'Select edge/UF', exact: true }).click();
   const initial = await page.getByTestId('state-digest').textContent();
-  const source = JSON.parse(readFileSync('packages/gear/source.json', 'utf8'));
+  const source = JSON.parse(readFileSync('packages/gear/relational-source.json', 'utf8'));
   source.puzzleId = 'gear-custom-experimental-v1'; source.gearedEdges = ['UF', 'UR'];
   const sourcePath = testInfo.outputPath('uf-ur-source.json');
   writeFileSync(sourcePath, JSON.stringify(source));

@@ -17,8 +17,8 @@ afterEach(() => { for (const handle of handles) handle.delete(); handles.length 
 
 describe('native / WebAssembly parity', () => {
   it('spins every driven cog about its outward axis on every face, including F at UR', () => {
-    const value = session('packages/gear/source.json');
-    const geometry = runtime.createGeometry(value, read('packages/gear/gear-normal-euclidean.json'));
+    const value = session('packages/gear/relational-source.json');
+    const geometry = runtime.createGeometry(value, read('packages/gear/relational-gear-normal-euclidean.json'));
     expect(geometry).toBeTruthy();
     const definition = JSON.parse(read('packages/gear/definition.json'));
     const placements = new Map<string, any>(definition.placementDomains.find((d: any) => d.id === 'gear-edge').placements.map((q: any) => [q.key, q]));
@@ -64,10 +64,10 @@ describe('native / WebAssembly parity', () => {
     } finally { geometry?.delete(); }
   });
   it('matches complete R/L motion and inverses with only UF geared', () => {
-    const source = JSON.parse(read('packages/gear/source.json')); source.gearedEdges = ['UF'];
+    const source = JSON.parse(read('packages/gear/relational-source.json')); source.gearedEdges = ['UF'];
     const text = JSON.stringify(source);
     const a = new runtime.Session(text), b = new runtime.Session(text);
-    const realization = JSON.parse(read('packages/gear/gear-supplied-euclidean.json'));
+    const realization = JSON.parse(read('packages/gear/relational-gear-supplied-euclidean.json'));
     realization.compatibleDefinitionDigest = snapshot(a).definitionDigest;
     const ga = runtime.createGeometry(a, JSON.stringify(realization));
     const gb = runtime.createGeometry(b, JSON.stringify(realization));
@@ -92,14 +92,14 @@ describe('native / WebAssembly parity', () => {
     } finally { ga?.delete(); gb?.delete(); a.delete(); b.delete(); }
   });
   it('matches dynamic mixed-slice Gear Cube rules, animation and replay for UF/UR', () => {
-    const source = JSON.parse(read('packages/gear/source.json'));
+    const source = JSON.parse(read('packages/gear/relational-source.json'));
     source.puzzleId = 'gear-custom-experimental-v1'; source.gearedEdges = ['UF', 'UR'];
     const text = JSON.stringify(source);
     const directory = mkdtempSync(join(tmpdir(), 'gear-mask-'));
     const path = join(directory, 'source.json'); writeFileSync(path, text);
     const value = new runtime.Session(text), restored = new runtime.Session(text);
-    const compiled = JSON.parse(runtime.compileJSON(text));
-    const realization = JSON.parse(read('packages/gear/gear-supplied-euclidean.json'));
+    const compiled = JSON.parse(runtime.compileExecutionJSON(text));
+    const realization = JSON.parse(read('packages/gear/relational-gear-supplied-euclidean.json'));
     realization.compatibleDefinitionDigest = compiled.definition.definitionDigest;
     const geometry = runtime.createGeometry(value, JSON.stringify(realization));
     try {
@@ -245,9 +245,10 @@ describe('native / WebAssembly parity', () => {
   });
 
   it('matches Bagua published sequences, cut blocking and replay', () => {
-    const path = 'packages/bagua/definition.json';
+    const path = 'packages/bagua/relational-package.json';
     const wasm = new runtime.Session(read(path));
-    const restored = new runtime.Session(read(path));
+    const restored = runtime.createSessionFromDefinition(wasm);
+    if (!restored) throw new Error('Shared session factory returned no handle.');
     try {
       const origin = snapshot(wasm);
       const algorithm = '[[U+ R2:U+],[R R+ L-:D2]]';
@@ -261,7 +262,7 @@ describe('native / WebAssembly parity', () => {
       expect(JSON.parse(wasm.runJSON(`(${algorithm})'`, 'transactional', snapshot(wasm).revision)).status).toBe('Committed');
       expect(snapshot(wasm).stateDigest).toBe(origin.stateDigest);
       const blocked = JSON.parse(wasm.runJSON('U+ R F- U+', 'transactional', snapshot(wasm).revision));
-      expect(blocked.reasonCode).toBe('placement.blocked');
+      expect(blocked.reasonCode).toBe('relation.rejected');
       expect(blocked.implicatedPieces).toContain('corner/07');
       expect(snapshot(wasm).stateDigest).toBe(origin.stateDigest);
     } finally { wasm.delete(); restored.delete(); }

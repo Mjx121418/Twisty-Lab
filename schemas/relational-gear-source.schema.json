@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:twisty:schema:relational-gear-source:1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "formatVersion", "puzzleId", "gearedEdges"],
+  "properties": {
+    "kind": {"const": "relational-gear-prototypes"},
+    "formatVersion": {"const": 1},
+    "puzzleId": {"type": "string", "minLength": 1, "maxLength": 256},
+    "gearedEdges": {"type": "array", "uniqueItems": true, "maxItems": 12,
+      "items": {"enum": ["UF", "UR", "UB", "UL", "DF", "DR", "DB", "DL", "FR", "FL", "BR", "BL"]}}
+  }
+}
