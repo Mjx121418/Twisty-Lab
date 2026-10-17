@@ -45,12 +45,23 @@ def realization(definition, meshes):
     result.update(id=name+'-spherical-v1', kind='articulated-spherical',
                   radius=meshes['radius'], fidelity='supplied-spherical-gear-mesh',
                   modelProvenance={**meshes['provenance'], 'symmetryMeshing': {
-                      'method': 'Fundamental sectors, planar-star simplification, symmetric cog shells, then rotation/reflection copies',
+                      'method': 'Fundamental sectors, planar-star simplification, shared plain-edge/carrier tips and symmetric cog shells, then rotation/reflection copies',
                       'groups': groups, 'sourcePrototypeTriangles': original_triangles,
                       'prototypeTriangles': triangles, 'coordinateWeldDigits': 10,
                       'cogSurface': {'parameterization': 'gnomonic', 'radialBands': 3,
                                      'rimInset': gear_spherical_mesh.COG_RIM_WIDTH,
                                      'seamHalfWidth': gear_spherical_mesh.COG_SEAM_HALF_WIDTH},
+                      'plainEdgeSurface': {'parameterization': 'gnomonic', 'radialBands': 3,
+                                           'cornerBoundary': 'great-circle arc',
+                                           'cornerClearance': gear_spherical_mesh.PLAIN_EDGE_CORNER_CLEARANCE,
+                                           'centerBoundary': 'source notch',
+                                           'rimInset': gear_spherical_mesh.PLAIN_EDGE_RIM_WIDTH,
+                                           'seamHalfWidth': gear_spherical_mesh.PLAIN_EDGE_SEAM_HALF_WIDTH},
+                      'carrierSurface': {'parameterization': 'gnomonic',
+                                         'centerBoundary': 'shared plain-edge tip',
+                                         'sideBoundary': 'uninterrupted great-circle arc',
+                                         'cogBoundary': 'source profile extended to straight sides',
+                                         'rimInset': gear_spherical_mesh.PLAIN_EDGE_RIM_WIDTH},
                       'centralBallPreserved': True}})
     return result
 

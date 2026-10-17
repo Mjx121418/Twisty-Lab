@@ -106,19 +106,23 @@ The subsequent symmetry remeshing in `scripts/gear_spherical_mesh.py` clips one 
 
 The cog's tooth outline comes from the source sector's walls, while its shell and color layout are meshed separately. Its outer and inner caps use three radial bands on the original shell radii. A geometric inset supplies an even black rim, and a continuous straight band separates the two colors in gnomonic coordinates. All three rotated separator bands cut the triangle layout, preserving sixfold connectivity; only the band between the actual colored halves is painted black. This removes the four stray rim tips and pinched center caused by copying texture-seam fragments. The rim inset is 0.016 and the separator half-width is 0.011 in those coordinates, recorded in realization provenance. The generator samples both sides and the interior of the band to check continuity.
 
+The large plain edge used by Extreme has smooth, nearly straight boundaries beside the corners, following the cubical reference. Each side is a straight line in edge-centered gnomonic coordinates, which projects to a great-circle arc on the sphere. Its width leaves a minimum 0.018 clearance from the adjacent corner's outer surface in those coordinates, avoiding an overly broad gap. This removes the source's side step and bulge while retaining its center-facing notch. The colored patches follow the sides with a 0.016 inset and a 0.011 separator half-width; both shell radii and D2 symmetry are preserved. These shared plain-edge assets also apply to all-plain and custom configurations. The generator checks both straightness and corner clearance in the resting geometry; continuous motion clearance remains unverified.
+
+The normal cube's outer edge carrier uses the same center-facing tip, width, notch, and colored border as the large plain edge. Each short side is one uninterrupted great-circle arc, with its cog-facing profile extended to meet that side. Both pieces share the tip authoring and border offset, so their physical and visible gaps beside the common center piece agree. The generator independently compares both center-facing profiles across their full widths and checks that the short sides have no intermediate bends. Carrier caps use radial normals and retain D2 symmetry and the original shell radii.
+
 Each piece uses fewer triangles after remeshing:
 
 | Shared prototype, including colored patches | Supplied triangles | Symmetry-meshed triangles |
 | --- | ---: | ---: |
 | Corner | 3,197 | 1,068 |
 | Center | 172 | 160 |
-| Plain edge | 2,918 | 980 |
-| Geared edge carrier | 867 | 384 |
+| Plain edge | 2,918 | 992 |
+| Geared edge carrier | 867 | 576 |
 | Six-tooth cog | 2,784 | 1,056 |
 | Central ball | 320 | 320 |
-| **Total** | **10,258** | **3,968** |
+| **Total** | **10,258** | **4,172** |
 
-The generator audits every triangle under these symmetries, checking connectivity, winding, and transported port labels. It also rejects triangle-budget increases relative to the supplied source. The supplied source remains unchanged for reproducibility. Selecting a common sector regularizes its slightly asymmetric approximations, and the cog caps are projected onto their spherical shells, so the resulting facets and sticker borders can differ slightly from the original conversion; the source-conservation comparison above applies to the original converted assets. Motion tracks and smooth-normal handling are preserved. The assembled normal preset contains **27,104 triangles**, down from **70,740**, including the ball.
+The generator audits every triangle under these symmetries, checking connectivity, winding, and transported port labels. It also rejects triangle-budget increases relative to the supplied source. The supplied source remains unchanged for reproducibility. Selecting a common sector regularizes its slightly asymmetric approximations, and the authored edge caps are projected onto their spherical shells, so the resulting facets and sticker borders can differ slightly from the original conversion; the source-conservation comparison above applies to the original converted assets. Motion tracks and smooth-normal handling are preserved. The assembled normal preset contains **29,408 triangles**, down from **70,740**, including the ball.
 
 The supplied mesh is available for browser review. Its catalog transports and radial motion are checked; continuous surface coverage, tooth contact, and clearance remain unverified. The earlier rejected 70° disk candidate is a different construction. See [spherical status and the historical audit](gear-spherical-feasibility.md).
 
