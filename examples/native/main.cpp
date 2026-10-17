@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
     if (argc != 4)
       throw std::runtime_error("Expected definition, realization, and algorithm.");
     twisty::Session session(read(argv[1]));
-    twisty::Geometry geometry(session.definition(), read(argv[2]));
+    twisty::Geometry geometry(session.execution(), read(argv[2]));
     const auto result = session.run(argv[3], "transactional", session.revision());
     if (result.at("status") != "Committed")
       throw std::runtime_error(result.dump());

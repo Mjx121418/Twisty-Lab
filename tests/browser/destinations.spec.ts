@@ -9,7 +9,8 @@ let runtime: MainModule;
 test.beforeAll(async () => { runtime = await createKernel(); });
 test.beforeEach(async ({ page }) => {
   await page.goto('./');
-  await expect(page.getByTestId('state-digest')).toHaveText(/[0-9a-f]{64}/);
+  // A cold browser compiles WASM after page load under the container CPU budget.
+  await expect(page.getByTestId('state-digest')).toHaveText(/[0-9a-f]{64}/, { timeout: 15_000 });
   await expect(page.locator('canvas')).toHaveCount(2);
 });
 
@@ -25,8 +26,9 @@ async function clickDestination(page: Page, viewId: string, puzzle: string, real
   const host = page.getByTestId(viewId);
   await host.scrollIntoViewIfNeeded();
   const bounds = (await host.boundingBox())!;
-  const session = new KernelSession(runtime, readFileSync(`packages/${puzzle}/${puzzle === 'helicopter' || puzzle === 'bagua' ? 'definition' : 'source'}.json`, 'utf8'));
-  const geometry = runtime.createGeometry(session.native, readFileSync(`packages/${puzzle}/${realization}.json`, 'utf8'))!;
+  const migrated = puzzle === 'cube3' || puzzle === 'bandaged';
+  const session = new KernelSession(runtime, readFileSync(`packages/${puzzle}/${migrated ? 'relational-package' : 'definition'}.json`, 'utf8'));
+  const geometry = runtime.createGeometry(session.native, readFileSync(`packages/${puzzle}/${migrated ? 'relational-' : ''}${realization}.json`, 'utf8'))!;
   const assets: BufferGeometry[] = [];
   const material = new MeshBasicMaterial();
   try {

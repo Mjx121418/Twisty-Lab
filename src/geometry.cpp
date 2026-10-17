@@ -81,9 +81,11 @@ V diagram_center(const std::string &face) {
 }
 } // namespace
 Geometry::Geometry(const std::string &definition_json, const std::string &realization_json)
-    : Geometry(load_definition(Json::parse(definition_json)), realization_json) {}
+    : Geometry(Execution::from_source(definition_json), realization_json) {}
 Geometry::Geometry(std::shared_ptr<const Definition> definition, const std::string &realization_json)
-    : definition_(std::move(definition)), displayed_(definition_->initial), before_(displayed_),
+    : Geometry(Execution::legacy(std::move(definition)), realization_json) {}
+Geometry::Geometry(std::shared_ptr<const Execution> execution, const std::string &realization_json)
+    : execution_(std::move(execution)), definition_(execution_->definition()), displayed_(definition_->initial), before_(displayed_),
       after_(displayed_) {
   const auto realization = Json::parse(realization_json);
   if (realization.at("schemaVersion") != 1 ||
@@ -217,7 +219,7 @@ std::array<double, 16> Geometry::resting(const Part &part, const State &state) c
   return matrix({1, 0, 0}, {0, 1, 0}, {0, 0, 1}, p);
 }
 void Geometry::set_state_json(const std::string &state) {
-  const auto decoded = decode_state(*definition_, Json::parse(state));
+  const auto decoded = execution_->decode(Json::parse(state));
   displayed_ = decoded;
   before_ = decoded;
   after_ = decoded;
@@ -230,15 +232,22 @@ std::string Geometry::prepare_animation_json(const std::string &input) {
     if (transition.at("definitionDigest") != definition_->digest)
       throw DiagnosticError("realization.digest_mismatch", "/transition",
                             "Transition uses a different definition.");
-    auto before = decode_state(*definition_, transition.at("beforeState"));
-    auto after = decode_state(*definition_, transition.at("afterState"));
+    auto before = execution_->decode(transition.at("beforeState"));
+    auto after = execution_->decode(transition.at("afterState"));
     const auto operation_id = transition.at("request").at("operation").get<std::string>();
-    const auto planned = plan(*definition_, before, operation_id);
+    if (execution_->relational() && !transition.at("request").contains("choices"))
+      throw DiagnosticError("realization.witness", "/request/choices", "Relational witnesses must record the completed tuple.");
+    const auto planned = execution_->plan(before, operation_id, transition.at("request").value("choices", Json{}));
     if (!planned.transition || planned.transition->after != after ||
-        encode_transition(*definition_, *planned.transition) != transition)
+        execution_->encode(*planned.transition) != transition)
       throw DiagnosticError("realization.witness", "/transition",
                             "Transition is not the recorded abstract witness.");
     const auto &operation = definition_->operations.at(definition_->operation_ids.at(operation_id));
+    if (execution_->relational())
+      for (const auto &event : planned.transition->events)
+        if (event != operation.transport)
+          throw DiagnosticError("realization.unsupported_transition", "/pieceActions/event",
+                                "This cube track cannot realize a different per-piece rotation event.");
     const auto op_index = definition_->operation_ids.at(operation_id);
     const auto track_axis = catalog_ ? tracks_[op_index].axis : Point{};
     const auto axis = catalog_ ? V{track_axis[0], track_axis[1], track_axis[2]} :

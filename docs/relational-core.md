@@ -1,8 +1,8 @@
 # Experimental relational language and flat executor
 
-This implements the first execution milestone of the [migration plan](abstract-language-core-plan.md): an expanded JSON AST, a portable C++ compiler, a domain-free executor, and a separate completion helper. The existing simulator presets, sessions, geometric interpreters, and saved documents still use the existing API. Their migration follows after this foundation has been checked against the current puzzles.
+This implements the initial milestones of the [migration plan](abstract-language-core-plan.md): an expanded JSON AST, a portable C++ compiler, a domain-free executor, a separate completion helper, and migrated cube/bandage definitions. Those two presets now use relational sessions and interpreters in the reference app and independent clients, with comparison tests against the legacy executor. The interacting puzzles retain their explicit legacy packages during migration.
 
-The new path is available through `Twisty::flat_core` (standard C++ library only), `Twisty::relational` (compiler, completion helpers, and JSON facade), and the WASM `RelationalPuzzle` class. It is advertised as `experimentalAPIs.relational = 1`. Public API 1 and frame-buffer version 1 remain unchanged; replacing the existing session/definition contracts will require the planned API 2. Do not treat the experimental preview as a persisted compiled-definition or session format. It has no semantic digest or replay codec yet.
+The new path is available through `Twisty::flat_core` (standard C++ library only), `Twisty::relational` (compiler, completion helpers, and JSON facade), and the WASM `RelationalPuzzle` class. It is advertised as `experimentalAPIs.relational = 1`. Public API 2 adds persisted relational packages and complete-tuple session replay through `Twisty::execution`; frame-buffer version 1 is unchanged. The experimental preview remains a separate inspection format without its own semantic digest or replay codec.
 
 ## Execution and completion
 
@@ -19,7 +19,7 @@ Selections decode the supplied choices. Local requirements and interaction claus
 - Binding selects an explicitly named profile or an author-declared default whose state-only `when` predicate holds. Without either, it requests a choice. It never picks the first profile or claims a profile exhausts the relation. A selected tuple still needs execution permission.
 - Discovery streams candidate tuples under separate candidate and result limits. `complete: false` means the search stopped early. An empty incomplete result proves nothing about the existence of a permitted tuple. `complete: true` means every tuple was checked. This is a small bounded exploration helper, not a general-purpose solver.
 
-Distinct choices remain distinct even when their targets coincide. Every permitted transition includes its request, concrete choices, original and target states, and `{piece, from, to, event}` records. A renderer will eventually bind those event IDs to motion tracks; endpoints alone cannot determine winding.
+Distinct choices remain distinct even when their targets coincide. Every permitted transition includes its request, concrete choices, original and target states, and `{piece, from, to, event}` records. An interpreter binds those event IDs to motion tracks; endpoints alone cannot determine winding. The migrated cube interpreter supports its uniform face-rotation tracks; general per-piece event adapters remain ahead.
 
 ## JSON AST version 1
 
@@ -80,7 +80,46 @@ Empty `all` is true; empty `any` is false; impossible count intervals are false.
 
 Top-level `relations: [{id, predicate}]` are conjoined with each request's `relation` and selected local requirements. The request leaf lets a relation refer to `u`. Invariant, goal, local requirements, and profile conditions are state-only; they cannot read a choice or request. The invariant defaults to placement compatibility alone. The goal defaults to the initial assignment and never restricts permission. Profile declarations select candidates and do not add clauses to the relation.
 
-The AST is the initial expanded form. Textual `.pzl` syntax, imports, reusable domain modules, finite templates, symmetry expansion, automatic exact-profile derivation, source-level conflict compositions, and shipped-puzzle libraries are subsequent milestones. No runtime callbacks or puzzle-specific predicate handlers are used here.
+The AST is the initial expanded form. The cube/bandage authoring library now supplies finite symmetry expansion and exact profiles. Textual `.pzl` syntax, imports, general reusable domain modules/templates, automatic profile derivation, source-level conflict compositions, and the interacting-puzzle libraries remain subsequent work. No runtime callbacks or puzzle-specific predicate handlers are used here.
+
+## Cube and bandage migration
+
+The portable authoring library generates ordinary version-1 ASTs directly from the 24-element permutation action on six abstract face labels. It does not load a legacy definition or call the legacy planner. The old and new compilers share a standalone `Twisty::symmetry` library for finite permutation/group/coset operations; that library depends only on standard C++.
+
+| Model | Persistent pieces | Flat placements | Directed requests |
+| --- | --- | --- | --- |
+| 3×3 cube | 26 | 54 | 12 |
+| UF–UFR bandaged cube | 25 | 78 | 12 |
+
+Corners, edges, and centers each have local transports. Every request permits exactly the tuple selecting its face turn in each domain, with an explicit default profile supplying that tuple. Center self-loops retain the quarter-turn event. The compound module adds its 24 rigid placements and replaces the two fused identities with one `bandage/UF-UFR` identity.
+
+Bandage blocking is an interaction clause: selecting a local face movement implies the compound is outside the placements cut by that movement. The compound transport table contains only fully participating placements. Occupancy is a conjunction of ordinary exact-one cardinality formulas, one per abstract slot; the compound contributes to both slots it occupies. There is no footprint handler in the executor.
+
+The generated artifacts are:
+
+- [Cube AST](../packages/cube3/relational.pzl.json) and [catalog bindings](../packages/cube3/relational-bindings.json).
+- [Bandage AST](../packages/bandaged/relational.pzl.json) and [catalog bindings](../packages/bandaged/relational-bindings.json).
+
+The separate catalogs preserve piece names, local ports, port labels, abstract resource incidence, qualified placement names, inverse requests, and event names. They contain no coordinates, meshes, or rotation angles. These are the bindings needed for the later interpreter migration, rather than extra fields in the executing core.
+
+Native clients can call `cube_module(false)` or `cube_module(true)` from `<twisty/relational_cube.hpp>` and pass its `source` to `compile()`. WASM exposes `relationalCubeModuleJSON(bandaged)`; TypeScript clients can use:
+
+```js
+const { source, catalog } = createRelationalCubeSource(kernel, true);
+const puzzle = new ExperimentalRelationalPuzzle(kernel, JSON.stringify(source));
+// catalog carries names/ports/events; puzzle carries the executable program.
+```
+
+Import `createRelationalCubeSource` from the SDK entry point. Libraries are advertised in `kernelInfoJSON().relationalLibraries`. Checked-in ASTs can also be loaded directly without invoking the authoring library.
+
+Regenerate or check the artifacts after building the native example:
+
+```sh
+python3 scripts/relational-packages.py --write
+python3 scripts/relational-packages.py
+```
+
+`twisty_relational --cube-module` and `--bandaged-module` print the source/catalog pair. The package checker includes their reproducibility check. Existing schema-1 definitions, realization digests, and saved histories are retained for the production application until the session/codec/interpreter migration; these ASTs do not silently replace those documents.
 
 ## Native use
 
@@ -102,9 +141,9 @@ The independently linkable example accepts a source path and one JSON query per 
 
 ```sh
 cmake --preset native
-cmake --build --preset native --target twisty_relational flat_core_tests
+cmake --build --preset native --target twisty_relational flat_core_tests cube_relational_tests
 build/native/twisty_relational examples/relational/coupled.pzl.json --inspect
-ctest --preset native -R 'flat_core_relations|relational_source_oracle'
+ctest --preset native -R 'flat_core_relations|relational_source_oracle|cube_relational_migration|relational_cube_packages'
 ```
 
 The example's separate CMake project can also consume an installed `Twisty::relational` package. Linking only `Twisty::flat_core` adds neither the JSON compiler nor the existing executor/geometry.
@@ -146,3 +185,14 @@ Source text is limited to 8 MiB and nesting 256; expressions expand to at most 1
 The native C++ tests exercise atomic execution, input/program validation, conflicting writers, source/target predicate rebinding, self-loop participation, deep graphs, candidate binding, and truncated/exhaustive discovery. The independent Python evaluator reads the source AST directly and exhausts tiny global assignments and local tuples, including invalid cross-catalog imports. Its expected states and witnesses never use compiled predicates or maps. Seeded Boolean formulas and a separate occupancy model broaden the comparison.
 
 After building native, WASM, and the packaged SDK, run `npm run check:relational`. Optional positional arguments select the native example executable and SDK entry point when using separate build directories. That check compares both the native consumer and WASM API with the source oracle, including complete transition witnesses and compiler previews.
+
+The cube/bandage migration gate exhausts every local transport entry and all 24 whole-cube orientations, then checks all directed requests along deterministic sampled walks. It compares goals, legal requests, exact targets, inverse permission, full participant/event witnesses, labels and ports, and every single-piece placement substitution into the origin. Wrong local choices—including omitted movements represented as idle—are rejected. The native test exports reference cases for WASM comparison, and installed/copied SDK consumers exercise the same authoring library and migrated programs. This is not exhaustive enumeration of either puzzle's complete reachable state graph.
+
+
+## Session and interpreter migration
+
+The cube/bandage abstract parity gate now also gates their explicit `relational-package` documents and three rebundled realization pins. The reference app, default headless CLI, and independent Canvas example use those packages. `Twisty::execution` is a transitional wire/frame adapter: it maps the existing symbolic inspector state and grouped port frames to the domain-free executor. All new permission, validity, and goal checks use `flat::Program`; old execution is selected only by explicit legacy document kinds.
+
+Public API 2 adds persisted relational definitions and session schema 2 with complete choices. Planning, interactive/transactional algorithms, revision checks, seeded scrambles, undo/redo, and history loading share this execution context. The interpreter also shares it and validates the concrete tuple and event witness. The existing standalone preview format and its version remain experimental and unchanged. See [the session contracts and explicit legacy-save converter](kernel-api.md#relational-sessions-in-api-2).
+
+The adapter currently accepts the parity-gated cube binding catalog and its constant default profiles/uniform face tracks. It is not a general realization compiler for every raw AST. Interacting puzzle libraries, their completion/inverse catalogs, general frame adapters, richer source diagnostics, and textual/module syntax remain ahead. The new core's two predicate opcodes and disjoint placement layout are unchanged.

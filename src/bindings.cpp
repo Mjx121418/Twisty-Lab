@@ -20,16 +20,21 @@ val transforms(const Geometry &geometry) {
 std::string compile(const std::string &source) {
   return compile_json(source).dump();
 }
+std::string compile_execution(const std::string &source) {
+  return compile_execution_json(source).dump();
+}
 std::string kernel_info_json() {
   return kernel_info().dump();
 }
 Geometry *create_geometry(const Session &session, const std::string &realization) {
-  return new Geometry(session.definition(), realization);
+  return new Geometry(session.execution(), realization);
 }
 } // namespace
 EMSCRIPTEN_BINDINGS(twisty) {
   function("compileJSON", &compile);
+  function("compileExecutionJSON", &compile_execution);
   function("compileRelationalJSON", &twisty::relational::compile_json);
+  function("relationalCubeModuleJSON", &twisty::relational::cube_module_json);
   function("kernelInfoJSON", &kernel_info_json);
   function("createGeometry", &create_geometry, return_value_policy::take_ownership());
   class_<twisty::relational::Puzzle>("RelationalPuzzle")
@@ -51,7 +56,8 @@ EMSCRIPTEN_BINDINGS(twisty) {
       .function("scrambleJSON", &Session::scramble_json)
       .function("saveJSON", &Session::save_json)
       .function("saveWithPresentationJSON", &Session::save_with_presentation_json)
-      .function("loadJSON", &Session::load_json);
+      .function("loadJSON", &Session::load_json)
+      .function("convertLegacyJSON", &Session::convert_legacy_json);
   class_<Geometry>("Geometry")
       .constructor<std::string, std::string>()
       .function("sceneJSON", &Geometry::scene_json)

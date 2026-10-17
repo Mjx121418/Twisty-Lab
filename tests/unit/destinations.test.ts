@@ -9,8 +9,8 @@ beforeAll(async () => { runtime = await createKernel(); });
 
 describe('selected-piece destinations', () => {
   it.each([
-    ['cube3', 'source.json', 'corner/UFR', ['F', "F'", 'R', "R'", 'U', "U'"]],
-    ['bandaged', 'source.json', 'bandage/UF-UFR', ['F', "F'", 'U', "U'"]],
+    ['cube3', 'relational-package.json', 'corner/UFR', ['F', "F'", 'R', "R'", 'U', "U'"]],
+    ['bandaged', 'relational-package.json', 'bandage/UF-UFR', ['F', "F'", 'U', "U'"]],
     ['helicopter', 'definition.json', 'corner/BDL', ['BL_ab', 'BL_ac', 'BL_ad', 'BL_ae', 'BL_af', 'DB_ab', 'DB_ac', 'DB_ad', 'DB_ae', 'DB_af', 'DL_ab', 'DL_ac', 'DL_ad', 'DL_ae', 'DL_af']],
   ])('plans only legal participating moves for %s', (puzzle, source, pieceId, expected) => {
     const session = new KernelSession(runtime, read(`packages/${puzzle}/${source}`));
@@ -26,7 +26,7 @@ describe('selected-piece destinations', () => {
   });
 
   it('includes centers that participate without changing placement and rejects old source revisions', () => {
-    const session = new KernelSession(runtime, read('packages/cube3/source.json'));
+    const session = new KernelSession(runtime, read('packages/cube3/relational-package.json'));
     try {
       const snapshot = session.snapshot();
       const options = pieceDestinations(session, snapshot, 'center/U');

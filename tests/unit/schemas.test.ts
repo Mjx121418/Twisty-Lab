@@ -6,6 +6,9 @@ import createModule from '../../kernel/generated/twisty.mjs';
 it('validates the experimental relational AST and compiles the example', async () => {
   const ajv = new Ajv({ allErrors: true, strict: false });
   const validate = ajv.compile(JSON.parse(readFileSync('schemas/relational-puzzle.schema.json', 'utf8')));
+  ajv.addSchema(JSON.parse(readFileSync('schemas/definition.schema.json', 'utf8')));
+  const validatePackage = ajv.compile(JSON.parse(readFileSync('schemas/relational-package.schema.json', 'utf8')));
+  const validateSession = ajv.compile(JSON.parse(readFileSync('schemas/session-v2.schema.json', 'utf8')));
   const text = readFileSync('examples/relational/coupled.pzl.json', 'utf8');
   expect(validate(JSON.parse(text)), JSON.stringify(validate.errors)).toBe(true);
   const malformed = JSON.parse(text);
@@ -13,6 +16,23 @@ it('validates the experimental relational AST and compiles the example', async (
   expect(validate(malformed)).toBe(false);
   const module = await createModule();
   expect(JSON.parse(module.compileRelationalJSON(text)).status).toBe('Compiled');
+  for (const [name, bandaged] of [['cube3', false], ['bandaged', true]] as const) {
+    const source = JSON.parse(readFileSync(`packages/${name}/relational.pzl.json`, 'utf8'));
+    const catalog = JSON.parse(readFileSync(`packages/${name}/relational-bindings.json`, 'utf8'));
+    expect(validate(source), JSON.stringify(validate.errors)).toBe(true);
+    expect(JSON.parse(module.relationalCubeModuleJSON(bandaged))).toEqual({ source, catalog });
+    expect(JSON.parse(module.compileRelationalJSON(JSON.stringify(source))).status).toBe('Compiled');
+    const packageText = readFileSync(`packages/${name}/relational-package.json`, 'utf8');
+    expect(validatePackage(JSON.parse(packageText)), JSON.stringify(validatePackage.errors)).toBe(true);
+    const session = new module.Session(packageText);
+    try {
+      expect(JSON.parse(session.runJSON('U R', 'transactional', '0')).status).toBe('Committed');
+      const saved = JSON.parse(session.saveJSON());
+      expect(validateSession(saved), JSON.stringify(validateSession.errors)).toBe(true);
+      delete saved.logical.requests[0].choices;
+      expect(validateSession(saved)).toBe(false);
+    } finally { session.delete(); }
+  }
 });
 
 it('validates shipped sources, compiled definitions, realizations, fixtures, and generated saves', async () => {

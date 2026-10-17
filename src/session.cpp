@@ -13,6 +13,8 @@ template <class F> std::string guarded(F function) {
         result["transitionRecords"].push_back(transition.dump());
     }
     return result.dump();
+  } catch (const flat::Error &error) {
+    return Json{{"status", "Invalid"}, {"diagnostics", Json::array({{{"reasonCode", error.code}, {"source", "/"}, {"message", error.what()}}})}}.dump();
   } catch (const std::exception &error) {
     return diagnostic_result(error).dump();
   }
@@ -31,28 +33,16 @@ std::uint64_t parse_revision(const std::string &text) {
 }
 std::string request_operation(const std::string &request) {
   const auto parsed = Json::parse(request);
+  if (parsed.contains("choices") && !parsed.at("choices").is_array())
+    throw DiagnosticError("request.choices", "/choices", "A supplied completion must be an array.");
   if (!parsed.at("parameters").is_object() || !parsed.at("parameters").empty())
     throw DiagnosticError("request.parameters", "/parameters",
                           "These primitives accept an empty parameter record.");
   return parsed.at("operation").get<std::string>();
 }
 } // namespace
-Session::Session(const std::string &source) {
-  auto document = Json::parse(source);
-  if (document.value("kind", std::string{}) == "finite-definition")
-    definition_ = load_definition(std::move(document));
-  else {
-    const auto result = compile_json(source);
-    if (result.at("status") != "Compiled") {
-      const auto &diagnostic = result.at("diagnostics").at(0);
-      throw DiagnosticError(diagnostic.at("reasonCode"), diagnostic.value("source", "/"),
-                            diagnostic.at("message"));
-    }
-    definition_ = load_definition(result.at("definition"));
-  }
-  origin_ = definition_->initial;
-  state_ = origin_;
-}
+Session::Session(const std::string &source) : execution_(Execution::from_source(source)),
+    definition_(execution_->definition()), origin_(definition_->initial), state_(origin_) {}
 std::string Session::revision() const {
   return std::to_string(revision_);
 }
@@ -70,8 +60,8 @@ Json Session::snapshot() const {
                           {"revision", revision()},
                           {"stateDigest", state_digest(*definition_, state_)},
                           {"state", encode_state(*definition_, state_)},
-                          {"solved", solved(*definition_, state_)},
-                          {"legalRequests", legal_operations(*definition_, state_)},
+                          {"solved", execution_->is_solved(state_)},
+                          {"legalRequests", execution_->legal(state_)},
                           {"history", history},
                           {"cursor", cursor_},
                           {"canUndo", cursor_ > 0},
@@ -79,19 +69,25 @@ Json Session::snapshot() const {
   cached_revision_ = revision_;
   return *cached_snapshot_;
 }
-Json Session::commit(const Transition &transition, bool truncate) {
+Json Session::commit(const CompletedTransition &transition, bool truncate) {
   if (truncate && cursor_ < history_.size())
     history_.erase(history_.begin() + static_cast<std::ptrdiff_t>(cursor_), history_.end());
   state_ = transition.after;
   history_.push_back(transition);
   ++cursor_;
   ++revision_;
-  return encode_transition(*definition_, transition);
+  return execution_->encode(transition);
 }
 Json Session::execute(const std::string &operation, const std::string &expected) {
+  return execute_completed(operation, nullptr, expected);
+}
+Json Session::execute(const std::string &operation, const std::vector<std::string> &choices, const std::string &expected) {
+  return execute_completed(operation, choices, expected);
+}
+Json Session::execute_completed(const std::string &operation, const Json &choices, const std::string &expected) {
   if (stale(expected))
     return stale_result(revision());
-  const auto result = plan(*definition_, state_, operation);
+  const auto result = execution_->plan(state_, operation, choices);
   if (!result.transition)
     return result.blocked;
   const auto transition = commit(*result.transition);
@@ -104,10 +100,10 @@ Json Session::run(const std::string &notation, const std::string &policy, const 
     throw DiagnosticError("sequence.policy", "/policy", "Policy must be interactive or transactional.");
   const auto moves = parse_notation(*definition_, notation);
   Json transitions = Json::array();
-  std::vector<Transition> staged;
+  std::vector<CompletedTransition> staged;
   auto temporary = state_;
   for (std::size_t i = 0; i < moves.size(); ++i) {
-    auto result = plan(*definition_, policy == "transactional" ? temporary : state_, moves[i]);
+    auto result = execution_->plan(policy == "transactional" ? temporary : state_, moves[i]);
     if (!result.transition) {
       auto blocked = result.blocked;
       blocked["failureIndex"] = i;
@@ -133,15 +129,14 @@ Json Session::undo(const std::string &expected) {
   if (cursor_ == 0)
     return {{"status", "NoHistory"}};
   const auto &previous = history_[cursor_ - 1];
-  const auto &operation = definition_->operations.at(definition_->operation_ids.at(previous.operation));
-  auto result = plan(*definition_, state_, operation.inverse);
+  auto result = execution_->inverse(previous);
   if (!result.transition || result.transition->after != previous.before)
     throw DiagnosticError("history.inverse", "/history", "Inverse did not restore the full recorded state.");
   state_ = result.transition->after;
   --cursor_;
   ++revision_;
   return {{"status", "Committed"},
-          {"transitions", Json::array({encode_transition(*definition_, *result.transition)})},
+          {"transitions", Json::array({execution_->encode(*result.transition)})},
           {"snapshot", snapshot()}};
 }
 Json Session::redo(const std::string &expected) {
@@ -149,14 +144,14 @@ Json Session::redo(const std::string &expected) {
     return stale_result(revision());
   if (cursor_ == history_.size())
     return {{"status", "NoHistory"}};
-  auto result = plan(*definition_, state_, history_[cursor_].operation);
+  auto result = execution_->plan(state_, history_[cursor_].operation, execution_->relational() ? Json(history_[cursor_].choices) : Json{});
   if (!result.transition || result.transition->after != history_[cursor_].after)
     throw DiagnosticError("history.replay", "/history", "Redo differs from the recorded transition.");
   state_ = result.transition->after;
   ++cursor_;
   ++revision_;
   return {{"status", "Committed"},
-          {"transitions", Json::array({encode_transition(*definition_, *result.transition)})},
+          {"transitions", Json::array({execution_->encode(*result.transition)})},
           {"snapshot", snapshot()}};
 }
 Json Session::scramble(std::uint32_t seed, std::uint32_t length, const std::string &expected) {
@@ -173,11 +168,11 @@ Json Session::scramble(std::uint32_t seed, std::uint32_t length, const std::stri
   };
   auto temporary = state_;
   std::vector<std::string> moves;
-  std::vector<Transition> staged;
+  std::vector<CompletedTransition> staged;
   std::string excluded;
   for (std::uint32_t i = 0; i < length; ++i) {
     std::vector<std::string> candidates;
-    for (const auto &request : legal_operations(*definition_, temporary))
+    for (const auto &request : execution_->legal(temporary))
       candidates.push_back(request.at("operation").get<std::string>());
     if (candidates.empty())
       break;
@@ -190,7 +185,7 @@ Json Session::scramble(std::uint32_t seed, std::uint32_t length, const std::stri
       draw = next();
     const auto selected = candidates[draw % bound];
     moves.push_back(selected);
-    auto transition = *plan(*definition_, temporary, selected).transition;
+    auto transition = *execution_->plan(temporary, selected).transition;
     temporary = transition.after;
     staged.push_back(std::move(transition));
     excluded = definition_->operations.at(definition_->operation_ids.at(selected)).inverse;
@@ -222,12 +217,13 @@ Json Session::save() const {
     requests.push_back({{"operation", history_[i].operation},
                         {"parameters", Json::object()},
                         {"afterStateDigest", state_digest(*definition_, history_[i].after)}});
+    if (execution_->relational()) requests.back()["choices"] = history_[i].choices;
     if ((i + 1) % 100 == 0)
       checkpoints.push_back({{"index", i + 1},
                              {"state", encode_state(*definition_, history_[i].after)},
                              {"stateDigest", state_digest(*definition_, history_[i].after)}});
   }
-  return {{"schemaVersion", 1},
+  return {{"schemaVersion", execution_->relational() ? 2 : 1},
           {"kind", "session"},
           {"logical",
            {{"definitionDigest", definition_->digest},
@@ -240,22 +236,24 @@ Json Session::save() const {
           {"presentation", Json::object()}};
 }
 Json Session::load(const Json &document) {
-  if (document.at("schemaVersion") != 1 || document.at("kind") != "session")
-    throw DiagnosticError("session.schema", "/", "Expected a schema-v1 session.");
+  if (document.at("schemaVersion") != (execution_->relational() ? 2 : 1) || document.at("kind") != "session")
+    throw DiagnosticError("session.schema", "/", "Session schema does not match this execution format. Legacy histories require explicit conversion.");
   const auto &logical = document.at("logical");
   if (logical.at("definitionDigest") != definition_->digest)
     throw DiagnosticError("definition.digest_mismatch", "/logical/definitionDigest",
                           "Saved session uses different puzzle semantics.");
-  const auto origin = decode_state(*definition_, logical.at("originState"));
+  const auto origin = execution_->decode(logical.at("originState"));
   auto temporary = origin;
-  std::vector<Transition> history;
+  std::vector<CompletedTransition> history;
   if (logical.at("requests").size() > 100000)
     throw DiagnosticError("history.limit", "/logical/requests", "History exceeds 100000 requests.");
   for (const auto &request : logical.at("requests")) {
-    if (!request.at("parameters").empty())
+    if (!request.at("parameters").is_object() || !request.at("parameters").empty())
       throw DiagnosticError("request.parameters", "/logical/requests",
                             "These primitives do not accept parameters.");
-    auto result = plan(*definition_, temporary, request.at("operation"));
+    if (execution_->relational() && (!request.contains("choices") || !request.at("choices").is_array()))
+      throw DiagnosticError("history.choices", "/logical/requests", "Relational replay requires recorded choices.");
+    auto result = execution_->plan(temporary, request.at("operation").get<std::string>(), request.value("choices", Json{}));
     if (!result.transition)
       throw DiagnosticError("history.blocked", "/logical/requests", result.blocked.dump());
     if (request.at("afterStateDigest") != state_digest(*definition_, result.transition->after))
@@ -277,7 +275,7 @@ Json Session::load(const Json &document) {
       throw DiagnosticError("history.checkpoint", "/logical/checkpoints",
                             "Checkpoint index is outside history.");
     const auto expected_state = index == 0 ? origin : history[index - 1].after;
-    if (decode_state(*definition_, checkpoint.at("state")) != expected_state ||
+    if (execution_->decode(checkpoint.at("state")) != expected_state ||
         checkpoint.at("stateDigest") != state_digest(*definition_, expected_state))
       throw DiagnosticError("history.checkpoint", "/logical/checkpoints", "Checkpoint differs from replay.");
   }
@@ -290,27 +288,24 @@ Json Session::load(const Json &document) {
   return {{"status", "Loaded"}, {"snapshot", snapshot()}};
 }
 std::string Session::definition_json() const {
-  auto output = definition_->canonical;
-  output["definitionDigest"] = definition_->digest;
-  output["provenance"] = definition_->provenance;
-  return output.dump();
+  return execution_->definition_json().dump();
 }
 std::string Session::execute_json(const std::string &request, const std::string &expected) {
-  return guarded([&]() { return execute(request_operation(request), expected); });
+  return guarded([&]() { return execute_completed(request_operation(request), Json::parse(request).value("choices", Json{}), expected); });
 }
 std::string Session::plan_json(const std::string &request, const std::string &state) const {
   return guarded([&]() -> Json {
     const auto result =
-        plan(*definition_, decode_state(*definition_, Json::parse(state)), request_operation(request));
+        execution_->plan(execution_->decode(Json::parse(state)), request_operation(request), Json::parse(request).value("choices", Json{}));
     if (!result.transition)
       return result.blocked;
-    const auto transition = encode_transition(*definition_, *result.transition);
+    const auto transition = execution_->encode(*result.transition);
     return {{"status", "Legal"}, {"transition", transition}, {"transitionRecord", transition.dump()}};
   });
 }
 std::string Session::validate_state_json(const std::string &state) const {
   return guarded([&]() -> Json {
-    decode_state(*definition_, Json::parse(state));
+    execution_->decode(Json::parse(state));
     return {{"status", "Valid"}};
   });
 }
@@ -329,6 +324,48 @@ std::string Session::scramble_json(std::uint32_t seed, std::uint32_t length, con
 }
 std::string Session::load_json(const std::string &document) {
   return guarded([&]() { return load(Json::parse(document)); });
+}
+std::string Session::convert_legacy_json(const std::string &text, const std::string &legacy_definition) const {
+  return guarded([&]() -> Json {
+    if (!execution_->relational())
+      throw DiagnosticError("session.conversion", "/", "Conversion requires a relational destination.");
+    const auto document = Json::parse(text);
+    // Requiring a compiled schema-1 definition keeps the old meaning explicit.
+    const auto old_definition = load_definition(Json::parse(legacy_definition));
+    Session previous(legacy_definition);
+    previous.load(document);
+    if (old_definition->id != definition_->id)
+      throw DiagnosticError("session.conversion", "/puzzleId", "Puzzle IDs differ.");
+    Session converted(definition_json());
+    converted.origin_ = execution_->decode(encode_state(*old_definition, previous.origin_));
+    converted.state_ = converted.origin_;
+    for (const auto &recorded : previous.history_) {
+      const auto planned = execution_->plan(converted.state_, recorded.operation);
+      if (!planned.transition || encode_state(*definition_, planned.transition->after) != encode_state(*old_definition, recorded.after))
+        throw DiagnosticError("session.conversion", "/logical/requests", "New completion does not reproduce the legacy replay.");
+      auto old_actions = encode_transition(*old_definition, recorded).at("pieceActions");
+      auto new_actions = execution_->encode(*planned.transition).at("pieceActions");
+      for (auto &action : new_actions) {
+        if (action.at("event") != action.at("transport"))
+          throw DiagnosticError("session.conversion", "/logical/requests", "New event differs from the legacy transport.");
+        action.erase("event");
+      }
+      const auto sort = [](Json &actions) {
+        std::sort(actions.begin(), actions.end(), [](const auto &a, const auto &b) {
+          return a.at("pieceId").template get<std::string>() < b.at("pieceId").template get<std::string>();
+        });
+      };
+      sort(old_actions); sort(new_actions);
+      if (old_actions != new_actions)
+        throw DiagnosticError("session.conversion", "/logical/requests", "New completion has different participants or transports.");
+      converted.commit(*planned.transition);
+    }
+    converted.cursor_ = previous.cursor_;
+    converted.state_ = converted.cursor_ == 0 ? converted.origin_ : converted.history_[converted.cursor_ - 1].after;
+    converted.revision_ = parse_revision(document.at("logical").at("revision").get<std::string>());
+    auto result = converted.save(); result["presentation"] = document.at("presentation");
+    return {{"status", "Converted"}, {"session", result}};
+  });
 }
 std::string Session::save_with_presentation_json(const std::string &presentation) const {
   auto document = save();

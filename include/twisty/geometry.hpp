@@ -1,5 +1,5 @@
 #pragma once
-#include "twisty/core.hpp"
+#include "twisty/execution.hpp"
 #include <array>
 
 namespace twisty {
@@ -7,6 +7,7 @@ class Geometry {
 public:
   Geometry(const std::string &definition_json, const std::string &realization_json);
   Geometry(std::shared_ptr<const Definition>, const std::string &realization_json);
+  Geometry(std::shared_ptr<const Execution>, const std::string &realization_json);
   std::string scene_json() const {
     return scene_.dump();
   }
@@ -28,6 +29,7 @@ public:
   }
 
 private:
+  std::shared_ptr<const Execution> execution_;
   struct Part {
     Index piece;
     std::string port;

@@ -1,0 +1,1520 @@
+{
+  "domains": [
+    {
+      "id": "center",
+      "localPorts": [
+        "0"
+      ],
+      "pieces": [
+        "center/B",
+        "center/D",
+        "center/F",
+        "center/L",
+        "center/R",
+        "center/U"
+      ],
+      "placements": [
+        "center/center:B",
+        "center/center:D",
+        "center/center:F",
+        "center/center:L",
+        "center/center:R",
+        "center/center:U"
+      ]
+    },
+    {
+      "id": "corner",
+      "localPorts": [
+        "0",
+        "1",
+        "2"
+      ],
+      "pieces": [
+        "corner/DBL",
+        "corner/DBR",
+        "corner/DFL",
+        "corner/DFR",
+        "corner/UBL",
+        "corner/UBR",
+        "corner/UFL",
+        "corner/UFR"
+      ],
+      "placements": [
+        "corner/corner:B-D-R",
+        "corner/corner:B-L-D",
+        "corner/corner:B-R-U",
+        "corner/corner:B-U-L",
+        "corner/corner:D-B-L",
+        "corner/corner:D-F-R",
+        "corner/corner:D-L-F",
+        "corner/corner:D-R-B",
+        "corner/corner:F-D-L",
+        "corner/corner:F-L-U",
+        "corner/corner:F-R-D",
+        "corner/corner:F-U-R",
+        "corner/corner:L-B-U",
+        "corner/corner:L-D-B",
+        "corner/corner:L-F-D",
+        "corner/corner:L-U-F",
+        "corner/corner:R-B-D",
+        "corner/corner:R-D-F",
+        "corner/corner:R-F-U",
+        "corner/corner:R-U-B",
+        "corner/corner:U-B-R",
+        "corner/corner:U-F-L",
+        "corner/corner:U-L-B",
+        "corner/corner:U-R-F"
+      ]
+    },
+    {
+      "id": "edge",
+      "localPorts": [
+        "0",
+        "1"
+      ],
+      "pieces": [
+        "edge/BL",
+        "edge/BR",
+        "edge/DB",
+        "edge/DF",
+        "edge/DL",
+        "edge/DR",
+        "edge/FL",
+        "edge/FR",
+        "edge/UB",
+        "edge/UF",
+        "edge/UL",
+        "edge/UR"
+      ],
+      "placements": [
+        "edge/edge:B-D",
+        "edge/edge:B-L",
+        "edge/edge:B-R",
+        "edge/edge:B-U",
+        "edge/edge:D-B",
+        "edge/edge:D-F",
+        "edge/edge:D-L",
+        "edge/edge:D-R",
+        "edge/edge:F-D",
+        "edge/edge:F-L",
+        "edge/edge:F-R",
+        "edge/edge:F-U",
+        "edge/edge:L-B",
+        "edge/edge:L-D",
+        "edge/edge:L-F",
+        "edge/edge:L-U",
+        "edge/edge:R-B",
+        "edge/edge:R-D",
+        "edge/edge:R-F",
+        "edge/edge:R-U",
+        "edge/edge:U-B",
+        "edge/edge:U-F",
+        "edge/edge:U-L",
+        "edge/edge:U-R"
+      ]
+    }
+  ],
+  "faceLabels": [
+    "U",
+    "R",
+    "F",
+    "D",
+    "L",
+    "B"
+  ],
+  "kind": "relational-cube-bindings",
+  "pieces": {
+    "center/B": {
+      "domain": "center",
+      "home": "center/center:B",
+      "portLabels": {
+        "0": "B"
+      }
+    },
+    "center/D": {
+      "domain": "center",
+      "home": "center/center:D",
+      "portLabels": {
+        "0": "D"
+      }
+    },
+    "center/F": {
+      "domain": "center",
+      "home": "center/center:F",
+      "portLabels": {
+        "0": "F"
+      }
+    },
+    "center/L": {
+      "domain": "center",
+      "home": "center/center:L",
+      "portLabels": {
+        "0": "L"
+      }
+    },
+    "center/R": {
+      "domain": "center",
+      "home": "center/center:R",
+      "portLabels": {
+        "0": "R"
+      }
+    },
+    "center/U": {
+      "domain": "center",
+      "home": "center/center:U",
+      "portLabels": {
+        "0": "U"
+      }
+    },
+    "corner/DBL": {
+      "domain": "corner",
+      "home": "corner/corner:D-B-L",
+      "portLabels": {
+        "0": "D",
+        "1": "B",
+        "2": "L"
+      }
+    },
+    "corner/DBR": {
+      "domain": "corner",
+      "home": "corner/corner:D-R-B",
+      "portLabels": {
+        "0": "D",
+        "1": "R",
+        "2": "B"
+      }
+    },
+    "corner/DFL": {
+      "domain": "corner",
+      "home": "corner/corner:D-L-F",
+      "portLabels": {
+        "0": "D",
+        "1": "L",
+        "2": "F"
+      }
+    },
+    "corner/DFR": {
+      "domain": "corner",
+      "home": "corner/corner:D-F-R",
+      "portLabels": {
+        "0": "D",
+        "1": "F",
+        "2": "R"
+      }
+    },
+    "corner/UBL": {
+      "domain": "corner",
+      "home": "corner/corner:U-L-B",
+      "portLabels": {
+        "0": "U",
+        "1": "L",
+        "2": "B"
+      }
+    },
+    "corner/UBR": {
+      "domain": "corner",
+      "home": "corner/corner:U-B-R",
+      "portLabels": {
+        "0": "U",
+        "1": "B",
+        "2": "R"
+      }
+    },
+    "corner/UFL": {
+      "domain": "corner",
+      "home": "corner/corner:U-F-L",
+      "portLabels": {
+        "0": "U",
+        "1": "F",
+        "2": "L"
+      }
+    },
+    "corner/UFR": {
+      "domain": "corner",
+      "home": "corner/corner:U-R-F",
+      "portLabels": {
+        "0": "U",
+        "1": "R",
+        "2": "F"
+      }
+    },
+    "edge/BL": {
+      "domain": "edge",
+      "home": "edge/edge:B-L",
+      "portLabels": {
+        "0": "B",
+        "1": "L"
+      }
+    },
+    "edge/BR": {
+      "domain": "edge",
+      "home": "edge/edge:B-R",
+      "portLabels": {
+        "0": "B",
+        "1": "R"
+      }
+    },
+    "edge/DB": {
+      "domain": "edge",
+      "home": "edge/edge:D-B",
+      "portLabels": {
+        "0": "D",
+        "1": "B"
+      }
+    },
+    "edge/DF": {
+      "domain": "edge",
+      "home": "edge/edge:D-F",
+      "portLabels": {
+        "0": "D",
+        "1": "F"
+      }
+    },
+    "edge/DL": {
+      "domain": "edge",
+      "home": "edge/edge:D-L",
+      "portLabels": {
+        "0": "D",
+        "1": "L"
+      }
+    },
+    "edge/DR": {
+      "domain": "edge",
+      "home": "edge/edge:D-R",
+      "portLabels": {
+        "0": "D",
+        "1": "R"
+      }
+    },
+    "edge/FL": {
+      "domain": "edge",
+      "home": "edge/edge:F-L",
+      "portLabels": {
+        "0": "F",
+        "1": "L"
+      }
+    },
+    "edge/FR": {
+      "domain": "edge",
+      "home": "edge/edge:F-R",
+      "portLabels": {
+        "0": "F",
+        "1": "R"
+      }
+    },
+    "edge/UB": {
+      "domain": "edge",
+      "home": "edge/edge:U-B",
+      "portLabels": {
+        "0": "U",
+        "1": "B"
+      }
+    },
+    "edge/UF": {
+      "domain": "edge",
+      "home": "edge/edge:U-F",
+      "portLabels": {
+        "0": "U",
+        "1": "F"
+      }
+    },
+    "edge/UL": {
+      "domain": "edge",
+      "home": "edge/edge:U-L",
+      "portLabels": {
+        "0": "U",
+        "1": "L"
+      }
+    },
+    "edge/UR": {
+      "domain": "edge",
+      "home": "edge/edge:U-R",
+      "portLabels": {
+        "0": "U",
+        "1": "R"
+      }
+    }
+  },
+  "placements": {
+    "center/center:B": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "B"
+        }
+      },
+      "resources": [
+        "B"
+      ]
+    },
+    "center/center:D": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "D"
+        }
+      },
+      "resources": [
+        "D"
+      ]
+    },
+    "center/center:F": {
+      "ports": {
+        "0": {
+          "attachment": "F",
+          "cell": "F"
+        }
+      },
+      "resources": [
+        "F"
+      ]
+    },
+    "center/center:L": {
+      "ports": {
+        "0": {
+          "attachment": "L",
+          "cell": "L"
+        }
+      },
+      "resources": [
+        "L"
+      ]
+    },
+    "center/center:R": {
+      "ports": {
+        "0": {
+          "attachment": "R",
+          "cell": "R"
+        }
+      },
+      "resources": [
+        "R"
+      ]
+    },
+    "center/center:U": {
+      "ports": {
+        "0": {
+          "attachment": "U",
+          "cell": "U"
+        }
+      },
+      "resources": [
+        "U"
+      ]
+    },
+    "corner/corner:B-D-R": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "DBR"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "DBR"
+        },
+        "2": {
+          "attachment": "R",
+          "cell": "DBR"
+        }
+      },
+      "resources": [
+        "DBR"
+      ]
+    },
+    "corner/corner:B-L-D": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "DBL"
+        },
+        "1": {
+          "attachment": "L",
+          "cell": "DBL"
+        },
+        "2": {
+          "attachment": "D",
+          "cell": "DBL"
+        }
+      },
+      "resources": [
+        "DBL"
+      ]
+    },
+    "corner/corner:B-R-U": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "UBR"
+        },
+        "1": {
+          "attachment": "R",
+          "cell": "UBR"
+        },
+        "2": {
+          "attachment": "U",
+          "cell": "UBR"
+        }
+      },
+      "resources": [
+        "UBR"
+      ]
+    },
+    "corner/corner:B-U-L": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "UBL"
+        },
+        "1": {
+          "attachment": "U",
+          "cell": "UBL"
+        },
+        "2": {
+          "attachment": "L",
+          "cell": "UBL"
+        }
+      },
+      "resources": [
+        "UBL"
+      ]
+    },
+    "corner/corner:D-B-L": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "DBL"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "DBL"
+        },
+        "2": {
+          "attachment": "L",
+          "cell": "DBL"
+        }
+      },
+      "resources": [
+        "DBL"
+      ]
+    },
+    "corner/corner:D-F-R": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "DFR"
+        },
+        "1": {
+          "attachment": "F",
+          "cell": "DFR"
+        },
+        "2": {
+          "attachment": "R",
+          "cell": "DFR"
+        }
+      },
+      "resources": [
+        "DFR"
+      ]
+    },
+    "corner/corner:D-L-F": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "DFL"
+        },
+        "1": {
+          "attachment": "L",
+          "cell": "DFL"
+        },
+        "2": {
+          "attachment": "F",
+          "cell": "DFL"
+        }
+      },
+      "resources": [
+        "DFL"
+      ]
+    },
+    "corner/corner:D-R-B": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "DBR"
+        },
+        "1": {
+          "attachment": "R",
+          "cell": "DBR"
+        },
+        "2": {
+          "attachment": "B",
+          "cell": "DBR"
+        }
+      },
+      "resources": [
+        "DBR"
+      ]
+    },
+    "corner/corner:F-D-L": {
+      "ports": {
+        "0": {
+          "attachment": "F",
+          "cell": "DFL"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "DFL"
+        },
+        "2": {
+          "attachment": "L",
+          "cell": "DFL"
+        }
+      },
+      "resources": [
+        "DFL"
+      ]
+    },
+    "corner/corner:F-L-U": {
+      "ports": {
+        "0": {
+          "attachment": "F",
+          "cell": "UFL"
+        },
+        "1": {
+          "attachment": "L",
+          "cell": "UFL"
+        },
+        "2": {
+          "attachment": "U",
+          "cell": "UFL"
+        }
+      },
+      "resources": [
+        "UFL"
+      ]
+    },
+    "corner/corner:F-R-D": {
+      "ports": {
+        "0": {
+          "attachment": "F",
+          "cell": "DFR"
+        },
+        "1": {
+          "attachment": "R",
+          "cell": "DFR"
+        },
+        "2": {
+          "attachment": "D",
+          "cell": "DFR"
+        }
+      },
+      "resources": [
+        "DFR"
+      ]
+    },
+    "corner/corner:F-U-R": {
+      "ports": {
+        "0": {
+          "attachment": "F",
+          "cell": "UFR"
+        },
+        "1": {
+          "attachment": "U",
+          "cell": "UFR"
+        },
+        "2": {
+          "attachment": "R",
+          "cell": "UFR"
+        }
+      },
+      "resources": [
+        "UFR"
+      ]
+    },
+    "corner/corner:L-B-U": {
+      "ports": {
+        "0": {
+          "attachment": "L",
+          "cell": "UBL"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "UBL"
+        },
+        "2": {
+          "attachment": "U",
+          "cell": "UBL"
+        }
+      },
+      "resources": [
+        "UBL"
+      ]
+    },
+    "corner/corner:L-D-B": {
+      "ports": {
+        "0": {
+          "attachment": "L",
+          "cell": "DBL"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "DBL"
+        },
+        "2": {
+          "attachment": "B",
+          "cell": "DBL"
+        }
+      },
+      "resources": [
+        "DBL"
+      ]
+    },
+    "corner/corner:L-F-D": {
+      "ports": {
+        "0": {
+          "attachment": "L",
+          "cell": "DFL"
+        },
+        "1": {
+          "attachment": "F",
+          "cell": "DFL"
+        },
+        "2": {
+          "attachment": "D",
+          "cell": "DFL"
+        }
+      },
+      "resources": [
+        "DFL"
+      ]
+    },
+    "corner/corner:L-U-F": {
+      "ports": {
+        "0": {
+          "attachment": "L",
+          "cell": "UFL"
+        },
+        "1": {
+          "attachment": "U",
+          "cell": "UFL"
+        },
+        "2": {
+          "attachment": "F",
+          "cell": "UFL"
+        }
+      },
+      "resources": [
+        "UFL"
+      ]
+    },
+    "corner/corner:R-B-D": {
+      "ports": {
+        "0": {
+          "attachment": "R",
+          "cell": "DBR"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "DBR"
+        },
+        "2": {
+          "attachment": "D",
+          "cell": "DBR"
+        }
+      },
+      "resources": [
+        "DBR"
+      ]
+    },
+    "corner/corner:R-D-F": {
+      "ports": {
+        "0": {
+          "attachment": "R",
+          "cell": "DFR"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "DFR"
+        },
+        "2": {
+          "attachment": "F",
+          "cell": "DFR"
+        }
+      },
+      "resources": [
+        "DFR"
+      ]
+    },
+    "corner/corner:R-F-U": {
+      "ports": {
+        "0": {
+          "attachment": "R",
+          "cell": "UFR"
+        },
+        "1": {
+          "attachment": "F",
+          "cell": "UFR"
+        },
+        "2": {
+          "attachment": "U",
+          "cell": "UFR"
+        }
+      },
+      "resources": [
+        "UFR"
+      ]
+    },
+    "corner/corner:R-U-B": {
+      "ports": {
+        "0": {
+          "attachment": "R",
+          "cell": "UBR"
+        },
+        "1": {
+          "attachment": "U",
+          "cell": "UBR"
+        },
+        "2": {
+          "attachment": "B",
+          "cell": "UBR"
+        }
+      },
+      "resources": [
+        "UBR"
+      ]
+    },
+    "corner/corner:U-B-R": {
+      "ports": {
+        "0": {
+          "attachment": "U",
+          "cell": "UBR"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "UBR"
+        },
+        "2": {
+          "attachment": "R",
+          "cell": "UBR"
+        }
+      },
+      "resources": [
+        "UBR"
+      ]
+    },
+    "corner/corner:U-F-L": {
+      "ports": {
+        "0": {
+          "attachment": "U",
+          "cell": "UFL"
+        },
+        "1": {
+          "attachment": "F",
+          "cell": "UFL"
+        },
+        "2": {
+          "attachment": "L",
+          "cell": "UFL"
+        }
+      },
+      "resources": [
+        "UFL"
+      ]
+    },
+    "corner/corner:U-L-B": {
+      "ports": {
+        "0": {
+          "attachment": "U",
+          "cell": "UBL"
+        },
+        "1": {
+          "attachment": "L",
+          "cell": "UBL"
+        },
+        "2": {
+          "attachment": "B",
+          "cell": "UBL"
+        }
+      },
+      "resources": [
+        "UBL"
+      ]
+    },
+    "corner/corner:U-R-F": {
+      "ports": {
+        "0": {
+          "attachment": "U",
+          "cell": "UFR"
+        },
+        "1": {
+          "attachment": "R",
+          "cell": "UFR"
+        },
+        "2": {
+          "attachment": "F",
+          "cell": "UFR"
+        }
+      },
+      "resources": [
+        "UFR"
+      ]
+    },
+    "edge/edge:B-D": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "DB"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "DB"
+        }
+      },
+      "resources": [
+        "DB"
+      ]
+    },
+    "edge/edge:B-L": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "BL"
+        },
+        "1": {
+          "attachment": "L",
+          "cell": "BL"
+        }
+      },
+      "resources": [
+        "BL"
+      ]
+    },
+    "edge/edge:B-R": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "BR"
+        },
+        "1": {
+          "attachment": "R",
+          "cell": "BR"
+        }
+      },
+      "resources": [
+        "BR"
+      ]
+    },
+    "edge/edge:B-U": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "UB"
+        },
+        "1": {
+          "attachment": "U",
+          "cell": "UB"
+        }
+      },
+      "resources": [
+        "UB"
+      ]
+    },
+    "edge/edge:D-B": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "DB"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "DB"
+        }
+      },
+      "resources": [
+        "DB"
+      ]
+    },
+    "edge/edge:D-F": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "DF"
+        },
+        "1": {
+          "attachment": "F",
+          "cell": "DF"
+        }
+      },
+      "resources": [
+        "DF"
+      ]
+    },
+    "edge/edge:D-L": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "DL"
+        },
+        "1": {
+          "attachment": "L",
+          "cell": "DL"
+        }
+      },
+      "resources": [
+        "DL"
+      ]
+    },
+    "edge/edge:D-R": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "DR"
+        },
+        "1": {
+          "attachment": "R",
+          "cell": "DR"
+        }
+      },
+      "resources": [
+        "DR"
+      ]
+    },
+    "edge/edge:F-D": {
+      "ports": {
+        "0": {
+          "attachment": "F",
+          "cell": "DF"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "DF"
+        }
+      },
+      "resources": [
+        "DF"
+      ]
+    },
+    "edge/edge:F-L": {
+      "ports": {
+        "0": {
+          "attachment": "F",
+          "cell": "FL"
+        },
+        "1": {
+          "attachment": "L",
+          "cell": "FL"
+        }
+      },
+      "resources": [
+        "FL"
+      ]
+    },
+    "edge/edge:F-R": {
+      "ports": {
+        "0": {
+          "attachment": "F",
+          "cell": "FR"
+        },
+        "1": {
+          "attachment": "R",
+          "cell": "FR"
+        }
+      },
+      "resources": [
+        "FR"
+      ]
+    },
+    "edge/edge:F-U": {
+      "ports": {
+        "0": {
+          "attachment": "F",
+          "cell": "UF"
+        },
+        "1": {
+          "attachment": "U",
+          "cell": "UF"
+        }
+      },
+      "resources": [
+        "UF"
+      ]
+    },
+    "edge/edge:L-B": {
+      "ports": {
+        "0": {
+          "attachment": "L",
+          "cell": "BL"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "BL"
+        }
+      },
+      "resources": [
+        "BL"
+      ]
+    },
+    "edge/edge:L-D": {
+      "ports": {
+        "0": {
+          "attachment": "L",
+          "cell": "DL"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "DL"
+        }
+      },
+      "resources": [
+        "DL"
+      ]
+    },
+    "edge/edge:L-F": {
+      "ports": {
+        "0": {
+          "attachment": "L",
+          "cell": "FL"
+        },
+        "1": {
+          "attachment": "F",
+          "cell": "FL"
+        }
+      },
+      "resources": [
+        "FL"
+      ]
+    },
+    "edge/edge:L-U": {
+      "ports": {
+        "0": {
+          "attachment": "L",
+          "cell": "UL"
+        },
+        "1": {
+          "attachment": "U",
+          "cell": "UL"
+        }
+      },
+      "resources": [
+        "UL"
+      ]
+    },
+    "edge/edge:R-B": {
+      "ports": {
+        "0": {
+          "attachment": "R",
+          "cell": "BR"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "BR"
+        }
+      },
+      "resources": [
+        "BR"
+      ]
+    },
+    "edge/edge:R-D": {
+      "ports": {
+        "0": {
+          "attachment": "R",
+          "cell": "DR"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "DR"
+        }
+      },
+      "resources": [
+        "DR"
+      ]
+    },
+    "edge/edge:R-F": {
+      "ports": {
+        "0": {
+          "attachment": "R",
+          "cell": "FR"
+        },
+        "1": {
+          "attachment": "F",
+          "cell": "FR"
+        }
+      },
+      "resources": [
+        "FR"
+      ]
+    },
+    "edge/edge:R-U": {
+      "ports": {
+        "0": {
+          "attachment": "R",
+          "cell": "UR"
+        },
+        "1": {
+          "attachment": "U",
+          "cell": "UR"
+        }
+      },
+      "resources": [
+        "UR"
+      ]
+    },
+    "edge/edge:U-B": {
+      "ports": {
+        "0": {
+          "attachment": "U",
+          "cell": "UB"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "UB"
+        }
+      },
+      "resources": [
+        "UB"
+      ]
+    },
+    "edge/edge:U-F": {
+      "ports": {
+        "0": {
+          "attachment": "U",
+          "cell": "UF"
+        },
+        "1": {
+          "attachment": "F",
+          "cell": "UF"
+        }
+      },
+      "resources": [
+        "UF"
+      ]
+    },
+    "edge/edge:U-L": {
+      "ports": {
+        "0": {
+          "attachment": "U",
+          "cell": "UL"
+        },
+        "1": {
+          "attachment": "L",
+          "cell": "UL"
+        }
+      },
+      "resources": [
+        "UL"
+      ]
+    },
+    "edge/edge:U-R": {
+      "ports": {
+        "0": {
+          "attachment": "U",
+          "cell": "UR"
+        },
+        "1": {
+          "attachment": "R",
+          "cell": "UR"
+        }
+      },
+      "resources": [
+        "UR"
+      ]
+    }
+  },
+  "puzzleId": "cube3",
+  "requests": {
+    "B": {
+      "event": "B.clockwise",
+      "family": "B",
+      "inverse": "B'",
+      "profile": "turn"
+    },
+    "B'": {
+      "event": "B.counterclockwise",
+      "family": "B",
+      "inverse": "B",
+      "profile": "turn"
+    },
+    "D": {
+      "event": "D.clockwise",
+      "family": "D",
+      "inverse": "D'",
+      "profile": "turn"
+    },
+    "D'": {
+      "event": "D.counterclockwise",
+      "family": "D",
+      "inverse": "D",
+      "profile": "turn"
+    },
+    "F": {
+      "event": "F.clockwise",
+      "family": "F",
+      "inverse": "F'",
+      "profile": "turn"
+    },
+    "F'": {
+      "event": "F.counterclockwise",
+      "family": "F",
+      "inverse": "F",
+      "profile": "turn"
+    },
+    "L": {
+      "event": "L.clockwise",
+      "family": "L",
+      "inverse": "L'",
+      "profile": "turn"
+    },
+    "L'": {
+      "event": "L.counterclockwise",
+      "family": "L",
+      "inverse": "L",
+      "profile": "turn"
+    },
+    "R": {
+      "event": "R.clockwise",
+      "family": "R",
+      "inverse": "R'",
+      "profile": "turn"
+    },
+    "R'": {
+      "event": "R.counterclockwise",
+      "family": "R",
+      "inverse": "R",
+      "profile": "turn"
+    },
+    "U": {
+      "event": "U.clockwise",
+      "family": "U",
+      "inverse": "U'",
+      "profile": "turn"
+    },
+    "U'": {
+      "event": "U.counterclockwise",
+      "family": "U",
+      "inverse": "U",
+      "profile": "turn"
+    }
+  },
+  "resources": [
+    "B",
+    "BL",
+    "BR",
+    "D",
+    "DB",
+    "DBL",
+    "DBR",
+    "DF",
+    "DFL",
+    "DFR",
+    "DL",
+    "DR",
+    "F",
+    "FL",
+    "FR",
+    "L",
+    "R",
+    "U",
+    "UB",
+    "UBL",
+    "UBR",
+    "UF",
+    "UFL",
+    "UFR",
+    "UL",
+    "UR"
+  ],
+  "symmetry": [
+    [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    [
+      0,
+      2,
+      4,
+      3,
+      5,
+      1
+    ],
+    [
+      0,
+      4,
+      5,
+      3,
+      1,
+      2
+    ],
+    [
+      0,
+      5,
+      1,
+      3,
+      2,
+      4
+    ],
+    [
+      1,
+      0,
+      5,
+      4,
+      3,
+      2
+    ],
+    [
+      1,
+      2,
+      0,
+      4,
+      5,
+      3
+    ],
+    [
+      1,
+      3,
+      2,
+      4,
+      0,
+      5
+    ],
+    [
+      1,
+      5,
+      3,
+      4,
+      2,
+      0
+    ],
+    [
+      2,
+      0,
+      1,
+      5,
+      3,
+      4
+    ],
+    [
+      2,
+      1,
+      3,
+      5,
+      4,
+      0
+    ],
+    [
+      2,
+      3,
+      4,
+      5,
+      0,
+      1
+    ],
+    [
+      2,
+      4,
+      0,
+      5,
+      1,
+      3
+    ],
+    [
+      3,
+      1,
+      5,
+      0,
+      4,
+      2
+    ],
+    [
+      3,
+      2,
+      1,
+      0,
+      5,
+      4
+    ],
+    [
+      3,
+      4,
+      2,
+      0,
+      1,
+      5
+    ],
+    [
+      3,
+      5,
+      4,
+      0,
+      2,
+      1
+    ],
+    [
+      4,
+      0,
+      2,
+      1,
+      3,
+      5
+    ],
+    [
+      4,
+      2,
+      3,
+      1,
+      5,
+      0
+    ],
+    [
+      4,
+      3,
+      5,
+      1,
+      0,
+      2
+    ],
+    [
+      4,
+      5,
+      0,
+      1,
+      2,
+      3
+    ],
+    [
+      5,
+      0,
+      4,
+      2,
+      3,
+      1
+    ],
+    [
+      5,
+      1,
+      0,
+      2,
+      4,
+      3
+    ],
+    [
+      5,
+      3,
+      1,
+      2,
+      0,
+      4
+    ],
+    [
+      5,
+      4,
+      3,
+      2,
+      1,
+      0
+    ]
+  ],
+  "version": 1
+}

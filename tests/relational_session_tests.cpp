@@ -1,0 +1,225 @@
+#include "twisty/kernel.hpp"
+#include <algorithm>
+#include <cmath>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
+using namespace twisty;
+namespace {
+std::size_t checks = 0;
+void check(bool pass, const std::string &message) {
+  ++checks;
+  if (!pass)
+    throw std::runtime_error(message);
+}
+std::string read(const std::string &path) {
+  std::ifstream file(std::string(PROJECT_ROOT) + "/" + path);
+  std::ostringstream result;
+  result << file.rdbuf();
+  return result.str();
+}
+Json bundle(bool bandaged) {
+  const auto module = relational::cube_module(bandaged);
+  return {{"kind", "relational-package"},
+          {"formatVersion", 1},
+          {"source", module.source},
+          {"catalog", module.catalog}};
+}
+void invalid_unchanged(Session &session, const Json &document) {
+  const auto before = session.snapshot();
+  check(Json::parse(session.load_json(document.dump())).at("status") == "Invalid", "Invalid replay accepted");
+  check(session.snapshot() == before, "Failed replay mutated session");
+}
+void model(bool bandaged) {
+  const std::string name = bandaged ? "bandaged" : "cube3";
+  const auto source = bundle(bandaged).dump();
+  Session session(source), previous(read("packages/" + name + "/definition.json"));
+  const auto initial = session.snapshot();
+  check(session.execution()->relational(), "New package selected old executor");
+  check(initial.at("state") == previous.snapshot().at("state"), "Initial identities changed");
+  check(session.definition()->digest != previous.definition()->digest, "New semantics reused old pin");
+  check(Json::parse(session.definition_json()).at("kind") == "relational-definition",
+        "Definition format missing");
+  Session restored(session.definition_json());
+  check(restored.snapshot() == initial, "Compiled definition round trip differs");
+  auto damaged_definition = Json::parse(session.definition_json());
+  damaged_definition["program"]["goalRoot"] = 0;
+  check(compile_execution_json(damaged_definition.dump()).at("status") == "Invalid",
+        "Tampered compiled program accepted");
+  auto state = initial.at("state");
+  state["placementOf"]["unknown"] = "center:U";
+  check(Json::parse(session.validate_state_json(state.dump())).at("status") == "Invalid",
+        "Unknown state piece accepted");
+  check(session.execute("U", "1").at("status") == "StaleRevision", "Stale edit accepted");
+  auto preview = Json::parse(session.plan_json(R"({"operation":"U","parameters":{}})", session.state_json()));
+  check(preview.at("status") == "Legal" && session.snapshot() == initial, "Pure preview mutated session");
+  const auto witness = preview.at("transition");
+  check(witness.at("request").at("choices").size() == (bandaged ? 4 : 3), "Missing completion");
+  check(witness.at("pieceActions").size() == (bandaged ? 8 : 9), "Center participation changed");
+  check(std::any_of(witness.at("pieceActions").begin(), witness.at("pieceActions").end(),
+                    [](const auto &a) {
+                      return a.at("pieceId") == "center/U" && a.at("from") == a.at("to") &&
+                             a.at("event") == "U.clockwise";
+                    }),
+        "Self-loop event lost");
+  for (const auto *kind : {"cube-euclidean", "cube-port-diagram", "cube-spherical"}) {
+    auto realization = Json::parse(read("packages/" + name + "/" + kind + ".json"));
+    bool mismatch = false;
+    try {
+      Geometry incompatible(session.execution(), realization.dump());
+    } catch (const DiagnosticError &) {
+      mismatch = true;
+    }
+    check(mismatch, "Old realization pin was silently rebound");
+    realization["compatibleDefinitionDigest"] = session.definition()->digest;
+    Geometry geometry(session.execution(), realization.dump());
+    Geometry independent(session.definition_json(), realization.dump());
+    check(geometry.positions() == independent.positions(), "Independent interpreter assets differ");
+    check(Json::parse(geometry.prepare_animation_json(witness.dump())).at("status") == "Prepared",
+          "Flat witness not realized");
+    geometry.sample(.5);
+    for (const auto x : geometry.transforms())
+      check(std::isfinite(x), "Nonfinite animation frame");
+    geometry.sample(1);
+    const auto final_frame = geometry.transforms();
+    independent.set_state_json(witness.at("afterState").dump());
+    check(final_frame == independent.transforms(), "Animation endpoint differs from flat target");
+    for (int corruption = 0; corruption < 4; ++corruption) {
+      auto invalid = witness;
+      if (corruption == 0)
+        invalid["request"].erase("choices");
+      if (corruption == 1)
+        invalid["pieceActions"][0]["event"] = "U.counterclockwise";
+      if (corruption == 2)
+        invalid["pieceActions"].erase(invalid["pieceActions"].begin());
+      if (corruption == 3)
+        invalid["request"]["choices"][0] = "idle";
+      check(Json::parse(geometry.prepare_animation_json(invalid.dump())).at("status") ==
+                "UnsupportedTransition",
+            "Tampered witness animated");
+      check(final_frame == geometry.transforms(), "Rejected witness changed frame");
+    }
+  }
+  // All requests at each sampled walk position, then compare the next state.
+  std::uint32_t random = 19;
+  for (int step = 0; step < 36; ++step) {
+    for (const auto &op : session.definition()->operations) {
+      const auto a = session.execution()->plan(session.state(), op.id);
+      const auto b = twisty::plan(*previous.definition(), previous.state(), op.id);
+      check(a.transition.has_value() == b.transition.has_value(), "Session permission differs from oracle");
+      if (a.transition)
+        check(encode_state(*session.definition(), a.transition->after) ==
+                  encode_state(*previous.definition(), b.transition->after),
+              "Session target differs from oracle");
+    }
+    const auto legal = session.snapshot().at("legalRequests");
+    random ^= random << 13;
+    random ^= random >> 17;
+    random ^= random << 5;
+    const auto move = legal.at(random % legal.size()).at("operation").get<std::string>();
+    check(session.execute(move, session.revision()).at("status") == "Committed", "Legal flat move failed");
+    previous.execute(move, previous.revision());
+    check(session.snapshot().at("state") == previous.snapshot().at("state"), "Walk state differs");
+    check(session.snapshot().at("solved") == previous.snapshot().at("solved"), "Goal differs");
+  }
+  const auto saved = session.save();
+  check(saved.at("schemaVersion") == 2 && saved.at("logical").at("requests").at(0).contains("choices"),
+        "History format lost choices");
+  const auto before_undo = session.snapshot().at("stateDigest");
+  check(session.undo(session.revision()).at("status") == "Committed", "Undo failed");
+  check(session.redo(session.revision()).at("status") == "Committed" &&
+            session.snapshot().at("stateDigest") == before_undo,
+        "Redo differs");
+  restored.load(saved);
+  check(restored.snapshot().at("stateDigest") == before_undo, "Replay differs");
+  for (int corruption = 0; corruption < 5; ++corruption) {
+    auto invalid = saved;
+    if (corruption == 0)
+      invalid["logical"]["requests"][0].erase("choices");
+    if (corruption == 1)
+      invalid["logical"]["requests"][0]["choices"][0] = "idle";
+    if (corruption == 2)
+      invalid["logical"]["checkpoints"][0]["stateDigest"] = "bad";
+    if (corruption == 3)
+      invalid["schemaVersion"] = 1;
+    if (corruption == 4)
+      invalid["logical"]["requests"][0]["choices"] = nullptr;
+    invalid_unchanged(restored, invalid);
+  }
+  previous.undo(previous.revision());
+  const auto old_save = previous.save();
+  const auto conversion = Json::parse(
+      session.convert_legacy_json(old_save.dump(), read("packages/" + name + "/definition.json")));
+  check(conversion.at("status") == "Converted", "Legacy conversion failed: " + conversion.dump());
+  const auto unchanged = session.snapshot();
+  restored.load(conversion.at("session"));
+  check(restored.snapshot().at("state") == previous.snapshot().at("state"), "Converted cursor state differs");
+  check(restored.snapshot().at("canRedo").get<bool>(), "Conversion lost redo tail");
+  restored.redo(restored.revision());
+  previous.redo(previous.revision());
+  check(restored.snapshot().at("state") == previous.snapshot().at("state"), "Converted redo differs");
+  check(session.snapshot() == unchanged, "Conversion edited destination session");
+  auto bad_old = old_save;
+  bad_old["logical"]["requests"][0]["afterStateDigest"] = "bad";
+  check(
+      Json::parse(session.convert_legacy_json(bad_old.dump(), read("packages/" + name + "/definition.json")))
+              .at("status") == "Invalid",
+      "Corrupt legacy replay converted");
+  Session a(source), b(source);
+  check(a.scramble(42, 25, "0").at("scramble") == b.scramble(42, 25, "0").at("scramble"),
+        "Scramble not reproducible");
+  check(a.state_json() == b.state_json(), "Scramble states differ");
+  if (bandaged) {
+    Session blocked(source);
+    check(blocked.run("U R", "transactional", "0").at("status") == "Committed",
+          "Valid bandage sequence failed");
+    Session transaction(source);
+    check(transaction.run("D R", "transactional", "0").at("status") == "Blocked" &&
+              transaction.revision() == "0",
+          "Blocked transaction partially committed");
+  }
+}
+void alternative() {
+  auto package = bundle(false);
+  auto terms = Json::array();
+  for (const auto &d : package.at("source").at("domains"))
+    terms.push_back({{"chosen", {{"domain", d.at("id")}, {"moves", {"idle"}}}}});
+  for (auto &r : package["source"]["requests"])
+    if (r.at("id") == "U" || r.at("id") == "U'")
+      r["relation"] = {{"any", Json::array({r.at("relation"), {{"all", terms}}})}};
+  Session session(package.dump());
+  const auto origin = session.state_json();
+  const auto idle = R"({"operation":"U","parameters":{},"choices":["idle","idle","idle"]})";
+  check(Json::parse(session.execute_json(idle, "0")).at("status") == "Committed",
+        "Explicit alternative completion failed");
+  check(session.state_json() == origin, "Idle completion moved pieces");
+  session.undo(session.revision());
+  session.redo(session.revision());
+  check(session.state_json() == origin, "Redo silently selected the default tuple");
+  Session replay(package.dump());
+  replay.load(session.save());
+  check(replay.state_json() == origin && replay.snapshot().at("history").size() == 1,
+        "Replay lost distinct completion");
+  auto blocked_package = bundle(false);
+  blocked_package["source"]["relations"].push_back({{"id", "test/block-all"}, {"predicate", false}});
+  Session blocked(blocked_package.dump());
+  check(blocked.execute("U", "0").at("status") == "Blocked" && blocked.revision() == "0",
+        "Relational session ignored authored interaction");
+  auto goal_package = bundle(false);
+  goal_package["source"]["goal"] = false;
+  Session unsolved(goal_package.dump());
+  check(!unsolved.snapshot().at("solved").get<bool>(), "Relational session used the old home goal");
+}
+} // namespace
+int main() {
+  try {
+    model(false);
+    model(true);
+    alternative();
+    std::cout << checks << " relational session/interpreter checks passed\n";
+  } catch (const std::exception &e) {
+    std::cerr << e.what() << '\n';
+    return 1;
+  }
+}

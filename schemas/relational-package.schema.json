@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:twisty:schema:relational-package:1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "formatVersion",
+    "source",
+    "catalog"
+  ],
+  "properties": {
+    "kind": {
+      "const": "relational-package"
+    },
+    "formatVersion": {
+      "const": 1
+    },
+    "source": {
+      "$ref": "urn:twisty:schema:relational-puzzle:1"
+    },
+    "catalog": {
+      "type": "object",
+      "required": [
+        "kind",
+        "version",
+        "puzzleId",
+        "domains",
+        "pieces",
+        "placements",
+        "requests",
+        "resources",
+        "symmetry"
+      ],
+      "properties": {
+        "kind": {
+          "const": "relational-cube-bindings"
+        },
+        "version": {
+          "const": 1
+        }
+      }
+    }
+  }
+}

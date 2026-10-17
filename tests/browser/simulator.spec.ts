@@ -5,7 +5,7 @@ import { PerspectiveCamera, Vector3 } from 'three';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('./');
-  await expect(page.getByTestId('state-digest')).toHaveText(/[0-9a-f]{64}/);
+  await expect(page.getByTestId('state-digest')).toHaveText(/[0-9a-f]{64}/, { timeout: 15_000 });
   await expect(page.locator('canvas')).toHaveCount(2);
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
@@ -140,6 +140,8 @@ test('runs the same cube on a sphere, preserves state across views, and restores
   await page.getByRole('button', { name: 'Save session ↗' }).click();
   const saved = readFileSync((await (await downloading).path())!, 'utf8');
   const document = JSON.parse(saved);
+  expect(document.schemaVersion).toBe(2);
+  expect(document.logical.requests.every((request: { choices?: string[] }) => request.choices?.length === 3)).toBe(true);
   expect(document.presentation.viewPair).toBe('sphere-diagram');
   document.presentation.cameras = [
     { position: [4, 3, 7], target: [0, 0, 0], zoom: 1.2 },
@@ -233,7 +235,7 @@ test('keeps bandage blocking and identity on the spherical surface', async ({ pa
   await expect(page.getByLabel('Spherical puzzle')).toBeVisible();
   const initial = await page.getByTestId('state-digest').textContent();
   await page.getByRole('button', { name: 'Move R', exact: true }).click();
-  await expect(page.getByTestId('blocking-evidence')).toContainText('footprint.partial_overlap');
+  await expect(page.getByTestId('blocking-evidence')).toContainText('relation.rejected');
   await expect(page.getByTestId('cube-view')).toHaveAttribute('data-blocked-pieces', 'bandage/UF-UFR');
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
   await page.getByRole('button', { name: 'Select bandage/UF-UFR', exact: true }).click();
@@ -241,7 +243,7 @@ test('keeps bandage blocking and identity on the spherical surface', async ({ pa
   await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-selected-piece', 'bandage/UF-UFR');
   await page.getByRole('button', { name: 'Move U', exact: true }).click(); await resting(page);
   await page.getByRole('button', { name: 'Move R', exact: true }).click(); await resting(page);
-  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/bandaged/definition.json', '--algorithm', 'U R', '--json'], { encoding: 'utf8' }));
+  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/bandaged/relational-package.json', '--algorithm', 'U R', '--json'], { encoding: 'utf8' }));
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
   await page.getByRole('button', { name: '↶ Undo' }).click(); await resting(page);
   await page.getByRole('button', { name: '↷ Redo' }).click(); await resting(page);
@@ -273,7 +275,7 @@ test('explains and highlights bandaging while preserving blocked state', async (
   await expect(page.getByRole('button', { name: 'Select bandage/UF-UFR', exact: true })).toBeVisible();
   const initial = await page.getByTestId('state-digest').textContent();
   await page.getByRole('button', { name: 'Move R', exact: true }).click();
-  await expect(page.getByTestId('blocking-evidence')).toContainText('footprint.partial_overlap');
+  await expect(page.getByTestId('blocking-evidence')).toContainText('relation.rejected');
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
   await expect(page.getByTestId('cube-view')).toHaveAttribute('data-blocked-pieces', 'bandage/UF-UFR');
   await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-blocked-pieces', 'bandage/UF-UFR');
@@ -362,7 +364,7 @@ test('imports independent type/domain IDs and named operations without visual su
   await page.getByRole('button', { name: 'Move back', exact: true }).click();
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
   await page.getByLabel('Open session file').setInputFiles({ name: 'other-session.json', mimeType: 'application/json', buffer: Buffer.from(originalSession) });
-  await expect(page.getByTestId('blocking-evidence')).toContainText('definition.digest_mismatch');
+  await expect(page.getByTestId('blocking-evidence')).toContainText('session.schema');
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
 });
 

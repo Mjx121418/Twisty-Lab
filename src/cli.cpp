@@ -81,9 +81,9 @@ int main(int argc, char **argv) {
                                    [](const Json &row) { return row.at("passed").get<bool>(); });
       result = {{"status", all ? "Passed" : "Failed"}, {"cases", results}};
     } else {
-      const auto source = read(option("--definition", "packages/cube3/source.json"));
+      const auto source = read(option("--definition", "packages/cube3/relational-package.json"));
       if (command == "compile")
-        result = compile_json(source);
+        result = compile_execution_json(source);
       else {
         Session session(source);
         if (!option("--session").empty())
@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
                     {"snapshot", session.snapshot()}};
         else if (command == "validate") {
           if (!option("--state").empty())
-            decode_state(*session.definition(), Json::parse(read(option("--state"))));
+            session.execution()->decode(Json::parse(read(option("--state"))));
           result = {{"status", "Valid"},
                     {"definitionDigest", session.definition()->digest},
                     {"reachability", "not-certified-for-imported-assignments"}};

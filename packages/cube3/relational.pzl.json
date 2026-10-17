@@ -1,0 +1,3927 @@
+{
+  "domains": [
+    {
+      "id": "center",
+      "moves": [
+        {
+          "event": "B.clockwise",
+          "id": "B",
+          "support": [
+            "center:B"
+          ],
+          "transport": {
+            "center:B": "center:B"
+          }
+        },
+        {
+          "event": "B.counterclockwise",
+          "id": "B'",
+          "support": [
+            "center:B"
+          ],
+          "transport": {
+            "center:B": "center:B"
+          }
+        },
+        {
+          "event": "D.clockwise",
+          "id": "D",
+          "support": [
+            "center:D"
+          ],
+          "transport": {
+            "center:D": "center:D"
+          }
+        },
+        {
+          "event": "D.counterclockwise",
+          "id": "D'",
+          "support": [
+            "center:D"
+          ],
+          "transport": {
+            "center:D": "center:D"
+          }
+        },
+        {
+          "event": "F.clockwise",
+          "id": "F",
+          "support": [
+            "center:F"
+          ],
+          "transport": {
+            "center:F": "center:F"
+          }
+        },
+        {
+          "event": "F.counterclockwise",
+          "id": "F'",
+          "support": [
+            "center:F"
+          ],
+          "transport": {
+            "center:F": "center:F"
+          }
+        },
+        {
+          "event": "L.clockwise",
+          "id": "L",
+          "support": [
+            "center:L"
+          ],
+          "transport": {
+            "center:L": "center:L"
+          }
+        },
+        {
+          "event": "L.counterclockwise",
+          "id": "L'",
+          "support": [
+            "center:L"
+          ],
+          "transport": {
+            "center:L": "center:L"
+          }
+        },
+        {
+          "event": "R.clockwise",
+          "id": "R",
+          "support": [
+            "center:R"
+          ],
+          "transport": {
+            "center:R": "center:R"
+          }
+        },
+        {
+          "event": "R.counterclockwise",
+          "id": "R'",
+          "support": [
+            "center:R"
+          ],
+          "transport": {
+            "center:R": "center:R"
+          }
+        },
+        {
+          "event": "U.clockwise",
+          "id": "U",
+          "support": [
+            "center:U"
+          ],
+          "transport": {
+            "center:U": "center:U"
+          }
+        },
+        {
+          "event": "U.counterclockwise",
+          "id": "U'",
+          "support": [
+            "center:U"
+          ],
+          "transport": {
+            "center:U": "center:U"
+          }
+        }
+      ],
+      "pieces": [
+        {
+          "id": "center/B",
+          "initial": "center:B"
+        },
+        {
+          "id": "center/D",
+          "initial": "center:D"
+        },
+        {
+          "id": "center/F",
+          "initial": "center:F"
+        },
+        {
+          "id": "center/L",
+          "initial": "center:L"
+        },
+        {
+          "id": "center/R",
+          "initial": "center:R"
+        },
+        {
+          "id": "center/U",
+          "initial": "center:U"
+        }
+      ],
+      "placements": [
+        "center:B",
+        "center:D",
+        "center:F",
+        "center:L",
+        "center:R",
+        "center:U"
+      ]
+    },
+    {
+      "id": "corner",
+      "moves": [
+        {
+          "event": "B.clockwise",
+          "id": "B",
+          "support": [
+            "corner:B-D-R",
+            "corner:B-L-D",
+            "corner:B-R-U",
+            "corner:B-U-L",
+            "corner:D-B-L",
+            "corner:D-R-B",
+            "corner:L-B-U",
+            "corner:L-D-B",
+            "corner:R-B-D",
+            "corner:R-U-B",
+            "corner:U-B-R",
+            "corner:U-L-B"
+          ],
+          "transport": {
+            "corner:B-D-R": "corner:B-R-U",
+            "corner:B-L-D": "corner:B-D-R",
+            "corner:B-R-U": "corner:B-U-L",
+            "corner:B-U-L": "corner:B-L-D",
+            "corner:D-B-L": "corner:R-B-D",
+            "corner:D-R-B": "corner:R-U-B",
+            "corner:L-B-U": "corner:D-B-L",
+            "corner:L-D-B": "corner:D-R-B",
+            "corner:R-B-D": "corner:U-B-R",
+            "corner:R-U-B": "corner:U-L-B",
+            "corner:U-B-R": "corner:L-B-U",
+            "corner:U-L-B": "corner:L-D-B"
+          }
+        },
+        {
+          "event": "B.counterclockwise",
+          "id": "B'",
+          "support": [
+            "corner:B-D-R",
+            "corner:B-L-D",
+            "corner:B-R-U",
+            "corner:B-U-L",
+            "corner:D-B-L",
+            "corner:D-R-B",
+            "corner:L-B-U",
+            "corner:L-D-B",
+            "corner:R-B-D",
+            "corner:R-U-B",
+            "corner:U-B-R",
+            "corner:U-L-B"
+          ],
+          "transport": {
+            "corner:B-D-R": "corner:B-L-D",
+            "corner:B-L-D": "corner:B-U-L",
+            "corner:B-R-U": "corner:B-D-R",
+            "corner:B-U-L": "corner:B-R-U",
+            "corner:D-B-L": "corner:L-B-U",
+            "corner:D-R-B": "corner:L-D-B",
+            "corner:L-B-U": "corner:U-B-R",
+            "corner:L-D-B": "corner:U-L-B",
+            "corner:R-B-D": "corner:D-B-L",
+            "corner:R-U-B": "corner:D-R-B",
+            "corner:U-B-R": "corner:R-B-D",
+            "corner:U-L-B": "corner:R-U-B"
+          }
+        },
+        {
+          "event": "D.clockwise",
+          "id": "D",
+          "support": [
+            "corner:B-D-R",
+            "corner:B-L-D",
+            "corner:D-B-L",
+            "corner:D-F-R",
+            "corner:D-L-F",
+            "corner:D-R-B",
+            "corner:F-D-L",
+            "corner:F-R-D",
+            "corner:L-D-B",
+            "corner:L-F-D",
+            "corner:R-B-D",
+            "corner:R-D-F"
+          ],
+          "transport": {
+            "corner:B-D-R": "corner:L-D-B",
+            "corner:B-L-D": "corner:L-F-D",
+            "corner:D-B-L": "corner:D-L-F",
+            "corner:D-F-R": "corner:D-R-B",
+            "corner:D-L-F": "corner:D-F-R",
+            "corner:D-R-B": "corner:D-B-L",
+            "corner:F-D-L": "corner:R-D-F",
+            "corner:F-R-D": "corner:R-B-D",
+            "corner:L-D-B": "corner:F-D-L",
+            "corner:L-F-D": "corner:F-R-D",
+            "corner:R-B-D": "corner:B-L-D",
+            "corner:R-D-F": "corner:B-D-R"
+          }
+        },
+        {
+          "event": "D.counterclockwise",
+          "id": "D'",
+          "support": [
+            "corner:B-D-R",
+            "corner:B-L-D",
+            "corner:D-B-L",
+            "corner:D-F-R",
+            "corner:D-L-F",
+            "corner:D-R-B",
+            "corner:F-D-L",
+            "corner:F-R-D",
+            "corner:L-D-B",
+            "corner:L-F-D",
+            "corner:R-B-D",
+            "corner:R-D-F"
+          ],
+          "transport": {
+            "corner:B-D-R": "corner:R-D-F",
+            "corner:B-L-D": "corner:R-B-D",
+            "corner:D-B-L": "corner:D-R-B",
+            "corner:D-F-R": "corner:D-L-F",
+            "corner:D-L-F": "corner:D-B-L",
+            "corner:D-R-B": "corner:D-F-R",
+            "corner:F-D-L": "corner:L-D-B",
+            "corner:F-R-D": "corner:L-F-D",
+            "corner:L-D-B": "corner:B-D-R",
+            "corner:L-F-D": "corner:B-L-D",
+            "corner:R-B-D": "corner:F-R-D",
+            "corner:R-D-F": "corner:F-D-L"
+          }
+        },
+        {
+          "event": "F.clockwise",
+          "id": "F",
+          "support": [
+            "corner:D-F-R",
+            "corner:D-L-F",
+            "corner:F-D-L",
+            "corner:F-L-U",
+            "corner:F-R-D",
+            "corner:F-U-R",
+            "corner:L-F-D",
+            "corner:L-U-F",
+            "corner:R-D-F",
+            "corner:R-F-U",
+            "corner:U-F-L",
+            "corner:U-R-F"
+          ],
+          "transport": {
+            "corner:D-F-R": "corner:L-F-D",
+            "corner:D-L-F": "corner:L-U-F",
+            "corner:F-D-L": "corner:F-L-U",
+            "corner:F-L-U": "corner:F-U-R",
+            "corner:F-R-D": "corner:F-D-L",
+            "corner:F-U-R": "corner:F-R-D",
+            "corner:L-F-D": "corner:U-F-L",
+            "corner:L-U-F": "corner:U-R-F",
+            "corner:R-D-F": "corner:D-L-F",
+            "corner:R-F-U": "corner:D-F-R",
+            "corner:U-F-L": "corner:R-F-U",
+            "corner:U-R-F": "corner:R-D-F"
+          }
+        },
+        {
+          "event": "F.counterclockwise",
+          "id": "F'",
+          "support": [
+            "corner:D-F-R",
+            "corner:D-L-F",
+            "corner:F-D-L",
+            "corner:F-L-U",
+            "corner:F-R-D",
+            "corner:F-U-R",
+            "corner:L-F-D",
+            "corner:L-U-F",
+            "corner:R-D-F",
+            "corner:R-F-U",
+            "corner:U-F-L",
+            "corner:U-R-F"
+          ],
+          "transport": {
+            "corner:D-F-R": "corner:R-F-U",
+            "corner:D-L-F": "corner:R-D-F",
+            "corner:F-D-L": "corner:F-R-D",
+            "corner:F-L-U": "corner:F-D-L",
+            "corner:F-R-D": "corner:F-U-R",
+            "corner:F-U-R": "corner:F-L-U",
+            "corner:L-F-D": "corner:D-F-R",
+            "corner:L-U-F": "corner:D-L-F",
+            "corner:R-D-F": "corner:U-R-F",
+            "corner:R-F-U": "corner:U-F-L",
+            "corner:U-F-L": "corner:L-F-D",
+            "corner:U-R-F": "corner:L-U-F"
+          }
+        },
+        {
+          "event": "L.clockwise",
+          "id": "L",
+          "support": [
+            "corner:B-L-D",
+            "corner:B-U-L",
+            "corner:D-B-L",
+            "corner:D-L-F",
+            "corner:F-D-L",
+            "corner:F-L-U",
+            "corner:L-B-U",
+            "corner:L-D-B",
+            "corner:L-F-D",
+            "corner:L-U-F",
+            "corner:U-F-L",
+            "corner:U-L-B"
+          ],
+          "transport": {
+            "corner:B-L-D": "corner:U-L-B",
+            "corner:B-U-L": "corner:U-F-L",
+            "corner:D-B-L": "corner:B-U-L",
+            "corner:D-L-F": "corner:B-L-D",
+            "corner:F-D-L": "corner:D-B-L",
+            "corner:F-L-U": "corner:D-L-F",
+            "corner:L-B-U": "corner:L-U-F",
+            "corner:L-D-B": "corner:L-B-U",
+            "corner:L-F-D": "corner:L-D-B",
+            "corner:L-U-F": "corner:L-F-D",
+            "corner:U-F-L": "corner:F-D-L",
+            "corner:U-L-B": "corner:F-L-U"
+          }
+        },
+        {
+          "event": "L.counterclockwise",
+          "id": "L'",
+          "support": [
+            "corner:B-L-D",
+            "corner:B-U-L",
+            "corner:D-B-L",
+            "corner:D-L-F",
+            "corner:F-D-L",
+            "corner:F-L-U",
+            "corner:L-B-U",
+            "corner:L-D-B",
+            "corner:L-F-D",
+            "corner:L-U-F",
+            "corner:U-F-L",
+            "corner:U-L-B"
+          ],
+          "transport": {
+            "corner:B-L-D": "corner:D-L-F",
+            "corner:B-U-L": "corner:D-B-L",
+            "corner:D-B-L": "corner:F-D-L",
+            "corner:D-L-F": "corner:F-L-U",
+            "corner:F-D-L": "corner:U-F-L",
+            "corner:F-L-U": "corner:U-L-B",
+            "corner:L-B-U": "corner:L-D-B",
+            "corner:L-D-B": "corner:L-F-D",
+            "corner:L-F-D": "corner:L-U-F",
+            "corner:L-U-F": "corner:L-B-U",
+            "corner:U-F-L": "corner:B-U-L",
+            "corner:U-L-B": "corner:B-L-D"
+          }
+        },
+        {
+          "event": "R.clockwise",
+          "id": "R",
+          "support": [
+            "corner:B-D-R",
+            "corner:B-R-U",
+            "corner:D-F-R",
+            "corner:D-R-B",
+            "corner:F-R-D",
+            "corner:F-U-R",
+            "corner:R-B-D",
+            "corner:R-D-F",
+            "corner:R-F-U",
+            "corner:R-U-B",
+            "corner:U-B-R",
+            "corner:U-R-F"
+          ],
+          "transport": {
+            "corner:B-D-R": "corner:D-F-R",
+            "corner:B-R-U": "corner:D-R-B",
+            "corner:D-F-R": "corner:F-U-R",
+            "corner:D-R-B": "corner:F-R-D",
+            "corner:F-R-D": "corner:U-R-F",
+            "corner:F-U-R": "corner:U-B-R",
+            "corner:R-B-D": "corner:R-D-F",
+            "corner:R-D-F": "corner:R-F-U",
+            "corner:R-F-U": "corner:R-U-B",
+            "corner:R-U-B": "corner:R-B-D",
+            "corner:U-B-R": "corner:B-D-R",
+            "corner:U-R-F": "corner:B-R-U"
+          }
+        },
+        {
+          "event": "R.counterclockwise",
+          "id": "R'",
+          "support": [
+            "corner:B-D-R",
+            "corner:B-R-U",
+            "corner:D-F-R",
+            "corner:D-R-B",
+            "corner:F-R-D",
+            "corner:F-U-R",
+            "corner:R-B-D",
+            "corner:R-D-F",
+            "corner:R-F-U",
+            "corner:R-U-B",
+            "corner:U-B-R",
+            "corner:U-R-F"
+          ],
+          "transport": {
+            "corner:B-D-R": "corner:U-B-R",
+            "corner:B-R-U": "corner:U-R-F",
+            "corner:D-F-R": "corner:B-D-R",
+            "corner:D-R-B": "corner:B-R-U",
+            "corner:F-R-D": "corner:D-R-B",
+            "corner:F-U-R": "corner:D-F-R",
+            "corner:R-B-D": "corner:R-U-B",
+            "corner:R-D-F": "corner:R-B-D",
+            "corner:R-F-U": "corner:R-D-F",
+            "corner:R-U-B": "corner:R-F-U",
+            "corner:U-B-R": "corner:F-U-R",
+            "corner:U-R-F": "corner:F-R-D"
+          }
+        },
+        {
+          "event": "U.clockwise",
+          "id": "U",
+          "support": [
+            "corner:B-R-U",
+            "corner:B-U-L",
+            "corner:F-L-U",
+            "corner:F-U-R",
+            "corner:L-B-U",
+            "corner:L-U-F",
+            "corner:R-F-U",
+            "corner:R-U-B",
+            "corner:U-B-R",
+            "corner:U-F-L",
+            "corner:U-L-B",
+            "corner:U-R-F"
+          ],
+          "transport": {
+            "corner:B-R-U": "corner:R-F-U",
+            "corner:B-U-L": "corner:R-U-B",
+            "corner:F-L-U": "corner:L-B-U",
+            "corner:F-U-R": "corner:L-U-F",
+            "corner:L-B-U": "corner:B-R-U",
+            "corner:L-U-F": "corner:B-U-L",
+            "corner:R-F-U": "corner:F-L-U",
+            "corner:R-U-B": "corner:F-U-R",
+            "corner:U-B-R": "corner:U-R-F",
+            "corner:U-F-L": "corner:U-L-B",
+            "corner:U-L-B": "corner:U-B-R",
+            "corner:U-R-F": "corner:U-F-L"
+          }
+        },
+        {
+          "event": "U.counterclockwise",
+          "id": "U'",
+          "support": [
+            "corner:B-R-U",
+            "corner:B-U-L",
+            "corner:F-L-U",
+            "corner:F-U-R",
+            "corner:L-B-U",
+            "corner:L-U-F",
+            "corner:R-F-U",
+            "corner:R-U-B",
+            "corner:U-B-R",
+            "corner:U-F-L",
+            "corner:U-L-B",
+            "corner:U-R-F"
+          ],
+          "transport": {
+            "corner:B-R-U": "corner:L-B-U",
+            "corner:B-U-L": "corner:L-U-F",
+            "corner:F-L-U": "corner:R-F-U",
+            "corner:F-U-R": "corner:R-U-B",
+            "corner:L-B-U": "corner:F-L-U",
+            "corner:L-U-F": "corner:F-U-R",
+            "corner:R-F-U": "corner:B-R-U",
+            "corner:R-U-B": "corner:B-U-L",
+            "corner:U-B-R": "corner:U-L-B",
+            "corner:U-F-L": "corner:U-R-F",
+            "corner:U-L-B": "corner:U-F-L",
+            "corner:U-R-F": "corner:U-B-R"
+          }
+        }
+      ],
+      "pieces": [
+        {
+          "id": "corner/DBL",
+          "initial": "corner:D-B-L"
+        },
+        {
+          "id": "corner/DBR",
+          "initial": "corner:D-R-B"
+        },
+        {
+          "id": "corner/DFL",
+          "initial": "corner:D-L-F"
+        },
+        {
+          "id": "corner/DFR",
+          "initial": "corner:D-F-R"
+        },
+        {
+          "id": "corner/UBL",
+          "initial": "corner:U-L-B"
+        },
+        {
+          "id": "corner/UBR",
+          "initial": "corner:U-B-R"
+        },
+        {
+          "id": "corner/UFL",
+          "initial": "corner:U-F-L"
+        },
+        {
+          "id": "corner/UFR",
+          "initial": "corner:U-R-F"
+        }
+      ],
+      "placements": [
+        "corner:B-D-R",
+        "corner:B-L-D",
+        "corner:B-R-U",
+        "corner:B-U-L",
+        "corner:D-B-L",
+        "corner:D-F-R",
+        "corner:D-L-F",
+        "corner:D-R-B",
+        "corner:F-D-L",
+        "corner:F-L-U",
+        "corner:F-R-D",
+        "corner:F-U-R",
+        "corner:L-B-U",
+        "corner:L-D-B",
+        "corner:L-F-D",
+        "corner:L-U-F",
+        "corner:R-B-D",
+        "corner:R-D-F",
+        "corner:R-F-U",
+        "corner:R-U-B",
+        "corner:U-B-R",
+        "corner:U-F-L",
+        "corner:U-L-B",
+        "corner:U-R-F"
+      ]
+    },
+    {
+      "id": "edge",
+      "moves": [
+        {
+          "event": "B.clockwise",
+          "id": "B",
+          "support": [
+            "edge:B-D",
+            "edge:B-L",
+            "edge:B-R",
+            "edge:B-U",
+            "edge:D-B",
+            "edge:L-B",
+            "edge:R-B",
+            "edge:U-B"
+          ],
+          "transport": {
+            "edge:B-D": "edge:B-R",
+            "edge:B-L": "edge:B-D",
+            "edge:B-R": "edge:B-U",
+            "edge:B-U": "edge:B-L",
+            "edge:D-B": "edge:R-B",
+            "edge:L-B": "edge:D-B",
+            "edge:R-B": "edge:U-B",
+            "edge:U-B": "edge:L-B"
+          }
+        },
+        {
+          "event": "B.counterclockwise",
+          "id": "B'",
+          "support": [
+            "edge:B-D",
+            "edge:B-L",
+            "edge:B-R",
+            "edge:B-U",
+            "edge:D-B",
+            "edge:L-B",
+            "edge:R-B",
+            "edge:U-B"
+          ],
+          "transport": {
+            "edge:B-D": "edge:B-L",
+            "edge:B-L": "edge:B-U",
+            "edge:B-R": "edge:B-D",
+            "edge:B-U": "edge:B-R",
+            "edge:D-B": "edge:L-B",
+            "edge:L-B": "edge:U-B",
+            "edge:R-B": "edge:D-B",
+            "edge:U-B": "edge:R-B"
+          }
+        },
+        {
+          "event": "D.clockwise",
+          "id": "D",
+          "support": [
+            "edge:B-D",
+            "edge:D-B",
+            "edge:D-F",
+            "edge:D-L",
+            "edge:D-R",
+            "edge:F-D",
+            "edge:L-D",
+            "edge:R-D"
+          ],
+          "transport": {
+            "edge:B-D": "edge:L-D",
+            "edge:D-B": "edge:D-L",
+            "edge:D-F": "edge:D-R",
+            "edge:D-L": "edge:D-F",
+            "edge:D-R": "edge:D-B",
+            "edge:F-D": "edge:R-D",
+            "edge:L-D": "edge:F-D",
+            "edge:R-D": "edge:B-D"
+          }
+        },
+        {
+          "event": "D.counterclockwise",
+          "id": "D'",
+          "support": [
+            "edge:B-D",
+            "edge:D-B",
+            "edge:D-F",
+            "edge:D-L",
+            "edge:D-R",
+            "edge:F-D",
+            "edge:L-D",
+            "edge:R-D"
+          ],
+          "transport": {
+            "edge:B-D": "edge:R-D",
+            "edge:D-B": "edge:D-R",
+            "edge:D-F": "edge:D-L",
+            "edge:D-L": "edge:D-B",
+            "edge:D-R": "edge:D-F",
+            "edge:F-D": "edge:L-D",
+            "edge:L-D": "edge:B-D",
+            "edge:R-D": "edge:F-D"
+          }
+        },
+        {
+          "event": "F.clockwise",
+          "id": "F",
+          "support": [
+            "edge:D-F",
+            "edge:F-D",
+            "edge:F-L",
+            "edge:F-R",
+            "edge:F-U",
+            "edge:L-F",
+            "edge:R-F",
+            "edge:U-F"
+          ],
+          "transport": {
+            "edge:D-F": "edge:L-F",
+            "edge:F-D": "edge:F-L",
+            "edge:F-L": "edge:F-U",
+            "edge:F-R": "edge:F-D",
+            "edge:F-U": "edge:F-R",
+            "edge:L-F": "edge:U-F",
+            "edge:R-F": "edge:D-F",
+            "edge:U-F": "edge:R-F"
+          }
+        },
+        {
+          "event": "F.counterclockwise",
+          "id": "F'",
+          "support": [
+            "edge:D-F",
+            "edge:F-D",
+            "edge:F-L",
+            "edge:F-R",
+            "edge:F-U",
+            "edge:L-F",
+            "edge:R-F",
+            "edge:U-F"
+          ],
+          "transport": {
+            "edge:D-F": "edge:R-F",
+            "edge:F-D": "edge:F-R",
+            "edge:F-L": "edge:F-D",
+            "edge:F-R": "edge:F-U",
+            "edge:F-U": "edge:F-L",
+            "edge:L-F": "edge:D-F",
+            "edge:R-F": "edge:U-F",
+            "edge:U-F": "edge:L-F"
+          }
+        },
+        {
+          "event": "L.clockwise",
+          "id": "L",
+          "support": [
+            "edge:B-L",
+            "edge:D-L",
+            "edge:F-L",
+            "edge:L-B",
+            "edge:L-D",
+            "edge:L-F",
+            "edge:L-U",
+            "edge:U-L"
+          ],
+          "transport": {
+            "edge:B-L": "edge:U-L",
+            "edge:D-L": "edge:B-L",
+            "edge:F-L": "edge:D-L",
+            "edge:L-B": "edge:L-U",
+            "edge:L-D": "edge:L-B",
+            "edge:L-F": "edge:L-D",
+            "edge:L-U": "edge:L-F",
+            "edge:U-L": "edge:F-L"
+          }
+        },
+        {
+          "event": "L.counterclockwise",
+          "id": "L'",
+          "support": [
+            "edge:B-L",
+            "edge:D-L",
+            "edge:F-L",
+            "edge:L-B",
+            "edge:L-D",
+            "edge:L-F",
+            "edge:L-U",
+            "edge:U-L"
+          ],
+          "transport": {
+            "edge:B-L": "edge:D-L",
+            "edge:D-L": "edge:F-L",
+            "edge:F-L": "edge:U-L",
+            "edge:L-B": "edge:L-D",
+            "edge:L-D": "edge:L-F",
+            "edge:L-F": "edge:L-U",
+            "edge:L-U": "edge:L-B",
+            "edge:U-L": "edge:B-L"
+          }
+        },
+        {
+          "event": "R.clockwise",
+          "id": "R",
+          "support": [
+            "edge:B-R",
+            "edge:D-R",
+            "edge:F-R",
+            "edge:R-B",
+            "edge:R-D",
+            "edge:R-F",
+            "edge:R-U",
+            "edge:U-R"
+          ],
+          "transport": {
+            "edge:B-R": "edge:D-R",
+            "edge:D-R": "edge:F-R",
+            "edge:F-R": "edge:U-R",
+            "edge:R-B": "edge:R-D",
+            "edge:R-D": "edge:R-F",
+            "edge:R-F": "edge:R-U",
+            "edge:R-U": "edge:R-B",
+            "edge:U-R": "edge:B-R"
+          }
+        },
+        {
+          "event": "R.counterclockwise",
+          "id": "R'",
+          "support": [
+            "edge:B-R",
+            "edge:D-R",
+            "edge:F-R",
+            "edge:R-B",
+            "edge:R-D",
+            "edge:R-F",
+            "edge:R-U",
+            "edge:U-R"
+          ],
+          "transport": {
+            "edge:B-R": "edge:U-R",
+            "edge:D-R": "edge:B-R",
+            "edge:F-R": "edge:D-R",
+            "edge:R-B": "edge:R-U",
+            "edge:R-D": "edge:R-B",
+            "edge:R-F": "edge:R-D",
+            "edge:R-U": "edge:R-F",
+            "edge:U-R": "edge:F-R"
+          }
+        },
+        {
+          "event": "U.clockwise",
+          "id": "U",
+          "support": [
+            "edge:B-U",
+            "edge:F-U",
+            "edge:L-U",
+            "edge:R-U",
+            "edge:U-B",
+            "edge:U-F",
+            "edge:U-L",
+            "edge:U-R"
+          ],
+          "transport": {
+            "edge:B-U": "edge:R-U",
+            "edge:F-U": "edge:L-U",
+            "edge:L-U": "edge:B-U",
+            "edge:R-U": "edge:F-U",
+            "edge:U-B": "edge:U-R",
+            "edge:U-F": "edge:U-L",
+            "edge:U-L": "edge:U-B",
+            "edge:U-R": "edge:U-F"
+          }
+        },
+        {
+          "event": "U.counterclockwise",
+          "id": "U'",
+          "support": [
+            "edge:B-U",
+            "edge:F-U",
+            "edge:L-U",
+            "edge:R-U",
+            "edge:U-B",
+            "edge:U-F",
+            "edge:U-L",
+            "edge:U-R"
+          ],
+          "transport": {
+            "edge:B-U": "edge:L-U",
+            "edge:F-U": "edge:R-U",
+            "edge:L-U": "edge:F-U",
+            "edge:R-U": "edge:B-U",
+            "edge:U-B": "edge:U-L",
+            "edge:U-F": "edge:U-R",
+            "edge:U-L": "edge:U-F",
+            "edge:U-R": "edge:U-B"
+          }
+        }
+      ],
+      "pieces": [
+        {
+          "id": "edge/BL",
+          "initial": "edge:B-L"
+        },
+        {
+          "id": "edge/BR",
+          "initial": "edge:B-R"
+        },
+        {
+          "id": "edge/DB",
+          "initial": "edge:D-B"
+        },
+        {
+          "id": "edge/DF",
+          "initial": "edge:D-F"
+        },
+        {
+          "id": "edge/DL",
+          "initial": "edge:D-L"
+        },
+        {
+          "id": "edge/DR",
+          "initial": "edge:D-R"
+        },
+        {
+          "id": "edge/FL",
+          "initial": "edge:F-L"
+        },
+        {
+          "id": "edge/FR",
+          "initial": "edge:F-R"
+        },
+        {
+          "id": "edge/UB",
+          "initial": "edge:U-B"
+        },
+        {
+          "id": "edge/UF",
+          "initial": "edge:U-F"
+        },
+        {
+          "id": "edge/UL",
+          "initial": "edge:U-L"
+        },
+        {
+          "id": "edge/UR",
+          "initial": "edge:U-R"
+        }
+      ],
+      "placements": [
+        "edge:B-D",
+        "edge:B-L",
+        "edge:B-R",
+        "edge:B-U",
+        "edge:D-B",
+        "edge:D-F",
+        "edge:D-L",
+        "edge:D-R",
+        "edge:F-D",
+        "edge:F-L",
+        "edge:F-R",
+        "edge:F-U",
+        "edge:L-B",
+        "edge:L-D",
+        "edge:L-F",
+        "edge:L-U",
+        "edge:R-B",
+        "edge:R-D",
+        "edge:R-F",
+        "edge:R-U",
+        "edge:U-B",
+        "edge:U-F",
+        "edge:U-L",
+        "edge:U-R"
+      ]
+    }
+  ],
+  "id": "cube3",
+  "invariant": {
+    "all": [
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "center/B",
+                "placements": [
+                  "center/center:B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/D",
+                "placements": [
+                  "center/center:B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/F",
+                "placements": [
+                  "center/center:B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/L",
+                "placements": [
+                  "center/center:B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/R",
+                "placements": [
+                  "center/center:B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/U",
+                "placements": [
+                  "center/center:B"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "edge/BL",
+                "placements": [
+                  "edge/edge:B-L",
+                  "edge/edge:L-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/BR",
+                "placements": [
+                  "edge/edge:B-L",
+                  "edge/edge:L-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DB",
+                "placements": [
+                  "edge/edge:B-L",
+                  "edge/edge:L-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DF",
+                "placements": [
+                  "edge/edge:B-L",
+                  "edge/edge:L-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DL",
+                "placements": [
+                  "edge/edge:B-L",
+                  "edge/edge:L-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DR",
+                "placements": [
+                  "edge/edge:B-L",
+                  "edge/edge:L-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FL",
+                "placements": [
+                  "edge/edge:B-L",
+                  "edge/edge:L-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FR",
+                "placements": [
+                  "edge/edge:B-L",
+                  "edge/edge:L-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UB",
+                "placements": [
+                  "edge/edge:B-L",
+                  "edge/edge:L-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UF",
+                "placements": [
+                  "edge/edge:B-L",
+                  "edge/edge:L-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UL",
+                "placements": [
+                  "edge/edge:B-L",
+                  "edge/edge:L-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UR",
+                "placements": [
+                  "edge/edge:B-L",
+                  "edge/edge:L-B"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "edge/BL",
+                "placements": [
+                  "edge/edge:B-R",
+                  "edge/edge:R-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/BR",
+                "placements": [
+                  "edge/edge:B-R",
+                  "edge/edge:R-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DB",
+                "placements": [
+                  "edge/edge:B-R",
+                  "edge/edge:R-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DF",
+                "placements": [
+                  "edge/edge:B-R",
+                  "edge/edge:R-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DL",
+                "placements": [
+                  "edge/edge:B-R",
+                  "edge/edge:R-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DR",
+                "placements": [
+                  "edge/edge:B-R",
+                  "edge/edge:R-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FL",
+                "placements": [
+                  "edge/edge:B-R",
+                  "edge/edge:R-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FR",
+                "placements": [
+                  "edge/edge:B-R",
+                  "edge/edge:R-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UB",
+                "placements": [
+                  "edge/edge:B-R",
+                  "edge/edge:R-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UF",
+                "placements": [
+                  "edge/edge:B-R",
+                  "edge/edge:R-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UL",
+                "placements": [
+                  "edge/edge:B-R",
+                  "edge/edge:R-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UR",
+                "placements": [
+                  "edge/edge:B-R",
+                  "edge/edge:R-B"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "center/B",
+                "placements": [
+                  "center/center:D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/D",
+                "placements": [
+                  "center/center:D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/F",
+                "placements": [
+                  "center/center:D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/L",
+                "placements": [
+                  "center/center:D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/R",
+                "placements": [
+                  "center/center:D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/U",
+                "placements": [
+                  "center/center:D"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "edge/BL",
+                "placements": [
+                  "edge/edge:B-D",
+                  "edge/edge:D-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/BR",
+                "placements": [
+                  "edge/edge:B-D",
+                  "edge/edge:D-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DB",
+                "placements": [
+                  "edge/edge:B-D",
+                  "edge/edge:D-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DF",
+                "placements": [
+                  "edge/edge:B-D",
+                  "edge/edge:D-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DL",
+                "placements": [
+                  "edge/edge:B-D",
+                  "edge/edge:D-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DR",
+                "placements": [
+                  "edge/edge:B-D",
+                  "edge/edge:D-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FL",
+                "placements": [
+                  "edge/edge:B-D",
+                  "edge/edge:D-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FR",
+                "placements": [
+                  "edge/edge:B-D",
+                  "edge/edge:D-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UB",
+                "placements": [
+                  "edge/edge:B-D",
+                  "edge/edge:D-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UF",
+                "placements": [
+                  "edge/edge:B-D",
+                  "edge/edge:D-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UL",
+                "placements": [
+                  "edge/edge:B-D",
+                  "edge/edge:D-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UR",
+                "placements": [
+                  "edge/edge:B-D",
+                  "edge/edge:D-B"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "corner/DBL",
+                "placements": [
+                  "corner/corner:B-L-D",
+                  "corner/corner:D-B-L",
+                  "corner/corner:L-D-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DBR",
+                "placements": [
+                  "corner/corner:B-L-D",
+                  "corner/corner:D-B-L",
+                  "corner/corner:L-D-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DFL",
+                "placements": [
+                  "corner/corner:B-L-D",
+                  "corner/corner:D-B-L",
+                  "corner/corner:L-D-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DFR",
+                "placements": [
+                  "corner/corner:B-L-D",
+                  "corner/corner:D-B-L",
+                  "corner/corner:L-D-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UBL",
+                "placements": [
+                  "corner/corner:B-L-D",
+                  "corner/corner:D-B-L",
+                  "corner/corner:L-D-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UBR",
+                "placements": [
+                  "corner/corner:B-L-D",
+                  "corner/corner:D-B-L",
+                  "corner/corner:L-D-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UFL",
+                "placements": [
+                  "corner/corner:B-L-D",
+                  "corner/corner:D-B-L",
+                  "corner/corner:L-D-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UFR",
+                "placements": [
+                  "corner/corner:B-L-D",
+                  "corner/corner:D-B-L",
+                  "corner/corner:L-D-B"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "corner/DBL",
+                "placements": [
+                  "corner/corner:B-D-R",
+                  "corner/corner:D-R-B",
+                  "corner/corner:R-B-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DBR",
+                "placements": [
+                  "corner/corner:B-D-R",
+                  "corner/corner:D-R-B",
+                  "corner/corner:R-B-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DFL",
+                "placements": [
+                  "corner/corner:B-D-R",
+                  "corner/corner:D-R-B",
+                  "corner/corner:R-B-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DFR",
+                "placements": [
+                  "corner/corner:B-D-R",
+                  "corner/corner:D-R-B",
+                  "corner/corner:R-B-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UBL",
+                "placements": [
+                  "corner/corner:B-D-R",
+                  "corner/corner:D-R-B",
+                  "corner/corner:R-B-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UBR",
+                "placements": [
+                  "corner/corner:B-D-R",
+                  "corner/corner:D-R-B",
+                  "corner/corner:R-B-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UFL",
+                "placements": [
+                  "corner/corner:B-D-R",
+                  "corner/corner:D-R-B",
+                  "corner/corner:R-B-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UFR",
+                "placements": [
+                  "corner/corner:B-D-R",
+                  "corner/corner:D-R-B",
+                  "corner/corner:R-B-D"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "edge/BL",
+                "placements": [
+                  "edge/edge:D-F",
+                  "edge/edge:F-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/BR",
+                "placements": [
+                  "edge/edge:D-F",
+                  "edge/edge:F-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DB",
+                "placements": [
+                  "edge/edge:D-F",
+                  "edge/edge:F-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DF",
+                "placements": [
+                  "edge/edge:D-F",
+                  "edge/edge:F-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DL",
+                "placements": [
+                  "edge/edge:D-F",
+                  "edge/edge:F-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DR",
+                "placements": [
+                  "edge/edge:D-F",
+                  "edge/edge:F-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FL",
+                "placements": [
+                  "edge/edge:D-F",
+                  "edge/edge:F-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FR",
+                "placements": [
+                  "edge/edge:D-F",
+                  "edge/edge:F-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UB",
+                "placements": [
+                  "edge/edge:D-F",
+                  "edge/edge:F-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UF",
+                "placements": [
+                  "edge/edge:D-F",
+                  "edge/edge:F-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UL",
+                "placements": [
+                  "edge/edge:D-F",
+                  "edge/edge:F-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UR",
+                "placements": [
+                  "edge/edge:D-F",
+                  "edge/edge:F-D"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "corner/DBL",
+                "placements": [
+                  "corner/corner:D-L-F",
+                  "corner/corner:F-D-L",
+                  "corner/corner:L-F-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DBR",
+                "placements": [
+                  "corner/corner:D-L-F",
+                  "corner/corner:F-D-L",
+                  "corner/corner:L-F-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DFL",
+                "placements": [
+                  "corner/corner:D-L-F",
+                  "corner/corner:F-D-L",
+                  "corner/corner:L-F-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DFR",
+                "placements": [
+                  "corner/corner:D-L-F",
+                  "corner/corner:F-D-L",
+                  "corner/corner:L-F-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UBL",
+                "placements": [
+                  "corner/corner:D-L-F",
+                  "corner/corner:F-D-L",
+                  "corner/corner:L-F-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UBR",
+                "placements": [
+                  "corner/corner:D-L-F",
+                  "corner/corner:F-D-L",
+                  "corner/corner:L-F-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UFL",
+                "placements": [
+                  "corner/corner:D-L-F",
+                  "corner/corner:F-D-L",
+                  "corner/corner:L-F-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UFR",
+                "placements": [
+                  "corner/corner:D-L-F",
+                  "corner/corner:F-D-L",
+                  "corner/corner:L-F-D"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "corner/DBL",
+                "placements": [
+                  "corner/corner:D-F-R",
+                  "corner/corner:F-R-D",
+                  "corner/corner:R-D-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DBR",
+                "placements": [
+                  "corner/corner:D-F-R",
+                  "corner/corner:F-R-D",
+                  "corner/corner:R-D-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DFL",
+                "placements": [
+                  "corner/corner:D-F-R",
+                  "corner/corner:F-R-D",
+                  "corner/corner:R-D-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DFR",
+                "placements": [
+                  "corner/corner:D-F-R",
+                  "corner/corner:F-R-D",
+                  "corner/corner:R-D-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UBL",
+                "placements": [
+                  "corner/corner:D-F-R",
+                  "corner/corner:F-R-D",
+                  "corner/corner:R-D-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UBR",
+                "placements": [
+                  "corner/corner:D-F-R",
+                  "corner/corner:F-R-D",
+                  "corner/corner:R-D-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UFL",
+                "placements": [
+                  "corner/corner:D-F-R",
+                  "corner/corner:F-R-D",
+                  "corner/corner:R-D-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UFR",
+                "placements": [
+                  "corner/corner:D-F-R",
+                  "corner/corner:F-R-D",
+                  "corner/corner:R-D-F"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "edge/BL",
+                "placements": [
+                  "edge/edge:D-L",
+                  "edge/edge:L-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/BR",
+                "placements": [
+                  "edge/edge:D-L",
+                  "edge/edge:L-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DB",
+                "placements": [
+                  "edge/edge:D-L",
+                  "edge/edge:L-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DF",
+                "placements": [
+                  "edge/edge:D-L",
+                  "edge/edge:L-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DL",
+                "placements": [
+                  "edge/edge:D-L",
+                  "edge/edge:L-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DR",
+                "placements": [
+                  "edge/edge:D-L",
+                  "edge/edge:L-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FL",
+                "placements": [
+                  "edge/edge:D-L",
+                  "edge/edge:L-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FR",
+                "placements": [
+                  "edge/edge:D-L",
+                  "edge/edge:L-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UB",
+                "placements": [
+                  "edge/edge:D-L",
+                  "edge/edge:L-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UF",
+                "placements": [
+                  "edge/edge:D-L",
+                  "edge/edge:L-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UL",
+                "placements": [
+                  "edge/edge:D-L",
+                  "edge/edge:L-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UR",
+                "placements": [
+                  "edge/edge:D-L",
+                  "edge/edge:L-D"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "edge/BL",
+                "placements": [
+                  "edge/edge:D-R",
+                  "edge/edge:R-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/BR",
+                "placements": [
+                  "edge/edge:D-R",
+                  "edge/edge:R-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DB",
+                "placements": [
+                  "edge/edge:D-R",
+                  "edge/edge:R-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DF",
+                "placements": [
+                  "edge/edge:D-R",
+                  "edge/edge:R-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DL",
+                "placements": [
+                  "edge/edge:D-R",
+                  "edge/edge:R-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DR",
+                "placements": [
+                  "edge/edge:D-R",
+                  "edge/edge:R-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FL",
+                "placements": [
+                  "edge/edge:D-R",
+                  "edge/edge:R-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FR",
+                "placements": [
+                  "edge/edge:D-R",
+                  "edge/edge:R-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UB",
+                "placements": [
+                  "edge/edge:D-R",
+                  "edge/edge:R-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UF",
+                "placements": [
+                  "edge/edge:D-R",
+                  "edge/edge:R-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UL",
+                "placements": [
+                  "edge/edge:D-R",
+                  "edge/edge:R-D"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UR",
+                "placements": [
+                  "edge/edge:D-R",
+                  "edge/edge:R-D"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "center/B",
+                "placements": [
+                  "center/center:F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/D",
+                "placements": [
+                  "center/center:F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/F",
+                "placements": [
+                  "center/center:F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/L",
+                "placements": [
+                  "center/center:F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/R",
+                "placements": [
+                  "center/center:F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/U",
+                "placements": [
+                  "center/center:F"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "edge/BL",
+                "placements": [
+                  "edge/edge:F-L",
+                  "edge/edge:L-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/BR",
+                "placements": [
+                  "edge/edge:F-L",
+                  "edge/edge:L-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DB",
+                "placements": [
+                  "edge/edge:F-L",
+                  "edge/edge:L-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DF",
+                "placements": [
+                  "edge/edge:F-L",
+                  "edge/edge:L-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DL",
+                "placements": [
+                  "edge/edge:F-L",
+                  "edge/edge:L-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DR",
+                "placements": [
+                  "edge/edge:F-L",
+                  "edge/edge:L-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FL",
+                "placements": [
+                  "edge/edge:F-L",
+                  "edge/edge:L-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FR",
+                "placements": [
+                  "edge/edge:F-L",
+                  "edge/edge:L-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UB",
+                "placements": [
+                  "edge/edge:F-L",
+                  "edge/edge:L-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UF",
+                "placements": [
+                  "edge/edge:F-L",
+                  "edge/edge:L-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UL",
+                "placements": [
+                  "edge/edge:F-L",
+                  "edge/edge:L-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UR",
+                "placements": [
+                  "edge/edge:F-L",
+                  "edge/edge:L-F"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "edge/BL",
+                "placements": [
+                  "edge/edge:F-R",
+                  "edge/edge:R-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/BR",
+                "placements": [
+                  "edge/edge:F-R",
+                  "edge/edge:R-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DB",
+                "placements": [
+                  "edge/edge:F-R",
+                  "edge/edge:R-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DF",
+                "placements": [
+                  "edge/edge:F-R",
+                  "edge/edge:R-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DL",
+                "placements": [
+                  "edge/edge:F-R",
+                  "edge/edge:R-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DR",
+                "placements": [
+                  "edge/edge:F-R",
+                  "edge/edge:R-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FL",
+                "placements": [
+                  "edge/edge:F-R",
+                  "edge/edge:R-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FR",
+                "placements": [
+                  "edge/edge:F-R",
+                  "edge/edge:R-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UB",
+                "placements": [
+                  "edge/edge:F-R",
+                  "edge/edge:R-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UF",
+                "placements": [
+                  "edge/edge:F-R",
+                  "edge/edge:R-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UL",
+                "placements": [
+                  "edge/edge:F-R",
+                  "edge/edge:R-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UR",
+                "placements": [
+                  "edge/edge:F-R",
+                  "edge/edge:R-F"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "center/B",
+                "placements": [
+                  "center/center:L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/D",
+                "placements": [
+                  "center/center:L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/F",
+                "placements": [
+                  "center/center:L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/L",
+                "placements": [
+                  "center/center:L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/R",
+                "placements": [
+                  "center/center:L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/U",
+                "placements": [
+                  "center/center:L"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "center/B",
+                "placements": [
+                  "center/center:R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/D",
+                "placements": [
+                  "center/center:R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/F",
+                "placements": [
+                  "center/center:R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/L",
+                "placements": [
+                  "center/center:R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/R",
+                "placements": [
+                  "center/center:R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/U",
+                "placements": [
+                  "center/center:R"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "center/B",
+                "placements": [
+                  "center/center:U"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/D",
+                "placements": [
+                  "center/center:U"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/F",
+                "placements": [
+                  "center/center:U"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/L",
+                "placements": [
+                  "center/center:U"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/R",
+                "placements": [
+                  "center/center:U"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "center/U",
+                "placements": [
+                  "center/center:U"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "edge/BL",
+                "placements": [
+                  "edge/edge:B-U",
+                  "edge/edge:U-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/BR",
+                "placements": [
+                  "edge/edge:B-U",
+                  "edge/edge:U-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DB",
+                "placements": [
+                  "edge/edge:B-U",
+                  "edge/edge:U-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DF",
+                "placements": [
+                  "edge/edge:B-U",
+                  "edge/edge:U-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DL",
+                "placements": [
+                  "edge/edge:B-U",
+                  "edge/edge:U-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DR",
+                "placements": [
+                  "edge/edge:B-U",
+                  "edge/edge:U-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FL",
+                "placements": [
+                  "edge/edge:B-U",
+                  "edge/edge:U-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FR",
+                "placements": [
+                  "edge/edge:B-U",
+                  "edge/edge:U-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UB",
+                "placements": [
+                  "edge/edge:B-U",
+                  "edge/edge:U-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UF",
+                "placements": [
+                  "edge/edge:B-U",
+                  "edge/edge:U-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UL",
+                "placements": [
+                  "edge/edge:B-U",
+                  "edge/edge:U-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UR",
+                "placements": [
+                  "edge/edge:B-U",
+                  "edge/edge:U-B"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "corner/DBL",
+                "placements": [
+                  "corner/corner:B-U-L",
+                  "corner/corner:L-B-U",
+                  "corner/corner:U-L-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DBR",
+                "placements": [
+                  "corner/corner:B-U-L",
+                  "corner/corner:L-B-U",
+                  "corner/corner:U-L-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DFL",
+                "placements": [
+                  "corner/corner:B-U-L",
+                  "corner/corner:L-B-U",
+                  "corner/corner:U-L-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DFR",
+                "placements": [
+                  "corner/corner:B-U-L",
+                  "corner/corner:L-B-U",
+                  "corner/corner:U-L-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UBL",
+                "placements": [
+                  "corner/corner:B-U-L",
+                  "corner/corner:L-B-U",
+                  "corner/corner:U-L-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UBR",
+                "placements": [
+                  "corner/corner:B-U-L",
+                  "corner/corner:L-B-U",
+                  "corner/corner:U-L-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UFL",
+                "placements": [
+                  "corner/corner:B-U-L",
+                  "corner/corner:L-B-U",
+                  "corner/corner:U-L-B"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UFR",
+                "placements": [
+                  "corner/corner:B-U-L",
+                  "corner/corner:L-B-U",
+                  "corner/corner:U-L-B"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "corner/DBL",
+                "placements": [
+                  "corner/corner:B-R-U",
+                  "corner/corner:R-U-B",
+                  "corner/corner:U-B-R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DBR",
+                "placements": [
+                  "corner/corner:B-R-U",
+                  "corner/corner:R-U-B",
+                  "corner/corner:U-B-R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DFL",
+                "placements": [
+                  "corner/corner:B-R-U",
+                  "corner/corner:R-U-B",
+                  "corner/corner:U-B-R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DFR",
+                "placements": [
+                  "corner/corner:B-R-U",
+                  "corner/corner:R-U-B",
+                  "corner/corner:U-B-R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UBL",
+                "placements": [
+                  "corner/corner:B-R-U",
+                  "corner/corner:R-U-B",
+                  "corner/corner:U-B-R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UBR",
+                "placements": [
+                  "corner/corner:B-R-U",
+                  "corner/corner:R-U-B",
+                  "corner/corner:U-B-R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UFL",
+                "placements": [
+                  "corner/corner:B-R-U",
+                  "corner/corner:R-U-B",
+                  "corner/corner:U-B-R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UFR",
+                "placements": [
+                  "corner/corner:B-R-U",
+                  "corner/corner:R-U-B",
+                  "corner/corner:U-B-R"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "edge/BL",
+                "placements": [
+                  "edge/edge:F-U",
+                  "edge/edge:U-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/BR",
+                "placements": [
+                  "edge/edge:F-U",
+                  "edge/edge:U-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DB",
+                "placements": [
+                  "edge/edge:F-U",
+                  "edge/edge:U-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DF",
+                "placements": [
+                  "edge/edge:F-U",
+                  "edge/edge:U-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DL",
+                "placements": [
+                  "edge/edge:F-U",
+                  "edge/edge:U-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DR",
+                "placements": [
+                  "edge/edge:F-U",
+                  "edge/edge:U-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FL",
+                "placements": [
+                  "edge/edge:F-U",
+                  "edge/edge:U-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FR",
+                "placements": [
+                  "edge/edge:F-U",
+                  "edge/edge:U-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UB",
+                "placements": [
+                  "edge/edge:F-U",
+                  "edge/edge:U-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UF",
+                "placements": [
+                  "edge/edge:F-U",
+                  "edge/edge:U-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UL",
+                "placements": [
+                  "edge/edge:F-U",
+                  "edge/edge:U-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UR",
+                "placements": [
+                  "edge/edge:F-U",
+                  "edge/edge:U-F"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "corner/DBL",
+                "placements": [
+                  "corner/corner:F-L-U",
+                  "corner/corner:L-U-F",
+                  "corner/corner:U-F-L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DBR",
+                "placements": [
+                  "corner/corner:F-L-U",
+                  "corner/corner:L-U-F",
+                  "corner/corner:U-F-L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DFL",
+                "placements": [
+                  "corner/corner:F-L-U",
+                  "corner/corner:L-U-F",
+                  "corner/corner:U-F-L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DFR",
+                "placements": [
+                  "corner/corner:F-L-U",
+                  "corner/corner:L-U-F",
+                  "corner/corner:U-F-L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UBL",
+                "placements": [
+                  "corner/corner:F-L-U",
+                  "corner/corner:L-U-F",
+                  "corner/corner:U-F-L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UBR",
+                "placements": [
+                  "corner/corner:F-L-U",
+                  "corner/corner:L-U-F",
+                  "corner/corner:U-F-L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UFL",
+                "placements": [
+                  "corner/corner:F-L-U",
+                  "corner/corner:L-U-F",
+                  "corner/corner:U-F-L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UFR",
+                "placements": [
+                  "corner/corner:F-L-U",
+                  "corner/corner:L-U-F",
+                  "corner/corner:U-F-L"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "corner/DBL",
+                "placements": [
+                  "corner/corner:F-U-R",
+                  "corner/corner:R-F-U",
+                  "corner/corner:U-R-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DBR",
+                "placements": [
+                  "corner/corner:F-U-R",
+                  "corner/corner:R-F-U",
+                  "corner/corner:U-R-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DFL",
+                "placements": [
+                  "corner/corner:F-U-R",
+                  "corner/corner:R-F-U",
+                  "corner/corner:U-R-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/DFR",
+                "placements": [
+                  "corner/corner:F-U-R",
+                  "corner/corner:R-F-U",
+                  "corner/corner:U-R-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UBL",
+                "placements": [
+                  "corner/corner:F-U-R",
+                  "corner/corner:R-F-U",
+                  "corner/corner:U-R-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UBR",
+                "placements": [
+                  "corner/corner:F-U-R",
+                  "corner/corner:R-F-U",
+                  "corner/corner:U-R-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UFL",
+                "placements": [
+                  "corner/corner:F-U-R",
+                  "corner/corner:R-F-U",
+                  "corner/corner:U-R-F"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "corner/UFR",
+                "placements": [
+                  "corner/corner:F-U-R",
+                  "corner/corner:R-F-U",
+                  "corner/corner:U-R-F"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "edge/BL",
+                "placements": [
+                  "edge/edge:L-U",
+                  "edge/edge:U-L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/BR",
+                "placements": [
+                  "edge/edge:L-U",
+                  "edge/edge:U-L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DB",
+                "placements": [
+                  "edge/edge:L-U",
+                  "edge/edge:U-L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DF",
+                "placements": [
+                  "edge/edge:L-U",
+                  "edge/edge:U-L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DL",
+                "placements": [
+                  "edge/edge:L-U",
+                  "edge/edge:U-L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DR",
+                "placements": [
+                  "edge/edge:L-U",
+                  "edge/edge:U-L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FL",
+                "placements": [
+                  "edge/edge:L-U",
+                  "edge/edge:U-L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FR",
+                "placements": [
+                  "edge/edge:L-U",
+                  "edge/edge:U-L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UB",
+                "placements": [
+                  "edge/edge:L-U",
+                  "edge/edge:U-L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UF",
+                "placements": [
+                  "edge/edge:L-U",
+                  "edge/edge:U-L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UL",
+                "placements": [
+                  "edge/edge:L-U",
+                  "edge/edge:U-L"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UR",
+                "placements": [
+                  "edge/edge:L-U",
+                  "edge/edge:U-L"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "count": {
+          "max": 1,
+          "min": 1,
+          "of": [
+            {
+              "at": {
+                "piece": "edge/BL",
+                "placements": [
+                  "edge/edge:R-U",
+                  "edge/edge:U-R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/BR",
+                "placements": [
+                  "edge/edge:R-U",
+                  "edge/edge:U-R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DB",
+                "placements": [
+                  "edge/edge:R-U",
+                  "edge/edge:U-R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DF",
+                "placements": [
+                  "edge/edge:R-U",
+                  "edge/edge:U-R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DL",
+                "placements": [
+                  "edge/edge:R-U",
+                  "edge/edge:U-R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/DR",
+                "placements": [
+                  "edge/edge:R-U",
+                  "edge/edge:U-R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FL",
+                "placements": [
+                  "edge/edge:R-U",
+                  "edge/edge:U-R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/FR",
+                "placements": [
+                  "edge/edge:R-U",
+                  "edge/edge:U-R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UB",
+                "placements": [
+                  "edge/edge:R-U",
+                  "edge/edge:U-R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UF",
+                "placements": [
+                  "edge/edge:R-U",
+                  "edge/edge:U-R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UL",
+                "placements": [
+                  "edge/edge:R-U",
+                  "edge/edge:U-R"
+                ]
+              }
+            },
+            {
+              "at": {
+                "piece": "edge/UR",
+                "placements": [
+                  "edge/edge:R-U",
+                  "edge/edge:U-R"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "kind": "relational-puzzle",
+  "languageVersion": 1,
+  "relations": [],
+  "requests": [
+    {
+      "defaultProfile": "turn",
+      "id": "B",
+      "profiles": [
+        {
+          "choices": {
+            "center": "B",
+            "corner": "B",
+            "edge": "B"
+          },
+          "id": "turn"
+        }
+      ],
+      "relation": {
+        "all": [
+          {
+            "chosen": {
+              "domain": "center",
+              "moves": [
+                "B"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "corner",
+              "moves": [
+                "B"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "edge",
+              "moves": [
+                "B"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "defaultProfile": "turn",
+      "id": "B'",
+      "profiles": [
+        {
+          "choices": {
+            "center": "B'",
+            "corner": "B'",
+            "edge": "B'"
+          },
+          "id": "turn"
+        }
+      ],
+      "relation": {
+        "all": [
+          {
+            "chosen": {
+              "domain": "center",
+              "moves": [
+                "B'"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "corner",
+              "moves": [
+                "B'"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "edge",
+              "moves": [
+                "B'"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "defaultProfile": "turn",
+      "id": "D",
+      "profiles": [
+        {
+          "choices": {
+            "center": "D",
+            "corner": "D",
+            "edge": "D"
+          },
+          "id": "turn"
+        }
+      ],
+      "relation": {
+        "all": [
+          {
+            "chosen": {
+              "domain": "center",
+              "moves": [
+                "D"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "corner",
+              "moves": [
+                "D"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "edge",
+              "moves": [
+                "D"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "defaultProfile": "turn",
+      "id": "D'",
+      "profiles": [
+        {
+          "choices": {
+            "center": "D'",
+            "corner": "D'",
+            "edge": "D'"
+          },
+          "id": "turn"
+        }
+      ],
+      "relation": {
+        "all": [
+          {
+            "chosen": {
+              "domain": "center",
+              "moves": [
+                "D'"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "corner",
+              "moves": [
+                "D'"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "edge",
+              "moves": [
+                "D'"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "defaultProfile": "turn",
+      "id": "F",
+      "profiles": [
+        {
+          "choices": {
+            "center": "F",
+            "corner": "F",
+            "edge": "F"
+          },
+          "id": "turn"
+        }
+      ],
+      "relation": {
+        "all": [
+          {
+            "chosen": {
+              "domain": "center",
+              "moves": [
+                "F"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "corner",
+              "moves": [
+                "F"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "edge",
+              "moves": [
+                "F"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "defaultProfile": "turn",
+      "id": "F'",
+      "profiles": [
+        {
+          "choices": {
+            "center": "F'",
+            "corner": "F'",
+            "edge": "F'"
+          },
+          "id": "turn"
+        }
+      ],
+      "relation": {
+        "all": [
+          {
+            "chosen": {
+              "domain": "center",
+              "moves": [
+                "F'"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "corner",
+              "moves": [
+                "F'"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "edge",
+              "moves": [
+                "F'"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "defaultProfile": "turn",
+      "id": "L",
+      "profiles": [
+        {
+          "choices": {
+            "center": "L",
+            "corner": "L",
+            "edge": "L"
+          },
+          "id": "turn"
+        }
+      ],
+      "relation": {
+        "all": [
+          {
+            "chosen": {
+              "domain": "center",
+              "moves": [
+                "L"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "corner",
+              "moves": [
+                "L"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "edge",
+              "moves": [
+                "L"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "defaultProfile": "turn",
+      "id": "L'",
+      "profiles": [
+        {
+          "choices": {
+            "center": "L'",
+            "corner": "L'",
+            "edge": "L'"
+          },
+          "id": "turn"
+        }
+      ],
+      "relation": {
+        "all": [
+          {
+            "chosen": {
+              "domain": "center",
+              "moves": [
+                "L'"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "corner",
+              "moves": [
+                "L'"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "edge",
+              "moves": [
+                "L'"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "defaultProfile": "turn",
+      "id": "R",
+      "profiles": [
+        {
+          "choices": {
+            "center": "R",
+            "corner": "R",
+            "edge": "R"
+          },
+          "id": "turn"
+        }
+      ],
+      "relation": {
+        "all": [
+          {
+            "chosen": {
+              "domain": "center",
+              "moves": [
+                "R"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "corner",
+              "moves": [
+                "R"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "edge",
+              "moves": [
+                "R"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "defaultProfile": "turn",
+      "id": "R'",
+      "profiles": [
+        {
+          "choices": {
+            "center": "R'",
+            "corner": "R'",
+            "edge": "R'"
+          },
+          "id": "turn"
+        }
+      ],
+      "relation": {
+        "all": [
+          {
+            "chosen": {
+              "domain": "center",
+              "moves": [
+                "R'"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "corner",
+              "moves": [
+                "R'"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "edge",
+              "moves": [
+                "R'"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "defaultProfile": "turn",
+      "id": "U",
+      "profiles": [
+        {
+          "choices": {
+            "center": "U",
+            "corner": "U",
+            "edge": "U"
+          },
+          "id": "turn"
+        }
+      ],
+      "relation": {
+        "all": [
+          {
+            "chosen": {
+              "domain": "center",
+              "moves": [
+                "U"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "corner",
+              "moves": [
+                "U"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "edge",
+              "moves": [
+                "U"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "defaultProfile": "turn",
+      "id": "U'",
+      "profiles": [
+        {
+          "choices": {
+            "center": "U'",
+            "corner": "U'",
+            "edge": "U'"
+          },
+          "id": "turn"
+        }
+      ],
+      "relation": {
+        "all": [
+          {
+            "chosen": {
+              "domain": "center",
+              "moves": [
+                "U'"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "corner",
+              "moves": [
+                "U'"
+              ]
+            }
+          },
+          {
+            "chosen": {
+              "domain": "edge",
+              "moves": [
+                "U'"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

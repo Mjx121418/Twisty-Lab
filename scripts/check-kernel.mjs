@@ -18,15 +18,16 @@ try {
   execFileSync('cmake', ['--build', join(consumer, 'build'), '--parallel', '1'], { stdio: 'inherit' });
   const javascript = join(temporary, 'javascript');
   await cp(new URL('../build/kernel/', import.meta.url), javascript, { recursive: true });
-  const { createKernel, KernelSession, ExperimentalRelationalPuzzle } = await import(pathToFileURL(join(javascript, 'index.js')).href);
+  const { createKernel, KernelSession, ExperimentalRelationalPuzzle, createRelationalCubeSource } = await import(pathToFileURL(join(javascript, 'index.js')).href);
   const module = await createKernel();
   const info = JSON.parse(module.kernelInfoJSON());
   const manifest = JSON.parse(await readFile(join(javascript, 'package.json'), 'utf8'));
-  assert.equal(info.apiVersion, 1); assert.equal(info.frameBufferVersion, 1);
+  assert.equal(info.apiVersion, 2); assert.equal(info.frameBufferVersion, 1);
   assert.equal(info.version, manifest.version);
   assert.ok(info.ruleModules.includes('finite-placement-relations@2'));
   assert.ok(info.realizationKinds.includes('articulated-spherical'));
   assert.equal(info.experimentalAPIs.relational, 1);
+  assert.deepEqual(info.relationalLibraries, ['cube3', 'bandaged-uf-ufr']);
   const relationalConsumer = join(temporary, 'relational-consumer');
   await cp(join(javascript, 'examples/relational'), relationalConsumer, { recursive: true });
   execFileSync('cmake', ['-S', relationalConsumer, '-B', join(relationalConsumer, 'build'), '-G', 'Ninja',
@@ -48,6 +49,27 @@ try {
       input: queries.map((q) => JSON.stringify(q)).join('\n') + '\n' }).trim().split('\n').map((line) => JSON.parse(line));
     assert.deepEqual(queries.map((q) => relational.query(q)), native);
     console.log('Installed native and packaged WASM relational consumers agree.');
+    for (const [name, bandaged] of [['cube3', false], ['bandaged', true]]) {
+      const data = join(javascript, 'examples/canvas/data', name);
+      const source = JSON.parse(await readFile(join(data, 'relational.pzl.json'), 'utf8'));
+      const catalog = JSON.parse(await readFile(join(data, 'relational-bindings.json'), 'utf8'));
+      assert.deepEqual(createRelationalCubeSource(module, bandaged), { source, catalog });
+      assert.deepEqual(JSON.parse(execFileSync(executable, [bandaged ? '--bandaged-module' : '--cube-module'], { encoding: 'utf8' })), { source, catalog });
+      const cube = new ExperimentalRelationalPuzzle(module, JSON.stringify(source));
+      try {
+        const initial = cube.preview.program.initialPlacements;
+        const selection = cube.query({ op: 'bind', state: initial, request: 'U' });
+        assert.equal(selection.status, 'Selected');
+        const turn = { op: 'plan', state: initial, request: 'U', choices: selection.choices };
+        const expected = cube.query(turn);
+        assert.equal(expected.status, 'Permitted');
+        assert.equal(expected.transition.actions.length, bandaged ? 8 : 9);
+        const actual = JSON.parse(execFileSync(executable, [join(data, 'relational.pzl.json')], {
+          encoding: 'utf8', input: JSON.stringify(turn) + '\n' }));
+        assert.deepEqual(actual, expected);
+      } finally { cube.dispose(); }
+    }
+    console.log('Installed native and packaged WASM cube/bandage authoring libraries agree.');
   } finally { relational.dispose(); }
   const customDirectory = join(javascript, 'examples/canvas/data/gear-custom');
   await mkdir(customDirectory, { recursive: true });
@@ -83,8 +105,10 @@ try {
     ['gear-custom', "F U R Dq L Bq (F U R Dq L Bq)'", 'F', 'gear-custom-spherical'],
   ]) {
     const directory = join(javascript, 'examples/canvas/data', puzzle);
-    const source = await readFile(join(directory, 'definition.json'), 'utf8');
-    const realizationPath = join(directory, `${kind}.json`);
+    const migrated = puzzle === 'cube3' || puzzle === 'bandaged';
+    const sourcePath = join(directory, migrated ? 'relational-package.json' : 'definition.json');
+    const source = await readFile(sourcePath, 'utf8');
+    const realizationPath = join(directory, `${migrated ? 'relational-' : ''}${kind}.json`);
     const realization = await readFile(realizationPath, 'utf8');
     const session = new KernelSession(module, source);
     const geometry = module.createGeometry(session.native, realization);
@@ -113,7 +137,7 @@ try {
       assert.equal(preview.status, 'Legal');
       assert.deepEqual(session.snapshot(), origin, 'Planning must not commit state/history.');
       assert.equal(session.plan({ operation: firstMove, parameters: { unsupported: 1 } }).status, 'Invalid');
-      if (puzzle === 'bandaged') assert.equal(session.plan({ operation: 'R', parameters: {} }).reasonCode, 'footprint.partial_overlap');
+      if (puzzle === 'bandaged') assert.equal(session.plan({ operation: 'R', parameters: {} }).reasonCode, 'relation.rejected');
       if (puzzle === 'gear-custom') {
         assert.deepEqual(session.plan({ operation: 'R', parameters: {} }).transition.afterState,
           session.plan({ operation: 'L', parameters: {} }).transition.afterState);
@@ -131,7 +155,7 @@ try {
         assert.equal(JSON.parse(geometry.prepareAnimationJSON(record)).status, 'Prepared');
         geometry.sample(0.5); geometry.sample(1);
       }
-      const reference = JSON.parse(execFileSync(join(consumer, 'build/custom_kernel_consumer'), [join(directory, 'definition.json'), realizationPath, algorithm], { encoding: 'utf8' }));
+      const reference = JSON.parse(execFileSync(join(consumer, 'build/custom_kernel_consumer'), [sourcePath, realizationPath, algorithm], { encoding: 'utf8' }));
       assert.deepEqual(session.snapshot(), reference.snapshot);
       assert.deepEqual(JSON.parse(geometry.sceneJSON()), reference.scene);
       assert.deepEqual(info, reference.kernel);

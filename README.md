@@ -1,6 +1,6 @@
 # Twisty Lab
 
-A portable twisty-puzzle kernel with one exact C++ rule system and interchangeable C++ geometric realizations. Custom native and browser renderers/controllers use its public APIs. The bundled Three.js application displays synchronized Euclidean, spherical, and labeled port views of the same session.
+A portable twisty-puzzle kernel with exact C++ rules and interchangeable C++ geometric realizations. Custom native and browser renderers/controllers use its public APIs. The bundled Three.js application displays synchronized Euclidean, spherical, and labeled port views of the same session.
 
 The initial release includes a 3×3 cube and a reference bandaged cube with the UF edge and UFR corner fused into one rigid piece. It provides explainable blocking, synchronized views, file-based definition inspection, algorithms, reproducible legal scrambles, undo/redo, and portable saved sessions.
 
@@ -62,13 +62,13 @@ The CLI links the core, compiler, and session without the geometry or renderer t
 
 ```sh
 npm run build:native
-build/native/twisty inspect --definition packages/cube3/source.json --json
+build/native/twisty inspect --definition packages/cube3/relational-package.json --json
 build/native/twisty run --algorithm "[R,U]" --policy transactional --json
 build/native/twisty scramble --seed 42 --length 25 --save build/session.json --json
 build/native/twisty replay --session build/session.json --json
 build/native/twisty verify-fixtures --json
 build/native/twisty compile --definition packages/cube3/source.json --output build/definition.json
-build/native/twisty validate --definition packages/bandaged/source.json
+build/native/twisty validate --definition packages/bandaged/relational-package.json
 ```
 
 Commands are `compile`, `validate`, `inspect`, `run`, `scramble`, `replay`, and `verify-fixtures`. Use `--json` for compact machine-readable results and `--output FILE` to save an output document. `run` and `scramble` accept `--session FILE` to continue an existing session and `--save FILE` to persist the result. Commands return nonzero for blocked execution or invalid input.
@@ -86,7 +86,7 @@ Native consumers use `find_package(TwistyKernel CONFIG REQUIRED)` and link `Twis
 
 See [the public API guide](docs/kernel-api.md), [the independent CMake consumer](examples/native/main.cpp), and [the Canvas renderer/controller](examples/canvas/app.js). Run `npm run check:kernel` to check installed/copied artifacts outside the repository. The production build also serves the standalone Canvas example at `/kernel/examples/canvas/`. The kernel can be built and hosted separately from React, Three.js, and Vite.
 
-The [experimental relational language](docs/relational-core.md) introduces a domain-free C++ executor and JSON compiler. It checks explicit movement tuples against general permission relations; profile selection and bounded discovery are separate helpers. Native and WASM examples are available, with `npm run check:relational` comparing them against an independent source evaluator. The [migration plan](docs/abstract-language-core-plan.md) records the remaining puzzle, session, and interpreter work.
+The [experimental relational language](docs/relational-core.md) introduces a domain-free C++ executor and JSON compiler. It checks explicit movement tuples against general permission relations; profile selection and bounded discovery are separate helpers. Migrated cube and bandage ASTs and authoring libraries are available through the native/WASM API, with `npm run check:relational` comparing their behavior and event witnesses against the current executor and checking the tiny examples against an independent evaluator. Cube and bandaged-cube presets now use relational sessions and witnesses in all three views, including the independent Canvas client. Other puzzles retain their existing executor during migration. Public API 2 adds new semantic pins and schema-2 histories that record movement choices; old cube saves have an explicit checked conversion API. The [migration plan](docs/abstract-language-core-plan.md) records the remaining interacting-puzzle, language, and adapter work.
 
 ## Authoring and data packages
 

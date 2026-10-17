@@ -4,6 +4,8 @@ export type { MainModule } from './generated/twisty.mjs';
 export type KernelInfo = {
   apiVersion: number; version: string; documentSchemaVersion: number; frameBufferVersion: number;
   experimentalAPIs?: { relational?: number };
+  relationalLibraries?: string[];
+  relationalDefinitionVersion?: number; sessionSchemaVersions?: number[];
   ruleModules: string[]; realizationKinds: string[]; geometryCapabilities: string[];
 };
 export type KernelOptions = { wasmURL?: string | URL; locateFile?: (filename: string, directory: string) => string };
@@ -12,12 +14,12 @@ export async function createKernel(options: KernelOptions = {}): Promise<MainMod
     filename.endsWith('.wasm') && options.wasmURL ? String(options.wasmURL) : directory + filename);
   const module = await createModule({ locateFile });
   const info = JSON.parse(module.kernelInfoJSON()) as KernelInfo;
-  if (info.apiVersion !== 1 || info.frameBufferVersion !== 1) throw new Error('Unsupported kernel API or frame-buffer version.');
+  if (info.apiVersion !== 2 || info.frameBufferVersion !== 1) throw new Error('Unsupported kernel API or frame-buffer version.');
   return module;
 }
 
 export type State = { placementOf: Record<string, string>; mechanism: Record<string, unknown> };
-export type Request = { operation: string; parameters: Record<string, never> };
+export type Request = { operation: string; parameters: Record<string, never>; choices?: string[] };
 export type Snapshot = {
   puzzleId: string; definitionDigest: string; stateDigest: string; revision: string;
   state: State; solved: boolean; legalRequests: Request[];
@@ -26,7 +28,8 @@ export type Snapshot = {
 export type Transition = {
   definitionDigest: string; beforeStateDigest: string; afterStateDigest: string;
   request: Request; beforeState: State; afterState: State;
-  pieceActions: { pieceId: string; from: string; to: string; role: string; transport: string }[];
+  witnessVersion?: number;
+  pieceActions: { pieceId: string; from: string; to: string; role: string; transport: string; event?: string }[];
 };
 export type Result = {
   status: string; snapshot?: Snapshot; transitions?: Transition[]; reasonCode?: string;
@@ -55,7 +58,7 @@ export type HitBinding = {
 };
 export type CompiledDefinition = {
   kind: string; puzzleId: string; definitionDigest: string;
-  ruleModule: 'finite-footprint@1' | 'finite-placement-relations@1' | 'finite-placement-relations@2';
+  ruleModule: 'relational@1' | 'finite-footprint@1' | 'finite-placement-relations@1' | 'finite-placement-relations@2';
   pieceTypes: { id: string; placementDomainId: string; localPorts: string[] }[];
   placementDomains: { id: string; placements: { key: string; footprint: string[]; portAttachment: Record<string, { cell: string; attachment: string }> }[] }[];
   pieces: { id: string; type: string; homePlacement: string; portLabels: Record<string, string> }[];
@@ -97,7 +100,7 @@ export type GearCubeSource = {
 };
 
 // Experimental version 1. Numeric placements are resolved through preview.bindings.
-// The current application sessions and realizations have not migrated to this API.
+// This pure preview/query API remains separate from persisted session packages.
 export type RelationalPredicate = boolean
   | { at: { piece: string; placements: string[] } }
   | { chosen: { domain: string; moves: string[] } }
@@ -119,6 +122,28 @@ export type RelationalSource = {
   requests: { id: string; relation: RelationalPredicate;
     profiles?: { id: string; choices: Record<string, string>; when?: RelationalPredicate }[]; defaultProfile?: string }[];
 };
+export type RelationalCubeCatalog = {
+  kind: 'relational-cube-bindings'; version: 1; puzzleId: string;
+  faceLabels: string[]; symmetry: number[][]; resources: string[];
+  domains: { id: string; pieces: string[]; placements: string[]; localPorts: string[] }[];
+  pieces: Record<string, { domain: string; home: string; portLabels: Record<string, string> }>;
+  placements: Record<string, { resources: string[]; ports: Record<string, { cell: string; attachment: string }> }>;
+  requests: Record<string, { inverse: string; family: string; event: string; profile: string }>;
+};
+export type RelationalPackage = {
+  kind: 'relational-package'; formatVersion: 1;
+  source: RelationalSource; catalog: RelationalCubeCatalog;
+};
+export type RelationalDefinition = CompiledDefinition & {
+  kind: 'relational-definition'; formatVersion: 1; predicateVersion: 1;
+  source: RelationalSource; catalog: RelationalCubeCatalog;
+  program: RelationalPreview['program']; bindings: RelationalPreview['bindings'];
+};
+export function createRelationalCubeSource(module: MainModule, bandaged = false): {
+  source: RelationalSource; catalog: RelationalCubeCatalog;
+} {
+  return JSON.parse(module.relationalCubeModuleJSON(bandaged)) as { source: RelationalSource; catalog: RelationalCubeCatalog };
+}
 export type RelationalPreview = {
   kind: 'relational-preview'; experimentalVersion: 1; predicateVersion: 1;
   bindings: {
@@ -175,7 +200,7 @@ export class KernelSession {
     } catch (error: unknown) {
       // Recover structured diagnostics only for an invalid import; valid sources
       // compile once in Session, preserving exact native serialization.
-      const result = JSON.parse(module.compileJSON(source)) as Result;
+      const result = JSON.parse(module.compileExecutionJSON(source)) as Result;
       throw new Error(result.diagnostics?.map((d) => `${d.source}: ${d.message}`).join('\n') ?? String(error));
     }
     this.definitionText = this.native.definitionJSON();
@@ -205,6 +230,9 @@ export class KernelSession {
     return JSON.parse(this.native.scrambleJSON(seed, length, expectedRevision)) as Result;
   }
   load(document: string): Result { return JSON.parse(this.native.loadJSON(document)) as Result; }
+  convertLegacy(document: string, legacyDefinition: string): { status: string; session?: unknown; diagnostics?: Result['diagnostics'] } {
+    return JSON.parse(this.native.convertLegacyJSON(document, legacyDefinition));
+  }
   save(presentation: unknown = {}): string {
     return this.native.saveWithPresentationJSON(JSON.stringify(presentation));
   }

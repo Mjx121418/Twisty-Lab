@@ -13,6 +13,7 @@ if args.update_fixtures and not args.write:
     parser.error('--update-fixtures requires --write')
 root = Path(__file__).resolve().parent.parent
 digests = {}
+subprocess.run(['python3', str(root / 'scripts/relational-packages.py')] + (['--write'] if args.write else []), check=True)
 for name in ['cube3', 'bandaged']:
     package = root / 'packages' / name
     result = json.loads(subprocess.check_output([

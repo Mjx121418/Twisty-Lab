@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(twisty_lab VERSION 0.1.0 LANGUAGES CXX)
+project(twisty_lab VERSION 0.2.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -27,8 +27,15 @@ target_include_directories(puzzle_core PUBLIC
 target_compile_features(puzzle_core PUBLIC cxx_std_20)
 target_link_libraries(puzzle_core PUBLIC json_headers project_options)
 
+add_library(puzzle_symmetry src/symmetry.cpp)
+target_include_directories(puzzle_symmetry PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_compile_features(puzzle_symmetry PUBLIC cxx_std_20)
+target_link_libraries(puzzle_symmetry PUBLIC project_options)
+
 add_library(puzzle_compiler src/compiler.cpp src/gear_compiler.cpp)
-target_link_libraries(puzzle_compiler PUBLIC puzzle_core)
+target_link_libraries(puzzle_compiler PUBLIC puzzle_core puzzle_symmetry)
 
 # The replacement executor is independently linkable and needs only the STL.
 # Authoring, JSON, completion policy, and discovery stay in a separate library.
@@ -38,18 +45,21 @@ target_include_directories(puzzle_flat_core PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_compile_features(puzzle_flat_core PUBLIC cxx_std_20)
 target_link_libraries(puzzle_flat_core PUBLIC project_options)
-add_library(puzzle_relational src/relational_compiler.cpp src/relational_completion.cpp src/relational_api.cpp)
-target_link_libraries(puzzle_relational PUBLIC puzzle_flat_core json_headers)
+add_library(puzzle_relational src/relational_compiler.cpp src/relational_completion.cpp src/relational_api.cpp src/relational_cube.cpp)
+target_link_libraries(puzzle_relational PUBLIC puzzle_flat_core puzzle_symmetry json_headers)
+
+add_library(puzzle_execution src/execution.cpp)
+target_link_libraries(puzzle_execution PUBLIC puzzle_compiler puzzle_relational)
 
 add_library(puzzle_session src/session.cpp src/notation.cpp)
-target_link_libraries(puzzle_session PUBLIC puzzle_compiler)
+target_link_libraries(puzzle_session PUBLIC puzzle_execution)
 
 add_library(puzzle_geometry src/geometry.cpp src/catalog_geometry.cpp src/spherical_geometry.cpp src/catalog_spherical_geometry.cpp src/articulated_geometry.cpp)
-target_link_libraries(puzzle_geometry PUBLIC puzzle_core)
+target_link_libraries(puzzle_geometry PUBLIC puzzle_execution)
 
 add_library(puzzle_kernel INTERFACE)
 target_link_libraries(puzzle_kernel INTERFACE puzzle_session puzzle_geometry puzzle_relational)
-foreach(component IN ITEMS core compiler session geometry flat_core relational kernel)
+foreach(component IN ITEMS core compiler execution session geometry symmetry flat_core relational kernel)
   add_library(Twisty::${component} ALIAS puzzle_${component})
   set_target_properties(puzzle_${component} PROPERTIES EXPORT_NAME ${component})
 endforeach()
@@ -67,7 +77,7 @@ if(EMSCRIPTEN)
     -sMAXIMUM_MEMORY=268435456 -sSTACK_SIZE=1048576
     --emit-tsd "${CMAKE_SOURCE_DIR}/kernel/generated/twisty.d.mts")
 else()
-  install(TARGETS puzzle_core puzzle_compiler puzzle_session puzzle_geometry puzzle_flat_core puzzle_relational puzzle_kernel
+  install(TARGETS puzzle_core puzzle_compiler puzzle_execution puzzle_session puzzle_geometry puzzle_symmetry puzzle_flat_core puzzle_relational puzzle_kernel
     json_headers project_options EXPORT TwistyKernelTargets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -99,6 +109,16 @@ else()
     add_executable(flat_core_tests tests/flat_core_tests.cpp)
     target_link_libraries(flat_core_tests PRIVATE puzzle_relational)
     add_test(NAME flat_core_relations COMMAND flat_core_tests)
+    add_executable(cube_relational_tests tests/cube_relational_tests.cpp)
+    target_link_libraries(cube_relational_tests PRIVATE puzzle_relational puzzle_core)
+    target_compile_definitions(cube_relational_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+    add_test(NAME cube_relational_migration COMMAND cube_relational_tests)
+    add_executable(relational_session_tests tests/relational_session_tests.cpp)
+    target_link_libraries(relational_session_tests PRIVATE puzzle_kernel)
+    target_compile_definitions(relational_session_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+    add_test(NAME relational_sessions_and_interpreters COMMAND relational_session_tests)
+    add_test(NAME relational_cube_packages
+      COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/relational-packages.py --native $<TARGET_FILE:twisty_relational>)
     add_test(NAME relational_source_oracle
       COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/relational_oracle.py
       $<TARGET_FILE:twisty_relational> ${CMAKE_SOURCE_DIR}/examples/relational/coupled.pzl.json)

@@ -69,8 +69,8 @@ async function install(puzzle) {
   document.querySelectorAll('button, select').forEach((element) => { element.disabled = true; });
   document.querySelector('#status').textContent = 'Loading…';
   const [source, realization] = await Promise.all([
-    fetch(`./data/${puzzle}/definition.json`).then((response) => response.text()),
-    fetch(`./data/${puzzle}/${puzzle === 'helicopter' || puzzle === 'bagua' || puzzle.startsWith('gear') ? puzzle : 'cube'}-port-diagram.json`).then((response) => response.text()),
+    fetch(`./data/${puzzle}/${puzzle === 'cube3' || puzzle === 'bandaged' ? 'relational-package' : 'definition'}.json`).then((response) => response.text()),
+    fetch(`./data/${puzzle}/${puzzle === 'helicopter' || puzzle === 'bagua' || puzzle.startsWith('gear') ? puzzle : 'relational-cube'}-port-diagram.json`).then((response) => response.text()),
   ]);
   if (epoch !== installEpoch) return;
   const next = new KernelSession(module, source);
