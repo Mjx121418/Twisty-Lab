@@ -3,6 +3,7 @@ export type { MainModule } from './generated/twisty.mjs';
 
 export type KernelInfo = {
   apiVersion: number; version: string; documentSchemaVersion: number; frameBufferVersion: number;
+  experimentalAPIs?: { relational?: number };
   ruleModules: string[]; realizationKinds: string[]; geometryCapabilities: string[];
 };
 export type KernelOptions = { wasmURL?: string | URL; locateFile?: (filename: string, directory: string) => string };
@@ -94,6 +95,74 @@ export type GearCubeSource = {
   schemaVersion: 1; semanticsVersion: string; kind: 'gear-cube-prototypes'; puzzleId: string;
   gearedEdges: string[];
 };
+
+// Experimental version 1. Numeric placements are resolved through preview.bindings.
+// The current application sessions and realizations have not migrated to this API.
+export type RelationalPredicate = boolean
+  | { at: { piece: string; placements: string[] } }
+  | { chosen: { domain: string; moves: string[] } }
+  | { request: string[] } | { ref: string } | { not: RelationalPredicate }
+  | { all: RelationalPredicate[] } | { any: RelationalPredicate[] }
+  | { implies: [RelationalPredicate, RelationalPredicate] } | { iff: [RelationalPredicate, RelationalPredicate] }
+  | { count: { min: number; max: number; of: RelationalPredicate[] } }
+  | { occupiedBy: { placement: string; pieces: string[] } };
+export type RelationalSource = {
+  kind: 'relational-puzzle'; languageVersion: 1; id: string;
+  domains: {
+    id: string; placements: string[]; pieces: { id: string; initial: string }[];
+    moves: { id: string; support: string[]; transport: Record<string, string>;
+      pieces?: string[]; requires?: RelationalPredicate; event?: string }[];
+  }[];
+  predicates?: Record<string, RelationalPredicate>;
+  relations?: { id: string; predicate: RelationalPredicate }[];
+  invariant?: RelationalPredicate; goal?: RelationalPredicate;
+  requests: { id: string; relation: RelationalPredicate;
+    profiles?: { id: string; choices: Record<string, string>; when?: RelationalPredicate }[]; defaultProfile?: string }[];
+};
+export type RelationalPreview = {
+  kind: 'relational-preview'; experimentalVersion: 1; predicateVersion: 1;
+  bindings: {
+    puzzleId: string; pieces: string[]; placements: string[]; events: string[];
+    choiceSlots: string[]; choiceValues: string[][];
+    requests: { id: string; profiles: { id: string; choices: string[]; whenRoot: number }[]; defaultProfile: string | null }[];
+  };
+  program: { pieceCount: number; placementCount: number; initialPlacements: number[];
+    finiteSets: number[][]; predicateNodes: Record<string, unknown>[]; childReferences: number[];
+    transportMaps: [number, number][][]; actionRecords: { piece: number; map: number; selectionRoot: number; event: number }[];
+    requestPrograms: { choiceSizes: number[]; firstAction: number; actionCount: number; relationRoot: number }[];
+    invariantRoot: number; goalRoot: number };
+};
+export type RelationalQuery = { state: number[] } & (
+  { op: 'validate' | 'goal' }
+  | { op: 'plan'; request: string; choices: string[] }
+  | { op: 'bind'; request: string; profile?: string }
+  | { op: 'discover'; request: string; candidateLimit: number; resultLimit: number });
+export type RelationalResult =
+  | { status: 'Invalid'; diagnostics?: { code: string; message: string }[] }
+  | { status: 'Valid' | 'ChoiceRequired' }
+  | { status: 'Evaluated'; solved: boolean }
+  | { status: 'Selected'; choices: string[] }
+  | { status: 'Discovered'; choices: string[][]; examined: number; complete: boolean }
+  | { status: 'Rejected'; reason: 'relation' | 'conflicting-writes' | 'target-invariant' }
+  | { status: 'Permitted'; transition: { request: string; choices: string[]; before: number[]; after: number[];
+      actions: { piece: number; from: number; to: number; event: number }[] } };
+
+export class ExperimentalRelationalPuzzle {
+  readonly native: InstanceType<MainModule['RelationalPuzzle']>;
+  readonly preview: RelationalPreview;
+  constructor(module: MainModule, source: string) {
+    const info = JSON.parse(module.kernelInfoJSON()) as KernelInfo;
+    if (info.experimentalAPIs?.relational !== 1) throw new Error('Unsupported relational API version.');
+    try { this.native = new module.RelationalPuzzle(source); }
+    catch (error: unknown) {
+      const result = JSON.parse(module.compileRelationalJSON(source)) as { diagnostics?: { message: string }[] };
+      throw new Error(result.diagnostics?.map((d) => d.message).join('\n') ?? String(error));
+    }
+    this.preview = JSON.parse(this.native.inspectJSON()) as RelationalPreview;
+  }
+  query(query: RelationalQuery): RelationalResult { return JSON.parse(this.native.queryJSON(JSON.stringify(query))) as RelationalResult; }
+  dispose(): void { this.native.delete(); }
+}
 
 export class KernelSession {
   readonly native: InstanceType<MainModule['Session']>;

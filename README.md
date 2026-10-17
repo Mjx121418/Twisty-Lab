@@ -86,6 +86,8 @@ Native consumers use `find_package(TwistyKernel CONFIG REQUIRED)` and link `Twis
 
 See [the public API guide](docs/kernel-api.md), [the independent CMake consumer](examples/native/main.cpp), and [the Canvas renderer/controller](examples/canvas/app.js). Run `npm run check:kernel` to check installed/copied artifacts outside the repository. The production build also serves the standalone Canvas example at `/kernel/examples/canvas/`. The kernel can be built and hosted separately from React, Three.js, and Vite.
 
+The [experimental relational language](docs/relational-core.md) introduces a domain-free C++ executor and JSON compiler. It checks explicit movement tuples against general permission relations; profile selection and bounded discovery are separate helpers. Native and WASM examples are available, with `npm run check:relational` comparing them against an independent source evaluator. The [migration plan](docs/abstract-language-core-plan.md) records the remaining puzzle, session, and interpreter work.
+
 ## Authoring and data packages
 
 `packages/cube3` and `packages/bandaged` contain compact JSON source definitions, checked-in explicit compiled definitions, and separate Euclidean, spherical, and diagram realization packages. Source definitions use concrete permutations of six abstract face labels, subgroup generators for prototype-position stabilizers, prototype pieces, and a directed operation prototype. C++ validates the stabilizers, enumerates position cosets, and generates finite placements and conjugated operations with their selected-cell guards and source provenance.

@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.25)
+project(relational_consumer LANGUAGES CXX)
+find_package(TwistyKernel 0.1 CONFIG REQUIRED)
+add_executable(twisty_relational main.cpp)
+target_link_libraries(twisty_relational PRIVATE Twisty::relational)

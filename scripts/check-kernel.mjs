@@ -6,18 +6,19 @@ import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
+const nativeBuild = process.argv[2] ?? 'build/native';
 const temporary = await mkdtemp(join(tmpdir(), 'twisty-kernel-'));
 try {
   // Both consumers run outside the source tree using copied/installed artifacts.
   const installed = join(temporary, 'native');
-  execFileSync('cmake', ['--install', 'build/native', '--prefix', installed], { cwd: root, stdio: 'inherit' });
+  execFileSync('cmake', ['--install', nativeBuild, '--prefix', installed], { cwd: root, stdio: 'inherit' });
   const consumer = join(temporary, 'consumer');
   await cp(new URL('../examples/native/', import.meta.url), consumer, { recursive: true });
   execFileSync('cmake', ['-S', consumer, '-B', join(consumer, 'build'), '-G', 'Ninja', `-DCMAKE_PREFIX_PATH=${installed}`], { stdio: 'inherit' });
   execFileSync('cmake', ['--build', join(consumer, 'build'), '--parallel', '1'], { stdio: 'inherit' });
   const javascript = join(temporary, 'javascript');
   await cp(new URL('../build/kernel/', import.meta.url), javascript, { recursive: true });
-  const { createKernel, KernelSession } = await import(pathToFileURL(join(javascript, 'index.js')).href);
+  const { createKernel, KernelSession, ExperimentalRelationalPuzzle } = await import(pathToFileURL(join(javascript, 'index.js')).href);
   const module = await createKernel();
   const info = JSON.parse(module.kernelInfoJSON());
   const manifest = JSON.parse(await readFile(join(javascript, 'package.json'), 'utf8'));
@@ -25,6 +26,29 @@ try {
   assert.equal(info.version, manifest.version);
   assert.ok(info.ruleModules.includes('finite-placement-relations@2'));
   assert.ok(info.realizationKinds.includes('articulated-spherical'));
+  assert.equal(info.experimentalAPIs.relational, 1);
+  const relationalConsumer = join(temporary, 'relational-consumer');
+  await cp(join(javascript, 'examples/relational'), relationalConsumer, { recursive: true });
+  execFileSync('cmake', ['-S', relationalConsumer, '-B', join(relationalConsumer, 'build'), '-G', 'Ninja',
+    `-DCMAKE_PREFIX_PATH=${installed}`], { stdio: 'inherit' });
+  execFileSync('cmake', ['--build', join(relationalConsumer, 'build'), '--parallel', '1'], { stdio: 'inherit' });
+  const relationalSource = join(relationalConsumer, 'coupled.pzl.json');
+  const relational = new ExperimentalRelationalPuzzle(module, await readFile(relationalSource, 'utf8'));
+  try {
+    const executable = join(relationalConsumer, 'build/twisty_relational');
+    assert.deepEqual(JSON.parse(execFileSync(executable, [relationalSource, '--inspect'], { encoding: 'utf8' })), relational.preview);
+    const queries = [
+      { op: 'bind', state: [0, 2, 4], request: 'fixed' },
+      { op: 'bind', state: [0, 2, 4], request: 'synchronize' },
+      { op: 'plan', state: [0, 2, 4], request: 'fixed', choices: ['turn', 'turn', 'idle'] },
+      { op: 'plan', state: [0, 2, 4], request: 'alternative', choices: ['turn', 'turn', 'idle'] },
+      { op: 'discover', state: [0, 2, 4], request: 'none', candidateLimit: 1, resultLimit: 10 },
+    ];
+    const native = execFileSync(executable, [relationalSource], { encoding: 'utf8',
+      input: queries.map((q) => JSON.stringify(q)).join('\n') + '\n' }).trim().split('\n').map((line) => JSON.parse(line));
+    assert.deepEqual(queries.map((q) => relational.query(q)), native);
+    console.log('Installed native and packaged WASM relational consumers agree.');
+  } finally { relational.dispose(); }
   const customDirectory = join(javascript, 'examples/canvas/data/gear-custom');
   await mkdir(customDirectory, { recursive: true });
   const custom = JSON.parse(module.compileJSON(JSON.stringify({ schemaVersion: 1, semanticsVersion: '2.0.2',

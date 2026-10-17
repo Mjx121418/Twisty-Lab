@@ -4,6 +4,8 @@ The C++ abstract core, compiler, session, and geometric interpreter form the reu
 
 The current kernel version is `0.1.0`, public API version `1`, document schema version `1`, and frame-buffer version `1`. `twisty::kernel_info()` and WASM `kernelInfoJSON()` report these independently of each puzzle's semantic digest. This is the first public development API; future incompatible contract changes require a new API or buffer version. Native consumers compile against the installed C++ headers and compatible toolchain; a cross-compiler binary ABI is not promised. Supported bindings currently cover C++ and JavaScript/TypeScript. Additional language bindings can use the same contracts later.
 
+An additive [experimental relational API](relational-core.md), advertised as `experimentalAPIs.relational = 1`, implements the new JSON language and domain-free executor. It exports `Twisty::flat_core`, `Twisty::relational`, WASM `RelationalPuzzle`, and the `ExperimentalRelationalPuzzle` adapter. Completion selection and bounded discovery are separate from permission checking. Existing sessions and realizations have not migrated to it; its preview is not a persisted definition/session format.
+
 ## Build and consume
 
 ```sh

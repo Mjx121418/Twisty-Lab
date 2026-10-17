@@ -2,6 +2,7 @@
 #include "twisty/compiler.hpp"
 #include "twisty/geometry.hpp"
 #include "twisty/session.hpp"
+#include "twisty/relational_completion.hpp"
 
 namespace twisty {
 // API compatibility is independent of puzzle schema and semantic digests.
@@ -13,6 +14,7 @@ inline Json kernel_info() {
       {"version", kernel_version},
       {"documentSchemaVersion", 1},
       {"frameBufferVersion", 1},
+      {"experimentalAPIs", {{"relational", 1}}},
       {"ruleModules", {"finite-footprint@1", "finite-placement-relations@1", "finite-placement-relations@2"}},
       {"realizationKinds",
        {"cube-euclidean", "cube-port-diagram", "cube-spherical", "polyhedral-euclidean",

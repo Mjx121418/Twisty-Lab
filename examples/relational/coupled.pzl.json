@@ -1,0 +1,105 @@
+{
+  "kind": "relational-puzzle",
+  "languageVersion": 1,
+  "id": "relational-coupling-example",
+  "domains": [
+    {
+      "id": "driver",
+      "placements": ["0", "1"],
+      "pieces": [{"id": "driver-piece", "initial": "0"}],
+      "moves": [
+        {"id": "turn", "support": ["0", "1"], "transport": {"0": "1", "1": "0"}},
+        {"id": "short-loop", "support": ["0"], "transport": {"0": "0"}, "event": "short-path"},
+        {"id": "long-loop", "support": ["0"], "transport": {"0": "0"}, "event": "long-path"}
+      ]
+    },
+    {
+      "id": "follower",
+      "placements": ["0", "1"],
+      "pieces": [{"id": "follower-piece", "initial": "0"}],
+      "moves": [{"id": "turn", "support": ["0", "1"], "transport": {"0": "1", "1": "0"}}]
+    },
+    {
+      "id": "latch",
+      "placements": ["0", "1"],
+      "pieces": [{"id": "latch-piece", "initial": "0"}],
+      "moves": [{"id": "turn", "support": ["0", "1"], "transport": {"0": "1", "1": "0"},
+        "requires": {"at": {"piece": "driver-piece", "placements": ["driver/0"]}}}]
+    }
+  ],
+  "predicates": {
+    "driverTurn": {"chosen": {"domain": "driver", "moves": ["turn"]}},
+    "followerTurn": {"chosen": {"domain": "follower", "moves": ["turn"]}},
+    "latchTurn": {"chosen": {"domain": "latch", "moves": ["turn"]}}
+  },
+  "invariant": {"not": {"all": [
+    {"at": {"piece": "driver-piece", "placements": ["driver/1"]}},
+    {"at": {"piece": "follower-piece", "placements": ["follower/1"]}},
+    {"at": {"piece": "latch-piece", "placements": ["latch/1"]}}
+  ]}},
+  "relations": [{"id": "latch-obstruction", "predicate": {"implies": [
+    {"ref": "latchTurn"},
+    {"not": {"occupiedBy": {"placement": "follower/1", "pieces": ["follower-piece"]}}}
+  ]}}],
+  "requests": [
+    {
+      "id": "synchronize",
+      "relation": {"all": [
+        {"chosen": {"domain": "driver", "moves": ["idle", "turn"]}},
+        {"iff": [{"ref": "driverTurn"}, {"ref": "followerTurn"}]},
+        {"chosen": {"domain": "latch", "moves": ["idle"]}}
+      ]}
+    },
+    {
+      "id": "cycle",
+      "relation": {"all": [
+        {"chosen": {"domain": "driver", "moves": ["idle", "turn"]}},
+        {"implies": [{"ref": "driverTurn"}, {"ref": "followerTurn"}]},
+        {"implies": [{"ref": "followerTurn"}, {"ref": "driverTurn"}]},
+        {"chosen": {"domain": "latch", "moves": ["idle"]}}
+      ]}
+    },
+    {
+      "id": "alternative",
+      "relation": {"all": [
+        {"chosen": {"domain": "driver", "moves": ["idle", "turn"]}},
+        {"count": {"min": 1, "max": 1, "of": [{"ref": "driverTurn"}, {"ref": "followerTurn"}, {"ref": "latchTurn"}]}}
+      ]}
+    },
+    {
+      "id": "none",
+      "relation": {"count": {"min": 1, "max": 1, "of": [{"ref": "driverTurn"}, {"ref": "driverTurn"}]}}
+    },
+    {
+      "id": "winding",
+      "relation": {"all": [
+        {"chosen": {"domain": "driver", "moves": ["short-loop", "long-loop"]}},
+        {"chosen": {"domain": "follower", "moves": ["idle"]}},
+        {"chosen": {"domain": "latch", "moves": ["idle"]}}
+      ]}
+    },
+    {
+      "id": "fixed",
+      "relation": {"all": [
+        {"ref": "driverTurn"}, {"ref": "followerTurn"},
+        {"chosen": {"domain": "latch", "moves": ["idle"]}}
+      ]},
+      "profiles": [{"id": "coupled", "choices": {"driver": "turn", "follower": "turn", "latch": "idle"}}],
+      "defaultProfile": "coupled"
+    },
+    {
+      "id": "source-requirement",
+      "relation": {"all": [
+        {"ref": "driverTurn"}, {"ref": "latchTurn"},
+        {"chosen": {"domain": "follower", "moves": ["idle"]}}
+      ]},
+      "profiles": [{"id": "source-zero", "when": {"at": {"piece": "driver-piece", "placements": ["driver/0"]}},
+        "choices": {"driver": "turn", "follower": "idle", "latch": "turn"}}],
+      "defaultProfile": "source-zero"
+    },
+    {
+      "id": "request-specialized",
+      "relation": {"any": [{"not": {"request": ["request-specialized"]}}, {"ref": "latchTurn"}]}
+    }
+  ]
+}

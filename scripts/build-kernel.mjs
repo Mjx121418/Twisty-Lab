@@ -16,15 +16,20 @@ if (process.argv.includes('--stage-web')) {
   await writeFile(new URL('package.json', output), JSON.stringify({
     name: '@twisty/kernel', version, type: 'module',
     exports: { '.': { types: './index.d.ts', import: './index.js' }, './runtime': './generated/twisty.mjs', './wasm': './generated/twisty.wasm' },
-    files: ['index.js', 'index.d.ts', 'generated', 'examples', 'README.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'bagua-verification.md', 'gear-model.md', 'gear-spherical-feasibility.md'],
+    files: ['index.js', 'index.d.ts', 'generated', 'examples', 'schemas', 'README.md', 'relational-core.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'bagua-verification.md', 'gear-model.md', 'gear-spherical-feasibility.md'],
   }, null, 2) + '\n');
   await cp(new URL('../docs/kernel-api.md', import.meta.url), new URL('README.md', output));
-  for (const file of ['spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'bagua-verification.md', 'gear-model.md', 'gear-spherical-feasibility.md']) {
+  for (const file of ['relational-core.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'bagua-verification.md', 'gear-model.md', 'gear-spherical-feasibility.md']) {
     const guide = (await readFile(new URL(`../docs/${file}`, import.meta.url), 'utf8'))
-      .replaceAll('../packages/', 'examples/canvas/data/').replaceAll('(kernel-api.md)', '(README.md)');
+      .replaceAll('../packages/', 'examples/canvas/data/').replaceAll('../examples/', 'examples/')
+      .replaceAll('../schemas/', 'schemas/').replaceAll('[migration plan](abstract-language-core-plan.md)', 'migration plan')
+      .replaceAll('(kernel-api.md)', '(README.md)');
     await writeFile(new URL(file, output), guide);
   }
   await cp(new URL('../examples/canvas/', import.meta.url), new URL('examples/canvas/', output), { recursive: true });
+  await cp(new URL('../examples/relational/', import.meta.url), new URL('examples/relational/', output), { recursive: true });
+  await mkdir(new URL('schemas/', output));
+  await cp(new URL('../schemas/relational-puzzle.schema.json', import.meta.url), new URL('schemas/relational-puzzle.schema.json', output));
   for (const puzzle of ['cube3', 'bandaged', 'helicopter', 'bagua', 'gear', 'gear-extreme', 'gear-plain']) {
     const directory = new URL(`examples/canvas/data/${puzzle}/`, output);
     await mkdir(directory, { recursive: true });

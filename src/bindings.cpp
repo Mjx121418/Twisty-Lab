@@ -1,4 +1,5 @@
 #include "twisty/kernel.hpp"
+#include "twisty/relational_compiler.hpp"
 #include <emscripten/bind.h>
 
 using namespace emscripten;
@@ -28,8 +29,13 @@ Geometry *create_geometry(const Session &session, const std::string &realization
 } // namespace
 EMSCRIPTEN_BINDINGS(twisty) {
   function("compileJSON", &compile);
+  function("compileRelationalJSON", &twisty::relational::compile_json);
   function("kernelInfoJSON", &kernel_info_json);
   function("createGeometry", &create_geometry, return_value_policy::take_ownership());
+  class_<twisty::relational::Puzzle>("RelationalPuzzle")
+      .constructor<std::string>()
+      .function("inspectJSON", &twisty::relational::Puzzle::inspect_json)
+      .function("queryJSON", &twisty::relational::Puzzle::query_json);
   class_<Session>("Session")
       .constructor<std::string>()
       .function("snapshotJSON", &Session::snapshot_json)

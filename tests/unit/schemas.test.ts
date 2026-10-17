@@ -3,6 +3,18 @@ import { readFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
 import createModule from '../../kernel/generated/twisty.mjs';
 
+it('validates the experimental relational AST and compiles the example', async () => {
+  const ajv = new Ajv({ allErrors: true, strict: false });
+  const validate = ajv.compile(JSON.parse(readFileSync('schemas/relational-puzzle.schema.json', 'utf8')));
+  const text = readFileSync('examples/relational/coupled.pzl.json', 'utf8');
+  expect(validate(JSON.parse(text)), JSON.stringify(validate.errors)).toBe(true);
+  const malformed = JSON.parse(text);
+  malformed.requests[0].relation = { unregisteredGuard: true };
+  expect(validate(malformed)).toBe(false);
+  const module = await createModule();
+  expect(JSON.parse(module.compileRelationalJSON(text)).status).toBe('Compiled');
+});
+
 it('validates shipped sources, compiled definitions, realizations, fixtures, and generated saves', async () => {
   const ajv = new Ajv({ allErrors: true, strict: false });
   for (const name of ['definition', 'source', 'state', 'session', 'realization', 'fixture']) {

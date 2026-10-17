@@ -30,6 +30,17 @@ target_link_libraries(puzzle_core PUBLIC json_headers project_options)
 add_library(puzzle_compiler src/compiler.cpp src/gear_compiler.cpp)
 target_link_libraries(puzzle_compiler PUBLIC puzzle_core)
 
+# The replacement executor is independently linkable and needs only the STL.
+# Authoring, JSON, completion policy, and discovery stay in a separate library.
+add_library(puzzle_flat_core src/flat_core.cpp)
+target_include_directories(puzzle_flat_core PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_compile_features(puzzle_flat_core PUBLIC cxx_std_20)
+target_link_libraries(puzzle_flat_core PUBLIC project_options)
+add_library(puzzle_relational src/relational_compiler.cpp src/relational_completion.cpp src/relational_api.cpp)
+target_link_libraries(puzzle_relational PUBLIC puzzle_flat_core json_headers)
+
 add_library(puzzle_session src/session.cpp src/notation.cpp)
 target_link_libraries(puzzle_session PUBLIC puzzle_compiler)
 
@@ -37,15 +48,15 @@ add_library(puzzle_geometry src/geometry.cpp src/catalog_geometry.cpp src/spheri
 target_link_libraries(puzzle_geometry PUBLIC puzzle_core)
 
 add_library(puzzle_kernel INTERFACE)
-target_link_libraries(puzzle_kernel INTERFACE puzzle_session puzzle_geometry)
-foreach(component IN ITEMS core compiler session geometry kernel)
+target_link_libraries(puzzle_kernel INTERFACE puzzle_session puzzle_geometry puzzle_relational)
+foreach(component IN ITEMS core compiler session geometry flat_core relational kernel)
   add_library(Twisty::${component} ALIAS puzzle_${component})
   set_target_properties(puzzle_${component} PROPERTIES EXPORT_NAME ${component})
 endforeach()
 
 if(EMSCRIPTEN)
   add_executable(twisty_wasm src/bindings.cpp)
-  target_link_libraries(twisty_wasm PRIVATE puzzle_session puzzle_geometry embind)
+  target_link_libraries(twisty_wasm PRIVATE puzzle_session puzzle_geometry puzzle_relational embind)
   set_target_properties(twisty_wasm PROPERTIES
     OUTPUT_NAME twisty SUFFIX .mjs
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/kernel/generated")
@@ -56,7 +67,7 @@ if(EMSCRIPTEN)
     -sMAXIMUM_MEMORY=268435456 -sSTACK_SIZE=1048576
     --emit-tsd "${CMAKE_SOURCE_DIR}/kernel/generated/twisty.d.mts")
 else()
-  install(TARGETS puzzle_core puzzle_compiler puzzle_session puzzle_geometry puzzle_kernel
+  install(TARGETS puzzle_core puzzle_compiler puzzle_session puzzle_geometry puzzle_flat_core puzzle_relational puzzle_kernel
     json_headers project_options EXPORT TwistyKernelTargets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -77,12 +88,20 @@ else()
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TwistyKernel)
   add_executable(twisty src/cli.cpp)
   target_link_libraries(twisty PRIVATE puzzle_session)
+  add_executable(twisty_relational examples/relational/main.cpp)
+  target_link_libraries(twisty_relational PRIVATE puzzle_relational)
   if(BUILD_TESTING)
     add_executable(gear_tests tests/gear_tests.cpp)
     target_link_libraries(gear_tests PRIVATE puzzle_kernel)
     target_compile_definitions(gear_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
     add_test(NAME gear_and_articulated_realizations COMMAND gear_tests)
     find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    add_executable(flat_core_tests tests/flat_core_tests.cpp)
+    target_link_libraries(flat_core_tests PRIVATE puzzle_relational)
+    add_test(NAME flat_core_relations COMMAND flat_core_tests)
+    add_test(NAME relational_source_oracle
+      COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/relational_oracle.py
+      $<TARGET_FILE:twisty_relational> ${CMAKE_SOURCE_DIR}/examples/relational/coupled.pzl.json)
     add_test(NAME gear_spherical_candidate_audit
       COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/gear_spherical_audit.py)
     add_executable(core_tests tests/core_tests.cpp)
