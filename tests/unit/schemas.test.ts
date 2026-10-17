@@ -23,7 +23,8 @@ it('shares immutable definitions while keeping histories and ownership independe
 it('validates the experimental relational AST and compiles the example', async () => {
   const ajv = new Ajv({ allErrors: true, strict: false });
   const validate = ajv.compile(JSON.parse(readFileSync('schemas/relational-puzzle.schema.json', 'utf8')));
-  ajv.addSchema(JSON.parse(readFileSync('schemas/definition.schema.json', 'utf8')));
+  // Current schemas must resolve without registering the retired definition schema.
+  ajv.addSchema(JSON.parse(readFileSync('schemas/state.schema.json', 'utf8')));
   const validatePackage = ajv.compile(JSON.parse(readFileSync('schemas/relational-package.schema.json', 'utf8')));
   const validateSession = ajv.compile(JSON.parse(readFileSync('schemas/session-v2.schema.json', 'utf8')));
   const text = readFileSync('examples/relational/coupled.pzl.json', 'utf8');
@@ -97,11 +98,16 @@ it('validates the experimental relational AST and compiles the example', async (
 
 it('validates shipped sources, compiled definitions, realizations, fixtures, and generated saves', async () => {
   const ajv = new Ajv({ allErrors: true, strict: false });
-  for (const name of ['definition', 'source', 'state', 'session', 'realization', 'fixture']) {
+  for (const name of ['definition', 'source', 'state', 'realization', 'fixture']) {
     ajv.addSchema(JSON.parse(readFileSync(`schemas/${name}.schema.json`, 'utf8')));
   }
   const check = (schema: string, value: unknown): void => {
     const valid = ajv.getSchema(`urn:twisty:schema:${schema}:1`)!;
+    expect(valid(value), JSON.stringify(valid.errors)).toBe(true);
+  };
+  ajv.addSchema(JSON.parse(readFileSync('schemas/session-v2.schema.json', 'utf8')));
+  const checkSession = (value: unknown): void => {
+    const valid = ajv.getSchema('urn:twisty:schema:session:2')!;
     expect(valid(value), JSON.stringify(valid.errors)).toBe(true);
   };
   const module = await createModule();
@@ -111,11 +117,11 @@ it('validates shipped sources, compiled definitions, realizations, fixtures, and
     check('realization', JSON.parse(readFileSync(`packages/${name}/cube-euclidean.json`, 'utf8')));
     check('realization', JSON.parse(readFileSync(`packages/${name}/cube-port-diagram.json`, 'utf8')));
     check('realization', JSON.parse(readFileSync(`packages/${name}/cube-spherical.json`, 'utf8')));
-    const session = new module.Session(readFileSync(`packages/${name}/source.json`, 'utf8'));
+    const session = new module.Session(readFileSync(`packages/${name}/relational-package.json`, 'utf8'));
     try {
       check('state', JSON.parse(session.stateJSON()));
       session.runJSON('U F', 'transactional', '0');
-      check('session', JSON.parse(session.saveJSON()));
+      checkSession(JSON.parse(session.saveJSON()));
     } finally { session.delete(); }
   }
   const helicopterText = readFileSync('packages/helicopter/definition.json', 'utf8');
@@ -123,22 +129,22 @@ it('validates shipped sources, compiled definitions, realizations, fixtures, and
   for (const kind of ['euclidean', 'port-diagram', 'spherical']) {
     check('realization', JSON.parse(readFileSync(`packages/helicopter/helicopter-${kind}.json`, 'utf8')));
   }
-  const helicopter = new module.Session(helicopterText);
+  const helicopter = new module.Session(readFileSync('packages/helicopter/relational-package.json', 'utf8'));
   try {
     check('state', JSON.parse(helicopter.stateJSON()));
     expect(JSON.parse(helicopter.runJSON('UF_ab UL_af', 'transactional', '0')).status).toBe('Committed');
-    check('session', JSON.parse(helicopter.saveJSON()));
+    checkSession(JSON.parse(helicopter.saveJSON()));
   } finally { helicopter.delete(); }
   const baguaText = readFileSync('packages/bagua/definition.json', 'utf8');
   check('definition', JSON.parse(baguaText));
   for (const kind of ['euclidean', 'port-diagram', 'spherical']) {
     check('realization', JSON.parse(readFileSync(`packages/bagua/bagua-${kind}.json`, 'utf8')));
   }
-  const bagua = new module.Session(baguaText);
+  const bagua = new module.Session(readFileSync('packages/bagua/relational-package.json', 'utf8'));
   try {
     check('state', JSON.parse(bagua.stateJSON()));
     expect(JSON.parse(bagua.runJSON("U+ R' L' D2 R L U-", 'transactional', '0')).status).toBe('Committed');
-    check('session', JSON.parse(bagua.saveJSON()));
+    checkSession(JSON.parse(bagua.saveJSON()));
   } finally { bagua.delete(); }
   check('fixture', JSON.parse(readFileSync('tests/fixtures/core.json', 'utf8')));
   for (const name of ['gear', 'gear-extreme', 'gear-plain']) {
@@ -146,7 +152,7 @@ it('validates shipped sources, compiled definitions, realizations, fixtures, and
     check('definition', JSON.parse(readFileSync(`packages/${name}/definition.json`, 'utf8')));
     for (const kind of ['euclidean', 'port-diagram', 'spherical']) check('realization', JSON.parse(readFileSync(`packages/${name}/${name}-${kind}.json`, 'utf8')));
     const text = readFileSync(`packages/${name}/source.json`, 'utf8');
-    expect(JSON.parse(module.compileJSON(text)).definition).toEqual(JSON.parse(readFileSync(`packages/${name}/definition.json`, 'utf8')));
+    expect(JSON.parse(module.compileExecutionJSON(text)).diagnostics[0].reasonCode).toBe('definition.unsupported');
   }
   const guarded = JSON.parse(readFileSync('packages/gear/definition.json', 'utf8'));
   guarded.ruleModule = 'finite-placement-relations@1';

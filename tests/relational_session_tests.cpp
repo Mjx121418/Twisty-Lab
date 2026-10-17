@@ -109,13 +109,11 @@ void elongated_bandage(Session &session, Geometry &geometry) {
 void model(bool bandaged) {
   const std::string name = bandaged ? "bandaged" : "cube3";
   const auto source = bundle(bandaged).dump();
-  Session session(source), previous(read("packages/" + name + "/definition.json"));
-  check(previous.definition_json() == previous.execution()->definition_json().dump(),
-        "Legacy definition serialization lost provenance");
+  Session session(source), previous(source);
+  const auto historical = Json::parse(read("packages/" + name + "/definition.json"));
   const auto initial = session.snapshot();
-  check(session.execution()->relational(), "New package selected old executor");
   check(initial.at("state") == previous.snapshot().at("state"), "Initial identities changed");
-  check(session.definition()->digest != previous.definition()->digest, "New semantics reused old pin");
+  check(Json(session.definition()->digest) != historical.at("definitionDigest"), "New semantics reused old pin");
   check(Json::parse(session.definition_json()).at("kind") == "relational-definition",
         "Definition format missing");
   Session restored(session.definition_json());
@@ -196,7 +194,7 @@ void model(bool bandaged) {
   for (int step = 0; step < 36; ++step) {
     for (const auto &op : session.definition()->operations) {
       const auto a = session.execution()->plan(session.state(), op.id);
-      const auto b = twisty::plan(*previous.definition(), previous.state(), op.id);
+      const auto b = previous.execution()->plan(previous.state(), op.id);
       check(a.transition.has_value() == b.transition.has_value(), "Session permission differs from oracle");
       if (a.transition)
         check(encode_state(*session.definition(), a.transition->after) ==
@@ -237,25 +235,9 @@ void model(bool bandaged) {
       invalid["logical"]["requests"][0]["choices"] = nullptr;
     invalid_unchanged(restored, invalid);
   }
-  previous.undo(previous.revision());
-  const auto old_save = previous.save();
-  const auto conversion = Json::parse(
-      session.convert_legacy_json(old_save.dump(), read("packages/" + name + "/definition.json")));
-  check(conversion.at("status") == "Converted", "Legacy conversion failed: " + conversion.dump());
-  const auto unchanged = session.snapshot();
-  restored.load(conversion.at("session"));
-  check(restored.snapshot().at("state") == previous.snapshot().at("state"), "Converted cursor state differs");
-  check(restored.snapshot().at("canRedo").get<bool>(), "Conversion lost redo tail");
-  restored.redo(restored.revision());
-  previous.redo(previous.revision());
-  check(restored.snapshot().at("state") == previous.snapshot().at("state"), "Converted redo differs");
-  check(session.snapshot() == unchanged, "Conversion edited destination session");
-  auto bad_old = old_save;
-  bad_old["logical"]["requests"][0]["afterStateDigest"] = "bad";
-  check(
-      Json::parse(session.convert_legacy_json(bad_old.dump(), read("packages/" + name + "/definition.json")))
-              .at("status") == "Invalid",
-      "Corrupt legacy replay converted");
+  auto old_save = session.save();
+  old_save["schemaVersion"] = 1;
+  invalid_unchanged(restored, old_save);
   Session a(source), b(source);
   check(a.scramble(42, 25, "0").at("scramble") == b.scramble(42, 25, "0").at("scramble"),
         "Scramble not reproducible");
@@ -301,6 +283,17 @@ void alternative() {
   Session unsolved(goal_package.dump());
   check(!unsolved.snapshot().at("solved").get<bool>(), "Relational session used the old home goal");
 }
+void retired_formats() {
+  check(kernel_info().at("apiVersion") == 3 && kernel_info().at("sessionSchemaVersions") == Json::array({2}),
+        "Runtime still advertises retired APIs");
+  for (const auto &path : {"packages/cube3/source.json", "packages/cube3/definition.json",
+                           "packages/helicopter/definition.json", "packages/gear/source.json"}) {
+    const auto result = compile_execution_json(read(path));
+    check(result.at("status") == "Invalid" &&
+              result.at("diagnostics")[0].at("reasonCode") == "definition.unsupported",
+          "Retired source silently entered a compatibility executor");
+  }
+}
 void shared_definition() {
   const auto deep = std::string(520, '[') + "0" + std::string(520, ']');
   check(compile_execution_json(deep).at("diagnostics")[0].at("reasonCode") == "document.depth",
@@ -336,6 +329,7 @@ int main() {
     model(true);
     alternative();
     shared_definition();
+    retired_formats();
     std::cout << checks << " relational session/interpreter checks passed\n";
   } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';

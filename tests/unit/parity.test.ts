@@ -161,8 +161,8 @@ describe('native / WebAssembly parity', () => {
     ['gear-extreme', 'gear-extreme-euclidean', "Uq R Fq (Uq R Fq)'"],
     ['gear-plain', 'gear-plain-port-diagram', "Rq Uq Fq (Rq Uq Fq)'"],
   ])('matches native %s assets and sampled %s frames', (name, kind, algorithm) => {
-    const definition = `packages/${name}/definition.json`;
-    const realization = `packages/${name}/${kind}.json`;
+    const definition = `packages/${name}/relational-package.json`;
+    const realization = `packages/${name}/relational-${kind}.json`;
     // Detailed authored meshes include expanded positions and normals in this probe.
     const reference = JSON.parse(execFileSync('build/native/geometry_probe', [definition, realization, algorithm], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 }));
     const value = new runtime.Session(read(definition));
@@ -195,9 +195,9 @@ describe('native / WebAssembly parity', () => {
     } finally { geometry.delete(); value.delete(); }
   });
   it('keeps a shared geometric definition alive after its session is disposed', () => {
-    const value = new runtime.Session(read('packages/helicopter/definition.json'));
+    const value = new runtime.Session(read('packages/helicopter/relational-package.json'));
     const state = value.stateJSON();
-    const geometry = runtime.createGeometry(value, read('packages/helicopter/helicopter-euclidean.json'));
+    const geometry = runtime.createGeometry(value, read('packages/helicopter/relational-helicopter-euclidean.json'));
     if (!geometry) throw new Error('Geometry creation failed.');
     value.delete();
     try {
@@ -210,7 +210,7 @@ describe('native / WebAssembly parity', () => {
     } finally { geometry.delete(); }
   });
   it('matches Helicopter jumbling, blocking, inverse and replay records', () => {
-    const path = 'packages/helicopter/definition.json';
+    const path = 'packages/helicopter/relational-package.json';
     const wasm = new runtime.Session(read(path));
     const restored = new runtime.Session(read(path));
     try {
@@ -224,14 +224,14 @@ describe('native / WebAssembly parity', () => {
       expect(snapshot(restored).stateDigest).toBe(snapshot(wasm).stateDigest);
       expect(JSON.parse(wasm.runJSON(`(${algorithm})'`, 'transactional', snapshot(wasm).revision)).status).toBe('Committed');
       expect(snapshot(wasm).solved).toBe(true);
-      expect(JSON.parse(wasm.runJSON('UF_ab UR_ad', 'transactional', snapshot(wasm).revision)).reasonCode).toBe('placement.blocked');
+      expect(JSON.parse(wasm.runJSON('UF_ab UR_ad', 'transactional', snapshot(wasm).revision)).reasonCode).toBe('relation.rejected');
       expect(snapshot(wasm).solved).toBe(true);
     } finally { wasm.delete(); restored.delete(); }
   });
   it.each(['cube3', 'bandaged'])('matches compilation, state, scramble, and witnesses for %s', (name) => {
-    const path = `packages/${name}/source.json`;
+    const path = `packages/${name}/relational-package.json`;
     const wasm = session(path);
-    const compiled = JSON.parse(runtime.compileJSON(read(path)));
+    const compiled = JSON.parse(runtime.compileExecutionJSON(read(path)));
     expect(compiled).toEqual(native(['compile', '--definition', path]));
     expect(snapshot(wasm)).toEqual(native(['inspect', '--definition', path]).snapshot);
     const result = JSON.parse(wasm.scrambleJSON(42, 30, '0'));
@@ -270,7 +270,7 @@ describe('native / WebAssembly parity', () => {
 
   it.each(JSON.parse(read('packages/bagua/review.json')).pureKiteCycles)(
     'matches Bagua $name and its published pure three-cycle', ({ notation }: { notation: string }) => {
-      const path = 'packages/bagua/definition.json';
+      const path = 'packages/bagua/relational-package.json';
       const wasm = session(path);
       const definition = JSON.parse(wasm.definitionJSON());
       const result = JSON.parse(wasm.runJSON(notation, 'transactional', '0'));
@@ -301,7 +301,7 @@ describe('native / WebAssembly parity', () => {
       try {
         expect(snapshot(value).definitionDigest).toBe(fixture.definitionDigest);
         expect(JSON.parse(value.runJSON(fixture.prefix, 'transactional', snapshot(value).revision)).status).toBe('Committed');
-        const result = JSON.parse(value.executeJSON(JSON.stringify({ operation: fixture.operation, parameters: {} }), snapshot(value).revision));
+        const result = JSON.parse(value.executeJSON(JSON.stringify({ operation: fixture.operation, parameters: {}, choices: fixture.choices }), snapshot(value).revision));
         expect(result.status, fixture.name).toBe(fixture.expectedStatus);
         if (fixture.reasonCode) expect(result.reasonCode).toBe(fixture.reasonCode);
         if (fixture.implicatedPiece) expect(result.implicatedPieces).toContain(fixture.implicatedPiece);
@@ -310,20 +310,17 @@ describe('native / WebAssembly parity', () => {
     }
   });
 
-  it('preserves wide exact integers through native serialization and animation records', () => {
-    const compiled = JSON.parse(runtime.compileJSON(read('packages/cube3/source.json'))).definition;
-    delete compiled.definitionDigest;
-    compiled.initialState.mechanism.counter = 'wide-integer-marker';
-    const source = JSON.stringify(compiled).replace('"wide-integer-marker"', '9223372036854775807');
+  it('preserves exact presentation integers and completed animation records', () => {
+    const source = read('packages/cube3/relational-package.json');
     const value = new runtime.Session(source); handles.push(value);
     const result = JSON.parse(value.runJSON('U', 'interactive', '0'));
-    expect(result.transitionRecords[0]).toContain('9223372036854775807');
-    const text = value.saveWithPresentationJSON('{"cameraZoom":0.5}');
+    expect(result.transitionRecords[0]).toContain('\"choices\"');
+    const text = value.saveWithPresentationJSON('{"counter":9223372036854775807,"cameraZoom":0.5}');
     expect(text).toContain('"counter":9223372036854775807');
     const restored = new runtime.Session(source); handles.push(restored);
     expect(JSON.parse(restored.loadJSON(text)).status).toBe('Loaded');
     expect(snapshot(restored).stateDigest).toBe(snapshot(value).stateDigest);
-    const realization = { ...JSON.parse(read('packages/cube3/cube-euclidean.json')), compatibleDefinitionDigest: snapshot(value).definitionDigest };
+    const realization = { ...JSON.parse(read('packages/cube3/relational-cube-euclidean.json')), compatibleDefinitionDigest: snapshot(value).definitionDigest };
     const view = new runtime.Geometry(value.definitionJSON(), JSON.stringify(realization));
     try {
       expect(JSON.parse(view.prepareAnimationJSON(result.transitionRecords[0])).status).toBe('Prepared');

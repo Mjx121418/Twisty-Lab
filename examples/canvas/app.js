@@ -53,9 +53,9 @@ function refresh() {
   const legal = new Set(snapshot.legalRequests.map((request) => request.operation));
   const controls = document.querySelector('#moves');
   controls.replaceChildren();
-  const candidates = snapshot.candidateRequests && new Set(snapshot.candidateRequests.map((request) => request.operation));
+  const candidates = new Set(snapshot.candidateRequests.map((request) => request.operation));
   for (const operation of session.definition.operations) {
-    if (candidates ? !candidates.has(operation.id) : !Object.entries(operation.pieceGuards ?? {}).every(([piece, placement]) => snapshot.state.placementOf[piece] === placement)) continue;
+    if (!candidates.has(operation.id)) continue;
     const button = document.createElement('button');
     button.textContent = operation.id;
     button.disabled = busy;

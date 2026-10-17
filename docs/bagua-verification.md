@@ -23,7 +23,7 @@ The existing additional legal algorithms, inverses, blocking rollback, occupancy
 
 ## Geometric consistency
 
-[`bagua_review_tests.cpp`](../tests/bagua_review_tests.cpp) reads the abstract definition and the separate Euclidean realization. It uses the unshrunk prototype vertices and placement frames, reconstructs supporting planes and boundary edge directions, and runs a separate separating-axis implementation. It does not import the Python authoring tool or use its precomputed overlap pairs as an oracle.
+[`bagua_review_tests.cpp`](../tests/legacy/bagua_review_tests.cpp) reads the abstract definition and the separate Euclidean realization. It uses the unshrunk prototype vertices and placement frames, reconstructs supporting planes and boundary edge directions, and runs a separate separating-axis implementation. It does not import the Python authoring tool or use its precomputed overlap pairs as an oracle.
 
 | Check | Scope | Result |
 | --- | ---: | --- |

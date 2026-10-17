@@ -263,7 +263,7 @@ void Geometry::build_spherical(const Json &realization) {
          "Expected a small positive surface lift.");
   ensure(segments >= 16 && segments <= 128 && segments % 4 == 0 && rings >= 2 && rings <= 12,
          "/angularSegments", "Use 16–128 angular segments in multiples of four and 2–12 radial segments.");
-  ensure(!definition_->placement_relations, "/ruleModule", "Spherical cube disks require footprint rules.");
+  ensure(!definition_->port_catalog, "/catalog/kind", "Spherical cube disks require a cube binding catalog.");
   for (const auto &operation : definition_->operations) {
     std::set<std::string> disk_cells;
     for (const auto &cell : definition_->cells)

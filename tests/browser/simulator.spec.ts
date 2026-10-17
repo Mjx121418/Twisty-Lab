@@ -342,16 +342,34 @@ test('imports independent type/domain IDs and named operations without visual su
   const downloading = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save session ↗' }).click();
   const originalSession = readFileSync((await (await downloading).path())!, 'utf8');
-  const authored = JSON.parse(readFileSync('packages/cube3/definition.json', 'utf8'));
-  delete authored.definitionDigest; delete authored.symmetry; delete authored.provenance;
-  authored.puzzleId = 'authored-example';
-  authored.pieceTypes.find((type: { id: string }) => type.id === 'corner').id = 'vertex';
-  for (const piece of authored.pieces) if (piece.type === 'corner') piece.type = 'vertex';
-  authored.operations = authored.operations.filter((operation: { family: string }) => operation.family === 'U');
-  for (const operation of authored.operations) {
-    operation.id = operation.id === 'U' ? 'turn' : 'back';
-    operation.inverse = operation.inverse === 'U' ? 'turn' : 'back';
-    operation.family = 'upper';
+  const original = JSON.parse(readFileSync('packages/cube3/relational-package.json', 'utf8'));
+  // Rename an authoring domain independently of persistent piece IDs/local keys.
+  const rename = (value: any): any => {
+    if (typeof value === 'string') return value === 'corner' ? 'vertex' : value.replace(/^corner\/corner:/, 'vertex/corner:');
+    if (Array.isArray(value)) return value.map(rename);
+    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, child]) =>
+      [rename(key), rename(child)]));
+    return value;
+  };
+  const authored = rename(original);
+  authored.source.id = 'authored-example'; authored.catalog.puzzleId = 'authored-example';
+  authored.source.requests = authored.source.requests.filter((request: { id: string }) => request.id === 'U' || request.id === "U'");
+  const names: Record<string, string> = { U: 'turn', "U'": 'back' };
+  authored.catalog.requests = Object.fromEntries(Object.entries(authored.catalog.requests)
+    .filter(([id]) => id in names).map(([id, value]) => {
+      const request = value as { inverse: string; family: string };
+      return [names[id], { ...request, inverse: names[request.inverse], family: 'upper' }];
+    }));
+  for (const domain of authored.source.domains) {
+    domain.moves = domain.moves.filter((move: { id: string }) => move.id in names);
+    for (const move of domain.moves) move.id = names[move.id];
+  }
+  for (const request of authored.source.requests) {
+    request.id = names[request.id];
+    for (const profile of request.profiles) {
+      for (const domain of Object.keys(profile.choices)) profile.choices[domain] = names[profile.choices[domain]];
+    }
+    for (const term of request.relation.all) term.chosen.moves = term.chosen.moves.map((id: string) => names[id]);
   }
   await page.getByLabel('Import definition file').setInputFiles({ name: 'authored.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(authored)) });
   await expect(page.getByRole('alert')).toContainText('No compatible realization');
@@ -366,7 +384,7 @@ test('imports independent type/domain IDs and named operations without visual su
   await page.getByRole('button', { name: 'Move back', exact: true }).click();
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
   await page.getByLabel('Open session file').setInputFiles({ name: 'other-session.json', mimeType: 'application/json', buffer: Buffer.from(originalSession) });
-  await expect(page.getByTestId('blocking-evidence')).toContainText('session.schema');
+  await expect(page.getByTestId('blocking-evidence')).toContainText('definition.digest_mismatch');
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
 });
 

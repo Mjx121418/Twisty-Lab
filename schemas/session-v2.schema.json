@@ -31,10 +31,10 @@
       ],
       "properties": {
         "definitionDigest": {
-          "$ref": "urn:twisty:schema:definition:1#/$defs/digest"
+          "$ref": "urn:twisty:schema:state:1#/$defs/digest"
         },
         "originState": {
-          "$ref": "urn:twisty:schema:definition:1#/$defs/state"
+          "$ref": "urn:twisty:schema:state:1#/$defs/state"
         },
         "revision": {
           "type": "string",
@@ -45,7 +45,7 @@
           "minimum": 0
         },
         "stateDigest": {
-          "$ref": "urn:twisty:schema:definition:1#/$defs/digest"
+          "$ref": "urn:twisty:schema:state:1#/$defs/digest"
         },
         "requests": {
           "type": "array",
@@ -66,7 +66,7 @@
                 "maxProperties": 0
               },
               "afterStateDigest": {
-                "$ref": "urn:twisty:schema:definition:1#/$defs/digest"
+                "$ref": "urn:twisty:schema:state:1#/$defs/digest"
               },
               "choices": {
                 "type": "array",
@@ -94,10 +94,10 @@
                 "minimum": 0
               },
               "state": {
-                "$ref": "urn:twisty:schema:definition:1#/$defs/state"
+                "$ref": "urn:twisty:schema:state:1#/$defs/state"
               },
               "stateDigest": {
-                "$ref": "urn:twisty:schema:definition:1#/$defs/digest"
+                "$ref": "urn:twisty:schema:state:1#/$defs/digest"
               }
             }
           }

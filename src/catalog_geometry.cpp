@@ -94,7 +94,7 @@ bool close(Frame a, Frame b) {
 } // namespace
 
 void Geometry::build_catalog(const Json &realization) {
-  ensure(definition_->placement_relations, "/ruleModule", "Polyhedral catalogs require placement relations.");
+  ensure(definition_->port_catalog, "/catalog/kind", "Polyhedral models require a port binding catalog.");
   scale_ = realization.at("scale").get<double>();
   const auto body_inset = realization.at("bodyInset").get<double>();
   const auto sticker_inset = realization.at("stickerInset").get<double>();

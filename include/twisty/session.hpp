@@ -9,8 +9,7 @@ public:
   explicit Session(const std::string &source);
   // A fresh logical session sharing immutable compiled data; no history is copied.
   explicit Session(std::shared_ptr<const Execution>);
-  // For relational packages this is interpreter/inspector metadata, not an
-  // argument to legacy free planning/validation functions. Use execution().
+  // Interpreter/inspector metadata. Use execution() for logical queries.
   std::shared_ptr<const Definition> definition() const {
     return definition_;
   }
@@ -50,9 +49,6 @@ public:
   }
   std::string save_with_presentation_json(const std::string &) const;
   std::string load_json(const std::string &);
-  // Pure, explicit schema-1 conversion. Checks the old replay and matches each
-  // new state and participation witness before returning a schema-2 document.
-  std::string convert_legacy_json(const std::string &document, const std::string &legacy_definition) const;
 
 private:
   std::shared_ptr<const Execution> execution_;

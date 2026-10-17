@@ -17,9 +17,6 @@ val indices(const Geometry &geometry) {
 val transforms(const Geometry &geometry) {
   return val(typed_memory_view(geometry.transforms().size(), geometry.transforms().data()));
 }
-std::string compile(const std::string &source) {
-  return compile_json(source).dump();
-}
 std::string compile_execution(const std::string &source) {
   return compile_execution_json(source).dump();
 }
@@ -34,7 +31,6 @@ Session *create_session_from_definition(const Session &session) {
 }
 } // namespace
 EMSCRIPTEN_BINDINGS(twisty) {
-  function("compileJSON", &compile);
   function("compileExecutionJSON", &compile_execution);
   function("compileRelationalJSON", &twisty::relational::compile_json);
   function("relationalCubeModuleJSON", &twisty::relational::cube_module_json);
@@ -62,8 +58,7 @@ EMSCRIPTEN_BINDINGS(twisty) {
       .function("scrambleJSON", &Session::scramble_json)
       .function("saveJSON", &Session::save_json)
       .function("saveWithPresentationJSON", &Session::save_with_presentation_json)
-      .function("loadJSON", &Session::load_json)
-      .function("convertLegacyJSON", &Session::convert_legacy_json);
+      .function("loadJSON", &Session::load_json);
   class_<Geometry>("Geometry")
       .constructor<std::string, std::string>()
       .function("sceneJSON", &Geometry::scene_json)

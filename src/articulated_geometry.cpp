@@ -113,7 +113,7 @@ Geometry::Frame Geometry::articulated_sample(const Part &part, double t) const {
 }
 
 void Geometry::build_articulated(const Json &realization) {
-  ensure(definition_->placement_relations, "/ruleModule", "Articulated models require placement relations.");
+  ensure(definition_->port_catalog, "/catalog/kind", "Articulated models require a port binding catalog.");
   const bool spherical = realization.at("kind") == "articulated-spherical";
   const double radius = spherical ? realization.at("radius").get<double>() : 0;
   ensure(!spherical || (std::isfinite(radius) && radius > 0 && radius <= 100), "/radius",

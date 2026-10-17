@@ -41,12 +41,9 @@ describe('selected-piece destinations', () => {
   });
 
   it('preserves exact records and previews destinations without changing the session or live geometry', () => {
-    const compiled = JSON.parse(runtime.compileJSON(read('packages/cube3/source.json'))).definition;
-    delete compiled.definitionDigest;
-    compiled.initialState.mechanism.counter = 'wide-integer-marker';
-    const source = JSON.stringify(compiled).replace('"wide-integer-marker"', '9223372036854775807');
+    const source = read('packages/cube3/relational-package.json');
     const session = new KernelSession(runtime, source);
-    const realization = { ...JSON.parse(read('packages/cube3/cube-spherical.json')), compatibleDefinitionDigest: session.definition.definitionDigest };
+    const realization = { ...JSON.parse(read('packages/cube3/relational-cube-spherical.json')), compatibleDefinitionDigest: session.definition.definitionDigest };
     const live = runtime.createGeometry(session.native, JSON.stringify(realization))!;
     const preview = runtime.createGeometry(session.native, JSON.stringify(realization))!;
     try {
@@ -54,7 +51,7 @@ describe('selected-piece destinations', () => {
       const liveFrame = Array.from(live.transforms() as Float32Array);
       const options = pieceDestinations(session, session.snapshot(), 'corner/UFR');
       for (const option of options) {
-        expect(option.transitionRecord).toContain('9223372036854775807');
+        expect(JSON.parse(option.transitionRecord).request.choices).toHaveLength(3);
         expect(JSON.parse(preview.prepareAnimationJSON(option.transitionRecord)).status).toBe('Prepared');
         preview.sample(1);
         expect(Array.from(preview.transforms() as Float32Array).every(Number.isFinite)).toBe(true);

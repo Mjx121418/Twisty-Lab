@@ -543,7 +543,7 @@ def main():
     document = model.definition(exclusions=not args.probe)
     temporary = ROOT / 'build/bagua-source.json'
     temporary.write_text(json.dumps(document, separators=(',', ':')) + '\n')
-    result = json.loads(subprocess.check_output([str(ROOT / 'build/native/twisty'), 'compile',
+    result = json.loads(subprocess.check_output([str(ROOT / 'build/native/twisty_legacy_reference'), 'compile',
                                                 '--definition', str(temporary), '--json'], text=True))
     assert result['status'] == 'Compiled', result
     compiled = result['definition']

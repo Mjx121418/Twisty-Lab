@@ -2,7 +2,7 @@ import createModule, { type MainModule } from './generated/twisty.mjs';
 export type { MainModule } from './generated/twisty.mjs';
 
 export type KernelInfo = {
-  apiVersion: number; version: string; documentSchemaVersion: number; frameBufferVersion: number;
+  apiVersion: number; version: string; documentKinds: string[]; frameBufferVersion: number;
   experimentalAPIs?: { relational?: number };
   relationalLibraries?: string[];
   relationalCatalogKinds?: string[];
@@ -15,7 +15,7 @@ export async function createKernel(options: KernelOptions = {}): Promise<MainMod
     filename.endsWith('.wasm') && options.wasmURL ? String(options.wasmURL) : directory + filename);
   const module = await createModule({ locateFile });
   const info = JSON.parse(module.kernelInfoJSON()) as KernelInfo;
-  if (info.apiVersion !== 2 || info.frameBufferVersion !== 1) throw new Error('Unsupported kernel API or frame-buffer version.');
+  if (info.apiVersion !== 3 || info.frameBufferVersion !== 1) throw new Error('Unsupported kernel API or frame-buffer version.');
   return module;
 }
 
@@ -24,14 +24,14 @@ export type Request = { operation: string; parameters: Record<string, never>; ch
 export type Snapshot = {
   puzzleId: string; definitionDigest: string; stateDigest: string; revision: string;
   state: State; solved: boolean; legalRequests: Request[];
-  candidateRequests?: Request[];
+  candidateRequests: Request[];
   history: string[]; cursor: number; canUndo: boolean; canRedo: boolean;
 };
 export type Transition = {
   definitionDigest: string; beforeStateDigest: string; afterStateDigest: string;
-  request: Request; beforeState: State; afterState: State;
-  witnessVersion?: number;
-  pieceActions: { pieceId: string; from: string; to: string; role: string; transport: string; event?: string }[];
+  request: Request & { choices: string[] }; beforeState: State; afterState: State;
+  witnessVersion: 1;
+  pieceActions: { pieceId: string; from: string; to: string; role: string; transport: string; event: string }[];
 };
 export type Result = {
   status: string; snapshot?: Snapshot; transitions?: Transition[]; reasonCode?: string;
@@ -59,16 +59,13 @@ export type HitBinding = {
   status: string; pieceId?: string; portId?: string; operationCandidates?: Request[];
 };
 export type CompiledDefinition = {
-  kind: string; puzzleId: string; definitionDigest: string;
-  ruleModule: 'relational@1' | 'finite-footprint@1' | 'finite-placement-relations@1' | 'finite-placement-relations@2';
+  kind: 'relational-definition'; formatVersion: 1; puzzleId: string; definitionDigest: string;
+  ruleModule: 'relational@1';
   pieceTypes: { id: string; placementDomainId: string; localPorts: string[] }[];
   placementDomains: { id: string; placements: { key: string; footprint: string[]; portAttachment: Record<string, { cell: string; attachment: string }> }[] }[];
   pieces: { id: string; type: string; homePlacement: string; portLabels: Record<string, string> }[];
-  operations: { id: string; inverse: string; family: string; selectedCells?: string[]; transport: string; pieceGuards?: Record<string, string>; placementCountGuards?: PlacementCountGuard[] }[];
-  symmetry?: { members?: number[][]; positionOrbits?: Record<string, { representative: string; stabilizer: number[][]; positions: { id: string }[] }> }; cells: string[]; provenance: unknown;
-};
-export type PlacementCountGuard = {
-  id: string; placementDomainId: string; placements: string[]; min: number; max: number;
+  operations: { id: string; inverse: string; family: string; selectedCells?: string[]; transport: string; }[];
+  symmetry?: { members?: number[][]; positionOrbits?: Record<string, { representative: string; stabilizer: number[][]; positions: { id: string }[] }> }; cells: string[];
 };
 export type PolyhedralModel = {
   vertices: number[][]; ports: Record<string, number[]>; symmetries: number[][];
@@ -95,10 +92,6 @@ export type ArticulatedComponent = {
   id: string; meshAssetId: string; role: 'body' | 'port'; portId?: string; materialBindingId?: string;
   placementFrames: Record<string, number[]>; symmetries?: number[][];
   operationTracks: Record<string, Record<string, RotationTrackStep[]>>;
-};
-export type GearCubeSource = {
-  schemaVersion: 1; semanticsVersion: string; kind: 'gear-cube-prototypes'; puzzleId: string;
-  gearedEdges: string[];
 };
 
 // Experimental version 1. Numeric placements are resolved through preview.bindings.
@@ -262,9 +255,6 @@ export class KernelSession {
     return JSON.parse(this.native.scrambleJSON(seed, length, expectedRevision)) as Result;
   }
   load(document: string): Result { return JSON.parse(this.native.loadJSON(document)) as Result; }
-  convertLegacy(document: string, legacyDefinition: string): { status: string; session?: unknown; diagnostics?: Result['diagnostics'] } {
-    return JSON.parse(this.native.convertLegacyJSON(document, legacyDefinition));
-  }
   save(presentation: unknown = {}): string {
     return this.native.saveWithPresentationJSON(JSON.stringify(presentation));
   }

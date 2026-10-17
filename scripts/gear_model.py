@@ -139,7 +139,7 @@ def main():
         if args.write:
             directory.mkdir(parents=True,exist_ok=True)
             (directory/'source.json').write_text(json.dumps(source,indent=2)+'\n')
-        result=json.loads(subprocess.check_output([str(ROOT/'build/native/twisty'),'compile','--definition',str(directory/'source.json'),'--json'],text=True))
+        result=json.loads(subprocess.check_output([str(ROOT/'build/native/twisty_legacy_reference'),'compile','--definition',str(directory/'source.json'),'--json'],text=True))
         if result['status']!='Compiled': raise RuntimeError(result)
         definition=result['definition']
         documents={'source.json':source,'definition.json':definition,

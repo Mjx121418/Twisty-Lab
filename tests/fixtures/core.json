@@ -4,95 +4,100 @@
   "cases": [
     {
       "name": "cube U is legal",
-      "source": "packages/cube3/source.json",
+      "source": "packages/cube3/relational-package.json",
       "prefix": "",
       "operation": "U",
       "expectedStatus": "Committed",
-      "definitionDigest": "883bd24d0115e6262058b31938613866a04137ac5387f76aef0a4699799a5de9"
+      "definitionDigest": "68012817e59f85933e58718540520ed38ecd2d90d337063d416f200e3e07e1d2"
     },
     {
       "name": "unchanged center participates",
-      "source": "packages/cube3/source.json",
+      "source": "packages/cube3/relational-package.json",
       "prefix": "",
       "operation": "U",
       "expectedStatus": "Committed",
       "unchangedParticipant": "center/U",
-      "definitionDigest": "883bd24d0115e6262058b31938613866a04137ac5387f76aef0a4699799a5de9"
+      "definitionDigest": "68012817e59f85933e58718540520ed38ecd2d90d337063d416f200e3e07e1d2"
     },
     {
       "name": "bandaged R is blocked",
-      "source": "packages/bandaged/source.json",
+      "source": "packages/bandaged/relational-package.json",
       "prefix": "",
       "operation": "R",
       "expectedStatus": "Blocked",
-      "reasonCode": "footprint.partial_overlap",
+      "reasonCode": "relation.rejected",
       "implicatedPiece": "bandage/UF-UFR",
-      "definitionDigest": "3049956cd3afa29ec7a380660aaba3a8997794ee71de5ae13c6dd950d3e7d698"
+      "definitionDigest": "a4bef1c5be7617a25acbadc635eb7c8fe60d4f417e424c4141f70777f59ac0d2"
     },
     {
       "name": "bandaged U is legal",
-      "source": "packages/bandaged/source.json",
+      "source": "packages/bandaged/relational-package.json",
       "prefix": "",
       "operation": "U",
       "expectedStatus": "Committed",
-      "definitionDigest": "3049956cd3afa29ec7a380660aaba3a8997794ee71de5ae13c6dd950d3e7d698"
+      "definitionDigest": "a4bef1c5be7617a25acbadc635eb7c8fe60d4f417e424c4141f70777f59ac0d2"
     },
     {
       "name": "bandaged F is legal",
-      "source": "packages/bandaged/source.json",
+      "source": "packages/bandaged/relational-package.json",
       "prefix": "",
       "operation": "F",
       "expectedStatus": "Committed",
-      "definitionDigest": "3049956cd3afa29ec7a380660aaba3a8997794ee71de5ae13c6dd950d3e7d698"
+      "definitionDigest": "a4bef1c5be7617a25acbadc635eb7c8fe60d4f417e424c4141f70777f59ac0d2"
     },
     {
       "name": "R becomes legal after U",
-      "source": "packages/bandaged/source.json",
+      "source": "packages/bandaged/relational-package.json",
       "prefix": "U",
       "operation": "R",
       "expectedStatus": "Committed",
-      "definitionDigest": "3049956cd3afa29ec7a380660aaba3a8997794ee71de5ae13c6dd950d3e7d698"
+      "definitionDigest": "a4bef1c5be7617a25acbadc635eb7c8fe60d4f417e424c4141f70777f59ac0d2"
     },
     {
       "name": "inverse restores blocking",
-      "source": "packages/bandaged/source.json",
+      "source": "packages/bandaged/relational-package.json",
       "prefix": "U U'",
       "operation": "R",
       "expectedStatus": "Blocked",
-      "reasonCode": "footprint.partial_overlap",
-      "definitionDigest": "3049956cd3afa29ec7a380660aaba3a8997794ee71de5ae13c6dd950d3e7d698"
+      "reasonCode": "relation.rejected",
+      "definitionDigest": "a4bef1c5be7617a25acbadc635eb7c8fe60d4f417e424c4141f70777f59ac0d2"
     },
     {
-      "source": "packages/helicopter/definition.json",
-      "definitionDigest": "aeadf784d10d7b90ea6f8b71437a6e410f215b5f47327fa139b9dc797c1c895a",
+      "source": "packages/helicopter/relational-package.json",
+      "definitionDigest": "4ac6e4678e4301c9cba54bc1551f60230cc29e42c399e5b9f35d2f61a7e5bee6",
       "name": "Helicopter jumble stop is legal",
       "prefix": "",
       "operation": "UF_ab",
       "expectedStatus": "Committed"
     },
     {
-      "source": "packages/helicopter/definition.json",
-      "definitionDigest": "aeadf784d10d7b90ea6f8b71437a6e410f215b5f47327fa139b9dc797c1c895a",
+      "source": "packages/helicopter/relational-package.json",
+      "definitionDigest": "4ac6e4678e4301c9cba54bc1551f60230cc29e42c399e5b9f35d2f61a7e5bee6",
       "name": "Helicopter stop guard rejects wrong source",
       "prefix": "UF_ab",
       "operation": "UF_ac",
       "expectedStatus": "Blocked",
-      "reasonCode": "placement.guard",
-      "implicatedPiece": "mechanism/UF"
+      "reasonCode": "relation.rejected",
+      "implicatedPiece": "mechanism/UF",
+      "choices": [
+        "UF_ac",
+        "UF_ac",
+        "UF_ac"
+      ]
     },
     {
-      "source": "packages/helicopter/definition.json",
-      "definitionDigest": "aeadf784d10d7b90ea6f8b71437a6e410f215b5f47327fa139b9dc797c1c895a",
+      "source": "packages/helicopter/relational-package.json",
+      "definitionDigest": "4ac6e4678e4301c9cba54bc1551f60230cc29e42c399e5b9f35d2f61a7e5bee6",
       "name": "Helicopter face piece blocks a cut",
       "prefix": "UF_ab",
       "operation": "UR_ad",
       "expectedStatus": "Blocked",
-      "reasonCode": "placement.blocked",
+      "reasonCode": "relation.rejected",
       "implicatedPiece": "center/Ufl"
     },
     {
-      "source": "packages/helicopter/definition.json",
-      "definitionDigest": "aeadf784d10d7b90ea6f8b71437a6e410f215b5f47327fa139b9dc797c1c895a",
+      "source": "packages/helicopter/relational-package.json",
+      "definitionDigest": "4ac6e4678e4301c9cba54bc1551f60230cc29e42c399e5b9f35d2f61a7e5bee6",
       "name": "Helicopter second jumble stop is legal",
       "prefix": "UF_ab",
       "operation": "UL_af",
@@ -103,24 +108,24 @@
       "prefix": "",
       "operation": "U+",
       "expectedStatus": "Committed",
-      "source": "packages/bagua/definition.json",
-      "definitionDigest": "9e9c2c32a01e8aa431723e69df35e59f43e5778f3b377ce3e965d555b5c2a1e6"
+      "source": "packages/bagua/relational-package.json",
+      "definitionDigest": "d0d13c3bef8512630ae95255d8a7338d8b8699f63e860af50b343c146c5c952a"
     },
     {
       "name": "Bagua quarter turn after 45 degrees is legal",
       "prefix": "U+",
       "operation": "R",
       "expectedStatus": "Committed",
-      "source": "packages/bagua/definition.json",
-      "definitionDigest": "9e9c2c32a01e8aa431723e69df35e59f43e5778f3b377ce3e965d555b5c2a1e6"
+      "source": "packages/bagua/relational-package.json",
+      "definitionDigest": "d0d13c3bef8512630ae95255d8a7338d8b8699f63e860af50b343c146c5c952a"
     },
     {
       "name": "Bagua Parkin RD sliver pair allows its published R2 repair start",
       "prefix": "((R2 U+ R2 U-)7)'",
       "operation": "R_half",
       "expectedStatus": "Committed",
-      "source": "packages/bagua/definition.json",
-      "definitionDigest": "9e9c2c32a01e8aa431723e69df35e59f43e5778f3b377ce3e965d555b5c2a1e6",
+      "source": "packages/bagua/relational-package.json",
+      "definitionDigest": "d0d13c3bef8512630ae95255d8a7338d8b8699f63e860af50b343c146c5c952a",
       "reference": "https://spencerparkin.github.io/twisty-puzzle-solutions/puzzle_bagua.html",
       "basis": "Inverse X is a model reproduction of the author's RD sliver-pair setup; X starts with R2."
     },
@@ -129,44 +134,44 @@
       "prefix": "U+ R F-",
       "operation": "U+",
       "expectedStatus": "Blocked",
-      "reasonCode": "placement.blocked",
+      "reasonCode": "relation.rejected",
       "implicatedPiece": "corner/07",
-      "source": "packages/bagua/definition.json",
-      "definitionDigest": "9e9c2c32a01e8aa431723e69df35e59f43e5778f3b377ce3e965d555b5c2a1e6"
+      "source": "packages/bagua/relational-package.json",
+      "definitionDigest": "d0d13c3bef8512630ae95255d8a7338d8b8699f63e860af50b343c146c5c952a"
     },
     {
       "name": "gear R is committed",
-      "source": "packages/gear/source.json",
+      "source": "packages/gear/relational-package.json",
       "prefix": "",
       "operation": "R",
       "expectedStatus": "Committed",
-      "definitionDigest": "60d22e4d45835c6b409d10f0f40bb82d370bf769aadbe110c76fb17fa8909032"
+      "definitionDigest": "298d876c9d4c18481a60394b32a808270f7571be7402bf45862b35afb7a2cc62"
     },
     {
       "name": "gear Rq is blocked",
-      "source": "packages/gear/source.json",
+      "source": "packages/gear/relational-package.json",
       "prefix": "",
       "operation": "Rq",
       "expectedStatus": "Blocked",
-      "definitionDigest": "60d22e4d45835c6b409d10f0f40bb82d370bf769aadbe110c76fb17fa8909032",
-      "reasonCode": "placement.blocked"
+      "definitionDigest": "298d876c9d4c18481a60394b32a808270f7571be7402bf45862b35afb7a2cc62",
+      "reasonCode": "relation.rejected"
     },
     {
       "name": "gear-extreme Uq is committed",
-      "source": "packages/gear-extreme/source.json",
+      "source": "packages/gear-extreme/relational-package.json",
       "prefix": "",
       "operation": "Uq",
       "expectedStatus": "Committed",
-      "definitionDigest": "cc627e3568fb9a45a0d582743da915e310e0330b354b33d8a4ab430deb9cdef7"
+      "definitionDigest": "d42b5e36f088800eff957c2ff194063b95607051f6fd15ea997d2c45b0f83b49"
     },
     {
       "name": "gear-extreme U is blocked",
-      "source": "packages/gear-extreme/source.json",
+      "source": "packages/gear-extreme/relational-package.json",
       "prefix": "",
       "operation": "U",
       "expectedStatus": "Blocked",
-      "definitionDigest": "cc627e3568fb9a45a0d582743da915e310e0330b354b33d8a4ab430deb9cdef7",
-      "reasonCode": "placement.count"
+      "definitionDigest": "d42b5e36f088800eff957c2ff194063b95607051f6fd15ea997d2c45b0f83b49",
+      "reasonCode": "relation.rejected"
     }
   ]
 }

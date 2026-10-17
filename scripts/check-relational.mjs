@@ -99,7 +99,6 @@ try {
     const text = await readFile(path, 'utf8');
     const session = new KernelSession(module, text);
     const restored = new KernelSession(module, session);
-    let legacy;
     let restoredDisposed = false;
     try {
       const algorithm = name === 'bagua' ? "U+ R' L' D2 R L U-" : name === 'helicopter' ? 'UF_ab UL_af' : name === 'gear' ? "R U F (R U F)'" : name === 'gear-extreme' ? "Uq R Fq (Uq R Fq)'" : name === 'gear-plain' ? "Rq Uq Fq (Rq Uq Fq)'" : "U R R' U'";
@@ -125,17 +124,12 @@ try {
       assert.deepEqual(restored.snapshot(), before);
       restored.dispose();
       restoredDisposed = true;
-      legacy = new KernelSession(module, await readFile(join(root, 'packages', name, 'definition.json'), 'utf8'));
-      assert.equal(legacy.run(algorithm, 'transactional').status, 'Committed');
-      legacy.undo();
-      const conversion = session.convertLegacy(legacy.save({ marker: 'preserved' }), legacy.definitionText);
-      assert.equal(conversion.status, 'Converted');
-      assert.deepEqual(conversion.session.presentation, { marker: 'preserved' });
-      assert.equal(session.load(JSON.stringify(conversion.session)).status, 'Loaded');
-      assert.deepEqual(session.snapshot().state, legacy.snapshot().state);
-      assert.equal(session.redo().status, 'Committed');
-      assert.equal(session.snapshot().stateDigest, reference.snapshot.stateDigest);
-    } finally { session.dispose(); if (!restoredDisposed) restored.dispose(); legacy?.dispose(); }
+      for (const path of ['definition.json', ...(name.startsWith('gear') || name === 'cube3' || name === 'bandaged' ? ['source.json'] : [])]) {
+        const rejected = JSON.parse(module.compileExecutionJSON(await readFile(join(root, 'packages', name, path), 'utf8')));
+        assert.equal(rejected.status, 'Invalid');
+        assert.equal(rejected.diagnostics[0].reasonCode, 'definition.unsupported');
+      }
+    } finally { session.dispose(); if (!restoredDisposed) restored.dispose(); }
     const reloaded = new KernelSession(module, session.definitionText);
     try {
       assert.equal(reloaded.definitionText, session.definitionText, 'Persisted definition bytes changed on reload.');
@@ -149,7 +143,7 @@ try {
   }
   console.log(`Gear migration: ${gearCount} WASM results preserve coupling, phases and per-domain event witnesses.`);
   console.log(`Bagua migration: ${bagua.queries.length} WASM results preserve occupancy, blocking, movements and witnesses.`);
-  console.log('All production presets preserve full native/WASM witnesses, replay, and explicit legacy conversion.');
+  console.log('All production presets preserve full native/WASM witnesses and replay; retired source formats are rejected.');
   console.log(`Portable relational API: ${count} WASM results match the independent source oracle and native consumer.`);
   console.log(`Helicopter migration: ${helicopterCount} WASM results match the previous executor's phases, states, legality and full witnesses.`);
   console.log(`Cube/bandage migration: ${migrationCount} WASM results match the current executor's states, legality and full event witnesses.`);

@@ -124,7 +124,7 @@ export function App() {
     const next = new KernelSession(runtime, source);
     const initial = next.snapshot();
     const parsedSource = JSON.parse(source);
-    if (['gear-cube-prototypes', 'relational-gear-prototypes'].includes(parsedSource.kind)) {
+    if (parsedSource.kind === 'relational-gear-prototypes') {
       setCustomGear(gearPreset(id, id === 'gear-custom' ? 'Gear family · custom' : 'Gear family', source, initial.definitionDigest));
     }
     kernel.current?.dispose(); kernel.current = next;
@@ -135,7 +135,7 @@ export function App() {
     setSelected(undefined); setEvidence(undefined); setLastScramble(''); setVisualError('');
     setAlgorithm(initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' :
       initial.puzzleId === 'bagua-experimental-v1' ? "U+ R' L' D2 R L U-" :
-      ['gear-cube-prototypes', 'relational-gear-prototypes'].includes(parsedSource.kind) ? (parsedSource.gearedEdges.length === 0 ? "Rq Uq Rq' Uq'" :
+      parsedSource.kind === 'relational-gear-prototypes' ? (parsedSource.gearedEdges.length === 0 ? "Rq Uq Rq' Uq'" :
         initial.legalRequests.some((request) => request.operation === 'R') ? "R R'" : "Rq Rq'") : "R U R' U'");
     setGeneration((value) => value + 1);
   }
@@ -320,7 +320,7 @@ export function App() {
   // Choose requests for the displayed source phase; core legalRequests remains
   // the authority for legality, including blockers on these same requests.
   const candidates = snapshot?.candidateRequests && new Set(snapshot.candidateRequests.map((request) => request.operation));
-  const phaseRequests = definition?.operations.filter((operation) => candidates ? candidates.has(operation.id) : Object.entries(operation.pieceGuards ?? {}).every(([piece, placement]) => snapshot?.state.placementOf[piece] === placement));
+  const phaseRequests = definition?.operations.filter((operation) => candidates?.has(operation.id));
   const families = Array.from(new Set(definition?.operations.map((operation) => operation.family) ?? []));
   const faceOrder = ['U', 'R', 'F', 'D', 'L', 'B'];
   families.sort((a, b) => (faceOrder.includes(a) ? faceOrder.indexOf(a) : 6) - (faceOrder.includes(b) ? faceOrder.indexOf(b) : 6) || a.localeCompare(b));
@@ -359,7 +359,7 @@ export function App() {
               <div className="segmented" aria-label="View layout">{(['both', 'cube', 'diagram'] as Layout[]).map((value) => <button key={value} aria-pressed={layout === value} onClick={() => requestLayout(value)}>{value === 'both' ? 'Both views' : value === 'cube' ? effectivePair === 'sphere-diagram' ? 'Sphere' : 'Cube' : effectivePair === 'cube-sphere' ? 'Sphere' : 'Diagram'}</button>)}</div>
             </div>
           </div>
-          {activePreset && ['gear-cube-prototypes', 'relational-gear-prototypes'].includes(JSON.parse(activePreset.source).kind) && <fieldset className="gear-configuration" disabled={busy}>
+          {activePreset && JSON.parse(activePreset.source).kind === 'relational-gear-prototypes' && <fieldset className="gear-configuration" disabled={busy}>
             <legend>Geared edges · changing these starts a solved puzzle</legend>
             {gearEdges.map((edge) => {
               const source = JSON.parse(activePreset.source);
@@ -419,14 +419,14 @@ export function App() {
         <aside className="inspector">
           <div className="inspector-header"><span className="eyebrow">LOOK UNDER THE SURFACE</span><h2>Definition inspector</h2><p>Follow a piece from abstract placement to visual part.</p></div>
           <div className="metrics"><div><strong>{definition?.pieces.length ?? '—'}</strong><span>pieces</span></div><div><strong>{definition?.operations.length ?? '—'}</strong><span>primitives</span></div><div><strong>{definition?.symmetry?.members?.length ?? '—'}</strong><span>symmetries</span></div></div>
-          {evidence && <section className="evidence" role="alert" data-testid="blocking-evidence"><span className="eyebrow">{evidence.status === 'Blocked' ? 'MOVE BLOCKED' : 'INVALID INPUT'}</span><h3>{['footprint.partial_overlap', 'placement.blocked'].includes(evidence.reasonCode ?? '') ? 'A rigid piece crosses the turn boundary.' : evidence.diagnostics?.[0]?.message ?? evidence.reasonCode}</h3><code>{evidence.reasonCode ?? evidence.diagnostics?.[0]?.reasonCode}</code>{evidence.implicatedPieces?.map((piece) => <button key={piece} onClick={() => setSelected(piece)}>{piece}</button>)}{evidence.evidence !== undefined && <details><summary>Abstract evidence</summary><pre>{JSON.stringify(evidence.evidence, null, 2)}</pre></details>}</section>}
+          {evidence && <section className="evidence" role="alert" data-testid="blocking-evidence"><span className="eyebrow">{evidence.status === 'Blocked' ? 'MOVE BLOCKED' : 'INVALID INPUT'}</span><h3>{evidence.reasonCode === 'relation.rejected' ? 'The puzzle interaction rules block this move.' : evidence.diagnostics?.[0]?.message ?? evidence.reasonCode}</h3><code>{evidence.reasonCode ?? evidence.diagnostics?.[0]?.reasonCode}</code>{evidence.implicatedPieces?.map((piece) => <button key={piece} onClick={() => setSelected(piece)}>{piece}</button>)}{evidence.evidence !== undefined && <details><summary>Abstract evidence</summary><pre>{JSON.stringify(evidence.evidence, null, 2)}</pre></details>}</section>}
           <div className="inspector-tabs">{(['pieces', 'history', 'definition'] as Inspector[]).map((value) => <button key={value} aria-pressed={inspector === value} onClick={() => setInspector(value)}>{value === 'definition' ? 'Source & rules' : value[0].toUpperCase() + value.slice(1)}</button>)}</div>
           {inspector === 'pieces' && <>
             <div className="piece-list">{definition?.pieces.map((piece) => <button key={piece.id} aria-label={`Select ${piece.id}`} aria-pressed={selected === piece.id} onClick={() => setSelected(piece.id)}><span>{piece.id}</span><small>{piece.type}</small></button>)}</div>
             <section className="piece-detail"><span className="eyebrow">SELECTED PIECE</span><h3>{selected ?? 'Choose a piece or port'}</h3>{selectedPiece && <><dl><dt>Placement</dt><dd><code>{snapshot?.state.placementOf[selectedPiece.id]}</code></dd><dt>Footprint</dt><dd>{selectedPlacement?.footprint.join(', ')}</dd><dt>Ports</dt><dd>{Object.entries(selectedPiece.portLabels).map(([port, label]) => `${port}: ${label}`).join(' · ')}</dd></dl><details><summary>Port attachments</summary><pre>{JSON.stringify(selectedPlacement?.portAttachment, null, 2)}</pre></details></>}</section>
           </>}
           {inspector === 'history' && <section className="history-list"><p>{snapshot?.cursor ?? 0} committed primitives at the cursor.</p>{snapshot?.history.length ? snapshot.history.map((move, index) => <div key={index} className={index >= snapshot.cursor ? 'future' : ''}><span>{String(index + 1).padStart(3, '0')}</span><strong>{move}</strong><small>{index >= snapshot.cursor ? 'redo' : 'committed'}</small></div>) : <p className="empty-state">Your first move starts a history.</p>}</section>}
-          {inspector === 'definition' && <section className="definition-detail"><dl>{definition?.placementDomains.map((domain) => <div key={domain.id}><dt>{domain.id} domain</dt><dd>{domain.placements.length} exact placements</dd></div>)}</dl><h3>Position orbits & stabilizers</h3><dl>{Object.entries(definition?.symmetry?.positionOrbits ?? {}).map(([type, orbit]) => <div key={type}><dt>{type}</dt><dd>{orbit.positions.length} positions · |H| = {orbit.stabilizer.length}</dd></div>)}</dl><h3>Directed operations</h3><div className="operation-list">{definition?.operations.map((operation) => <details key={operation.id}><summary>{operation.id} <span>inverse {operation.inverse}</span></summary><pre>{JSON.stringify(operation, null, 2)}</pre></details>)}</div><details><summary>Compiled definition & provenance</summary><pre>{definitionText}</pre></details></section>}
+          {inspector === 'definition' && <section className="definition-detail"><dl>{definition?.placementDomains.map((domain) => <div key={domain.id}><dt>{domain.id} domain</dt><dd>{domain.placements.length} exact placements</dd></div>)}</dl><h3>Position orbits & stabilizers</h3><dl>{Object.entries(definition?.symmetry?.positionOrbits ?? {}).map(([type, orbit]) => <div key={type}><dt>{type}</dt><dd>{orbit.positions.length} positions · |H| = {orbit.stabilizer.length}</dd></div>)}</dl><h3>Directed operations</h3><div className="operation-list">{definition?.operations.map((operation) => <details key={operation.id}><summary>{operation.id} <span>inverse {operation.inverse}</span></summary><pre>{JSON.stringify(operation, null, 2)}</pre></details>)}</div><details><summary>Compiled definition</summary><pre>{definitionText}</pre></details></section>}
           <div className="definition-footer"><span className="eyebrow">PINNED SEMANTICS</span><code title={snapshot?.definitionDigest}>{snapshot?.definitionDigest ?? '—'}</code></div>
         </aside>
       </main>

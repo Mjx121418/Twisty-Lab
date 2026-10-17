@@ -388,7 +388,7 @@ def main():
     package = ROOT / 'packages/helicopter'
     temporary = ROOT / 'build/helicopter-source.json'
     temporary.write_text(json.dumps(document, separators=(',', ':')) + '\n')
-    result = json.loads(subprocess.check_output([str(ROOT / 'build/native/twisty'), 'compile',
+    result = json.loads(subprocess.check_output([str(ROOT / 'build/native/twisty_legacy_reference'), 'compile',
                                                 '--definition', str(temporary), '--json'], text=True))
     compiled = result['definition']
     documents = {'definition.json': compiled, 'review.json': model.review(compiled['definitionDigest'])}

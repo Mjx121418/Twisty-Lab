@@ -30,13 +30,6 @@ template <class T> Index index_of(const std::vector<T> &items, const T &item) {
 }
 } // namespace
 
-std::shared_ptr<const Execution> Execution::legacy(std::shared_ptr<const Definition> definition) {
-  if (definition->canonical.value("kind", std::string{}) != "finite-definition")
-    throw DiagnosticError("execution.context_required", "/definition",
-                          "Relational port metadata is not a legacy execution definition; pass "
-                          "Session::execution() or definition_json().");
-  return std::shared_ptr<const Execution>(new Execution(std::move(definition)));
-}
 std::shared_ptr<const Execution> Execution::from_source(const std::string &text) {
   if (text.size() > 16 * 1024 * 1024)
     throw DiagnosticError("document.limit", "/", "Execution documents are limited to 16 MiB.");
@@ -75,15 +68,9 @@ std::shared_ptr<const Execution> Execution::from_source(const std::string &text)
     }
     return execution;
   }
-  if (kind == "finite-definition")
-    return legacy(load_definition(document));
-  const auto result = compile_json(text);
-  if (result.at("status") != "Compiled") {
-    const auto &d = result.at("diagnostics").at(0);
-    throw DiagnosticError(d.at("reasonCode").get<std::string>(), d.value("source", "/"),
-                          d.at("message").get<std::string>());
-  }
-  return legacy(load_definition(result.at("definition")));
+  throw DiagnosticError("definition.unsupported", "/kind",
+                        "Expected a relational-package, relational-definition, or relational-gear-prototypes. "
+                        "Legacy definitions and prototype sources are no longer supported.");
 }
 
 Execution::Execution(Json source, Json catalog) : puzzle_(relational::compile(source)) {
@@ -94,11 +81,11 @@ Execution::Execution(Json source, Json catalog) : puzzle_(relational::compile(so
   ensure((port_catalog || articulated_events_ || catalog.at("kind") == "relational-cube-bindings") &&
              catalog.at("version") == 1,
          "Expected a version-1 cube, port, or articulated binding catalog.");
-  const auto &bindings = puzzle_->bindings;
+  const auto &bindings = puzzle_.bindings;
   ensure(catalog.at("puzzleId").get<std::string>() == bindings.puzzle_id, "Puzzle IDs differ.");
   auto definition = std::make_shared<Definition>();
   definition->id = bindings.puzzle_id;
-  definition->placement_relations = port_catalog || articulated_events_;
+  definition->port_catalog = port_catalog || articulated_events_;
   definition->cells = catalog.at("resources").get<std::vector<std::string>>();
   const auto indexed = [](const std::vector<std::string> &names) {
     std::map<std::string, Index> result;
@@ -138,7 +125,7 @@ Execution::Execution(Json source, Json catalog) : puzzle_(relational::compile(so
       placement.key = key;
       placement.footprint = entry.at("resources").get<std::vector<std::string>>();
       for (const auto &cell : placement.footprint)
-        placement.footprint_cells.push_back(lookup(resource_ids, cell));
+        (void)lookup(resource_ids, cell);
       for (const auto &[port, p] : entry.at("ports").items()) {
         ensure(std::find(placement.footprint.begin(), placement.footprint.end(),
                          p.at("cell").get<std::string>()) != placement.footprint.end(),
@@ -185,7 +172,7 @@ Execution::Execution(Json source, Json catalog) : puzzle_(relational::compile(so
     ensure(c.at("pieces").get<std::vector<std::string>>() == expected_pieces, "Piece binding order differs.");
   }
   ensure(declared_placements.size() == catalog.at("placements").size(), "Extraneous placement bindings.");
-  // The legacy presentation tables are sorted by symbolic piece ID. Flat indices
+  // The presentation tables are sorted by symbolic piece ID. Flat indices
   // are independently mapped, never inferred from that ordering.
   auto sorted_pieces = bindings.pieces;
   std::sort(sorted_pieces.begin(), sorted_pieces.end());
@@ -199,7 +186,7 @@ Execution::Execution(Json source, Json catalog) : puzzle_(relational::compile(so
     const auto home = lookup(placement_ids, entry.at("home").get<std::string>());
     ensure(std::find(global_of_local_[d].begin(), global_of_local_[d].end(), home) !=
                    global_of_local_[d].end() &&
-               puzzle_->program.data().initial[p] == home,
+               puzzle_.program.data().initial[p] == home,
            "Piece home/domain binding differs from the program.");
     Piece piece{id, definition->domains[d].id, d, local_of_global_[home],
                 entry.at("portLabels").get<std::map<std::string, std::string>>()};
@@ -300,11 +287,7 @@ Execution::Execution(Json source, Json catalog) : puzzle_(relational::compile(so
       }
     ensure(expected.size() == catalog.at("events").size(), "Extraneous event bindings.");
   }
-  definition->provenance = {{"execution", "flat"},
-                            {"adapter", articulated_events_ ? "articulated-events@1"
-                                        : port_catalog      ? "uniform-port-tracks@1"
-                                                            : "cube-ports@1"}};
-  auto preview = relational::inspect(*puzzle_);
+  auto preview = relational::inspect(puzzle_);
   definition->canonical = {{"kind", "relational-definition"}, {"formatVersion", 1},
                            {"predicateVersion", 1},           {"puzzleId", definition->id},
                            {"ruleModule", "relational@1"},    {"cells", definition->cells},
@@ -327,12 +310,10 @@ Execution::Execution(Json source, Json catalog) : puzzle_(relational::compile(so
 Json Execution::definition_json() const {
   auto result = definition_->canonical;
   result["definitionDigest"] = definition_->digest;
-  if (!relational())
-    result["provenance"] = definition_->provenance;
   return result;
 }
 Index Execution::event_operation(Index piece, const std::string &event) const {
-  ensure(relational() && piece < definition_->pieces.size(), "Unknown event participant.");
+  ensure(piece < definition_->pieces.size(), "Unknown event participant.");
   const auto found = event_operations_.find({definition_->pieces[piece].domain, event});
   ensure(found != event_operations_.end(), "Unknown or incompatible participation event.");
   return found->second;
@@ -359,16 +340,10 @@ State Execution::display(const flat::State &state) const {
   return result;
 }
 void Execution::validate(const State &state) const {
-  if (!relational()) {
-    const auto result = validate_state(*definition_, state);
-    if (!result.empty())
-      throw DiagnosticError("state.invalid", "/state", result.dump());
-  } else if (!puzzle_->program.valid(flatten(state)))
+  if (!puzzle_.program.valid(flatten(state)))
     throw DiagnosticError("state.invariant", "/state", "State violates the compiled invariant.");
 }
 State Execution::decode(const Json &wire) const {
-  if (!relational())
-    return decode_state(*definition_, wire);
   const auto &placements = wire.at("placementOf");
   if (!placements.is_object() || placements.size() != definition_->pieces.size())
     throw DiagnosticError("state.pieces", "/placementOf", "Expected exactly the declared piece IDs.");
@@ -385,18 +360,10 @@ State Execution::decode(const Json &wire) const {
   return result;
 }
 bool Execution::is_solved(const State &state) const {
-  return relational() ? puzzle_->program.solved(flatten(state)) : solved(*definition_, state);
+  return puzzle_.program.solved(flatten(state));
 }
 ExecutionPlan Execution::plan(const State &state, const std::string &operation,
                               const Json &named_choices) const {
-  if (!relational()) {
-    if (!named_choices.is_null())
-      throw DiagnosticError("request.choices", "/choices", "Legacy requests do not accept movement tuples.");
-    auto result = twisty::plan(*definition_, state, operation);
-    if (!result.transition)
-      return {std::nullopt, result.blocked};
-    return {CompletedTransition{std::move(*result.transition), {}, {}}, {}};
-  }
   validate(state);
   if (!request_ids_.contains(operation))
     throw DiagnosticError("request.unknown", "/operation", "Unknown request.");
@@ -404,29 +371,29 @@ ExecutionPlan Execution::plan(const State &state, const std::string &operation,
   const auto before = flatten(state);
   std::optional<flat::Choices> choices;
   if (named_choices.is_null())
-    choices = relational::bind_profile(*puzzle_, request, before);
+    choices = relational::bind_profile(puzzle_, request, before);
   else {
     const auto names = named_choices.get<std::vector<std::string>>();
-    if (names.size() != puzzle_->bindings.choice_slots.size())
+    if (names.size() != puzzle_.bindings.choice_slots.size())
       throw DiagnosticError("request.choices", "/choices",
                             "Supply one choice for every declared choice slot.");
     choices = flat::Choices{};
     for (Index i = 0; i < names.size(); ++i)
-      choices->push_back(index_of(puzzle_->bindings.choice_values[i], names[i]));
+      choices->push_back(index_of(puzzle_.bindings.choice_values[i], names[i]));
   }
   if (!choices)
     return {std::nullopt, {{"status", "ChoiceRequired"}, {"operation", operation}}};
-  const auto result = puzzle_->program.plan(request, before, *choices);
+  const auto result = puzzle_.program.plan(request, before, *choices);
   if (!result.transition) {
     const auto reason = result.rejection == flat::Rejection::relation ? "relation.rejected"
                         : result.rejection == flat::Rejection::target_invariant
                             ? "state.target_invariant"
                             : "transport.conflicting_writes";
     std::set<std::string> inputs;
-    const auto root = puzzle_->program.data().requests[request].relation;
+    const auto root = puzzle_.program.data().requests[request].relation;
     if (result.rejection == flat::Rejection::relation)
-      for (const auto p : relational::rejection_inputs(puzzle_->program, request, before, *choices))
-        inputs.insert(puzzle_->bindings.pieces[p]);
+      for (const auto p : relational::rejection_inputs(puzzle_.program, request, before, *choices))
+        inputs.insert(puzzle_.bindings.pieces[p]);
     return {std::nullopt,
             {{"status", "Blocked"},
              {"reasonCode", reason},
@@ -438,18 +405,16 @@ ExecutionPlan Execution::plan(const State &state, const std::string &operation,
   const auto &w = *result.transition;
   CompletedTransition transition{{operation, state, display(w.after), {}}, {}, {}};
   for (Index i = 0; i < choices->size(); ++i)
-    transition.choices.push_back(puzzle_->bindings.choice_values[i][choices->at(i)]);
+    transition.choices.push_back(puzzle_.bindings.choice_values[i][choices->at(i)]);
   for (const auto &a : w.actions) {
     transition.actions.push_back(
         {display_piece_of_flat_[a.piece], local_of_global_[a.from], local_of_global_[a.to]});
-    transition.events.push_back(puzzle_->bindings.events[a.event]);
+    transition.events.push_back(puzzle_.bindings.events[a.event]);
   }
   return {std::move(transition), {}};
 }
 ExecutionPlan Execution::inverse(const CompletedTransition &transition) const {
   const auto &op = definition_->operations.at(definition_->operation_ids.at(transition.operation));
-  if (!relational())
-    return plan(transition.after, op.inverse);
   Json choices = Json::array();
   for (Index d = 0; d < transition.choices.size(); ++d)
     choices.push_back(inverse_moves_[d].at(transition.choices[d]));
@@ -457,26 +422,22 @@ ExecutionPlan Execution::inverse(const CompletedTransition &transition) const {
 }
 Json Execution::encode(const CompletedTransition &transition) const {
   auto wire = encode_transition(*definition_, transition);
-  if (relational()) {
-    wire["witnessVersion"] = 1;
-    wire["request"]["choices"] = transition.choices;
-    for (Index i = 0; i < transition.events.size(); ++i)
-      wire["pieceActions"][i]["event"] = transition.events[i];
-  }
+  wire["witnessVersion"] = 1;
+  wire["request"]["choices"] = transition.choices;
+  for (Index i = 0; i < transition.events.size(); ++i)
+    wire["pieceActions"][i]["event"] = transition.events[i];
   return wire;
 }
 Json Execution::legal(const State &state) const {
-  if (!relational())
-    return legal_operations(*definition_, state);
   auto requests = Json::array();
   const auto before = flatten(state);
-  const auto candidates = relational::bind_default_profiles(*puzzle_, before);
+  const auto candidates = relational::bind_default_profiles(puzzle_, before);
   for (Index r = 0; r < candidates.size(); ++r) {
-    if (candidates[r] && puzzle_->program.plan(r, before, *candidates[r]).transition) {
+    if (candidates[r] && puzzle_.program.plan(r, before, *candidates[r]).transition) {
       auto choices = Json::array();
       for (Index d = 0; d < candidates[r]->size(); ++d)
-        choices.push_back(puzzle_->bindings.choice_values[d][candidates[r]->at(d)]);
-      requests.push_back({{"operation", puzzle_->bindings.requests[r].id},
+        choices.push_back(puzzle_.bindings.choice_values[d][candidates[r]->at(d)]);
+      requests.push_back({{"operation", puzzle_.bindings.requests[r].id},
                           {"parameters", Json::object()},
                           {"choices", choices}});
     }
@@ -484,16 +445,15 @@ Json Execution::legal(const State &state) const {
   return requests;
 }
 Json Execution::candidates(const State &state) const {
-  ensure(relational(), "Candidate tuples are declared by relational profile bindings.");
   const auto source = flatten(state);
-  const auto candidates = relational::bind_default_profiles(*puzzle_, source);
+  const auto candidates = relational::bind_default_profiles(puzzle_, source);
   auto requests = Json::array();
-  for (Index r = 0; r < puzzle_->bindings.requests.size(); ++r)
+  for (Index r = 0; r < puzzle_.bindings.requests.size(); ++r)
     if (const auto &tuple = candidates[r]) {
       auto choices = Json::array();
       for (Index d = 0; d < tuple->size(); ++d)
-        choices.push_back(puzzle_->bindings.choice_values[d][tuple->at(d)]);
-      requests.push_back({{"operation", puzzle_->bindings.requests[r].id},
+        choices.push_back(puzzle_.bindings.choice_values[d][tuple->at(d)]);
+      requests.push_back({{"operation", puzzle_.bindings.requests[r].id},
                           {"parameters", Json::object()},
                           {"choices", choices}});
     }

@@ -59,14 +59,18 @@ int main(int argc, char **argv) {
       const auto fixtures = Json::parse(read(option("--fixtures", "tests/fixtures/core.json")));
       Json results = Json::array();
       for (const auto &fixture : fixtures.at("cases")) {
-        Session session(read(fixture.at("source")));
+        Session session(read(fixture.at("source"), 16 * 1024 * 1024));
         if (fixture.at("definitionDigest") != session.definition()->digest)
           throw DiagnosticError("fixture.digest", fixture.at("name"),
                                 "Fixture is pinned to different puzzle semantics.");
         const auto prefix = session.run(fixture.at("prefix"), "transactional", session.revision());
         if (prefix.at("status") != "Committed")
           throw DiagnosticError("fixture.prefix", fixture.at("name"), "Fixture prefix is blocked.");
-        const auto outcome = session.execute(fixture.at("operation"), session.revision());
+        const auto outcome = fixture.contains("choices")
+                                 ? session.execute(fixture.at("operation"),
+                                                   fixture.at("choices").get<std::vector<std::string>>(),
+                                                   session.revision())
+                                 : session.execute(fixture.at("operation"), session.revision());
         bool pass = outcome.at("status") == fixture.at("expectedStatus");
         if (fixture.contains("reasonCode"))
           pass = pass && outcome.at("reasonCode") == fixture.at("reasonCode");

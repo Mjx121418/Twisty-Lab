@@ -10,6 +10,7 @@
         "name": {"type": "string"}, "source": {"type": "string"},
         "definitionDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "prefix": {"type": "string"}, "operation": {"type": "string"},
+        "choices": {"type": "array", "items": {"type": "string"}},
         "expectedStatus": {"enum": ["Committed", "Blocked"]}, "reasonCode": {"type": "string"},
         "implicatedPiece": {"type": "string"}, "unchangedParticipant": {"type": "string"}
       }

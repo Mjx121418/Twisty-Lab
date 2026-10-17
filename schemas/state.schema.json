@@ -1,5 +1,60 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "urn:twisty:schema:state:1",
-  "$ref": "urn:twisty:schema:definition:1#/$defs/state"
+  "$ref": "#/$defs/state",
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "exact": {
+      "anyOf": [
+        {
+          "type": [
+            "string",
+            "integer",
+            "boolean",
+            "null"
+          ]
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/exact"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/exact"
+          }
+        }
+      ]
+    },
+    "state": {
+      "type": "object",
+      "required": [
+        "placementOf",
+        "mechanism"
+      ],
+      "properties": {
+        "placementOf": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "mechanism": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/exact"
+          }
+        }
+      }
+    }
+  }
 }

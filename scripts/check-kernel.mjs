@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import Ajv from 'ajv';
+import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -12,19 +13,37 @@ try {
   // Both consumers run outside the source tree using copied/installed artifacts.
   const installed = join(temporary, 'native');
   execFileSync('cmake', ['--install', nativeBuild, '--prefix', installed], { cwd: root, stdio: 'inherit' });
+  const headers = await readdir(join(installed, 'include/twisty'));
+  assert.ok(headers.includes('catalog.hpp'));
+  assert.ok(!headers.includes('core.hpp') && !headers.includes('compiler.hpp'));
+  const exported = await readFile(join(installed, 'lib/cmake/TwistyKernel/TwistyKernelTargets.cmake'), 'utf8');
+  assert.ok(!/Twisty::(?:core|compiler)|legacy_test_reference/.test(exported));
   const consumer = join(temporary, 'consumer');
   await cp(new URL('../examples/native/', import.meta.url), consumer, { recursive: true });
   execFileSync('cmake', ['-S', consumer, '-B', join(consumer, 'build'), '-G', 'Ninja', `-DCMAKE_PREFIX_PATH=${installed}`], { stdio: 'inherit' });
   execFileSync('cmake', ['--build', join(consumer, 'build'), '--parallel', '1'], { stdio: 'inherit' });
   const javascript = join(temporary, 'javascript');
   await cp(new URL('../build/kernel/', import.meta.url), javascript, { recursive: true });
+  const schemaDirectory = join(javascript, 'schemas');
+  const schemas = new Ajv({ strict: false, allErrors: true });
+  const schemaIDs = [];
+  for (const file of await readdir(schemaDirectory)) {
+    const schema = JSON.parse(await readFile(join(schemaDirectory, file), 'utf8'));
+    assert.ok(!schema.$id.includes('schema:definition:'), 'A retired definition schema was packaged.');
+    schemas.addSchema(schema);
+    schemaIDs.push(schema.$id);
+  }
+  for (const id of schemaIDs) assert.ok(schemas.getSchema(id), `Packaged schema cannot resolve: ${id}`);
   const { createKernel, KernelSession, ExperimentalRelationalPuzzle, createRelationalCubeSource, createRelationalGearSource } = await import(pathToFileURL(join(javascript, 'index.js')).href);
   const module = await createKernel();
   const info = JSON.parse(module.kernelInfoJSON());
   const manifest = JSON.parse(await readFile(join(javascript, 'package.json'), 'utf8'));
-  assert.equal(info.apiVersion, 2); assert.equal(info.frameBufferVersion, 1);
+  assert.equal(info.apiVersion, 3); assert.equal(info.frameBufferVersion, 1);
   assert.equal(info.version, manifest.version);
-  assert.ok(info.ruleModules.includes('finite-placement-relations@2'));
+  assert.deepEqual(info.ruleModules, ['relational@1']);
+  assert.deepEqual(info.sessionSchemaVersions, [2]);
+  assert.equal(typeof module.compileJSON, 'undefined');
+  assert.equal(typeof module.Session.prototype.convertLegacyJSON, 'undefined');
   assert.ok(info.realizationKinds.includes('articulated-spherical'));
   assert.equal(info.experimentalAPIs.relational, 1);
   assert.deepEqual(info.relationalLibraries, ['cube3', 'bandaged-uf-ufr', 'gear-family']);
@@ -85,11 +104,11 @@ try {
   const custom = JSON.parse(module.compileExecutionJSON(JSON.stringify({ formatVersion: 1,
     kind: 'relational-gear-prototypes', puzzleId: 'gear-custom-experimental-v1', gearedEdges: ['UF', 'UR'] })));
   assert.equal(custom.status, 'Compiled');
-  const customRealization = JSON.parse(await readFile(join(javascript, 'examples/canvas/data/gear/gear-supplied-euclidean.json'), 'utf8'));
+  const customRealization = JSON.parse(await readFile(join(javascript, 'examples/canvas/data/gear/relational-gear-supplied-euclidean.json'), 'utf8'));
   customRealization.compatibleDefinitionDigest = custom.definition.definitionDigest;
   await writeFile(join(customDirectory, 'relational-package.json'), JSON.stringify(custom.definition));
   await writeFile(join(customDirectory, 'relational-gear-custom-euclidean.json'), JSON.stringify(customRealization));
-  const customSphere = JSON.parse(await readFile(join(javascript, 'examples/canvas/data/gear/gear-spherical.json'), 'utf8'));
+  const customSphere = JSON.parse(await readFile(join(javascript, 'examples/canvas/data/gear/relational-gear-spherical.json'), 'utf8'));
   customSphere.compatibleDefinitionDigest = custom.definition.definitionDigest;
   await writeFile(join(customDirectory, 'relational-gear-custom-spherical.json'), JSON.stringify(customSphere));
   for (const [puzzle, algorithm, firstMove, kind] of [
@@ -114,6 +133,8 @@ try {
     ['gear-custom', "F U R Dq L Bq (F U R Dq L Bq)'", 'F', 'gear-custom-spherical'],
   ]) {
     const directory = join(javascript, 'examples/canvas/data', puzzle);
+    const shipped = await readdir(directory);
+    assert.ok(!shipped.includes('definition.json') && !shipped.includes('source.json'));
     const sourcePath = join(directory, 'relational-package.json');
     const source = await readFile(sourcePath, 'utf8');
     const realizationPath = join(directory, `relational-${kind}.json`);

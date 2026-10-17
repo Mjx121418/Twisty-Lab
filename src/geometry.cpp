@@ -93,8 +93,6 @@ V diagram_center(const std::string &face) {
 } // namespace
 Geometry::Geometry(const std::string &definition_json, const std::string &realization_json)
     : Geometry(Execution::from_source(definition_json), realization_json) {}
-Geometry::Geometry(std::shared_ptr<const Definition> definition, const std::string &realization_json)
-    : Geometry(Execution::legacy(std::move(definition)), realization_json) {}
 Geometry::Geometry(std::shared_ptr<const Execution> execution, const std::string &realization_json)
     : execution_(std::move(execution)), definition_(execution_->definition()),
       displayed_(definition_->initial), before_(displayed_), after_(displayed_) {
@@ -286,7 +284,7 @@ std::string Geometry::prepare_animation_json(const std::string &input) {
     auto before = execution_->decode(transition.at("beforeState"));
     auto after = execution_->decode(transition.at("afterState"));
     const auto operation_id = transition.at("request").at("operation").get<std::string>();
-    if (execution_->relational() && !transition.at("request").contains("choices"))
+    if (!transition.at("request").contains("choices"))
       throw DiagnosticError("realization.witness", "/request/choices",
                             "Relational witnesses must record the completed tuple.");
     const auto planned =
@@ -296,14 +294,14 @@ std::string Geometry::prepare_animation_json(const std::string &input) {
       throw DiagnosticError("realization.witness", "/transition",
                             "Transition is not the recorded abstract witness.");
     const auto &operation = definition_->operations.at(definition_->operation_ids.at(operation_id));
-    if (execution_->relational() && !articulated_)
+    if (!articulated_)
       for (const auto &event : planned.transition->events)
         if (event != operation.transport)
           throw DiagnosticError("realization.unsupported_transition", "/pieceActions/event",
                                 "This uniform track cannot realize a different per-piece rotation event.");
     const auto op_index = definition_->operation_ids.at(operation_id);
     std::vector<Index> piece_operations(definition_->pieces.size(), op_index);
-    if (execution_->relational() && articulated_) {
+    if (articulated_) {
       for (Index i = 0; i < planned.transition->actions.size(); ++i) {
         const auto &action = planned.transition->actions[i];
         const auto track = execution_->event_operation(action.piece, planned.transition->events[i]);

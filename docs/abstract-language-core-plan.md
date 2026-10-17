@@ -2,7 +2,7 @@
 
 **Design and migration plan — 17 October 2026**
 
-Status: implementation started. The expanded JSON AST, independent toy-model oracle, domain-free C++ executor, and cube/bandage authoring libraries are implemented through an additive experimental API. Those two models have passed the native/WASM abstract-migration gate; the application/session/interpreter cutover remains ahead. See the [implementation and API guide](relational-core.md). The design uses general permission relations `R(s, u, a1, ..., an)` and keeps completion selection outside the executor. It replaces the direction of the domain-aware rule backends in Sections 2–6 of the [architecture proposal](../twisty_puzzle_simulator_architecture.md). The portable C++ kernel and separate geometric realizations remain the project boundary.
+Status: all shipped puzzles, sessions, interpreters, and native/WASM clients use the domain-free executor and relational language. Public API 3 removes the legacy runtime imports, guard handlers, schema-1 replay, and conversion methods. The historical evaluator remains only in isolated native comparison tools; see the cleanup record at the end of this plan. General textual syntax and module/template tooling remain future work. See the [implementation and API guide](relational-core.md). The design uses general permission relations `R(s, u, a1, ..., an)` and keeps completion selection outside the executor. It replaces the domain-aware rule backends in Sections 2–6 of the [architecture proposal](../twisty_puzzle_simulator_architecture.md). The portable C++ kernel and separate geometric realizations remain the project boundary.
 
 ## 1. The intended split
 
@@ -33,7 +33,7 @@ This is a replacement of the current execution model, rather than another rule-m
 
 ## 2. What must change in the current implementation
 
-The current [core.hpp](../include/twisty/core.hpp) stores `Domain`, `Piece::domain`, domain-indexed transport/role arrays, `piece_guards`, `placement_count_guards`, and mechanism guard/update records. [core.cpp](../src/core.cpp) branches between footprint and placement-relation rules and evaluates those guard forms separately. Even state validation uses domain-specific placement ranges and occupancy behavior selected by the rule module.
+At the design baseline, [core.hpp](../tests/legacy/include/twisty/core.hpp) stored `Domain`, `Piece::domain`, domain-indexed transport/role arrays, `piece_guards`, `placement_count_guards`, and mechanism guard/update records. [core.cpp](../tests/legacy/core.cpp) branched between footprint and placement-relation rules and evaluates those guard forms separately. Even state validation uses domain-specific placement ranges and occupancy behavior selected by the rule module.
 
 The migration must replace all of those execution paths, including state validation and goal checking. Merely flattening `Operation::maps` would leave most of the old abstraction in place.
 
@@ -487,3 +487,44 @@ All 32 browser cases have passing results: 30 in the full run and the two long B
 The import path now uses a linear string-aware nesting scan before normal JSON parsing, avoiding the callback parser's quadratic scans of broad predicate objects. In this container, Bagua's first WASM session dropped from roughly 17 seconds to 1.4 seconds; a 30-turn published sequence takes about 0.3 seconds. Moving large canonical JSON values and sharing immutable definitions keep saved-definition reload within the existing 256 MiB WASM maximum. Heavy checks ran sequentially with one build/browser worker; observed container memory remained below 4 GiB, peaking at about 3.4 GiB during browser checks before cache reclaim.
 
 The production build, package reproducibility check, schema/type checks, and whitespace check also pass. Generated sources and geometric pins reproduce from the current authoring tools. The implementation remains uncommitted for visual review.
+
+
+## Legacy runtime cleanup
+
+Public API 3 (`0.3.0`) removes the alternative executor, old authoring compiler,
+schema-1 histories, and legacy save conversion from the production kernel. The
+portable C++ API no longer exports `core.hpp`, `compiler.hpp`, the old free rule
+functions, or metadata-only geometry construction. `catalog.hpp` holds only
+symbolic interpreter/inspector metadata and wire helpers; `flat_core.hpp` remains
+the geometry-free and domain-free abstract executor. The old guard structures
+are removed from the production catalog.
+
+The previous implementation is frozen under `tests/legacy` for native model
+audits and migration comparisons. Its library/CLI exist only with
+`BUILD_TESTING=ON`, use a separate include tree, and are never linked into
+production targets, installed, or packaged. Production tests and independent
+native/WASM consumers cover the actual shipped runtime. Distributed data and
+portable regression fixtures use relational packages and schema-2 histories.
+No semantic digest or geometry-buffer change is required for this cleanup.
+
+Remaining cleanup concerns the historical test harness and offline fixture
+assets, which can be replaced by standalone recorded references after preserving
+the independent model audits. This does not leave a legacy execution path in the
+shipped kernel. General language tooling remains separate future work.
+
+
+Cleanup validation: all 22 native suites pass, including the production runtime
+across every preset and the retired-symbol audit. All 40 unit cases pass; the
+schema cases also pass after removing their dependency on the historical
+finite-definition schema. Native/WASM relational comparisons, all 19 independent
+installed/copied consumer combinations, exact package regeneration, TypeScript,
+and the production build pass. Every packaged schema resolves independently.
+
+All 32 browser cases pass across sequential batches with one worker. The first
+full run completed 17 cases before the memory guard stopped it at approximately
+3.3 GiB. Fresh browser batches completed the remaining 2 Bagua, 9 cube/import,
+and 4 Helicopter/context-recovery cases without changing their assertions.
+Successful batches peaked near 3.1 GiB. WASM remains capped at 256 MiB; removing
+the historical runtime reduces its binary from 1,729,345 to 1,329,789 bytes
+(about 23%). Dockerfile and source mesh edits are preserved; the migration
+commit's generated spherical snapshots match their committed source templates.

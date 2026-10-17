@@ -17,7 +17,7 @@ subprocess.run(['python3', str(root / 'scripts/relational-packages.py')] + (['--
 for name in ['cube3', 'bandaged']:
     package = root / 'packages' / name
     result = json.loads(subprocess.check_output([
-        str(root / 'build/native/twisty'), 'compile', '--definition', str(package / 'source.json'), '--json'
+        str(root / 'build/native/twisty_legacy_reference'), 'compile', '--definition', str(package / 'source.json'), '--json'
     ], text=True))
     if result['status'] != 'Compiled':
         raise SystemExit(result)
@@ -57,11 +57,15 @@ for name in ['gear', 'gear-extreme', 'gear-plain']:
 digests['bagua'] = json.loads((root / 'packages/bagua/definition.json').read_text())['definitionDigest']
 fixture_path = root / 'tests/fixtures/core.json'
 fixtures = json.loads(fixture_path.read_text())
+current_pins = {}
 for case in fixtures['cases']:
     name = Path(case['source']).parent.name
+    if name not in current_pins:
+        current_pins[name] = json.loads(subprocess.check_output([str(root / 'build/native/twisty'), 'compile', '--definition', str(root / case['source']), '--json'], text=True))['definition']['definitionDigest']
+    current = current_pins[name]
     if args.update_fixtures:
-        case['definitionDigest'] = digests[name]
-    elif case['definitionDigest'] != digests[name]:
+        case['definitionDigest'] = current
+    elif case['definitionDigest'] != current:
         raise SystemExit(f'Fixture {case["name"]!r} has a different semantic pin; review it before updating.')
 if args.update_fixtures:
     fixture_path.write_text(json.dumps(fixtures, indent=2) + '\n')
