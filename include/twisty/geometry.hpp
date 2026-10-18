@@ -44,6 +44,9 @@ private:
   bool spherical_ = false;
   bool catalog_spherical_ = false;
   bool articulated_ = false;
+  bool flat_surface_ = false;
+  bool flat_twisted_ = false;
+  double flat_side_ = 2;
   using Frame = std::array<double, 16>;
   using Point = std::array<double, 3>;
   struct Model {
@@ -89,6 +92,8 @@ private:
   void build_spherical(const Json &);
   void build_catalog_spherical(const Json &);
   void build_articulated(const Json &);
+  void build_flat_surface(const Json &);
+  Frame canonical_flat_frame(Frame) const;
   Frame articulated_resting(const Part &, const State &) const;
   Frame articulated_sample(const Part &, double) const;
   Frame catalog_resting(const Part &, const State &) const;

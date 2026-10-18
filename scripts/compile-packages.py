@@ -48,6 +48,7 @@ subprocess.run(['python3', str(root / 'scripts/helicopter_packages.py')] + (['--
 digests['helicopter'] = json.loads((root / 'packages/helicopter/definition.json').read_text())['definitionDigest']
 subprocess.run(['python3', str(root / 'scripts/bagua_model.py')], check=True)
 subprocess.run(['python3', str(root / 'scripts/bagua_packages.py')] + (['--write'] if args.write else []), check=True)
+subprocess.run(['python3', str(root / 'scripts/flat_surface_packages.py')] + (['--write'] if args.write else []), check=True)
 subprocess.run(['python3', str(root / 'scripts/gear_model.py')], check=True)
 subprocess.run(['python3', str(root / 'scripts/gear_normal.py')], check=True)
 subprocess.run(['python3', str(root / 'scripts/gear_packages.py')] + (['--write'] if args.write else []), check=True)

@@ -139,18 +139,26 @@ try {
     ['gear-extreme', "Uq R Fq (Uq R Fq)'", 'Uq', 'gear-extreme-port-diagram'],
     ['gear-custom', "F U R Dq L Bq (F U R Dq L Bq)'", 'F', 'gear-custom-euclidean'],
     ['gear-custom', "F U R Dq L Bq (F U R Dq L Bq)'", 'F', 'gear-custom-spherical'],
+    ['flat-torus', "A B C D (A B C D)'", 'A', 'flat-quotient'],
+    ['flat-klein-bottle', "A B C D (A B C D)'", 'A', 'flat-quotient'],
   ]) {
     const directory = join(javascript, 'examples/canvas/data', puzzle);
     const shipped = await readdir(directory);
     assert.ok(!shipped.includes('definition.json') && !shipped.includes('source.json'));
     const sourcePath = join(directory, 'relational-package.json');
     const source = await readFile(sourcePath, 'utf8');
-    const realizationPath = join(directory, `relational-${kind}.json`);
+    const realizationPath = join(directory, kind === 'flat-quotient' ? 'flat-quotient.json' : `relational-${kind}.json`);
     const realization = await readFile(realizationPath, 'utf8');
     const session = new KernelSession(module, source);
     const geometry = module.createGeometry(session.native, realization);
     assert.ok(geometry);
     try {
+      if (kind === 'flat-quotient') {
+        const scene = JSON.parse(geometry.sceneJSON());
+        assert.equal(scene.flatSurface.deckGenerators.length, 2);
+        assert.equal(scene.visualParts.length, 116, 'Interpreter emits each physical part once.');
+        assert.ok(!('images' in scene.flatSurface), 'Renderer owns displayed copies.');
+      }
       if (puzzle.startsWith('gear')) {
         const scene = JSON.parse(geometry.sceneJSON());
         const positions = Array.from(geometry.positions());

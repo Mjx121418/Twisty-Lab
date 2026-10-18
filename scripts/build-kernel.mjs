@@ -16,12 +16,12 @@ if (process.argv.includes('--stage-web')) {
   await writeFile(new URL('package.json', output), JSON.stringify({
     name: '@twisty/kernel', version, type: 'module',
     exports: { '.': { types: './index.d.ts', import: './index.js' }, './runtime': './generated/twisty.mjs', './wasm': './generated/twisty.wasm' },
-    files: ['index.js', 'index.d.ts', 'generated', 'examples', 'schemas', 'README.md', 'core-language.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'bagua-verification.md', 'gear-model.md', 'gear-spherical-feasibility.md'],
+    files: ['index.js', 'index.d.ts', 'generated', 'examples', 'schemas', 'README.md', 'core-language.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'bagua-verification.md', 'gear-model.md', 'gear-spherical-feasibility.md', 'flat-surfaces.md'],
   }, null, 2) + '\n');
   const readme = (await readFile(new URL('../docs/kernel-api.md', import.meta.url), 'utf8'))
     .replaceAll('../schemas/', 'schemas/').replaceAll('../examples/', 'examples/');
   await writeFile(new URL('README.md', output), readme);
-  for (const file of ['core-language.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'bagua-verification.md', 'gear-model.md', 'gear-spherical-feasibility.md']) {
+  for (const file of ['core-language.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'bagua-verification.md', 'gear-model.md', 'gear-spherical-feasibility.md', 'flat-surfaces.md']) {
     const guide = (await readFile(new URL(`../docs/${file}`, import.meta.url), 'utf8'))
       .replaceAll('../packages/', 'examples/canvas/data/').replaceAll('../examples/', 'examples/')
       .replaceAll('../schemas/', 'schemas/').replaceAll('[migration plan](abstract-language-core-plan.md)', 'migration plan')
@@ -54,6 +54,12 @@ if (process.argv.includes('--stage-web')) {
     for (const file of files) {
       await cp(new URL(`../packages/${puzzle}/${file}`, import.meta.url), new URL(file, directory));
     }
+  }
+  for (const puzzle of ['flat-torus', 'flat-klein-bottle']) {
+    const directory = new URL(`examples/canvas/data/${puzzle}/`, output);
+    await mkdir(directory, { recursive: true });
+    for (const file of ['relational.pzl.json', 'relational-bindings.json', 'relational-package.json', 'flat-quotient.json', 'manifest.json'])
+      await cp(new URL(`../packages/${puzzle}/${file}`, import.meta.url), new URL(file, directory));
   }
   console.log(`Portable kernel ${version}: build/kernel`);
 }

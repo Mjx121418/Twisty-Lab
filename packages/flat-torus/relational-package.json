@@ -1,0 +1,7169 @@
+{
+  "catalog": {
+    "domains": [
+      {
+        "id": "face",
+        "localPorts": [
+          "0"
+        ],
+        "pieces": [
+          "face-00",
+          "face-01",
+          "face-02",
+          "face-03"
+        ],
+        "placements": [
+          "face/1,1/1,0,0,1",
+          "face/1,1/0,-1,1,0",
+          "face/1,1/-1,0,0,-1",
+          "face/1,1/0,1,-1,0",
+          "face/3,1/1,0,0,1",
+          "face/3,1/0,-1,1,0",
+          "face/3,1/-1,0,0,-1",
+          "face/3,1/0,1,-1,0",
+          "face/1,3/1,0,0,1",
+          "face/1,3/0,-1,1,0",
+          "face/1,3/-1,0,0,-1",
+          "face/1,3/0,1,-1,0",
+          "face/3,3/1,0,0,1",
+          "face/3,3/0,-1,1,0",
+          "face/3,3/-1,0,0,-1",
+          "face/3,3/0,1,-1,0"
+        ]
+      },
+      {
+        "id": "edge",
+        "localPorts": [
+          "0",
+          "1"
+        ],
+        "pieces": [
+          "edge-00",
+          "edge-01",
+          "edge-02",
+          "edge-03",
+          "edge-04",
+          "edge-05",
+          "edge-06",
+          "edge-07"
+        ],
+        "placements": [
+          "edge/0,1/1,0,0,1",
+          "edge/0,1/-1,0,0,-1",
+          "edge/2,1/1,0,0,1",
+          "edge/2,1/-1,0,0,-1",
+          "edge/0,3/1,0,0,1",
+          "edge/0,3/-1,0,0,-1",
+          "edge/2,3/1,0,0,1",
+          "edge/2,3/-1,0,0,-1",
+          "edge/1,0/0,-1,1,0",
+          "edge/1,0/0,1,-1,0",
+          "edge/3,0/0,-1,1,0",
+          "edge/3,0/0,1,-1,0",
+          "edge/1,2/0,-1,1,0",
+          "edge/1,2/0,1,-1,0",
+          "edge/3,2/0,-1,1,0",
+          "edge/3,2/0,1,-1,0"
+        ]
+      },
+      {
+        "id": "vertex",
+        "localPorts": [
+          "0"
+        ],
+        "pieces": [
+          "vertex-00",
+          "vertex-01",
+          "vertex-02",
+          "vertex-03",
+          "vertex-04",
+          "vertex-05",
+          "vertex-06",
+          "vertex-07",
+          "vertex-08",
+          "vertex-09",
+          "vertex-10",
+          "vertex-11",
+          "vertex-12",
+          "vertex-13",
+          "vertex-14",
+          "vertex-15"
+        ],
+        "placements": [
+          "vertex/0,0/1,0,0,1",
+          "vertex/0,0/0,-1,1,0",
+          "vertex/0,0/-1,0,0,-1",
+          "vertex/0,0/0,1,-1,0",
+          "vertex/2,0/1,0,0,1",
+          "vertex/2,0/0,-1,1,0",
+          "vertex/2,0/-1,0,0,-1",
+          "vertex/2,0/0,1,-1,0",
+          "vertex/0,2/1,0,0,1",
+          "vertex/0,2/0,-1,1,0",
+          "vertex/0,2/-1,0,0,-1",
+          "vertex/0,2/0,1,-1,0",
+          "vertex/2,2/1,0,0,1",
+          "vertex/2,2/0,-1,1,0",
+          "vertex/2,2/-1,0,0,-1",
+          "vertex/2,2/0,1,-1,0"
+        ]
+      },
+      {
+        "id": "vertex-core",
+        "localPorts": [
+          "0",
+          "1",
+          "2",
+          "3"
+        ],
+        "pieces": [
+          "vertex-core-00",
+          "vertex-core-01",
+          "vertex-core-02",
+          "vertex-core-03"
+        ],
+        "placements": [
+          "vertex-core/0,0/1,0,0,1",
+          "vertex-core/0,0/0,-1,1,0",
+          "vertex-core/0,0/-1,0,0,-1",
+          "vertex-core/0,0/0,1,-1,0",
+          "vertex-core/2,0/1,0,0,1",
+          "vertex-core/2,0/0,-1,1,0",
+          "vertex-core/2,0/-1,0,0,-1",
+          "vertex-core/2,0/0,1,-1,0",
+          "vertex-core/0,2/1,0,0,1",
+          "vertex-core/0,2/0,-1,1,0",
+          "vertex-core/0,2/-1,0,0,-1",
+          "vertex-core/0,2/0,1,-1,0",
+          "vertex-core/2,2/1,0,0,1",
+          "vertex-core/2,2/0,-1,1,0",
+          "vertex-core/2,2/-1,0,0,-1",
+          "vertex-core/2,2/0,1,-1,0"
+        ]
+      }
+    ],
+    "kind": "relational-port-bindings",
+    "pieces": {
+      "edge-00": {
+        "domain": "edge",
+        "home": "edge/0,1/1,0,0,1",
+        "portLabels": {
+          "0": "B",
+          "1": "A"
+        }
+      },
+      "edge-01": {
+        "domain": "edge",
+        "home": "edge/2,1/1,0,0,1",
+        "portLabels": {
+          "0": "A",
+          "1": "B"
+        }
+      },
+      "edge-02": {
+        "domain": "edge",
+        "home": "edge/0,3/1,0,0,1",
+        "portLabels": {
+          "0": "D",
+          "1": "C"
+        }
+      },
+      "edge-03": {
+        "domain": "edge",
+        "home": "edge/2,3/1,0,0,1",
+        "portLabels": {
+          "0": "C",
+          "1": "D"
+        }
+      },
+      "edge-04": {
+        "domain": "edge",
+        "home": "edge/1,0/0,-1,1,0",
+        "portLabels": {
+          "0": "C",
+          "1": "A"
+        }
+      },
+      "edge-05": {
+        "domain": "edge",
+        "home": "edge/3,0/0,-1,1,0",
+        "portLabels": {
+          "0": "D",
+          "1": "B"
+        }
+      },
+      "edge-06": {
+        "domain": "edge",
+        "home": "edge/1,2/0,-1,1,0",
+        "portLabels": {
+          "0": "A",
+          "1": "C"
+        }
+      },
+      "edge-07": {
+        "domain": "edge",
+        "home": "edge/3,2/0,-1,1,0",
+        "portLabels": {
+          "0": "B",
+          "1": "D"
+        }
+      },
+      "face-00": {
+        "domain": "face",
+        "home": "face/1,1/1,0,0,1",
+        "portLabels": {
+          "0": "A"
+        }
+      },
+      "face-01": {
+        "domain": "face",
+        "home": "face/3,1/1,0,0,1",
+        "portLabels": {
+          "0": "B"
+        }
+      },
+      "face-02": {
+        "domain": "face",
+        "home": "face/1,3/1,0,0,1",
+        "portLabels": {
+          "0": "C"
+        }
+      },
+      "face-03": {
+        "domain": "face",
+        "home": "face/3,3/1,0,0,1",
+        "portLabels": {
+          "0": "D"
+        }
+      },
+      "vertex-00": {
+        "domain": "vertex",
+        "home": "vertex/0,0/1,0,0,1",
+        "portLabels": {
+          "0": "D"
+        }
+      },
+      "vertex-01": {
+        "domain": "vertex",
+        "home": "vertex/0,0/0,-1,1,0",
+        "portLabels": {
+          "0": "C"
+        }
+      },
+      "vertex-02": {
+        "domain": "vertex",
+        "home": "vertex/0,0/-1,0,0,-1",
+        "portLabels": {
+          "0": "A"
+        }
+      },
+      "vertex-03": {
+        "domain": "vertex",
+        "home": "vertex/0,0/0,1,-1,0",
+        "portLabels": {
+          "0": "B"
+        }
+      },
+      "vertex-04": {
+        "domain": "vertex",
+        "home": "vertex/2,0/1,0,0,1",
+        "portLabels": {
+          "0": "C"
+        }
+      },
+      "vertex-05": {
+        "domain": "vertex",
+        "home": "vertex/2,0/0,-1,1,0",
+        "portLabels": {
+          "0": "D"
+        }
+      },
+      "vertex-06": {
+        "domain": "vertex",
+        "home": "vertex/2,0/-1,0,0,-1",
+        "portLabels": {
+          "0": "B"
+        }
+      },
+      "vertex-07": {
+        "domain": "vertex",
+        "home": "vertex/2,0/0,1,-1,0",
+        "portLabels": {
+          "0": "A"
+        }
+      },
+      "vertex-08": {
+        "domain": "vertex",
+        "home": "vertex/0,2/1,0,0,1",
+        "portLabels": {
+          "0": "B"
+        }
+      },
+      "vertex-09": {
+        "domain": "vertex",
+        "home": "vertex/0,2/0,-1,1,0",
+        "portLabels": {
+          "0": "A"
+        }
+      },
+      "vertex-10": {
+        "domain": "vertex",
+        "home": "vertex/0,2/-1,0,0,-1",
+        "portLabels": {
+          "0": "C"
+        }
+      },
+      "vertex-11": {
+        "domain": "vertex",
+        "home": "vertex/0,2/0,1,-1,0",
+        "portLabels": {
+          "0": "D"
+        }
+      },
+      "vertex-12": {
+        "domain": "vertex",
+        "home": "vertex/2,2/1,0,0,1",
+        "portLabels": {
+          "0": "A"
+        }
+      },
+      "vertex-13": {
+        "domain": "vertex",
+        "home": "vertex/2,2/0,-1,1,0",
+        "portLabels": {
+          "0": "B"
+        }
+      },
+      "vertex-14": {
+        "domain": "vertex",
+        "home": "vertex/2,2/-1,0,0,-1",
+        "portLabels": {
+          "0": "D"
+        }
+      },
+      "vertex-15": {
+        "domain": "vertex",
+        "home": "vertex/2,2/0,1,-1,0",
+        "portLabels": {
+          "0": "C"
+        }
+      },
+      "vertex-core-00": {
+        "domain": "vertex-core",
+        "home": "vertex-core/0,0/1,0,0,1",
+        "portLabels": {
+          "0": "D",
+          "1": "C",
+          "2": "B",
+          "3": "A"
+        }
+      },
+      "vertex-core-01": {
+        "domain": "vertex-core",
+        "home": "vertex-core/2,0/1,0,0,1",
+        "portLabels": {
+          "0": "C",
+          "1": "D",
+          "2": "A",
+          "3": "B"
+        }
+      },
+      "vertex-core-02": {
+        "domain": "vertex-core",
+        "home": "vertex-core/0,2/1,0,0,1",
+        "portLabels": {
+          "0": "B",
+          "1": "A",
+          "2": "D",
+          "3": "C"
+        }
+      },
+      "vertex-core-03": {
+        "domain": "vertex-core",
+        "home": "vertex-core/2,2/1,0,0,1",
+        "portLabels": {
+          "0": "A",
+          "1": "B",
+          "2": "C",
+          "3": "D"
+        }
+      }
+    },
+    "placements": {
+      "edge/0,1/-1,0,0,-1": {
+        "ports": {
+          "0": {
+            "attachment": "A",
+            "cell": "location/edge/00"
+          },
+          "1": {
+            "attachment": "B",
+            "cell": "location/edge/00"
+          }
+        },
+        "resources": [
+          "location/edge/00"
+        ]
+      },
+      "edge/0,1/1,0,0,1": {
+        "ports": {
+          "0": {
+            "attachment": "B",
+            "cell": "location/edge/00"
+          },
+          "1": {
+            "attachment": "A",
+            "cell": "location/edge/00"
+          }
+        },
+        "resources": [
+          "location/edge/00"
+        ]
+      },
+      "edge/0,3/-1,0,0,-1": {
+        "ports": {
+          "0": {
+            "attachment": "C",
+            "cell": "location/edge/02"
+          },
+          "1": {
+            "attachment": "D",
+            "cell": "location/edge/02"
+          }
+        },
+        "resources": [
+          "location/edge/02"
+        ]
+      },
+      "edge/0,3/1,0,0,1": {
+        "ports": {
+          "0": {
+            "attachment": "D",
+            "cell": "location/edge/02"
+          },
+          "1": {
+            "attachment": "C",
+            "cell": "location/edge/02"
+          }
+        },
+        "resources": [
+          "location/edge/02"
+        ]
+      },
+      "edge/1,0/0,-1,1,0": {
+        "ports": {
+          "0": {
+            "attachment": "C",
+            "cell": "location/edge/04"
+          },
+          "1": {
+            "attachment": "A",
+            "cell": "location/edge/04"
+          }
+        },
+        "resources": [
+          "location/edge/04"
+        ]
+      },
+      "edge/1,0/0,1,-1,0": {
+        "ports": {
+          "0": {
+            "attachment": "A",
+            "cell": "location/edge/04"
+          },
+          "1": {
+            "attachment": "C",
+            "cell": "location/edge/04"
+          }
+        },
+        "resources": [
+          "location/edge/04"
+        ]
+      },
+      "edge/1,2/0,-1,1,0": {
+        "ports": {
+          "0": {
+            "attachment": "A",
+            "cell": "location/edge/06"
+          },
+          "1": {
+            "attachment": "C",
+            "cell": "location/edge/06"
+          }
+        },
+        "resources": [
+          "location/edge/06"
+        ]
+      },
+      "edge/1,2/0,1,-1,0": {
+        "ports": {
+          "0": {
+            "attachment": "C",
+            "cell": "location/edge/06"
+          },
+          "1": {
+            "attachment": "A",
+            "cell": "location/edge/06"
+          }
+        },
+        "resources": [
+          "location/edge/06"
+        ]
+      },
+      "edge/2,1/-1,0,0,-1": {
+        "ports": {
+          "0": {
+            "attachment": "B",
+            "cell": "location/edge/01"
+          },
+          "1": {
+            "attachment": "A",
+            "cell": "location/edge/01"
+          }
+        },
+        "resources": [
+          "location/edge/01"
+        ]
+      },
+      "edge/2,1/1,0,0,1": {
+        "ports": {
+          "0": {
+            "attachment": "A",
+            "cell": "location/edge/01"
+          },
+          "1": {
+            "attachment": "B",
+            "cell": "location/edge/01"
+          }
+        },
+        "resources": [
+          "location/edge/01"
+        ]
+      },
+      "edge/2,3/-1,0,0,-1": {
+        "ports": {
+          "0": {
+            "attachment": "D",
+            "cell": "location/edge/03"
+          },
+          "1": {
+            "attachment": "C",
+            "cell": "location/edge/03"
+          }
+        },
+        "resources": [
+          "location/edge/03"
+        ]
+      },
+      "edge/2,3/1,0,0,1": {
+        "ports": {
+          "0": {
+            "attachment": "C",
+            "cell": "location/edge/03"
+          },
+          "1": {
+            "attachment": "D",
+            "cell": "location/edge/03"
+          }
+        },
+        "resources": [
+          "location/edge/03"
+        ]
+      },
+      "edge/3,0/0,-1,1,0": {
+        "ports": {
+          "0": {
+            "attachment": "D",
+            "cell": "location/edge/05"
+          },
+          "1": {
+            "attachment": "B",
+            "cell": "location/edge/05"
+          }
+        },
+        "resources": [
+          "location/edge/05"
+        ]
+      },
+      "edge/3,0/0,1,-1,0": {
+        "ports": {
+          "0": {
+            "attachment": "B",
+            "cell": "location/edge/05"
+          },
+          "1": {
+            "attachment": "D",
+            "cell": "location/edge/05"
+          }
+        },
+        "resources": [
+          "location/edge/05"
+        ]
+      },
+      "edge/3,2/0,-1,1,0": {
+        "ports": {
+          "0": {
+            "attachment": "B",
+            "cell": "location/edge/07"
+          },
+          "1": {
+            "attachment": "D",
+            "cell": "location/edge/07"
+          }
+        },
+        "resources": [
+          "location/edge/07"
+        ]
+      },
+      "edge/3,2/0,1,-1,0": {
+        "ports": {
+          "0": {
+            "attachment": "D",
+            "cell": "location/edge/07"
+          },
+          "1": {
+            "attachment": "B",
+            "cell": "location/edge/07"
+          }
+        },
+        "resources": [
+          "location/edge/07"
+        ]
+      },
+      "face/1,1/-1,0,0,-1": {
+        "ports": {
+          "0": {
+            "attachment": "A",
+            "cell": "location/face/00"
+          }
+        },
+        "resources": [
+          "location/face/00"
+        ]
+      },
+      "face/1,1/0,-1,1,0": {
+        "ports": {
+          "0": {
+            "attachment": "A",
+            "cell": "location/face/00"
+          }
+        },
+        "resources": [
+          "location/face/00"
+        ]
+      },
+      "face/1,1/0,1,-1,0": {
+        "ports": {
+          "0": {
+            "attachment": "A",
+            "cell": "location/face/00"
+          }
+        },
+        "resources": [
+          "location/face/00"
+        ]
+      },
+      "face/1,1/1,0,0,1": {
+        "ports": {
+          "0": {
+            "attachment": "A",
+            "cell": "location/face/00"
+          }
+        },
+        "resources": [
+          "location/face/00"
+        ]
+      },
+      "face/1,3/-1,0,0,-1": {
+        "ports": {
+          "0": {
+            "attachment": "C",
+            "cell": "location/face/02"
+          }
+        },
+        "resources": [
+          "location/face/02"
+        ]
+      },
+      "face/1,3/0,-1,1,0": {
+        "ports": {
+          "0": {
+            "attachment": "C",
+            "cell": "location/face/02"
+          }
+        },
+        "resources": [
+          "location/face/02"
+        ]
+      },
+      "face/1,3/0,1,-1,0": {
+        "ports": {
+          "0": {
+            "attachment": "C",
+            "cell": "location/face/02"
+          }
+        },
+        "resources": [
+          "location/face/02"
+        ]
+      },
+      "face/1,3/1,0,0,1": {
+        "ports": {
+          "0": {
+            "attachment": "C",
+            "cell": "location/face/02"
+          }
+        },
+        "resources": [
+          "location/face/02"
+        ]
+      },
+      "face/3,1/-1,0,0,-1": {
+        "ports": {
+          "0": {
+            "attachment": "B",
+            "cell": "location/face/01"
+          }
+        },
+        "resources": [
+          "location/face/01"
+        ]
+      },
+      "face/3,1/0,-1,1,0": {
+        "ports": {
+          "0": {
+            "attachment": "B",
+            "cell": "location/face/01"
+          }
+        },
+        "resources": [
+          "location/face/01"
+        ]
+      },
+      "face/3,1/0,1,-1,0": {
+        "ports": {
+          "0": {
+            "attachment": "B",
+            "cell": "location/face/01"
+          }
+        },
+        "resources": [
+          "location/face/01"
+        ]
+      },
+      "face/3,1/1,0,0,1": {
+        "ports": {
+          "0": {
+            "attachment": "B",
+            "cell": "location/face/01"
+          }
+        },
+        "resources": [
+          "location/face/01"
+        ]
+      },
+      "face/3,3/-1,0,0,-1": {
+        "ports": {
+          "0": {
+            "attachment": "D",
+            "cell": "location/face/03"
+          }
+        },
+        "resources": [
+          "location/face/03"
+        ]
+      },
+      "face/3,3/0,-1,1,0": {
+        "ports": {
+          "0": {
+            "attachment": "D",
+            "cell": "location/face/03"
+          }
+        },
+        "resources": [
+          "location/face/03"
+        ]
+      },
+      "face/3,3/0,1,-1,0": {
+        "ports": {
+          "0": {
+            "attachment": "D",
+            "cell": "location/face/03"
+          }
+        },
+        "resources": [
+          "location/face/03"
+        ]
+      },
+      "face/3,3/1,0,0,1": {
+        "ports": {
+          "0": {
+            "attachment": "D",
+            "cell": "location/face/03"
+          }
+        },
+        "resources": [
+          "location/face/03"
+        ]
+      },
+      "vertex-core/0,0/-1,0,0,-1": {
+        "ports": {
+          "0": {
+            "attachment": "A",
+            "cell": "location/vertex-core/00"
+          },
+          "1": {
+            "attachment": "B",
+            "cell": "location/vertex-core/00"
+          },
+          "2": {
+            "attachment": "C",
+            "cell": "location/vertex-core/00"
+          },
+          "3": {
+            "attachment": "D",
+            "cell": "location/vertex-core/00"
+          }
+        },
+        "resources": [
+          "location/vertex-core/00"
+        ]
+      },
+      "vertex-core/0,0/0,-1,1,0": {
+        "ports": {
+          "0": {
+            "attachment": "C",
+            "cell": "location/vertex-core/00"
+          },
+          "1": {
+            "attachment": "A",
+            "cell": "location/vertex-core/00"
+          },
+          "2": {
+            "attachment": "D",
+            "cell": "location/vertex-core/00"
+          },
+          "3": {
+            "attachment": "B",
+            "cell": "location/vertex-core/00"
+          }
+        },
+        "resources": [
+          "location/vertex-core/00"
+        ]
+      },
+      "vertex-core/0,0/0,1,-1,0": {
+        "ports": {
+          "0": {
+            "attachment": "B",
+            "cell": "location/vertex-core/00"
+          },
+          "1": {
+            "attachment": "D",
+            "cell": "location/vertex-core/00"
+          },
+          "2": {
+            "attachment": "A",
+            "cell": "location/vertex-core/00"
+          },
+          "3": {
+            "attachment": "C",
+            "cell": "location/vertex-core/00"
+          }
+        },
+        "resources": [
+          "location/vertex-core/00"
+        ]
+      },
+      "vertex-core/0,0/1,0,0,1": {
+        "ports": {
+          "0": {
+            "attachment": "D",
+            "cell": "location/vertex-core/00"
+          },
+          "1": {
+            "attachment": "C",
+            "cell": "location/vertex-core/00"
+          },
+          "2": {
+            "attachment": "B",
+            "cell": "location/vertex-core/00"
+          },
+          "3": {
+            "attachment": "A",
+            "cell": "location/vertex-core/00"
+          }
+        },
+        "resources": [
+          "location/vertex-core/00"
+        ]
+      },
+      "vertex-core/0,2/-1,0,0,-1": {
+        "ports": {
+          "0": {
+            "attachment": "C",
+            "cell": "location/vertex-core/02"
+          },
+          "1": {
+            "attachment": "D",
+            "cell": "location/vertex-core/02"
+          },
+          "2": {
+            "attachment": "A",
+            "cell": "location/vertex-core/02"
+          },
+          "3": {
+            "attachment": "B",
+            "cell": "location/vertex-core/02"
+          }
+        },
+        "resources": [
+          "location/vertex-core/02"
+        ]
+      },
+      "vertex-core/0,2/0,-1,1,0": {
+        "ports": {
+          "0": {
+            "attachment": "A",
+            "cell": "location/vertex-core/02"
+          },
+          "1": {
+            "attachment": "C",
+            "cell": "location/vertex-core/02"
+          },
+          "2": {
+            "attachment": "B",
+            "cell": "location/vertex-core/02"
+          },
+          "3": {
+            "attachment": "D",
+            "cell": "location/vertex-core/02"
+          }
+        },
+        "resources": [
+          "location/vertex-core/02"
+        ]
+      },
+      "vertex-core/0,2/0,1,-1,0": {
+        "ports": {
+          "0": {
+            "attachment": "D",
+            "cell": "location/vertex-core/02"
+          },
+          "1": {
+            "attachment": "B",
+            "cell": "location/vertex-core/02"
+          },
+          "2": {
+            "attachment": "C",
+            "cell": "location/vertex-core/02"
+          },
+          "3": {
+            "attachment": "A",
+            "cell": "location/vertex-core/02"
+          }
+        },
+        "resources": [
+          "location/vertex-core/02"
+        ]
+      },
+      "vertex-core/0,2/1,0,0,1": {
+        "ports": {
+          "0": {
+            "attachment": "B",
+            "cell": "location/vertex-core/02"
+          },
+          "1": {
+            "attachment": "A",
+            "cell": "location/vertex-core/02"
+          },
+          "2": {
+            "attachment": "D",
+            "cell": "location/vertex-core/02"
+          },
+          "3": {
+            "attachment": "C",
+            "cell": "location/vertex-core/02"
+          }
+        },
+        "resources": [
+          "location/vertex-core/02"
+        ]
+      },
+      "vertex-core/2,0/-1,0,0,-1": {
+        "ports": {
+          "0": {
+            "attachment": "B",
+            "cell": "location/vertex-core/01"
+          },
+          "1": {
+            "attachment": "A",
+            "cell": "location/vertex-core/01"
+          },
+          "2": {
+            "attachment": "D",
+            "cell": "location/vertex-core/01"
+          },
+          "3": {
+            "attachment": "C",
+            "cell": "location/vertex-core/01"
+          }
+        },
+        "resources": [
+          "location/vertex-core/01"
+        ]
+      },
+      "vertex-core/2,0/0,-1,1,0": {
+        "ports": {
+          "0": {
+            "attachment": "D",
+            "cell": "location/vertex-core/01"
+          },
+          "1": {
+            "attachment": "B",
+            "cell": "location/vertex-core/01"
+          },
+          "2": {
+            "attachment": "C",
+            "cell": "location/vertex-core/01"
+          },
+          "3": {
+            "attachment": "A",
+            "cell": "location/vertex-core/01"
+          }
+        },
+        "resources": [
+          "location/vertex-core/01"
+        ]
+      },
+      "vertex-core/2,0/0,1,-1,0": {
+        "ports": {
+          "0": {
+            "attachment": "A",
+            "cell": "location/vertex-core/01"
+          },
+          "1": {
+            "attachment": "C",
+            "cell": "location/vertex-core/01"
+          },
+          "2": {
+            "attachment": "B",
+            "cell": "location/vertex-core/01"
+          },
+          "3": {
+            "attachment": "D",
+            "cell": "location/vertex-core/01"
+          }
+        },
+        "resources": [
+          "location/vertex-core/01"
+        ]
+      },
+      "vertex-core/2,0/1,0,0,1": {
+        "ports": {
+          "0": {
+            "attachment": "C",
+            "cell": "location/vertex-core/01"
+          },
+          "1": {
+            "attachment": "D",
+            "cell": "location/vertex-core/01"
+          },
+          "2": {
+            "attachment": "A",
+            "cell": "location/vertex-core/01"
+          },
+          "3": {
+            "attachment": "B",
+            "cell": "location/vertex-core/01"
+          }
+        },
+        "resources": [
+          "location/vertex-core/01"
+        ]
+      },
+      "vertex-core/2,2/-1,0,0,-1": {
+        "ports": {
+          "0": {
+            "attachment": "D",
+            "cell": "location/vertex-core/03"
+          },
+          "1": {
+            "attachment": "C",
+            "cell": "location/vertex-core/03"
+          },
+          "2": {
+            "attachment": "B",
+            "cell": "location/vertex-core/03"
+          },
+          "3": {
+            "attachment": "A",
+            "cell": "location/vertex-core/03"
+          }
+        },
+        "resources": [
+          "location/vertex-core/03"
+        ]
+      },
+      "vertex-core/2,2/0,-1,1,0": {
+        "ports": {
+          "0": {
+            "attachment": "B",
+            "cell": "location/vertex-core/03"
+          },
+          "1": {
+            "attachment": "D",
+            "cell": "location/vertex-core/03"
+          },
+          "2": {
+            "attachment": "A",
+            "cell": "location/vertex-core/03"
+          },
+          "3": {
+            "attachment": "C",
+            "cell": "location/vertex-core/03"
+          }
+        },
+        "resources": [
+          "location/vertex-core/03"
+        ]
+      },
+      "vertex-core/2,2/0,1,-1,0": {
+        "ports": {
+          "0": {
+            "attachment": "C",
+            "cell": "location/vertex-core/03"
+          },
+          "1": {
+            "attachment": "A",
+            "cell": "location/vertex-core/03"
+          },
+          "2": {
+            "attachment": "D",
+            "cell": "location/vertex-core/03"
+          },
+          "3": {
+            "attachment": "B",
+            "cell": "location/vertex-core/03"
+          }
+        },
+        "resources": [
+          "location/vertex-core/03"
+        ]
+      },
+      "vertex-core/2,2/1,0,0,1": {
+        "ports": {
+          "0": {
+            "attachment": "A",
+            "cell": "location/vertex-core/03"
+          },
+          "1": {
+            "attachment": "B",
+            "cell": "location/vertex-core/03"
+          },
+          "2": {
+            "attachment": "C",
+            "cell": "location/vertex-core/03"
+          },
+          "3": {
+            "attachment": "D",
+            "cell": "location/vertex-core/03"
+          }
+        },
+        "resources": [
+          "location/vertex-core/03"
+        ]
+      },
+      "vertex/0,0/-1,0,0,-1": {
+        "ports": {
+          "0": {
+            "attachment": "A",
+            "cell": "location/vertex/02"
+          }
+        },
+        "resources": [
+          "location/vertex/02"
+        ]
+      },
+      "vertex/0,0/0,-1,1,0": {
+        "ports": {
+          "0": {
+            "attachment": "C",
+            "cell": "location/vertex/01"
+          }
+        },
+        "resources": [
+          "location/vertex/01"
+        ]
+      },
+      "vertex/0,0/0,1,-1,0": {
+        "ports": {
+          "0": {
+            "attachment": "B",
+            "cell": "location/vertex/03"
+          }
+        },
+        "resources": [
+          "location/vertex/03"
+        ]
+      },
+      "vertex/0,0/1,0,0,1": {
+        "ports": {
+          "0": {
+            "attachment": "D",
+            "cell": "location/vertex/00"
+          }
+        },
+        "resources": [
+          "location/vertex/00"
+        ]
+      },
+      "vertex/0,2/-1,0,0,-1": {
+        "ports": {
+          "0": {
+            "attachment": "C",
+            "cell": "location/vertex/10"
+          }
+        },
+        "resources": [
+          "location/vertex/10"
+        ]
+      },
+      "vertex/0,2/0,-1,1,0": {
+        "ports": {
+          "0": {
+            "attachment": "A",
+            "cell": "location/vertex/09"
+          }
+        },
+        "resources": [
+          "location/vertex/09"
+        ]
+      },
+      "vertex/0,2/0,1,-1,0": {
+        "ports": {
+          "0": {
+            "attachment": "D",
+            "cell": "location/vertex/11"
+          }
+        },
+        "resources": [
+          "location/vertex/11"
+        ]
+      },
+      "vertex/0,2/1,0,0,1": {
+        "ports": {
+          "0": {
+            "attachment": "B",
+            "cell": "location/vertex/08"
+          }
+        },
+        "resources": [
+          "location/vertex/08"
+        ]
+      },
+      "vertex/2,0/-1,0,0,-1": {
+        "ports": {
+          "0": {
+            "attachment": "B",
+            "cell": "location/vertex/06"
+          }
+        },
+        "resources": [
+          "location/vertex/06"
+        ]
+      },
+      "vertex/2,0/0,-1,1,0": {
+        "ports": {
+          "0": {
+            "attachment": "D",
+            "cell": "location/vertex/05"
+          }
+        },
+        "resources": [
+          "location/vertex/05"
+        ]
+      },
+      "vertex/2,0/0,1,-1,0": {
+        "ports": {
+          "0": {
+            "attachment": "A",
+            "cell": "location/vertex/07"
+          }
+        },
+        "resources": [
+          "location/vertex/07"
+        ]
+      },
+      "vertex/2,0/1,0,0,1": {
+        "ports": {
+          "0": {
+            "attachment": "C",
+            "cell": "location/vertex/04"
+          }
+        },
+        "resources": [
+          "location/vertex/04"
+        ]
+      },
+      "vertex/2,2/-1,0,0,-1": {
+        "ports": {
+          "0": {
+            "attachment": "D",
+            "cell": "location/vertex/14"
+          }
+        },
+        "resources": [
+          "location/vertex/14"
+        ]
+      },
+      "vertex/2,2/0,-1,1,0": {
+        "ports": {
+          "0": {
+            "attachment": "B",
+            "cell": "location/vertex/13"
+          }
+        },
+        "resources": [
+          "location/vertex/13"
+        ]
+      },
+      "vertex/2,2/0,1,-1,0": {
+        "ports": {
+          "0": {
+            "attachment": "C",
+            "cell": "location/vertex/15"
+          }
+        },
+        "resources": [
+          "location/vertex/15"
+        ]
+      },
+      "vertex/2,2/1,0,0,1": {
+        "ports": {
+          "0": {
+            "attachment": "A",
+            "cell": "location/vertex/12"
+          }
+        },
+        "resources": [
+          "location/vertex/12"
+        ]
+      }
+    },
+    "puzzleId": "flat-torus-v1",
+    "requests": {
+      "A": {
+        "event": "A.motion",
+        "family": "A",
+        "inverse": "A'",
+        "profile": "default",
+        "unavailablePlacements": []
+      },
+      "A'": {
+        "event": "A'.motion",
+        "family": "A",
+        "inverse": "A",
+        "profile": "default",
+        "unavailablePlacements": []
+      },
+      "A2": {
+        "event": "A2.motion",
+        "family": "A",
+        "inverse": "A2",
+        "profile": "default",
+        "unavailablePlacements": []
+      },
+      "B": {
+        "event": "B.motion",
+        "family": "B",
+        "inverse": "B'",
+        "profile": "default",
+        "unavailablePlacements": []
+      },
+      "B'": {
+        "event": "B'.motion",
+        "family": "B",
+        "inverse": "B",
+        "profile": "default",
+        "unavailablePlacements": []
+      },
+      "B2": {
+        "event": "B2.motion",
+        "family": "B",
+        "inverse": "B2",
+        "profile": "default",
+        "unavailablePlacements": []
+      },
+      "C": {
+        "event": "C.motion",
+        "family": "C",
+        "inverse": "C'",
+        "profile": "default",
+        "unavailablePlacements": []
+      },
+      "C'": {
+        "event": "C'.motion",
+        "family": "C",
+        "inverse": "C",
+        "profile": "default",
+        "unavailablePlacements": []
+      },
+      "C2": {
+        "event": "C2.motion",
+        "family": "C",
+        "inverse": "C2",
+        "profile": "default",
+        "unavailablePlacements": []
+      },
+      "D": {
+        "event": "D.motion",
+        "family": "D",
+        "inverse": "D'",
+        "profile": "default",
+        "unavailablePlacements": []
+      },
+      "D'": {
+        "event": "D'.motion",
+        "family": "D",
+        "inverse": "D",
+        "profile": "default",
+        "unavailablePlacements": []
+      },
+      "D2": {
+        "event": "D2.motion",
+        "family": "D",
+        "inverse": "D2",
+        "profile": "default",
+        "unavailablePlacements": []
+      }
+    },
+    "resources": [
+      "location/face/00",
+      "location/face/01",
+      "location/face/02",
+      "location/face/03",
+      "location/edge/00",
+      "location/edge/01",
+      "location/edge/02",
+      "location/edge/03",
+      "location/edge/04",
+      "location/edge/05",
+      "location/edge/06",
+      "location/edge/07",
+      "location/vertex/00",
+      "location/vertex/01",
+      "location/vertex/02",
+      "location/vertex/03",
+      "location/vertex/04",
+      "location/vertex/05",
+      "location/vertex/06",
+      "location/vertex/07",
+      "location/vertex/08",
+      "location/vertex/09",
+      "location/vertex/10",
+      "location/vertex/11",
+      "location/vertex/12",
+      "location/vertex/13",
+      "location/vertex/14",
+      "location/vertex/15",
+      "location/vertex-core/00",
+      "location/vertex-core/01",
+      "location/vertex-core/02",
+      "location/vertex-core/03"
+    ],
+    "version": 1
+  },
+  "formatVersion": 1,
+  "kind": "relational-package",
+  "source": {
+    "domains": [
+      {
+        "id": "face",
+        "moves": [
+          {
+            "event": "A.motion",
+            "id": "A",
+            "support": [
+              "1,1/1,0,0,1",
+              "1,1/0,-1,1,0",
+              "1,1/-1,0,0,-1",
+              "1,1/0,1,-1,0"
+            ],
+            "transport": {
+              "1,1/-1,0,0,-1": "1,1/0,-1,1,0",
+              "1,1/0,-1,1,0": "1,1/1,0,0,1",
+              "1,1/0,1,-1,0": "1,1/-1,0,0,-1",
+              "1,1/1,0,0,1": "1,1/0,1,-1,0"
+            }
+          },
+          {
+            "event": "A'.motion",
+            "id": "A'",
+            "support": [
+              "1,1/1,0,0,1",
+              "1,1/0,-1,1,0",
+              "1,1/-1,0,0,-1",
+              "1,1/0,1,-1,0"
+            ],
+            "transport": {
+              "1,1/-1,0,0,-1": "1,1/0,1,-1,0",
+              "1,1/0,-1,1,0": "1,1/-1,0,0,-1",
+              "1,1/0,1,-1,0": "1,1/1,0,0,1",
+              "1,1/1,0,0,1": "1,1/0,-1,1,0"
+            }
+          },
+          {
+            "event": "A2.motion",
+            "id": "A2",
+            "support": [
+              "1,1/1,0,0,1",
+              "1,1/0,-1,1,0",
+              "1,1/-1,0,0,-1",
+              "1,1/0,1,-1,0"
+            ],
+            "transport": {
+              "1,1/-1,0,0,-1": "1,1/1,0,0,1",
+              "1,1/0,-1,1,0": "1,1/0,1,-1,0",
+              "1,1/0,1,-1,0": "1,1/0,-1,1,0",
+              "1,1/1,0,0,1": "1,1/-1,0,0,-1"
+            }
+          },
+          {
+            "event": "B.motion",
+            "id": "B",
+            "support": [
+              "3,1/1,0,0,1",
+              "3,1/0,-1,1,0",
+              "3,1/-1,0,0,-1",
+              "3,1/0,1,-1,0"
+            ],
+            "transport": {
+              "3,1/-1,0,0,-1": "3,1/0,-1,1,0",
+              "3,1/0,-1,1,0": "3,1/1,0,0,1",
+              "3,1/0,1,-1,0": "3,1/-1,0,0,-1",
+              "3,1/1,0,0,1": "3,1/0,1,-1,0"
+            }
+          },
+          {
+            "event": "B'.motion",
+            "id": "B'",
+            "support": [
+              "3,1/1,0,0,1",
+              "3,1/0,-1,1,0",
+              "3,1/-1,0,0,-1",
+              "3,1/0,1,-1,0"
+            ],
+            "transport": {
+              "3,1/-1,0,0,-1": "3,1/0,1,-1,0",
+              "3,1/0,-1,1,0": "3,1/-1,0,0,-1",
+              "3,1/0,1,-1,0": "3,1/1,0,0,1",
+              "3,1/1,0,0,1": "3,1/0,-1,1,0"
+            }
+          },
+          {
+            "event": "B2.motion",
+            "id": "B2",
+            "support": [
+              "3,1/1,0,0,1",
+              "3,1/0,-1,1,0",
+              "3,1/-1,0,0,-1",
+              "3,1/0,1,-1,0"
+            ],
+            "transport": {
+              "3,1/-1,0,0,-1": "3,1/1,0,0,1",
+              "3,1/0,-1,1,0": "3,1/0,1,-1,0",
+              "3,1/0,1,-1,0": "3,1/0,-1,1,0",
+              "3,1/1,0,0,1": "3,1/-1,0,0,-1"
+            }
+          },
+          {
+            "event": "C.motion",
+            "id": "C",
+            "support": [
+              "1,3/1,0,0,1",
+              "1,3/0,-1,1,0",
+              "1,3/-1,0,0,-1",
+              "1,3/0,1,-1,0"
+            ],
+            "transport": {
+              "1,3/-1,0,0,-1": "1,3/0,-1,1,0",
+              "1,3/0,-1,1,0": "1,3/1,0,0,1",
+              "1,3/0,1,-1,0": "1,3/-1,0,0,-1",
+              "1,3/1,0,0,1": "1,3/0,1,-1,0"
+            }
+          },
+          {
+            "event": "C'.motion",
+            "id": "C'",
+            "support": [
+              "1,3/1,0,0,1",
+              "1,3/0,-1,1,0",
+              "1,3/-1,0,0,-1",
+              "1,3/0,1,-1,0"
+            ],
+            "transport": {
+              "1,3/-1,0,0,-1": "1,3/0,1,-1,0",
+              "1,3/0,-1,1,0": "1,3/-1,0,0,-1",
+              "1,3/0,1,-1,0": "1,3/1,0,0,1",
+              "1,3/1,0,0,1": "1,3/0,-1,1,0"
+            }
+          },
+          {
+            "event": "C2.motion",
+            "id": "C2",
+            "support": [
+              "1,3/1,0,0,1",
+              "1,3/0,-1,1,0",
+              "1,3/-1,0,0,-1",
+              "1,3/0,1,-1,0"
+            ],
+            "transport": {
+              "1,3/-1,0,0,-1": "1,3/1,0,0,1",
+              "1,3/0,-1,1,0": "1,3/0,1,-1,0",
+              "1,3/0,1,-1,0": "1,3/0,-1,1,0",
+              "1,3/1,0,0,1": "1,3/-1,0,0,-1"
+            }
+          },
+          {
+            "event": "D.motion",
+            "id": "D",
+            "support": [
+              "3,3/1,0,0,1",
+              "3,3/0,-1,1,0",
+              "3,3/-1,0,0,-1",
+              "3,3/0,1,-1,0"
+            ],
+            "transport": {
+              "3,3/-1,0,0,-1": "3,3/0,-1,1,0",
+              "3,3/0,-1,1,0": "3,3/1,0,0,1",
+              "3,3/0,1,-1,0": "3,3/-1,0,0,-1",
+              "3,3/1,0,0,1": "3,3/0,1,-1,0"
+            }
+          },
+          {
+            "event": "D'.motion",
+            "id": "D'",
+            "support": [
+              "3,3/1,0,0,1",
+              "3,3/0,-1,1,0",
+              "3,3/-1,0,0,-1",
+              "3,3/0,1,-1,0"
+            ],
+            "transport": {
+              "3,3/-1,0,0,-1": "3,3/0,1,-1,0",
+              "3,3/0,-1,1,0": "3,3/-1,0,0,-1",
+              "3,3/0,1,-1,0": "3,3/1,0,0,1",
+              "3,3/1,0,0,1": "3,3/0,-1,1,0"
+            }
+          },
+          {
+            "event": "D2.motion",
+            "id": "D2",
+            "support": [
+              "3,3/1,0,0,1",
+              "3,3/0,-1,1,0",
+              "3,3/-1,0,0,-1",
+              "3,3/0,1,-1,0"
+            ],
+            "transport": {
+              "3,3/-1,0,0,-1": "3,3/1,0,0,1",
+              "3,3/0,-1,1,0": "3,3/0,1,-1,0",
+              "3,3/0,1,-1,0": "3,3/0,-1,1,0",
+              "3,3/1,0,0,1": "3,3/-1,0,0,-1"
+            }
+          }
+        ],
+        "pieces": [
+          {
+            "id": "face-00",
+            "initial": "1,1/1,0,0,1"
+          },
+          {
+            "id": "face-01",
+            "initial": "3,1/1,0,0,1"
+          },
+          {
+            "id": "face-02",
+            "initial": "1,3/1,0,0,1"
+          },
+          {
+            "id": "face-03",
+            "initial": "3,3/1,0,0,1"
+          }
+        ],
+        "placements": [
+          "1,1/1,0,0,1",
+          "1,1/0,-1,1,0",
+          "1,1/-1,0,0,-1",
+          "1,1/0,1,-1,0",
+          "3,1/1,0,0,1",
+          "3,1/0,-1,1,0",
+          "3,1/-1,0,0,-1",
+          "3,1/0,1,-1,0",
+          "1,3/1,0,0,1",
+          "1,3/0,-1,1,0",
+          "1,3/-1,0,0,-1",
+          "1,3/0,1,-1,0",
+          "3,3/1,0,0,1",
+          "3,3/0,-1,1,0",
+          "3,3/-1,0,0,-1",
+          "3,3/0,1,-1,0"
+        ]
+      },
+      {
+        "id": "edge",
+        "moves": [
+          {
+            "event": "A.motion",
+            "id": "A",
+            "support": [
+              "0,1/1,0,0,1",
+              "0,1/-1,0,0,-1",
+              "2,1/1,0,0,1",
+              "2,1/-1,0,0,-1",
+              "1,0/0,-1,1,0",
+              "1,0/0,1,-1,0",
+              "1,2/0,-1,1,0",
+              "1,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,1/-1,0,0,-1": "1,2/0,-1,1,0",
+              "0,1/1,0,0,1": "1,2/0,1,-1,0",
+              "1,0/0,-1,1,0": "0,1/1,0,0,1",
+              "1,0/0,1,-1,0": "0,1/-1,0,0,-1",
+              "1,2/0,-1,1,0": "2,1/1,0,0,1",
+              "1,2/0,1,-1,0": "2,1/-1,0,0,-1",
+              "2,1/-1,0,0,-1": "1,0/0,-1,1,0",
+              "2,1/1,0,0,1": "1,0/0,1,-1,0"
+            }
+          },
+          {
+            "event": "A'.motion",
+            "id": "A'",
+            "support": [
+              "0,1/1,0,0,1",
+              "0,1/-1,0,0,-1",
+              "2,1/1,0,0,1",
+              "2,1/-1,0,0,-1",
+              "1,0/0,-1,1,0",
+              "1,0/0,1,-1,0",
+              "1,2/0,-1,1,0",
+              "1,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,1/-1,0,0,-1": "1,0/0,1,-1,0",
+              "0,1/1,0,0,1": "1,0/0,-1,1,0",
+              "1,0/0,-1,1,0": "2,1/-1,0,0,-1",
+              "1,0/0,1,-1,0": "2,1/1,0,0,1",
+              "1,2/0,-1,1,0": "0,1/-1,0,0,-1",
+              "1,2/0,1,-1,0": "0,1/1,0,0,1",
+              "2,1/-1,0,0,-1": "1,2/0,1,-1,0",
+              "2,1/1,0,0,1": "1,2/0,-1,1,0"
+            }
+          },
+          {
+            "event": "A2.motion",
+            "id": "A2",
+            "support": [
+              "0,1/1,0,0,1",
+              "0,1/-1,0,0,-1",
+              "2,1/1,0,0,1",
+              "2,1/-1,0,0,-1",
+              "1,0/0,-1,1,0",
+              "1,0/0,1,-1,0",
+              "1,2/0,-1,1,0",
+              "1,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,1/-1,0,0,-1": "2,1/1,0,0,1",
+              "0,1/1,0,0,1": "2,1/-1,0,0,-1",
+              "1,0/0,-1,1,0": "1,2/0,1,-1,0",
+              "1,0/0,1,-1,0": "1,2/0,-1,1,0",
+              "1,2/0,-1,1,0": "1,0/0,1,-1,0",
+              "1,2/0,1,-1,0": "1,0/0,-1,1,0",
+              "2,1/-1,0,0,-1": "0,1/1,0,0,1",
+              "2,1/1,0,0,1": "0,1/-1,0,0,-1"
+            }
+          },
+          {
+            "event": "B.motion",
+            "id": "B",
+            "support": [
+              "0,1/1,0,0,1",
+              "0,1/-1,0,0,-1",
+              "2,1/1,0,0,1",
+              "2,1/-1,0,0,-1",
+              "3,0/0,-1,1,0",
+              "3,0/0,1,-1,0",
+              "3,2/0,-1,1,0",
+              "3,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,1/-1,0,0,-1": "3,0/0,-1,1,0",
+              "0,1/1,0,0,1": "3,0/0,1,-1,0",
+              "2,1/-1,0,0,-1": "3,2/0,-1,1,0",
+              "2,1/1,0,0,1": "3,2/0,1,-1,0",
+              "3,0/0,-1,1,0": "2,1/1,0,0,1",
+              "3,0/0,1,-1,0": "2,1/-1,0,0,-1",
+              "3,2/0,-1,1,0": "0,1/1,0,0,1",
+              "3,2/0,1,-1,0": "0,1/-1,0,0,-1"
+            }
+          },
+          {
+            "event": "B'.motion",
+            "id": "B'",
+            "support": [
+              "0,1/1,0,0,1",
+              "0,1/-1,0,0,-1",
+              "2,1/1,0,0,1",
+              "2,1/-1,0,0,-1",
+              "3,0/0,-1,1,0",
+              "3,0/0,1,-1,0",
+              "3,2/0,-1,1,0",
+              "3,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,1/-1,0,0,-1": "3,2/0,1,-1,0",
+              "0,1/1,0,0,1": "3,2/0,-1,1,0",
+              "2,1/-1,0,0,-1": "3,0/0,1,-1,0",
+              "2,1/1,0,0,1": "3,0/0,-1,1,0",
+              "3,0/0,-1,1,0": "0,1/-1,0,0,-1",
+              "3,0/0,1,-1,0": "0,1/1,0,0,1",
+              "3,2/0,-1,1,0": "2,1/-1,0,0,-1",
+              "3,2/0,1,-1,0": "2,1/1,0,0,1"
+            }
+          },
+          {
+            "event": "B2.motion",
+            "id": "B2",
+            "support": [
+              "0,1/1,0,0,1",
+              "0,1/-1,0,0,-1",
+              "2,1/1,0,0,1",
+              "2,1/-1,0,0,-1",
+              "3,0/0,-1,1,0",
+              "3,0/0,1,-1,0",
+              "3,2/0,-1,1,0",
+              "3,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,1/-1,0,0,-1": "2,1/1,0,0,1",
+              "0,1/1,0,0,1": "2,1/-1,0,0,-1",
+              "2,1/-1,0,0,-1": "0,1/1,0,0,1",
+              "2,1/1,0,0,1": "0,1/-1,0,0,-1",
+              "3,0/0,-1,1,0": "3,2/0,1,-1,0",
+              "3,0/0,1,-1,0": "3,2/0,-1,1,0",
+              "3,2/0,-1,1,0": "3,0/0,1,-1,0",
+              "3,2/0,1,-1,0": "3,0/0,-1,1,0"
+            }
+          },
+          {
+            "event": "C.motion",
+            "id": "C",
+            "support": [
+              "0,3/1,0,0,1",
+              "0,3/-1,0,0,-1",
+              "2,3/1,0,0,1",
+              "2,3/-1,0,0,-1",
+              "1,0/0,-1,1,0",
+              "1,0/0,1,-1,0",
+              "1,2/0,-1,1,0",
+              "1,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,3/-1,0,0,-1": "1,0/0,-1,1,0",
+              "0,3/1,0,0,1": "1,0/0,1,-1,0",
+              "1,0/0,-1,1,0": "2,3/1,0,0,1",
+              "1,0/0,1,-1,0": "2,3/-1,0,0,-1",
+              "1,2/0,-1,1,0": "0,3/1,0,0,1",
+              "1,2/0,1,-1,0": "0,3/-1,0,0,-1",
+              "2,3/-1,0,0,-1": "1,2/0,-1,1,0",
+              "2,3/1,0,0,1": "1,2/0,1,-1,0"
+            }
+          },
+          {
+            "event": "C'.motion",
+            "id": "C'",
+            "support": [
+              "0,3/1,0,0,1",
+              "0,3/-1,0,0,-1",
+              "2,3/1,0,0,1",
+              "2,3/-1,0,0,-1",
+              "1,0/0,-1,1,0",
+              "1,0/0,1,-1,0",
+              "1,2/0,-1,1,0",
+              "1,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,3/-1,0,0,-1": "1,2/0,1,-1,0",
+              "0,3/1,0,0,1": "1,2/0,-1,1,0",
+              "1,0/0,-1,1,0": "0,3/-1,0,0,-1",
+              "1,0/0,1,-1,0": "0,3/1,0,0,1",
+              "1,2/0,-1,1,0": "2,3/-1,0,0,-1",
+              "1,2/0,1,-1,0": "2,3/1,0,0,1",
+              "2,3/-1,0,0,-1": "1,0/0,1,-1,0",
+              "2,3/1,0,0,1": "1,0/0,-1,1,0"
+            }
+          },
+          {
+            "event": "C2.motion",
+            "id": "C2",
+            "support": [
+              "0,3/1,0,0,1",
+              "0,3/-1,0,0,-1",
+              "2,3/1,0,0,1",
+              "2,3/-1,0,0,-1",
+              "1,0/0,-1,1,0",
+              "1,0/0,1,-1,0",
+              "1,2/0,-1,1,0",
+              "1,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,3/-1,0,0,-1": "2,3/1,0,0,1",
+              "0,3/1,0,0,1": "2,3/-1,0,0,-1",
+              "1,0/0,-1,1,0": "1,2/0,1,-1,0",
+              "1,0/0,1,-1,0": "1,2/0,-1,1,0",
+              "1,2/0,-1,1,0": "1,0/0,1,-1,0",
+              "1,2/0,1,-1,0": "1,0/0,-1,1,0",
+              "2,3/-1,0,0,-1": "0,3/1,0,0,1",
+              "2,3/1,0,0,1": "0,3/-1,0,0,-1"
+            }
+          },
+          {
+            "event": "D.motion",
+            "id": "D",
+            "support": [
+              "0,3/1,0,0,1",
+              "0,3/-1,0,0,-1",
+              "2,3/1,0,0,1",
+              "2,3/-1,0,0,-1",
+              "3,0/0,-1,1,0",
+              "3,0/0,1,-1,0",
+              "3,2/0,-1,1,0",
+              "3,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,3/-1,0,0,-1": "3,2/0,-1,1,0",
+              "0,3/1,0,0,1": "3,2/0,1,-1,0",
+              "2,3/-1,0,0,-1": "3,0/0,-1,1,0",
+              "2,3/1,0,0,1": "3,0/0,1,-1,0",
+              "3,0/0,-1,1,0": "0,3/1,0,0,1",
+              "3,0/0,1,-1,0": "0,3/-1,0,0,-1",
+              "3,2/0,-1,1,0": "2,3/1,0,0,1",
+              "3,2/0,1,-1,0": "2,3/-1,0,0,-1"
+            }
+          },
+          {
+            "event": "D'.motion",
+            "id": "D'",
+            "support": [
+              "0,3/1,0,0,1",
+              "0,3/-1,0,0,-1",
+              "2,3/1,0,0,1",
+              "2,3/-1,0,0,-1",
+              "3,0/0,-1,1,0",
+              "3,0/0,1,-1,0",
+              "3,2/0,-1,1,0",
+              "3,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,3/-1,0,0,-1": "3,0/0,1,-1,0",
+              "0,3/1,0,0,1": "3,0/0,-1,1,0",
+              "2,3/-1,0,0,-1": "3,2/0,1,-1,0",
+              "2,3/1,0,0,1": "3,2/0,-1,1,0",
+              "3,0/0,-1,1,0": "2,3/-1,0,0,-1",
+              "3,0/0,1,-1,0": "2,3/1,0,0,1",
+              "3,2/0,-1,1,0": "0,3/-1,0,0,-1",
+              "3,2/0,1,-1,0": "0,3/1,0,0,1"
+            }
+          },
+          {
+            "event": "D2.motion",
+            "id": "D2",
+            "support": [
+              "0,3/1,0,0,1",
+              "0,3/-1,0,0,-1",
+              "2,3/1,0,0,1",
+              "2,3/-1,0,0,-1",
+              "3,0/0,-1,1,0",
+              "3,0/0,1,-1,0",
+              "3,2/0,-1,1,0",
+              "3,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,3/-1,0,0,-1": "2,3/1,0,0,1",
+              "0,3/1,0,0,1": "2,3/-1,0,0,-1",
+              "2,3/-1,0,0,-1": "0,3/1,0,0,1",
+              "2,3/1,0,0,1": "0,3/-1,0,0,-1",
+              "3,0/0,-1,1,0": "3,2/0,1,-1,0",
+              "3,0/0,1,-1,0": "3,2/0,-1,1,0",
+              "3,2/0,-1,1,0": "3,0/0,1,-1,0",
+              "3,2/0,1,-1,0": "3,0/0,-1,1,0"
+            }
+          }
+        ],
+        "pieces": [
+          {
+            "id": "edge-00",
+            "initial": "0,1/1,0,0,1"
+          },
+          {
+            "id": "edge-01",
+            "initial": "2,1/1,0,0,1"
+          },
+          {
+            "id": "edge-02",
+            "initial": "0,3/1,0,0,1"
+          },
+          {
+            "id": "edge-03",
+            "initial": "2,3/1,0,0,1"
+          },
+          {
+            "id": "edge-04",
+            "initial": "1,0/0,-1,1,0"
+          },
+          {
+            "id": "edge-05",
+            "initial": "3,0/0,-1,1,0"
+          },
+          {
+            "id": "edge-06",
+            "initial": "1,2/0,-1,1,0"
+          },
+          {
+            "id": "edge-07",
+            "initial": "3,2/0,-1,1,0"
+          }
+        ],
+        "placements": [
+          "0,1/1,0,0,1",
+          "0,1/-1,0,0,-1",
+          "2,1/1,0,0,1",
+          "2,1/-1,0,0,-1",
+          "0,3/1,0,0,1",
+          "0,3/-1,0,0,-1",
+          "2,3/1,0,0,1",
+          "2,3/-1,0,0,-1",
+          "1,0/0,-1,1,0",
+          "1,0/0,1,-1,0",
+          "3,0/0,-1,1,0",
+          "3,0/0,1,-1,0",
+          "1,2/0,-1,1,0",
+          "1,2/0,1,-1,0",
+          "3,2/0,-1,1,0",
+          "3,2/0,1,-1,0"
+        ]
+      },
+      {
+        "id": "vertex",
+        "moves": [
+          {
+            "event": "A.motion",
+            "id": "A",
+            "support": [
+              "0,0/0,-1,1,0",
+              "0,0/-1,0,0,-1",
+              "0,0/0,1,-1,0",
+              "2,0/1,0,0,1",
+              "2,0/-1,0,0,-1",
+              "2,0/0,1,-1,0",
+              "0,2/1,0,0,1",
+              "0,2/0,-1,1,0",
+              "0,2/-1,0,0,-1",
+              "2,2/1,0,0,1",
+              "2,2/0,-1,1,0",
+              "2,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,0/-1,0,0,-1": "0,2/0,-1,1,0",
+              "0,0/0,-1,1,0": "0,2/1,0,0,1",
+              "0,0/0,1,-1,0": "0,2/-1,0,0,-1",
+              "0,2/-1,0,0,-1": "2,2/0,-1,1,0",
+              "0,2/0,-1,1,0": "2,2/1,0,0,1",
+              "0,2/1,0,0,1": "2,2/0,1,-1,0",
+              "2,0/-1,0,0,-1": "0,0/0,-1,1,0",
+              "2,0/0,1,-1,0": "0,0/-1,0,0,-1",
+              "2,0/1,0,0,1": "0,0/0,1,-1,0",
+              "2,2/0,-1,1,0": "2,0/1,0,0,1",
+              "2,2/0,1,-1,0": "2,0/-1,0,0,-1",
+              "2,2/1,0,0,1": "2,0/0,1,-1,0"
+            }
+          },
+          {
+            "event": "A'.motion",
+            "id": "A'",
+            "support": [
+              "0,0/0,-1,1,0",
+              "0,0/-1,0,0,-1",
+              "0,0/0,1,-1,0",
+              "2,0/1,0,0,1",
+              "2,0/-1,0,0,-1",
+              "2,0/0,1,-1,0",
+              "0,2/1,0,0,1",
+              "0,2/0,-1,1,0",
+              "0,2/-1,0,0,-1",
+              "2,2/1,0,0,1",
+              "2,2/0,-1,1,0",
+              "2,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,0/-1,0,0,-1": "2,0/0,1,-1,0",
+              "0,0/0,-1,1,0": "2,0/-1,0,0,-1",
+              "0,0/0,1,-1,0": "2,0/1,0,0,1",
+              "0,2/-1,0,0,-1": "0,0/0,1,-1,0",
+              "0,2/0,-1,1,0": "0,0/-1,0,0,-1",
+              "0,2/1,0,0,1": "0,0/0,-1,1,0",
+              "2,0/-1,0,0,-1": "2,2/0,1,-1,0",
+              "2,0/0,1,-1,0": "2,2/1,0,0,1",
+              "2,0/1,0,0,1": "2,2/0,-1,1,0",
+              "2,2/0,-1,1,0": "0,2/-1,0,0,-1",
+              "2,2/0,1,-1,0": "0,2/1,0,0,1",
+              "2,2/1,0,0,1": "0,2/0,-1,1,0"
+            }
+          },
+          {
+            "event": "A2.motion",
+            "id": "A2",
+            "support": [
+              "0,0/0,-1,1,0",
+              "0,0/-1,0,0,-1",
+              "0,0/0,1,-1,0",
+              "2,0/1,0,0,1",
+              "2,0/-1,0,0,-1",
+              "2,0/0,1,-1,0",
+              "0,2/1,0,0,1",
+              "0,2/0,-1,1,0",
+              "0,2/-1,0,0,-1",
+              "2,2/1,0,0,1",
+              "2,2/0,-1,1,0",
+              "2,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,0/-1,0,0,-1": "2,2/1,0,0,1",
+              "0,0/0,-1,1,0": "2,2/0,1,-1,0",
+              "0,0/0,1,-1,0": "2,2/0,-1,1,0",
+              "0,2/-1,0,0,-1": "2,0/1,0,0,1",
+              "0,2/0,-1,1,0": "2,0/0,1,-1,0",
+              "0,2/1,0,0,1": "2,0/-1,0,0,-1",
+              "2,0/-1,0,0,-1": "0,2/1,0,0,1",
+              "2,0/0,1,-1,0": "0,2/0,-1,1,0",
+              "2,0/1,0,0,1": "0,2/-1,0,0,-1",
+              "2,2/0,-1,1,0": "0,0/0,1,-1,0",
+              "2,2/0,1,-1,0": "0,0/0,-1,1,0",
+              "2,2/1,0,0,1": "0,0/-1,0,0,-1"
+            }
+          },
+          {
+            "event": "B.motion",
+            "id": "B",
+            "support": [
+              "0,0/1,0,0,1",
+              "0,0/-1,0,0,-1",
+              "0,0/0,1,-1,0",
+              "2,0/0,-1,1,0",
+              "2,0/-1,0,0,-1",
+              "2,0/0,1,-1,0",
+              "0,2/1,0,0,1",
+              "0,2/0,-1,1,0",
+              "0,2/0,1,-1,0",
+              "2,2/1,0,0,1",
+              "2,2/0,-1,1,0",
+              "2,2/-1,0,0,-1"
+            ],
+            "transport": {
+              "0,0/-1,0,0,-1": "2,0/0,-1,1,0",
+              "0,0/0,1,-1,0": "2,0/-1,0,0,-1",
+              "0,0/1,0,0,1": "2,0/0,1,-1,0",
+              "0,2/0,-1,1,0": "0,0/1,0,0,1",
+              "0,2/0,1,-1,0": "0,0/-1,0,0,-1",
+              "0,2/1,0,0,1": "0,0/0,1,-1,0",
+              "2,0/-1,0,0,-1": "2,2/0,-1,1,0",
+              "2,0/0,-1,1,0": "2,2/1,0,0,1",
+              "2,0/0,1,-1,0": "2,2/-1,0,0,-1",
+              "2,2/-1,0,0,-1": "0,2/0,-1,1,0",
+              "2,2/0,-1,1,0": "0,2/1,0,0,1",
+              "2,2/1,0,0,1": "0,2/0,1,-1,0"
+            }
+          },
+          {
+            "event": "B'.motion",
+            "id": "B'",
+            "support": [
+              "0,0/1,0,0,1",
+              "0,0/-1,0,0,-1",
+              "0,0/0,1,-1,0",
+              "2,0/0,-1,1,0",
+              "2,0/-1,0,0,-1",
+              "2,0/0,1,-1,0",
+              "0,2/1,0,0,1",
+              "0,2/0,-1,1,0",
+              "0,2/0,1,-1,0",
+              "2,2/1,0,0,1",
+              "2,2/0,-1,1,0",
+              "2,2/-1,0,0,-1"
+            ],
+            "transport": {
+              "0,0/-1,0,0,-1": "0,2/0,1,-1,0",
+              "0,0/0,1,-1,0": "0,2/1,0,0,1",
+              "0,0/1,0,0,1": "0,2/0,-1,1,0",
+              "0,2/0,-1,1,0": "2,2/-1,0,0,-1",
+              "0,2/0,1,-1,0": "2,2/1,0,0,1",
+              "0,2/1,0,0,1": "2,2/0,-1,1,0",
+              "2,0/-1,0,0,-1": "0,0/0,1,-1,0",
+              "2,0/0,-1,1,0": "0,0/-1,0,0,-1",
+              "2,0/0,1,-1,0": "0,0/1,0,0,1",
+              "2,2/-1,0,0,-1": "2,0/0,1,-1,0",
+              "2,2/0,-1,1,0": "2,0/-1,0,0,-1",
+              "2,2/1,0,0,1": "2,0/0,-1,1,0"
+            }
+          },
+          {
+            "event": "B2.motion",
+            "id": "B2",
+            "support": [
+              "0,0/1,0,0,1",
+              "0,0/-1,0,0,-1",
+              "0,0/0,1,-1,0",
+              "2,0/0,-1,1,0",
+              "2,0/-1,0,0,-1",
+              "2,0/0,1,-1,0",
+              "0,2/1,0,0,1",
+              "0,2/0,-1,1,0",
+              "0,2/0,1,-1,0",
+              "2,2/1,0,0,1",
+              "2,2/0,-1,1,0",
+              "2,2/-1,0,0,-1"
+            ],
+            "transport": {
+              "0,0/-1,0,0,-1": "2,2/1,0,0,1",
+              "0,0/0,1,-1,0": "2,2/0,-1,1,0",
+              "0,0/1,0,0,1": "2,2/-1,0,0,-1",
+              "0,2/0,-1,1,0": "2,0/0,1,-1,0",
+              "0,2/0,1,-1,0": "2,0/0,-1,1,0",
+              "0,2/1,0,0,1": "2,0/-1,0,0,-1",
+              "2,0/-1,0,0,-1": "0,2/1,0,0,1",
+              "2,0/0,-1,1,0": "0,2/0,1,-1,0",
+              "2,0/0,1,-1,0": "0,2/0,-1,1,0",
+              "2,2/-1,0,0,-1": "0,0/1,0,0,1",
+              "2,2/0,-1,1,0": "0,0/0,1,-1,0",
+              "2,2/1,0,0,1": "0,0/-1,0,0,-1"
+            }
+          },
+          {
+            "event": "C.motion",
+            "id": "C",
+            "support": [
+              "0,0/1,0,0,1",
+              "0,0/0,-1,1,0",
+              "0,0/-1,0,0,-1",
+              "2,0/1,0,0,1",
+              "2,0/0,-1,1,0",
+              "2,0/0,1,-1,0",
+              "0,2/0,-1,1,0",
+              "0,2/-1,0,0,-1",
+              "0,2/0,1,-1,0",
+              "2,2/1,0,0,1",
+              "2,2/-1,0,0,-1",
+              "2,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,0/-1,0,0,-1": "2,0/0,-1,1,0",
+              "0,0/0,-1,1,0": "2,0/1,0,0,1",
+              "0,0/1,0,0,1": "2,0/0,1,-1,0",
+              "0,2/-1,0,0,-1": "0,0/0,-1,1,0",
+              "0,2/0,-1,1,0": "0,0/1,0,0,1",
+              "0,2/0,1,-1,0": "0,0/-1,0,0,-1",
+              "2,0/0,-1,1,0": "2,2/1,0,0,1",
+              "2,0/0,1,-1,0": "2,2/-1,0,0,-1",
+              "2,0/1,0,0,1": "2,2/0,1,-1,0",
+              "2,2/-1,0,0,-1": "0,2/0,-1,1,0",
+              "2,2/0,1,-1,0": "0,2/-1,0,0,-1",
+              "2,2/1,0,0,1": "0,2/0,1,-1,0"
+            }
+          },
+          {
+            "event": "C'.motion",
+            "id": "C'",
+            "support": [
+              "0,0/1,0,0,1",
+              "0,0/0,-1,1,0",
+              "0,0/-1,0,0,-1",
+              "2,0/1,0,0,1",
+              "2,0/0,-1,1,0",
+              "2,0/0,1,-1,0",
+              "0,2/0,-1,1,0",
+              "0,2/-1,0,0,-1",
+              "0,2/0,1,-1,0",
+              "2,2/1,0,0,1",
+              "2,2/-1,0,0,-1",
+              "2,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,0/-1,0,0,-1": "0,2/0,1,-1,0",
+              "0,0/0,-1,1,0": "0,2/-1,0,0,-1",
+              "0,0/1,0,0,1": "0,2/0,-1,1,0",
+              "0,2/-1,0,0,-1": "2,2/0,1,-1,0",
+              "0,2/0,-1,1,0": "2,2/-1,0,0,-1",
+              "0,2/0,1,-1,0": "2,2/1,0,0,1",
+              "2,0/0,-1,1,0": "0,0/-1,0,0,-1",
+              "2,0/0,1,-1,0": "0,0/1,0,0,1",
+              "2,0/1,0,0,1": "0,0/0,-1,1,0",
+              "2,2/-1,0,0,-1": "2,0/0,1,-1,0",
+              "2,2/0,1,-1,0": "2,0/1,0,0,1",
+              "2,2/1,0,0,1": "2,0/0,-1,1,0"
+            }
+          },
+          {
+            "event": "C2.motion",
+            "id": "C2",
+            "support": [
+              "0,0/1,0,0,1",
+              "0,0/0,-1,1,0",
+              "0,0/-1,0,0,-1",
+              "2,0/1,0,0,1",
+              "2,0/0,-1,1,0",
+              "2,0/0,1,-1,0",
+              "0,2/0,-1,1,0",
+              "0,2/-1,0,0,-1",
+              "0,2/0,1,-1,0",
+              "2,2/1,0,0,1",
+              "2,2/-1,0,0,-1",
+              "2,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,0/-1,0,0,-1": "2,2/1,0,0,1",
+              "0,0/0,-1,1,0": "2,2/0,1,-1,0",
+              "0,0/1,0,0,1": "2,2/-1,0,0,-1",
+              "0,2/-1,0,0,-1": "2,0/1,0,0,1",
+              "0,2/0,-1,1,0": "2,0/0,1,-1,0",
+              "0,2/0,1,-1,0": "2,0/0,-1,1,0",
+              "2,0/0,-1,1,0": "0,2/0,1,-1,0",
+              "2,0/0,1,-1,0": "0,2/0,-1,1,0",
+              "2,0/1,0,0,1": "0,2/-1,0,0,-1",
+              "2,2/-1,0,0,-1": "0,0/1,0,0,1",
+              "2,2/0,1,-1,0": "0,0/0,-1,1,0",
+              "2,2/1,0,0,1": "0,0/-1,0,0,-1"
+            }
+          },
+          {
+            "event": "D.motion",
+            "id": "D",
+            "support": [
+              "0,0/1,0,0,1",
+              "0,0/0,-1,1,0",
+              "0,0/0,1,-1,0",
+              "2,0/1,0,0,1",
+              "2,0/0,-1,1,0",
+              "2,0/-1,0,0,-1",
+              "0,2/1,0,0,1",
+              "0,2/-1,0,0,-1",
+              "0,2/0,1,-1,0",
+              "2,2/0,-1,1,0",
+              "2,2/-1,0,0,-1",
+              "2,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,0/0,-1,1,0": "0,2/1,0,0,1",
+              "0,0/0,1,-1,0": "0,2/-1,0,0,-1",
+              "0,0/1,0,0,1": "0,2/0,1,-1,0",
+              "0,2/-1,0,0,-1": "2,2/0,-1,1,0",
+              "0,2/0,1,-1,0": "2,2/-1,0,0,-1",
+              "0,2/1,0,0,1": "2,2/0,1,-1,0",
+              "2,0/-1,0,0,-1": "0,0/0,-1,1,0",
+              "2,0/0,-1,1,0": "0,0/1,0,0,1",
+              "2,0/1,0,0,1": "0,0/0,1,-1,0",
+              "2,2/-1,0,0,-1": "2,0/0,-1,1,0",
+              "2,2/0,-1,1,0": "2,0/1,0,0,1",
+              "2,2/0,1,-1,0": "2,0/-1,0,0,-1"
+            }
+          },
+          {
+            "event": "D'.motion",
+            "id": "D'",
+            "support": [
+              "0,0/1,0,0,1",
+              "0,0/0,-1,1,0",
+              "0,0/0,1,-1,0",
+              "2,0/1,0,0,1",
+              "2,0/0,-1,1,0",
+              "2,0/-1,0,0,-1",
+              "0,2/1,0,0,1",
+              "0,2/-1,0,0,-1",
+              "0,2/0,1,-1,0",
+              "2,2/0,-1,1,0",
+              "2,2/-1,0,0,-1",
+              "2,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,0/0,-1,1,0": "2,0/-1,0,0,-1",
+              "0,0/0,1,-1,0": "2,0/1,0,0,1",
+              "0,0/1,0,0,1": "2,0/0,-1,1,0",
+              "0,2/-1,0,0,-1": "0,0/0,1,-1,0",
+              "0,2/0,1,-1,0": "0,0/1,0,0,1",
+              "0,2/1,0,0,1": "0,0/0,-1,1,0",
+              "2,0/-1,0,0,-1": "2,2/0,1,-1,0",
+              "2,0/0,-1,1,0": "2,2/-1,0,0,-1",
+              "2,0/1,0,0,1": "2,2/0,-1,1,0",
+              "2,2/-1,0,0,-1": "0,2/0,1,-1,0",
+              "2,2/0,-1,1,0": "0,2/-1,0,0,-1",
+              "2,2/0,1,-1,0": "0,2/1,0,0,1"
+            }
+          },
+          {
+            "event": "D2.motion",
+            "id": "D2",
+            "support": [
+              "0,0/1,0,0,1",
+              "0,0/0,-1,1,0",
+              "0,0/0,1,-1,0",
+              "2,0/1,0,0,1",
+              "2,0/0,-1,1,0",
+              "2,0/-1,0,0,-1",
+              "0,2/1,0,0,1",
+              "0,2/-1,0,0,-1",
+              "0,2/0,1,-1,0",
+              "2,2/0,-1,1,0",
+              "2,2/-1,0,0,-1",
+              "2,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,0/0,-1,1,0": "2,2/0,1,-1,0",
+              "0,0/0,1,-1,0": "2,2/0,-1,1,0",
+              "0,0/1,0,0,1": "2,2/-1,0,0,-1",
+              "0,2/-1,0,0,-1": "2,0/1,0,0,1",
+              "0,2/0,1,-1,0": "2,0/0,-1,1,0",
+              "0,2/1,0,0,1": "2,0/-1,0,0,-1",
+              "2,0/-1,0,0,-1": "0,2/1,0,0,1",
+              "2,0/0,-1,1,0": "0,2/0,1,-1,0",
+              "2,0/1,0,0,1": "0,2/-1,0,0,-1",
+              "2,2/-1,0,0,-1": "0,0/1,0,0,1",
+              "2,2/0,-1,1,0": "0,0/0,1,-1,0",
+              "2,2/0,1,-1,0": "0,0/0,-1,1,0"
+            }
+          }
+        ],
+        "pieces": [
+          {
+            "id": "vertex-00",
+            "initial": "0,0/1,0,0,1"
+          },
+          {
+            "id": "vertex-01",
+            "initial": "0,0/0,-1,1,0"
+          },
+          {
+            "id": "vertex-02",
+            "initial": "0,0/-1,0,0,-1"
+          },
+          {
+            "id": "vertex-03",
+            "initial": "0,0/0,1,-1,0"
+          },
+          {
+            "id": "vertex-04",
+            "initial": "2,0/1,0,0,1"
+          },
+          {
+            "id": "vertex-05",
+            "initial": "2,0/0,-1,1,0"
+          },
+          {
+            "id": "vertex-06",
+            "initial": "2,0/-1,0,0,-1"
+          },
+          {
+            "id": "vertex-07",
+            "initial": "2,0/0,1,-1,0"
+          },
+          {
+            "id": "vertex-08",
+            "initial": "0,2/1,0,0,1"
+          },
+          {
+            "id": "vertex-09",
+            "initial": "0,2/0,-1,1,0"
+          },
+          {
+            "id": "vertex-10",
+            "initial": "0,2/-1,0,0,-1"
+          },
+          {
+            "id": "vertex-11",
+            "initial": "0,2/0,1,-1,0"
+          },
+          {
+            "id": "vertex-12",
+            "initial": "2,2/1,0,0,1"
+          },
+          {
+            "id": "vertex-13",
+            "initial": "2,2/0,-1,1,0"
+          },
+          {
+            "id": "vertex-14",
+            "initial": "2,2/-1,0,0,-1"
+          },
+          {
+            "id": "vertex-15",
+            "initial": "2,2/0,1,-1,0"
+          }
+        ],
+        "placements": [
+          "0,0/1,0,0,1",
+          "0,0/0,-1,1,0",
+          "0,0/-1,0,0,-1",
+          "0,0/0,1,-1,0",
+          "2,0/1,0,0,1",
+          "2,0/0,-1,1,0",
+          "2,0/-1,0,0,-1",
+          "2,0/0,1,-1,0",
+          "0,2/1,0,0,1",
+          "0,2/0,-1,1,0",
+          "0,2/-1,0,0,-1",
+          "0,2/0,1,-1,0",
+          "2,2/1,0,0,1",
+          "2,2/0,-1,1,0",
+          "2,2/-1,0,0,-1",
+          "2,2/0,1,-1,0"
+        ]
+      },
+      {
+        "id": "vertex-core",
+        "moves": [
+          {
+            "event": "A.motion",
+            "id": "A",
+            "support": [
+              "0,0/1,0,0,1",
+              "0,0/0,-1,1,0",
+              "0,0/-1,0,0,-1",
+              "0,0/0,1,-1,0",
+              "2,0/1,0,0,1",
+              "2,0/0,-1,1,0",
+              "2,0/-1,0,0,-1",
+              "2,0/0,1,-1,0",
+              "0,2/1,0,0,1",
+              "0,2/0,-1,1,0",
+              "0,2/-1,0,0,-1",
+              "0,2/0,1,-1,0",
+              "2,2/1,0,0,1",
+              "2,2/0,-1,1,0",
+              "2,2/-1,0,0,-1",
+              "2,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,0/-1,0,0,-1": "0,2/0,-1,1,0",
+              "0,0/0,-1,1,0": "0,2/1,0,0,1",
+              "0,0/0,1,-1,0": "0,2/-1,0,0,-1",
+              "0,0/1,0,0,1": "0,2/0,1,-1,0",
+              "0,2/-1,0,0,-1": "2,2/0,-1,1,0",
+              "0,2/0,-1,1,0": "2,2/1,0,0,1",
+              "0,2/0,1,-1,0": "2,2/-1,0,0,-1",
+              "0,2/1,0,0,1": "2,2/0,1,-1,0",
+              "2,0/-1,0,0,-1": "0,0/0,-1,1,0",
+              "2,0/0,-1,1,0": "0,0/1,0,0,1",
+              "2,0/0,1,-1,0": "0,0/-1,0,0,-1",
+              "2,0/1,0,0,1": "0,0/0,1,-1,0",
+              "2,2/-1,0,0,-1": "2,0/0,-1,1,0",
+              "2,2/0,-1,1,0": "2,0/1,0,0,1",
+              "2,2/0,1,-1,0": "2,0/-1,0,0,-1",
+              "2,2/1,0,0,1": "2,0/0,1,-1,0"
+            }
+          },
+          {
+            "event": "A'.motion",
+            "id": "A'",
+            "support": [
+              "0,0/1,0,0,1",
+              "0,0/0,-1,1,0",
+              "0,0/-1,0,0,-1",
+              "0,0/0,1,-1,0",
+              "2,0/1,0,0,1",
+              "2,0/0,-1,1,0",
+              "2,0/-1,0,0,-1",
+              "2,0/0,1,-1,0",
+              "0,2/1,0,0,1",
+              "0,2/0,-1,1,0",
+              "0,2/-1,0,0,-1",
+              "0,2/0,1,-1,0",
+              "2,2/1,0,0,1",
+              "2,2/0,-1,1,0",
+              "2,2/-1,0,0,-1",
+              "2,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,0/-1,0,0,-1": "2,0/0,1,-1,0",
+              "0,0/0,-1,1,0": "2,0/-1,0,0,-1",
+              "0,0/0,1,-1,0": "2,0/1,0,0,1",
+              "0,0/1,0,0,1": "2,0/0,-1,1,0",
+              "0,2/-1,0,0,-1": "0,0/0,1,-1,0",
+              "0,2/0,-1,1,0": "0,0/-1,0,0,-1",
+              "0,2/0,1,-1,0": "0,0/1,0,0,1",
+              "0,2/1,0,0,1": "0,0/0,-1,1,0",
+              "2,0/-1,0,0,-1": "2,2/0,1,-1,0",
+              "2,0/0,-1,1,0": "2,2/-1,0,0,-1",
+              "2,0/0,1,-1,0": "2,2/1,0,0,1",
+              "2,0/1,0,0,1": "2,2/0,-1,1,0",
+              "2,2/-1,0,0,-1": "0,2/0,1,-1,0",
+              "2,2/0,-1,1,0": "0,2/-1,0,0,-1",
+              "2,2/0,1,-1,0": "0,2/1,0,0,1",
+              "2,2/1,0,0,1": "0,2/0,-1,1,0"
+            }
+          },
+          {
+            "event": "A2.motion",
+            "id": "A2",
+            "support": [
+              "0,0/1,0,0,1",
+              "0,0/0,-1,1,0",
+              "0,0/-1,0,0,-1",
+              "0,0/0,1,-1,0",
+              "2,0/1,0,0,1",
+              "2,0/0,-1,1,0",
+              "2,0/-1,0,0,-1",
+              "2,0/0,1,-1,0",
+              "0,2/1,0,0,1",
+              "0,2/0,-1,1,0",
+              "0,2/-1,0,0,-1",
+              "0,2/0,1,-1,0",
+              "2,2/1,0,0,1",
+              "2,2/0,-1,1,0",
+              "2,2/-1,0,0,-1",
+              "2,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,0/-1,0,0,-1": "2,2/1,0,0,1",
+              "0,0/0,-1,1,0": "2,2/0,1,-1,0",
+              "0,0/0,1,-1,0": "2,2/0,-1,1,0",
+              "0,0/1,0,0,1": "2,2/-1,0,0,-1",
+              "0,2/-1,0,0,-1": "2,0/1,0,0,1",
+              "0,2/0,-1,1,0": "2,0/0,1,-1,0",
+              "0,2/0,1,-1,0": "2,0/0,-1,1,0",
+              "0,2/1,0,0,1": "2,0/-1,0,0,-1",
+              "2,0/-1,0,0,-1": "0,2/1,0,0,1",
+              "2,0/0,-1,1,0": "0,2/0,1,-1,0",
+              "2,0/0,1,-1,0": "0,2/0,-1,1,0",
+              "2,0/1,0,0,1": "0,2/-1,0,0,-1",
+              "2,2/-1,0,0,-1": "0,0/1,0,0,1",
+              "2,2/0,-1,1,0": "0,0/0,1,-1,0",
+              "2,2/0,1,-1,0": "0,0/0,-1,1,0",
+              "2,2/1,0,0,1": "0,0/-1,0,0,-1"
+            }
+          },
+          {
+            "event": "B.motion",
+            "id": "B",
+            "support": [
+              "0,0/1,0,0,1",
+              "0,0/0,-1,1,0",
+              "0,0/-1,0,0,-1",
+              "0,0/0,1,-1,0",
+              "2,0/1,0,0,1",
+              "2,0/0,-1,1,0",
+              "2,0/-1,0,0,-1",
+              "2,0/0,1,-1,0",
+              "0,2/1,0,0,1",
+              "0,2/0,-1,1,0",
+              "0,2/-1,0,0,-1",
+              "0,2/0,1,-1,0",
+              "2,2/1,0,0,1",
+              "2,2/0,-1,1,0",
+              "2,2/-1,0,0,-1",
+              "2,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,0/-1,0,0,-1": "2,0/0,-1,1,0",
+              "0,0/0,-1,1,0": "2,0/1,0,0,1",
+              "0,0/0,1,-1,0": "2,0/-1,0,0,-1",
+              "0,0/1,0,0,1": "2,0/0,1,-1,0",
+              "0,2/-1,0,0,-1": "0,0/0,-1,1,0",
+              "0,2/0,-1,1,0": "0,0/1,0,0,1",
+              "0,2/0,1,-1,0": "0,0/-1,0,0,-1",
+              "0,2/1,0,0,1": "0,0/0,1,-1,0",
+              "2,0/-1,0,0,-1": "2,2/0,-1,1,0",
+              "2,0/0,-1,1,0": "2,2/1,0,0,1",
+              "2,0/0,1,-1,0": "2,2/-1,0,0,-1",
+              "2,0/1,0,0,1": "2,2/0,1,-1,0",
+              "2,2/-1,0,0,-1": "0,2/0,-1,1,0",
+              "2,2/0,-1,1,0": "0,2/1,0,0,1",
+              "2,2/0,1,-1,0": "0,2/-1,0,0,-1",
+              "2,2/1,0,0,1": "0,2/0,1,-1,0"
+            }
+          },
+          {
+            "event": "B'.motion",
+            "id": "B'",
+            "support": [
+              "0,0/1,0,0,1",
+              "0,0/0,-1,1,0",
+              "0,0/-1,0,0,-1",
+              "0,0/0,1,-1,0",
+              "2,0/1,0,0,1",
+              "2,0/0,-1,1,0",
+              "2,0/-1,0,0,-1",
+              "2,0/0,1,-1,0",
+              "0,2/1,0,0,1",
+              "0,2/0,-1,1,0",
+              "0,2/-1,0,0,-1",
+              "0,2/0,1,-1,0",
+              "2,2/1,0,0,1",
+              "2,2/0,-1,1,0",
+              "2,2/-1,0,0,-1",
+              "2,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,0/-1,0,0,-1": "0,2/0,1,-1,0",
+              "0,0/0,-1,1,0": "0,2/-1,0,0,-1",
+              "0,0/0,1,-1,0": "0,2/1,0,0,1",
+              "0,0/1,0,0,1": "0,2/0,-1,1,0",
+              "0,2/-1,0,0,-1": "2,2/0,1,-1,0",
+              "0,2/0,-1,1,0": "2,2/-1,0,0,-1",
+              "0,2/0,1,-1,0": "2,2/1,0,0,1",
+              "0,2/1,0,0,1": "2,2/0,-1,1,0",
+              "2,0/-1,0,0,-1": "0,0/0,1,-1,0",
+              "2,0/0,-1,1,0": "0,0/-1,0,0,-1",
+              "2,0/0,1,-1,0": "0,0/1,0,0,1",
+              "2,0/1,0,0,1": "0,0/0,-1,1,0",
+              "2,2/-1,0,0,-1": "2,0/0,1,-1,0",
+              "2,2/0,-1,1,0": "2,0/-1,0,0,-1",
+              "2,2/0,1,-1,0": "2,0/1,0,0,1",
+              "2,2/1,0,0,1": "2,0/0,-1,1,0"
+            }
+          },
+          {
+            "event": "B2.motion",
+            "id": "B2",
+            "support": [
+              "0,0/1,0,0,1",
+              "0,0/0,-1,1,0",
+              "0,0/-1,0,0,-1",
+              "0,0/0,1,-1,0",
+              "2,0/1,0,0,1",
+              "2,0/0,-1,1,0",
+              "2,0/-1,0,0,-1",
+              "2,0/0,1,-1,0",
+              "0,2/1,0,0,1",
+              "0,2/0,-1,1,0",
+              "0,2/-1,0,0,-1",
+              "0,2/0,1,-1,0",
+              "2,2/1,0,0,1",
+              "2,2/0,-1,1,0",
+              "2,2/-1,0,0,-1",
+              "2,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,0/-1,0,0,-1": "2,2/1,0,0,1",
+              "0,0/0,-1,1,0": "2,2/0,1,-1,0",
+              "0,0/0,1,-1,0": "2,2/0,-1,1,0",
+              "0,0/1,0,0,1": "2,2/-1,0,0,-1",
+              "0,2/-1,0,0,-1": "2,0/1,0,0,1",
+              "0,2/0,-1,1,0": "2,0/0,1,-1,0",
+              "0,2/0,1,-1,0": "2,0/0,-1,1,0",
+              "0,2/1,0,0,1": "2,0/-1,0,0,-1",
+              "2,0/-1,0,0,-1": "0,2/1,0,0,1",
+              "2,0/0,-1,1,0": "0,2/0,1,-1,0",
+              "2,0/0,1,-1,0": "0,2/0,-1,1,0",
+              "2,0/1,0,0,1": "0,2/-1,0,0,-1",
+              "2,2/-1,0,0,-1": "0,0/1,0,0,1",
+              "2,2/0,-1,1,0": "0,0/0,1,-1,0",
+              "2,2/0,1,-1,0": "0,0/0,-1,1,0",
+              "2,2/1,0,0,1": "0,0/-1,0,0,-1"
+            }
+          },
+          {
+            "event": "C.motion",
+            "id": "C",
+            "support": [
+              "0,0/1,0,0,1",
+              "0,0/0,-1,1,0",
+              "0,0/-1,0,0,-1",
+              "0,0/0,1,-1,0",
+              "2,0/1,0,0,1",
+              "2,0/0,-1,1,0",
+              "2,0/-1,0,0,-1",
+              "2,0/0,1,-1,0",
+              "0,2/1,0,0,1",
+              "0,2/0,-1,1,0",
+              "0,2/-1,0,0,-1",
+              "0,2/0,1,-1,0",
+              "2,2/1,0,0,1",
+              "2,2/0,-1,1,0",
+              "2,2/-1,0,0,-1",
+              "2,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,0/-1,0,0,-1": "2,0/0,-1,1,0",
+              "0,0/0,-1,1,0": "2,0/1,0,0,1",
+              "0,0/0,1,-1,0": "2,0/-1,0,0,-1",
+              "0,0/1,0,0,1": "2,0/0,1,-1,0",
+              "0,2/-1,0,0,-1": "0,0/0,-1,1,0",
+              "0,2/0,-1,1,0": "0,0/1,0,0,1",
+              "0,2/0,1,-1,0": "0,0/-1,0,0,-1",
+              "0,2/1,0,0,1": "0,0/0,1,-1,0",
+              "2,0/-1,0,0,-1": "2,2/0,-1,1,0",
+              "2,0/0,-1,1,0": "2,2/1,0,0,1",
+              "2,0/0,1,-1,0": "2,2/-1,0,0,-1",
+              "2,0/1,0,0,1": "2,2/0,1,-1,0",
+              "2,2/-1,0,0,-1": "0,2/0,-1,1,0",
+              "2,2/0,-1,1,0": "0,2/1,0,0,1",
+              "2,2/0,1,-1,0": "0,2/-1,0,0,-1",
+              "2,2/1,0,0,1": "0,2/0,1,-1,0"
+            }
+          },
+          {
+            "event": "C'.motion",
+            "id": "C'",
+            "support": [
+              "0,0/1,0,0,1",
+              "0,0/0,-1,1,0",
+              "0,0/-1,0,0,-1",
+              "0,0/0,1,-1,0",
+              "2,0/1,0,0,1",
+              "2,0/0,-1,1,0",
+              "2,0/-1,0,0,-1",
+              "2,0/0,1,-1,0",
+              "0,2/1,0,0,1",
+              "0,2/0,-1,1,0",
+              "0,2/-1,0,0,-1",
+              "0,2/0,1,-1,0",
+              "2,2/1,0,0,1",
+              "2,2/0,-1,1,0",
+              "2,2/-1,0,0,-1",
+              "2,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,0/-1,0,0,-1": "0,2/0,1,-1,0",
+              "0,0/0,-1,1,0": "0,2/-1,0,0,-1",
+              "0,0/0,1,-1,0": "0,2/1,0,0,1",
+              "0,0/1,0,0,1": "0,2/0,-1,1,0",
+              "0,2/-1,0,0,-1": "2,2/0,1,-1,0",
+              "0,2/0,-1,1,0": "2,2/-1,0,0,-1",
+              "0,2/0,1,-1,0": "2,2/1,0,0,1",
+              "0,2/1,0,0,1": "2,2/0,-1,1,0",
+              "2,0/-1,0,0,-1": "0,0/0,1,-1,0",
+              "2,0/0,-1,1,0": "0,0/-1,0,0,-1",
+              "2,0/0,1,-1,0": "0,0/1,0,0,1",
+              "2,0/1,0,0,1": "0,0/0,-1,1,0",
+              "2,2/-1,0,0,-1": "2,0/0,1,-1,0",
+              "2,2/0,-1,1,0": "2,0/-1,0,0,-1",
+              "2,2/0,1,-1,0": "2,0/1,0,0,1",
+              "2,2/1,0,0,1": "2,0/0,-1,1,0"
+            }
+          },
+          {
+            "event": "C2.motion",
+            "id": "C2",
+            "support": [
+              "0,0/1,0,0,1",
+              "0,0/0,-1,1,0",
+              "0,0/-1,0,0,-1",
+              "0,0/0,1,-1,0",
+              "2,0/1,0,0,1",
+              "2,0/0,-1,1,0",
+              "2,0/-1,0,0,-1",
+              "2,0/0,1,-1,0",
+              "0,2/1,0,0,1",
+              "0,2/0,-1,1,0",
+              "0,2/-1,0,0,-1",
+              "0,2/0,1,-1,0",
+              "2,2/1,0,0,1",
+              "2,2/0,-1,1,0",
+              "2,2/-1,0,0,-1",
+              "2,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,0/-1,0,0,-1": "2,2/1,0,0,1",
+              "0,0/0,-1,1,0": "2,2/0,1,-1,0",
+              "0,0/0,1,-1,0": "2,2/0,-1,1,0",
+              "0,0/1,0,0,1": "2,2/-1,0,0,-1",
+              "0,2/-1,0,0,-1": "2,0/1,0,0,1",
+              "0,2/0,-1,1,0": "2,0/0,1,-1,0",
+              "0,2/0,1,-1,0": "2,0/0,-1,1,0",
+              "0,2/1,0,0,1": "2,0/-1,0,0,-1",
+              "2,0/-1,0,0,-1": "0,2/1,0,0,1",
+              "2,0/0,-1,1,0": "0,2/0,1,-1,0",
+              "2,0/0,1,-1,0": "0,2/0,-1,1,0",
+              "2,0/1,0,0,1": "0,2/-1,0,0,-1",
+              "2,2/-1,0,0,-1": "0,0/1,0,0,1",
+              "2,2/0,-1,1,0": "0,0/0,1,-1,0",
+              "2,2/0,1,-1,0": "0,0/0,-1,1,0",
+              "2,2/1,0,0,1": "0,0/-1,0,0,-1"
+            }
+          },
+          {
+            "event": "D.motion",
+            "id": "D",
+            "support": [
+              "0,0/1,0,0,1",
+              "0,0/0,-1,1,0",
+              "0,0/-1,0,0,-1",
+              "0,0/0,1,-1,0",
+              "2,0/1,0,0,1",
+              "2,0/0,-1,1,0",
+              "2,0/-1,0,0,-1",
+              "2,0/0,1,-1,0",
+              "0,2/1,0,0,1",
+              "0,2/0,-1,1,0",
+              "0,2/-1,0,0,-1",
+              "0,2/0,1,-1,0",
+              "2,2/1,0,0,1",
+              "2,2/0,-1,1,0",
+              "2,2/-1,0,0,-1",
+              "2,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,0/-1,0,0,-1": "0,2/0,-1,1,0",
+              "0,0/0,-1,1,0": "0,2/1,0,0,1",
+              "0,0/0,1,-1,0": "0,2/-1,0,0,-1",
+              "0,0/1,0,0,1": "0,2/0,1,-1,0",
+              "0,2/-1,0,0,-1": "2,2/0,-1,1,0",
+              "0,2/0,-1,1,0": "2,2/1,0,0,1",
+              "0,2/0,1,-1,0": "2,2/-1,0,0,-1",
+              "0,2/1,0,0,1": "2,2/0,1,-1,0",
+              "2,0/-1,0,0,-1": "0,0/0,-1,1,0",
+              "2,0/0,-1,1,0": "0,0/1,0,0,1",
+              "2,0/0,1,-1,0": "0,0/-1,0,0,-1",
+              "2,0/1,0,0,1": "0,0/0,1,-1,0",
+              "2,2/-1,0,0,-1": "2,0/0,-1,1,0",
+              "2,2/0,-1,1,0": "2,0/1,0,0,1",
+              "2,2/0,1,-1,0": "2,0/-1,0,0,-1",
+              "2,2/1,0,0,1": "2,0/0,1,-1,0"
+            }
+          },
+          {
+            "event": "D'.motion",
+            "id": "D'",
+            "support": [
+              "0,0/1,0,0,1",
+              "0,0/0,-1,1,0",
+              "0,0/-1,0,0,-1",
+              "0,0/0,1,-1,0",
+              "2,0/1,0,0,1",
+              "2,0/0,-1,1,0",
+              "2,0/-1,0,0,-1",
+              "2,0/0,1,-1,0",
+              "0,2/1,0,0,1",
+              "0,2/0,-1,1,0",
+              "0,2/-1,0,0,-1",
+              "0,2/0,1,-1,0",
+              "2,2/1,0,0,1",
+              "2,2/0,-1,1,0",
+              "2,2/-1,0,0,-1",
+              "2,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,0/-1,0,0,-1": "2,0/0,1,-1,0",
+              "0,0/0,-1,1,0": "2,0/-1,0,0,-1",
+              "0,0/0,1,-1,0": "2,0/1,0,0,1",
+              "0,0/1,0,0,1": "2,0/0,-1,1,0",
+              "0,2/-1,0,0,-1": "0,0/0,1,-1,0",
+              "0,2/0,-1,1,0": "0,0/-1,0,0,-1",
+              "0,2/0,1,-1,0": "0,0/1,0,0,1",
+              "0,2/1,0,0,1": "0,0/0,-1,1,0",
+              "2,0/-1,0,0,-1": "2,2/0,1,-1,0",
+              "2,0/0,-1,1,0": "2,2/-1,0,0,-1",
+              "2,0/0,1,-1,0": "2,2/1,0,0,1",
+              "2,0/1,0,0,1": "2,2/0,-1,1,0",
+              "2,2/-1,0,0,-1": "0,2/0,1,-1,0",
+              "2,2/0,-1,1,0": "0,2/-1,0,0,-1",
+              "2,2/0,1,-1,0": "0,2/1,0,0,1",
+              "2,2/1,0,0,1": "0,2/0,-1,1,0"
+            }
+          },
+          {
+            "event": "D2.motion",
+            "id": "D2",
+            "support": [
+              "0,0/1,0,0,1",
+              "0,0/0,-1,1,0",
+              "0,0/-1,0,0,-1",
+              "0,0/0,1,-1,0",
+              "2,0/1,0,0,1",
+              "2,0/0,-1,1,0",
+              "2,0/-1,0,0,-1",
+              "2,0/0,1,-1,0",
+              "0,2/1,0,0,1",
+              "0,2/0,-1,1,0",
+              "0,2/-1,0,0,-1",
+              "0,2/0,1,-1,0",
+              "2,2/1,0,0,1",
+              "2,2/0,-1,1,0",
+              "2,2/-1,0,0,-1",
+              "2,2/0,1,-1,0"
+            ],
+            "transport": {
+              "0,0/-1,0,0,-1": "2,2/1,0,0,1",
+              "0,0/0,-1,1,0": "2,2/0,1,-1,0",
+              "0,0/0,1,-1,0": "2,2/0,-1,1,0",
+              "0,0/1,0,0,1": "2,2/-1,0,0,-1",
+              "0,2/-1,0,0,-1": "2,0/1,0,0,1",
+              "0,2/0,-1,1,0": "2,0/0,1,-1,0",
+              "0,2/0,1,-1,0": "2,0/0,-1,1,0",
+              "0,2/1,0,0,1": "2,0/-1,0,0,-1",
+              "2,0/-1,0,0,-1": "0,2/1,0,0,1",
+              "2,0/0,-1,1,0": "0,2/0,1,-1,0",
+              "2,0/0,1,-1,0": "0,2/0,-1,1,0",
+              "2,0/1,0,0,1": "0,2/-1,0,0,-1",
+              "2,2/-1,0,0,-1": "0,0/1,0,0,1",
+              "2,2/0,-1,1,0": "0,0/0,1,-1,0",
+              "2,2/0,1,-1,0": "0,0/0,-1,1,0",
+              "2,2/1,0,0,1": "0,0/-1,0,0,-1"
+            }
+          }
+        ],
+        "pieces": [
+          {
+            "id": "vertex-core-00",
+            "initial": "0,0/1,0,0,1"
+          },
+          {
+            "id": "vertex-core-01",
+            "initial": "2,0/1,0,0,1"
+          },
+          {
+            "id": "vertex-core-02",
+            "initial": "0,2/1,0,0,1"
+          },
+          {
+            "id": "vertex-core-03",
+            "initial": "2,2/1,0,0,1"
+          }
+        ],
+        "placements": [
+          "0,0/1,0,0,1",
+          "0,0/0,-1,1,0",
+          "0,0/-1,0,0,-1",
+          "0,0/0,1,-1,0",
+          "2,0/1,0,0,1",
+          "2,0/0,-1,1,0",
+          "2,0/-1,0,0,-1",
+          "2,0/0,1,-1,0",
+          "0,2/1,0,0,1",
+          "0,2/0,-1,1,0",
+          "0,2/-1,0,0,-1",
+          "0,2/0,1,-1,0",
+          "2,2/1,0,0,1",
+          "2,2/0,-1,1,0",
+          "2,2/-1,0,0,-1",
+          "2,2/0,1,-1,0"
+        ]
+      }
+    ],
+    "goal": {
+      "all": [
+        {
+          "at": {
+            "piece": "face-00",
+            "placements": [
+              "face/1,1/1,0,0,1"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "face-01",
+            "placements": [
+              "face/3,1/1,0,0,1"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "face-02",
+            "placements": [
+              "face/1,3/1,0,0,1"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "face-03",
+            "placements": [
+              "face/3,3/1,0,0,1"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "edge-00",
+            "placements": [
+              "edge/0,1/1,0,0,1"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "edge-01",
+            "placements": [
+              "edge/2,1/1,0,0,1"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "edge-02",
+            "placements": [
+              "edge/0,3/1,0,0,1"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "edge-03",
+            "placements": [
+              "edge/2,3/1,0,0,1"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "edge-04",
+            "placements": [
+              "edge/1,0/0,-1,1,0"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "edge-05",
+            "placements": [
+              "edge/3,0/0,-1,1,0"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "edge-06",
+            "placements": [
+              "edge/1,2/0,-1,1,0"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "edge-07",
+            "placements": [
+              "edge/3,2/0,-1,1,0"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "vertex-00",
+            "placements": [
+              "vertex/0,0/1,0,0,1"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "vertex-01",
+            "placements": [
+              "vertex/0,0/0,-1,1,0"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "vertex-02",
+            "placements": [
+              "vertex/0,0/-1,0,0,-1"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "vertex-03",
+            "placements": [
+              "vertex/0,0/0,1,-1,0"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "vertex-04",
+            "placements": [
+              "vertex/2,0/1,0,0,1"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "vertex-05",
+            "placements": [
+              "vertex/2,0/0,-1,1,0"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "vertex-06",
+            "placements": [
+              "vertex/2,0/-1,0,0,-1"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "vertex-07",
+            "placements": [
+              "vertex/2,0/0,1,-1,0"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "vertex-08",
+            "placements": [
+              "vertex/0,2/1,0,0,1"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "vertex-09",
+            "placements": [
+              "vertex/0,2/0,-1,1,0"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "vertex-10",
+            "placements": [
+              "vertex/0,2/-1,0,0,-1"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "vertex-11",
+            "placements": [
+              "vertex/0,2/0,1,-1,0"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "vertex-12",
+            "placements": [
+              "vertex/2,2/1,0,0,1"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "vertex-13",
+            "placements": [
+              "vertex/2,2/0,-1,1,0"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "vertex-14",
+            "placements": [
+              "vertex/2,2/-1,0,0,-1"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "vertex-15",
+            "placements": [
+              "vertex/2,2/0,1,-1,0"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "vertex-core-00",
+            "placements": [
+              "vertex-core/0,0/1,0,0,1"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "vertex-core-01",
+            "placements": [
+              "vertex-core/2,0/1,0,0,1"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "vertex-core-02",
+            "placements": [
+              "vertex-core/0,2/1,0,0,1"
+            ]
+          }
+        },
+        {
+          "at": {
+            "piece": "vertex-core-03",
+            "placements": [
+              "vertex-core/2,2/1,0,0,1"
+            ]
+          }
+        }
+      ]
+    },
+    "id": "flat-torus-v1",
+    "invariant": {
+      "all": [
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "face-00",
+                  "placements": [
+                    "face/1,1/1,0,0,1",
+                    "face/1,1/0,-1,1,0",
+                    "face/1,1/-1,0,0,-1",
+                    "face/1,1/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "face-01",
+                  "placements": [
+                    "face/1,1/1,0,0,1",
+                    "face/1,1/0,-1,1,0",
+                    "face/1,1/-1,0,0,-1",
+                    "face/1,1/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "face-02",
+                  "placements": [
+                    "face/1,1/1,0,0,1",
+                    "face/1,1/0,-1,1,0",
+                    "face/1,1/-1,0,0,-1",
+                    "face/1,1/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "face-03",
+                  "placements": [
+                    "face/1,1/1,0,0,1",
+                    "face/1,1/0,-1,1,0",
+                    "face/1,1/-1,0,0,-1",
+                    "face/1,1/0,1,-1,0"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "face-00",
+                  "placements": [
+                    "face/3,1/1,0,0,1",
+                    "face/3,1/0,-1,1,0",
+                    "face/3,1/-1,0,0,-1",
+                    "face/3,1/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "face-01",
+                  "placements": [
+                    "face/3,1/1,0,0,1",
+                    "face/3,1/0,-1,1,0",
+                    "face/3,1/-1,0,0,-1",
+                    "face/3,1/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "face-02",
+                  "placements": [
+                    "face/3,1/1,0,0,1",
+                    "face/3,1/0,-1,1,0",
+                    "face/3,1/-1,0,0,-1",
+                    "face/3,1/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "face-03",
+                  "placements": [
+                    "face/3,1/1,0,0,1",
+                    "face/3,1/0,-1,1,0",
+                    "face/3,1/-1,0,0,-1",
+                    "face/3,1/0,1,-1,0"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "face-00",
+                  "placements": [
+                    "face/1,3/1,0,0,1",
+                    "face/1,3/0,-1,1,0",
+                    "face/1,3/-1,0,0,-1",
+                    "face/1,3/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "face-01",
+                  "placements": [
+                    "face/1,3/1,0,0,1",
+                    "face/1,3/0,-1,1,0",
+                    "face/1,3/-1,0,0,-1",
+                    "face/1,3/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "face-02",
+                  "placements": [
+                    "face/1,3/1,0,0,1",
+                    "face/1,3/0,-1,1,0",
+                    "face/1,3/-1,0,0,-1",
+                    "face/1,3/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "face-03",
+                  "placements": [
+                    "face/1,3/1,0,0,1",
+                    "face/1,3/0,-1,1,0",
+                    "face/1,3/-1,0,0,-1",
+                    "face/1,3/0,1,-1,0"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "face-00",
+                  "placements": [
+                    "face/3,3/1,0,0,1",
+                    "face/3,3/0,-1,1,0",
+                    "face/3,3/-1,0,0,-1",
+                    "face/3,3/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "face-01",
+                  "placements": [
+                    "face/3,3/1,0,0,1",
+                    "face/3,3/0,-1,1,0",
+                    "face/3,3/-1,0,0,-1",
+                    "face/3,3/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "face-02",
+                  "placements": [
+                    "face/3,3/1,0,0,1",
+                    "face/3,3/0,-1,1,0",
+                    "face/3,3/-1,0,0,-1",
+                    "face/3,3/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "face-03",
+                  "placements": [
+                    "face/3,3/1,0,0,1",
+                    "face/3,3/0,-1,1,0",
+                    "face/3,3/-1,0,0,-1",
+                    "face/3,3/0,1,-1,0"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "edge-00",
+                  "placements": [
+                    "edge/0,1/1,0,0,1",
+                    "edge/0,1/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-01",
+                  "placements": [
+                    "edge/0,1/1,0,0,1",
+                    "edge/0,1/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-02",
+                  "placements": [
+                    "edge/0,1/1,0,0,1",
+                    "edge/0,1/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-03",
+                  "placements": [
+                    "edge/0,1/1,0,0,1",
+                    "edge/0,1/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-04",
+                  "placements": [
+                    "edge/0,1/1,0,0,1",
+                    "edge/0,1/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-05",
+                  "placements": [
+                    "edge/0,1/1,0,0,1",
+                    "edge/0,1/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-06",
+                  "placements": [
+                    "edge/0,1/1,0,0,1",
+                    "edge/0,1/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-07",
+                  "placements": [
+                    "edge/0,1/1,0,0,1",
+                    "edge/0,1/-1,0,0,-1"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "edge-00",
+                  "placements": [
+                    "edge/2,1/1,0,0,1",
+                    "edge/2,1/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-01",
+                  "placements": [
+                    "edge/2,1/1,0,0,1",
+                    "edge/2,1/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-02",
+                  "placements": [
+                    "edge/2,1/1,0,0,1",
+                    "edge/2,1/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-03",
+                  "placements": [
+                    "edge/2,1/1,0,0,1",
+                    "edge/2,1/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-04",
+                  "placements": [
+                    "edge/2,1/1,0,0,1",
+                    "edge/2,1/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-05",
+                  "placements": [
+                    "edge/2,1/1,0,0,1",
+                    "edge/2,1/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-06",
+                  "placements": [
+                    "edge/2,1/1,0,0,1",
+                    "edge/2,1/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-07",
+                  "placements": [
+                    "edge/2,1/1,0,0,1",
+                    "edge/2,1/-1,0,0,-1"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "edge-00",
+                  "placements": [
+                    "edge/0,3/1,0,0,1",
+                    "edge/0,3/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-01",
+                  "placements": [
+                    "edge/0,3/1,0,0,1",
+                    "edge/0,3/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-02",
+                  "placements": [
+                    "edge/0,3/1,0,0,1",
+                    "edge/0,3/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-03",
+                  "placements": [
+                    "edge/0,3/1,0,0,1",
+                    "edge/0,3/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-04",
+                  "placements": [
+                    "edge/0,3/1,0,0,1",
+                    "edge/0,3/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-05",
+                  "placements": [
+                    "edge/0,3/1,0,0,1",
+                    "edge/0,3/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-06",
+                  "placements": [
+                    "edge/0,3/1,0,0,1",
+                    "edge/0,3/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-07",
+                  "placements": [
+                    "edge/0,3/1,0,0,1",
+                    "edge/0,3/-1,0,0,-1"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "edge-00",
+                  "placements": [
+                    "edge/2,3/1,0,0,1",
+                    "edge/2,3/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-01",
+                  "placements": [
+                    "edge/2,3/1,0,0,1",
+                    "edge/2,3/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-02",
+                  "placements": [
+                    "edge/2,3/1,0,0,1",
+                    "edge/2,3/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-03",
+                  "placements": [
+                    "edge/2,3/1,0,0,1",
+                    "edge/2,3/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-04",
+                  "placements": [
+                    "edge/2,3/1,0,0,1",
+                    "edge/2,3/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-05",
+                  "placements": [
+                    "edge/2,3/1,0,0,1",
+                    "edge/2,3/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-06",
+                  "placements": [
+                    "edge/2,3/1,0,0,1",
+                    "edge/2,3/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-07",
+                  "placements": [
+                    "edge/2,3/1,0,0,1",
+                    "edge/2,3/-1,0,0,-1"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "edge-00",
+                  "placements": [
+                    "edge/1,0/0,-1,1,0",
+                    "edge/1,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-01",
+                  "placements": [
+                    "edge/1,0/0,-1,1,0",
+                    "edge/1,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-02",
+                  "placements": [
+                    "edge/1,0/0,-1,1,0",
+                    "edge/1,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-03",
+                  "placements": [
+                    "edge/1,0/0,-1,1,0",
+                    "edge/1,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-04",
+                  "placements": [
+                    "edge/1,0/0,-1,1,0",
+                    "edge/1,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-05",
+                  "placements": [
+                    "edge/1,0/0,-1,1,0",
+                    "edge/1,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-06",
+                  "placements": [
+                    "edge/1,0/0,-1,1,0",
+                    "edge/1,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-07",
+                  "placements": [
+                    "edge/1,0/0,-1,1,0",
+                    "edge/1,0/0,1,-1,0"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "edge-00",
+                  "placements": [
+                    "edge/3,0/0,-1,1,0",
+                    "edge/3,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-01",
+                  "placements": [
+                    "edge/3,0/0,-1,1,0",
+                    "edge/3,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-02",
+                  "placements": [
+                    "edge/3,0/0,-1,1,0",
+                    "edge/3,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-03",
+                  "placements": [
+                    "edge/3,0/0,-1,1,0",
+                    "edge/3,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-04",
+                  "placements": [
+                    "edge/3,0/0,-1,1,0",
+                    "edge/3,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-05",
+                  "placements": [
+                    "edge/3,0/0,-1,1,0",
+                    "edge/3,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-06",
+                  "placements": [
+                    "edge/3,0/0,-1,1,0",
+                    "edge/3,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-07",
+                  "placements": [
+                    "edge/3,0/0,-1,1,0",
+                    "edge/3,0/0,1,-1,0"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "edge-00",
+                  "placements": [
+                    "edge/1,2/0,-1,1,0",
+                    "edge/1,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-01",
+                  "placements": [
+                    "edge/1,2/0,-1,1,0",
+                    "edge/1,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-02",
+                  "placements": [
+                    "edge/1,2/0,-1,1,0",
+                    "edge/1,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-03",
+                  "placements": [
+                    "edge/1,2/0,-1,1,0",
+                    "edge/1,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-04",
+                  "placements": [
+                    "edge/1,2/0,-1,1,0",
+                    "edge/1,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-05",
+                  "placements": [
+                    "edge/1,2/0,-1,1,0",
+                    "edge/1,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-06",
+                  "placements": [
+                    "edge/1,2/0,-1,1,0",
+                    "edge/1,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-07",
+                  "placements": [
+                    "edge/1,2/0,-1,1,0",
+                    "edge/1,2/0,1,-1,0"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "edge-00",
+                  "placements": [
+                    "edge/3,2/0,-1,1,0",
+                    "edge/3,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-01",
+                  "placements": [
+                    "edge/3,2/0,-1,1,0",
+                    "edge/3,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-02",
+                  "placements": [
+                    "edge/3,2/0,-1,1,0",
+                    "edge/3,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-03",
+                  "placements": [
+                    "edge/3,2/0,-1,1,0",
+                    "edge/3,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-04",
+                  "placements": [
+                    "edge/3,2/0,-1,1,0",
+                    "edge/3,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-05",
+                  "placements": [
+                    "edge/3,2/0,-1,1,0",
+                    "edge/3,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-06",
+                  "placements": [
+                    "edge/3,2/0,-1,1,0",
+                    "edge/3,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "edge-07",
+                  "placements": [
+                    "edge/3,2/0,-1,1,0",
+                    "edge/3,2/0,1,-1,0"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "vertex-00",
+                  "placements": [
+                    "vertex/0,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-01",
+                  "placements": [
+                    "vertex/0,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-02",
+                  "placements": [
+                    "vertex/0,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-03",
+                  "placements": [
+                    "vertex/0,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-04",
+                  "placements": [
+                    "vertex/0,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-05",
+                  "placements": [
+                    "vertex/0,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-06",
+                  "placements": [
+                    "vertex/0,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-07",
+                  "placements": [
+                    "vertex/0,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-08",
+                  "placements": [
+                    "vertex/0,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-09",
+                  "placements": [
+                    "vertex/0,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-10",
+                  "placements": [
+                    "vertex/0,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-11",
+                  "placements": [
+                    "vertex/0,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-12",
+                  "placements": [
+                    "vertex/0,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-13",
+                  "placements": [
+                    "vertex/0,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-14",
+                  "placements": [
+                    "vertex/0,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-15",
+                  "placements": [
+                    "vertex/0,0/1,0,0,1"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "vertex-00",
+                  "placements": [
+                    "vertex/0,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-01",
+                  "placements": [
+                    "vertex/0,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-02",
+                  "placements": [
+                    "vertex/0,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-03",
+                  "placements": [
+                    "vertex/0,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-04",
+                  "placements": [
+                    "vertex/0,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-05",
+                  "placements": [
+                    "vertex/0,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-06",
+                  "placements": [
+                    "vertex/0,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-07",
+                  "placements": [
+                    "vertex/0,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-08",
+                  "placements": [
+                    "vertex/0,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-09",
+                  "placements": [
+                    "vertex/0,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-10",
+                  "placements": [
+                    "vertex/0,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-11",
+                  "placements": [
+                    "vertex/0,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-12",
+                  "placements": [
+                    "vertex/0,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-13",
+                  "placements": [
+                    "vertex/0,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-14",
+                  "placements": [
+                    "vertex/0,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-15",
+                  "placements": [
+                    "vertex/0,0/0,-1,1,0"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "vertex-00",
+                  "placements": [
+                    "vertex/0,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-01",
+                  "placements": [
+                    "vertex/0,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-02",
+                  "placements": [
+                    "vertex/0,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-03",
+                  "placements": [
+                    "vertex/0,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-04",
+                  "placements": [
+                    "vertex/0,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-05",
+                  "placements": [
+                    "vertex/0,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-06",
+                  "placements": [
+                    "vertex/0,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-07",
+                  "placements": [
+                    "vertex/0,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-08",
+                  "placements": [
+                    "vertex/0,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-09",
+                  "placements": [
+                    "vertex/0,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-10",
+                  "placements": [
+                    "vertex/0,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-11",
+                  "placements": [
+                    "vertex/0,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-12",
+                  "placements": [
+                    "vertex/0,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-13",
+                  "placements": [
+                    "vertex/0,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-14",
+                  "placements": [
+                    "vertex/0,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-15",
+                  "placements": [
+                    "vertex/0,0/-1,0,0,-1"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "vertex-00",
+                  "placements": [
+                    "vertex/0,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-01",
+                  "placements": [
+                    "vertex/0,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-02",
+                  "placements": [
+                    "vertex/0,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-03",
+                  "placements": [
+                    "vertex/0,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-04",
+                  "placements": [
+                    "vertex/0,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-05",
+                  "placements": [
+                    "vertex/0,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-06",
+                  "placements": [
+                    "vertex/0,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-07",
+                  "placements": [
+                    "vertex/0,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-08",
+                  "placements": [
+                    "vertex/0,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-09",
+                  "placements": [
+                    "vertex/0,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-10",
+                  "placements": [
+                    "vertex/0,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-11",
+                  "placements": [
+                    "vertex/0,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-12",
+                  "placements": [
+                    "vertex/0,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-13",
+                  "placements": [
+                    "vertex/0,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-14",
+                  "placements": [
+                    "vertex/0,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-15",
+                  "placements": [
+                    "vertex/0,0/0,1,-1,0"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "vertex-00",
+                  "placements": [
+                    "vertex/2,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-01",
+                  "placements": [
+                    "vertex/2,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-02",
+                  "placements": [
+                    "vertex/2,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-03",
+                  "placements": [
+                    "vertex/2,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-04",
+                  "placements": [
+                    "vertex/2,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-05",
+                  "placements": [
+                    "vertex/2,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-06",
+                  "placements": [
+                    "vertex/2,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-07",
+                  "placements": [
+                    "vertex/2,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-08",
+                  "placements": [
+                    "vertex/2,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-09",
+                  "placements": [
+                    "vertex/2,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-10",
+                  "placements": [
+                    "vertex/2,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-11",
+                  "placements": [
+                    "vertex/2,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-12",
+                  "placements": [
+                    "vertex/2,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-13",
+                  "placements": [
+                    "vertex/2,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-14",
+                  "placements": [
+                    "vertex/2,0/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-15",
+                  "placements": [
+                    "vertex/2,0/1,0,0,1"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "vertex-00",
+                  "placements": [
+                    "vertex/2,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-01",
+                  "placements": [
+                    "vertex/2,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-02",
+                  "placements": [
+                    "vertex/2,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-03",
+                  "placements": [
+                    "vertex/2,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-04",
+                  "placements": [
+                    "vertex/2,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-05",
+                  "placements": [
+                    "vertex/2,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-06",
+                  "placements": [
+                    "vertex/2,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-07",
+                  "placements": [
+                    "vertex/2,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-08",
+                  "placements": [
+                    "vertex/2,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-09",
+                  "placements": [
+                    "vertex/2,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-10",
+                  "placements": [
+                    "vertex/2,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-11",
+                  "placements": [
+                    "vertex/2,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-12",
+                  "placements": [
+                    "vertex/2,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-13",
+                  "placements": [
+                    "vertex/2,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-14",
+                  "placements": [
+                    "vertex/2,0/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-15",
+                  "placements": [
+                    "vertex/2,0/0,-1,1,0"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "vertex-00",
+                  "placements": [
+                    "vertex/2,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-01",
+                  "placements": [
+                    "vertex/2,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-02",
+                  "placements": [
+                    "vertex/2,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-03",
+                  "placements": [
+                    "vertex/2,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-04",
+                  "placements": [
+                    "vertex/2,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-05",
+                  "placements": [
+                    "vertex/2,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-06",
+                  "placements": [
+                    "vertex/2,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-07",
+                  "placements": [
+                    "vertex/2,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-08",
+                  "placements": [
+                    "vertex/2,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-09",
+                  "placements": [
+                    "vertex/2,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-10",
+                  "placements": [
+                    "vertex/2,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-11",
+                  "placements": [
+                    "vertex/2,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-12",
+                  "placements": [
+                    "vertex/2,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-13",
+                  "placements": [
+                    "vertex/2,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-14",
+                  "placements": [
+                    "vertex/2,0/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-15",
+                  "placements": [
+                    "vertex/2,0/-1,0,0,-1"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "vertex-00",
+                  "placements": [
+                    "vertex/2,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-01",
+                  "placements": [
+                    "vertex/2,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-02",
+                  "placements": [
+                    "vertex/2,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-03",
+                  "placements": [
+                    "vertex/2,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-04",
+                  "placements": [
+                    "vertex/2,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-05",
+                  "placements": [
+                    "vertex/2,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-06",
+                  "placements": [
+                    "vertex/2,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-07",
+                  "placements": [
+                    "vertex/2,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-08",
+                  "placements": [
+                    "vertex/2,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-09",
+                  "placements": [
+                    "vertex/2,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-10",
+                  "placements": [
+                    "vertex/2,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-11",
+                  "placements": [
+                    "vertex/2,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-12",
+                  "placements": [
+                    "vertex/2,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-13",
+                  "placements": [
+                    "vertex/2,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-14",
+                  "placements": [
+                    "vertex/2,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-15",
+                  "placements": [
+                    "vertex/2,0/0,1,-1,0"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "vertex-00",
+                  "placements": [
+                    "vertex/0,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-01",
+                  "placements": [
+                    "vertex/0,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-02",
+                  "placements": [
+                    "vertex/0,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-03",
+                  "placements": [
+                    "vertex/0,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-04",
+                  "placements": [
+                    "vertex/0,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-05",
+                  "placements": [
+                    "vertex/0,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-06",
+                  "placements": [
+                    "vertex/0,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-07",
+                  "placements": [
+                    "vertex/0,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-08",
+                  "placements": [
+                    "vertex/0,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-09",
+                  "placements": [
+                    "vertex/0,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-10",
+                  "placements": [
+                    "vertex/0,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-11",
+                  "placements": [
+                    "vertex/0,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-12",
+                  "placements": [
+                    "vertex/0,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-13",
+                  "placements": [
+                    "vertex/0,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-14",
+                  "placements": [
+                    "vertex/0,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-15",
+                  "placements": [
+                    "vertex/0,2/1,0,0,1"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "vertex-00",
+                  "placements": [
+                    "vertex/0,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-01",
+                  "placements": [
+                    "vertex/0,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-02",
+                  "placements": [
+                    "vertex/0,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-03",
+                  "placements": [
+                    "vertex/0,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-04",
+                  "placements": [
+                    "vertex/0,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-05",
+                  "placements": [
+                    "vertex/0,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-06",
+                  "placements": [
+                    "vertex/0,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-07",
+                  "placements": [
+                    "vertex/0,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-08",
+                  "placements": [
+                    "vertex/0,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-09",
+                  "placements": [
+                    "vertex/0,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-10",
+                  "placements": [
+                    "vertex/0,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-11",
+                  "placements": [
+                    "vertex/0,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-12",
+                  "placements": [
+                    "vertex/0,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-13",
+                  "placements": [
+                    "vertex/0,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-14",
+                  "placements": [
+                    "vertex/0,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-15",
+                  "placements": [
+                    "vertex/0,2/0,-1,1,0"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "vertex-00",
+                  "placements": [
+                    "vertex/0,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-01",
+                  "placements": [
+                    "vertex/0,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-02",
+                  "placements": [
+                    "vertex/0,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-03",
+                  "placements": [
+                    "vertex/0,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-04",
+                  "placements": [
+                    "vertex/0,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-05",
+                  "placements": [
+                    "vertex/0,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-06",
+                  "placements": [
+                    "vertex/0,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-07",
+                  "placements": [
+                    "vertex/0,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-08",
+                  "placements": [
+                    "vertex/0,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-09",
+                  "placements": [
+                    "vertex/0,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-10",
+                  "placements": [
+                    "vertex/0,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-11",
+                  "placements": [
+                    "vertex/0,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-12",
+                  "placements": [
+                    "vertex/0,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-13",
+                  "placements": [
+                    "vertex/0,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-14",
+                  "placements": [
+                    "vertex/0,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-15",
+                  "placements": [
+                    "vertex/0,2/-1,0,0,-1"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "vertex-00",
+                  "placements": [
+                    "vertex/0,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-01",
+                  "placements": [
+                    "vertex/0,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-02",
+                  "placements": [
+                    "vertex/0,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-03",
+                  "placements": [
+                    "vertex/0,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-04",
+                  "placements": [
+                    "vertex/0,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-05",
+                  "placements": [
+                    "vertex/0,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-06",
+                  "placements": [
+                    "vertex/0,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-07",
+                  "placements": [
+                    "vertex/0,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-08",
+                  "placements": [
+                    "vertex/0,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-09",
+                  "placements": [
+                    "vertex/0,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-10",
+                  "placements": [
+                    "vertex/0,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-11",
+                  "placements": [
+                    "vertex/0,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-12",
+                  "placements": [
+                    "vertex/0,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-13",
+                  "placements": [
+                    "vertex/0,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-14",
+                  "placements": [
+                    "vertex/0,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-15",
+                  "placements": [
+                    "vertex/0,2/0,1,-1,0"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "vertex-00",
+                  "placements": [
+                    "vertex/2,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-01",
+                  "placements": [
+                    "vertex/2,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-02",
+                  "placements": [
+                    "vertex/2,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-03",
+                  "placements": [
+                    "vertex/2,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-04",
+                  "placements": [
+                    "vertex/2,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-05",
+                  "placements": [
+                    "vertex/2,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-06",
+                  "placements": [
+                    "vertex/2,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-07",
+                  "placements": [
+                    "vertex/2,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-08",
+                  "placements": [
+                    "vertex/2,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-09",
+                  "placements": [
+                    "vertex/2,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-10",
+                  "placements": [
+                    "vertex/2,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-11",
+                  "placements": [
+                    "vertex/2,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-12",
+                  "placements": [
+                    "vertex/2,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-13",
+                  "placements": [
+                    "vertex/2,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-14",
+                  "placements": [
+                    "vertex/2,2/1,0,0,1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-15",
+                  "placements": [
+                    "vertex/2,2/1,0,0,1"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "vertex-00",
+                  "placements": [
+                    "vertex/2,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-01",
+                  "placements": [
+                    "vertex/2,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-02",
+                  "placements": [
+                    "vertex/2,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-03",
+                  "placements": [
+                    "vertex/2,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-04",
+                  "placements": [
+                    "vertex/2,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-05",
+                  "placements": [
+                    "vertex/2,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-06",
+                  "placements": [
+                    "vertex/2,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-07",
+                  "placements": [
+                    "vertex/2,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-08",
+                  "placements": [
+                    "vertex/2,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-09",
+                  "placements": [
+                    "vertex/2,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-10",
+                  "placements": [
+                    "vertex/2,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-11",
+                  "placements": [
+                    "vertex/2,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-12",
+                  "placements": [
+                    "vertex/2,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-13",
+                  "placements": [
+                    "vertex/2,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-14",
+                  "placements": [
+                    "vertex/2,2/0,-1,1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-15",
+                  "placements": [
+                    "vertex/2,2/0,-1,1,0"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "vertex-00",
+                  "placements": [
+                    "vertex/2,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-01",
+                  "placements": [
+                    "vertex/2,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-02",
+                  "placements": [
+                    "vertex/2,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-03",
+                  "placements": [
+                    "vertex/2,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-04",
+                  "placements": [
+                    "vertex/2,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-05",
+                  "placements": [
+                    "vertex/2,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-06",
+                  "placements": [
+                    "vertex/2,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-07",
+                  "placements": [
+                    "vertex/2,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-08",
+                  "placements": [
+                    "vertex/2,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-09",
+                  "placements": [
+                    "vertex/2,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-10",
+                  "placements": [
+                    "vertex/2,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-11",
+                  "placements": [
+                    "vertex/2,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-12",
+                  "placements": [
+                    "vertex/2,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-13",
+                  "placements": [
+                    "vertex/2,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-14",
+                  "placements": [
+                    "vertex/2,2/-1,0,0,-1"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-15",
+                  "placements": [
+                    "vertex/2,2/-1,0,0,-1"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "vertex-00",
+                  "placements": [
+                    "vertex/2,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-01",
+                  "placements": [
+                    "vertex/2,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-02",
+                  "placements": [
+                    "vertex/2,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-03",
+                  "placements": [
+                    "vertex/2,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-04",
+                  "placements": [
+                    "vertex/2,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-05",
+                  "placements": [
+                    "vertex/2,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-06",
+                  "placements": [
+                    "vertex/2,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-07",
+                  "placements": [
+                    "vertex/2,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-08",
+                  "placements": [
+                    "vertex/2,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-09",
+                  "placements": [
+                    "vertex/2,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-10",
+                  "placements": [
+                    "vertex/2,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-11",
+                  "placements": [
+                    "vertex/2,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-12",
+                  "placements": [
+                    "vertex/2,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-13",
+                  "placements": [
+                    "vertex/2,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-14",
+                  "placements": [
+                    "vertex/2,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-15",
+                  "placements": [
+                    "vertex/2,2/0,1,-1,0"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "vertex-core-00",
+                  "placements": [
+                    "vertex-core/0,0/1,0,0,1",
+                    "vertex-core/0,0/0,-1,1,0",
+                    "vertex-core/0,0/-1,0,0,-1",
+                    "vertex-core/0,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-core-01",
+                  "placements": [
+                    "vertex-core/0,0/1,0,0,1",
+                    "vertex-core/0,0/0,-1,1,0",
+                    "vertex-core/0,0/-1,0,0,-1",
+                    "vertex-core/0,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-core-02",
+                  "placements": [
+                    "vertex-core/0,0/1,0,0,1",
+                    "vertex-core/0,0/0,-1,1,0",
+                    "vertex-core/0,0/-1,0,0,-1",
+                    "vertex-core/0,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-core-03",
+                  "placements": [
+                    "vertex-core/0,0/1,0,0,1",
+                    "vertex-core/0,0/0,-1,1,0",
+                    "vertex-core/0,0/-1,0,0,-1",
+                    "vertex-core/0,0/0,1,-1,0"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "vertex-core-00",
+                  "placements": [
+                    "vertex-core/2,0/1,0,0,1",
+                    "vertex-core/2,0/0,-1,1,0",
+                    "vertex-core/2,0/-1,0,0,-1",
+                    "vertex-core/2,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-core-01",
+                  "placements": [
+                    "vertex-core/2,0/1,0,0,1",
+                    "vertex-core/2,0/0,-1,1,0",
+                    "vertex-core/2,0/-1,0,0,-1",
+                    "vertex-core/2,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-core-02",
+                  "placements": [
+                    "vertex-core/2,0/1,0,0,1",
+                    "vertex-core/2,0/0,-1,1,0",
+                    "vertex-core/2,0/-1,0,0,-1",
+                    "vertex-core/2,0/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-core-03",
+                  "placements": [
+                    "vertex-core/2,0/1,0,0,1",
+                    "vertex-core/2,0/0,-1,1,0",
+                    "vertex-core/2,0/-1,0,0,-1",
+                    "vertex-core/2,0/0,1,-1,0"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "vertex-core-00",
+                  "placements": [
+                    "vertex-core/0,2/1,0,0,1",
+                    "vertex-core/0,2/0,-1,1,0",
+                    "vertex-core/0,2/-1,0,0,-1",
+                    "vertex-core/0,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-core-01",
+                  "placements": [
+                    "vertex-core/0,2/1,0,0,1",
+                    "vertex-core/0,2/0,-1,1,0",
+                    "vertex-core/0,2/-1,0,0,-1",
+                    "vertex-core/0,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-core-02",
+                  "placements": [
+                    "vertex-core/0,2/1,0,0,1",
+                    "vertex-core/0,2/0,-1,1,0",
+                    "vertex-core/0,2/-1,0,0,-1",
+                    "vertex-core/0,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-core-03",
+                  "placements": [
+                    "vertex-core/0,2/1,0,0,1",
+                    "vertex-core/0,2/0,-1,1,0",
+                    "vertex-core/0,2/-1,0,0,-1",
+                    "vertex-core/0,2/0,1,-1,0"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "count": {
+            "max": 1,
+            "min": 1,
+            "of": [
+              {
+                "at": {
+                  "piece": "vertex-core-00",
+                  "placements": [
+                    "vertex-core/2,2/1,0,0,1",
+                    "vertex-core/2,2/0,-1,1,0",
+                    "vertex-core/2,2/-1,0,0,-1",
+                    "vertex-core/2,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-core-01",
+                  "placements": [
+                    "vertex-core/2,2/1,0,0,1",
+                    "vertex-core/2,2/0,-1,1,0",
+                    "vertex-core/2,2/-1,0,0,-1",
+                    "vertex-core/2,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-core-02",
+                  "placements": [
+                    "vertex-core/2,2/1,0,0,1",
+                    "vertex-core/2,2/0,-1,1,0",
+                    "vertex-core/2,2/-1,0,0,-1",
+                    "vertex-core/2,2/0,1,-1,0"
+                  ]
+                }
+              },
+              {
+                "at": {
+                  "piece": "vertex-core-03",
+                  "placements": [
+                    "vertex-core/2,2/1,0,0,1",
+                    "vertex-core/2,2/0,-1,1,0",
+                    "vertex-core/2,2/-1,0,0,-1",
+                    "vertex-core/2,2/0,1,-1,0"
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "kind": "relational-puzzle",
+    "languageVersion": 1,
+    "predicates": {},
+    "requests": [
+      {
+        "defaultProfile": "default",
+        "id": "A",
+        "profiles": [
+          {
+            "choices": {
+              "edge": "A",
+              "face": "A",
+              "vertex": "A",
+              "vertex-core": "A"
+            },
+            "id": "default"
+          }
+        ],
+        "relation": {
+          "all": [
+            {
+              "chosen": {
+                "domain": "face",
+                "moves": [
+                  "A"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "edge",
+                "moves": [
+                  "A"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex",
+                "moves": [
+                  "A"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex-core",
+                "moves": [
+                  "A"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "defaultProfile": "default",
+        "id": "A'",
+        "profiles": [
+          {
+            "choices": {
+              "edge": "A'",
+              "face": "A'",
+              "vertex": "A'",
+              "vertex-core": "A'"
+            },
+            "id": "default"
+          }
+        ],
+        "relation": {
+          "all": [
+            {
+              "chosen": {
+                "domain": "face",
+                "moves": [
+                  "A'"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "edge",
+                "moves": [
+                  "A'"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex",
+                "moves": [
+                  "A'"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex-core",
+                "moves": [
+                  "A'"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "defaultProfile": "default",
+        "id": "A2",
+        "profiles": [
+          {
+            "choices": {
+              "edge": "A2",
+              "face": "A2",
+              "vertex": "A2",
+              "vertex-core": "A2"
+            },
+            "id": "default"
+          }
+        ],
+        "relation": {
+          "all": [
+            {
+              "chosen": {
+                "domain": "face",
+                "moves": [
+                  "A2"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "edge",
+                "moves": [
+                  "A2"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex",
+                "moves": [
+                  "A2"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex-core",
+                "moves": [
+                  "A2"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "defaultProfile": "default",
+        "id": "B",
+        "profiles": [
+          {
+            "choices": {
+              "edge": "B",
+              "face": "B",
+              "vertex": "B",
+              "vertex-core": "B"
+            },
+            "id": "default"
+          }
+        ],
+        "relation": {
+          "all": [
+            {
+              "chosen": {
+                "domain": "face",
+                "moves": [
+                  "B"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "edge",
+                "moves": [
+                  "B"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex",
+                "moves": [
+                  "B"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex-core",
+                "moves": [
+                  "B"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "defaultProfile": "default",
+        "id": "B'",
+        "profiles": [
+          {
+            "choices": {
+              "edge": "B'",
+              "face": "B'",
+              "vertex": "B'",
+              "vertex-core": "B'"
+            },
+            "id": "default"
+          }
+        ],
+        "relation": {
+          "all": [
+            {
+              "chosen": {
+                "domain": "face",
+                "moves": [
+                  "B'"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "edge",
+                "moves": [
+                  "B'"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex",
+                "moves": [
+                  "B'"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex-core",
+                "moves": [
+                  "B'"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "defaultProfile": "default",
+        "id": "B2",
+        "profiles": [
+          {
+            "choices": {
+              "edge": "B2",
+              "face": "B2",
+              "vertex": "B2",
+              "vertex-core": "B2"
+            },
+            "id": "default"
+          }
+        ],
+        "relation": {
+          "all": [
+            {
+              "chosen": {
+                "domain": "face",
+                "moves": [
+                  "B2"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "edge",
+                "moves": [
+                  "B2"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex",
+                "moves": [
+                  "B2"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex-core",
+                "moves": [
+                  "B2"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "defaultProfile": "default",
+        "id": "C",
+        "profiles": [
+          {
+            "choices": {
+              "edge": "C",
+              "face": "C",
+              "vertex": "C",
+              "vertex-core": "C"
+            },
+            "id": "default"
+          }
+        ],
+        "relation": {
+          "all": [
+            {
+              "chosen": {
+                "domain": "face",
+                "moves": [
+                  "C"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "edge",
+                "moves": [
+                  "C"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex",
+                "moves": [
+                  "C"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex-core",
+                "moves": [
+                  "C"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "defaultProfile": "default",
+        "id": "C'",
+        "profiles": [
+          {
+            "choices": {
+              "edge": "C'",
+              "face": "C'",
+              "vertex": "C'",
+              "vertex-core": "C'"
+            },
+            "id": "default"
+          }
+        ],
+        "relation": {
+          "all": [
+            {
+              "chosen": {
+                "domain": "face",
+                "moves": [
+                  "C'"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "edge",
+                "moves": [
+                  "C'"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex",
+                "moves": [
+                  "C'"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex-core",
+                "moves": [
+                  "C'"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "defaultProfile": "default",
+        "id": "C2",
+        "profiles": [
+          {
+            "choices": {
+              "edge": "C2",
+              "face": "C2",
+              "vertex": "C2",
+              "vertex-core": "C2"
+            },
+            "id": "default"
+          }
+        ],
+        "relation": {
+          "all": [
+            {
+              "chosen": {
+                "domain": "face",
+                "moves": [
+                  "C2"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "edge",
+                "moves": [
+                  "C2"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex",
+                "moves": [
+                  "C2"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex-core",
+                "moves": [
+                  "C2"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "defaultProfile": "default",
+        "id": "D",
+        "profiles": [
+          {
+            "choices": {
+              "edge": "D",
+              "face": "D",
+              "vertex": "D",
+              "vertex-core": "D"
+            },
+            "id": "default"
+          }
+        ],
+        "relation": {
+          "all": [
+            {
+              "chosen": {
+                "domain": "face",
+                "moves": [
+                  "D"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "edge",
+                "moves": [
+                  "D"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex",
+                "moves": [
+                  "D"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex-core",
+                "moves": [
+                  "D"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "defaultProfile": "default",
+        "id": "D'",
+        "profiles": [
+          {
+            "choices": {
+              "edge": "D'",
+              "face": "D'",
+              "vertex": "D'",
+              "vertex-core": "D'"
+            },
+            "id": "default"
+          }
+        ],
+        "relation": {
+          "all": [
+            {
+              "chosen": {
+                "domain": "face",
+                "moves": [
+                  "D'"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "edge",
+                "moves": [
+                  "D'"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex",
+                "moves": [
+                  "D'"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex-core",
+                "moves": [
+                  "D'"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "defaultProfile": "default",
+        "id": "D2",
+        "profiles": [
+          {
+            "choices": {
+              "edge": "D2",
+              "face": "D2",
+              "vertex": "D2",
+              "vertex-core": "D2"
+            },
+            "id": "default"
+          }
+        ],
+        "relation": {
+          "all": [
+            {
+              "chosen": {
+                "domain": "face",
+                "moves": [
+                  "D2"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "edge",
+                "moves": [
+                  "D2"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex",
+                "moves": [
+                  "D2"
+                ]
+              }
+            },
+            {
+              "chosen": {
+                "domain": "vertex-core",
+                "moves": [
+                  "D2"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

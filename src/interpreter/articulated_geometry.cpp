@@ -143,6 +143,8 @@ void Geometry::build_articulated(const Json &realization) {
     Asset asset;
     for (const auto &v : data.at("vertices")) {
       const auto p = point(v);
+      ensure(!flat_surface_ || p[2] == 0, id,
+             "Flat-surface assets must lie in their local z=0 plane.");
       ensure(!spherical || dot(p, p) <= (radius + 1e-6) * (radius + 1e-6), id,
              "A spherical mesh must fit within its declared radius.");
       asset.vertices.push_back(p);
@@ -265,6 +267,11 @@ void Geometry::build_articulated(const Json &realization) {
         ensure(port.empty() || q.ports.contains(port), id, "Component refers to an undeclared local port.");
         component.frames.push_back(frame(frames.at(q.key)));
         const auto &m = component.frames.back();
+        ensure(!flat_surface_ ||
+                   (std::abs(m[2]) + std::abs(m[6]) + std::abs(m[8]) + std::abs(m[9]) +
+                        std::abs(m[14]) < 1e-9 &&
+                    m[12] >= 0 && m[12] < flat_side_ && m[13] >= 0 && m[13] < flat_side_),
+               id, "Flat-surface frames must be planar and anchored in the fundamental square.");
         ensure(!spherical || (m[12] == 0 && m[13] == 0 && m[14] == 0), id,
                "Spherical component frames must rotate about the sphere origin.");
       }
@@ -317,6 +324,11 @@ void Geometry::build_articulated(const Json &realization) {
             ensure(length > 1e-12, id, "Rotation axis is degenerate.");
             axis = scale(axis, 1 / length);
             const auto pivot = point(step.at("pivot"));
+            ensure(!flat_surface_ ||
+                       (std::abs(axis[0]) + std::abs(axis[1]) < 1e-9 && pivot[2] == 0 &&
+                        std::abs(pivot[0]) <= 2 * flat_side_ &&
+                        std::abs(pivot[1]) <= 2 * flat_side_),
+                   id, "Flat-surface tracks require bounded planar rotations.");
             ensure(!spherical || (pivot[0] == 0 && pivot[1] == 0 && pivot[2] == 0), id,
                    "Spherical animation pivots must be the sphere origin.");
             const auto angle = step.at("angle").get<double>();
@@ -328,6 +340,8 @@ void Geometry::build_articulated(const Json &realization) {
             endpoint = space == "local" ? multiply(endpoint, r) : multiply(r, endpoint);
           }
           const auto &target = component.frames[op.maps[d][q]];
+          if (flat_surface_)
+            endpoint = canonical_flat_frame(endpoint);
           if (diagram_)
             for (int i = 12; i < 15; ++i)
               endpoint[i] = target[i];

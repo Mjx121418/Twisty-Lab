@@ -31,10 +31,20 @@ import gearExtremeManifest from '../../packages/gear-extreme/relational-manifest
 import gearPlainManifest from '../../packages/gear-plain/relational-manifest.json';
 import { KernelSession, loadRuntime, type Realization, type Result, type Snapshot, type Transition } from './kernel';
 import { RenderView } from './renderer';
+import { SurfaceView } from './surfaceRenderer';
+import torusSource from '../../packages/flat-torus/relational-package.json?raw';
+import torusRealization from '../../packages/flat-torus/flat-quotient.json';
+import kleinSource from '../../packages/flat-klein-bottle/relational-package.json?raw';
+import kleinRealization from '../../packages/flat-klein-bottle/flat-quotient.json';
 import { pieceDestinations, type PieceDestination } from './destinations';
 
 type GearModel = 'supplied' | '12' | '6';
-type Preset = { id: string; label: string; source: string; realizations: Realization[]; spherical?: Realization; gearModels?: Record<GearModel, Realization[]> };
+type Preset = { id: string; label: string; source: string; realizations: Realization[]; spherical?: Realization; surface?: boolean; gearModels?: Record<GearModel, Realization[]> };
+type PuzzleView = RenderView | SurfaceView;
+function surfacePreset(id: string, label: string, source: string, realization: unknown): Preset {
+  const model = realization as Realization;
+  return { id, label, source, surface: true, realizations: ['square', 'tiles'].map((mode) => ({ ...model, id: `${model.id}-${mode}` })) };
+}
 const gearEuclidean = JSON.parse(gearEuclideanText) as Realization;
 const gearDiagram = JSON.parse(gearDiagramText) as Realization;
 const gearSixEuclidean = JSON.parse(gearSixEuclideanText) as Realization;
@@ -59,15 +69,18 @@ const presets = [
   gearPreset('gear', 'Gear Cube · experimental', gearSource, gearManifest.definitionDigest),
   gearPreset('gear-extreme', 'Gear Cube Extreme · experimental', gearExtremeSource, gearExtremeManifest.definitionDigest),
   gearPreset('gear-plain', 'Gear family · all plain', gearPlainSource, gearPlainManifest.definitionDigest),
+  surfacePreset('flat-torus', 'Flat torus · face turning', torusSource, torusRealization),
+  surfacePreset('flat-klein-bottle', 'Klein bottle · face turning', kleinSource, kleinRealization),
 ] as unknown as Preset[];
 type Layout = 'both' | 'cube' | 'diagram';
-type ViewPair = 'cube-diagram' | 'sphere-diagram' | 'cube-sphere';
+type ViewPair = 'cube-diagram' | 'sphere-diagram' | 'cube-sphere' | 'square-tiles';
 type Inspector = 'pieces' | 'history' | 'definition';
 
 function realizationPair(preset: Preset, pair: ViewPair, gearModel: GearModel = 'supplied'): Realization[] {
+  if (preset.surface) return preset.realizations;
   const [cube, diagram] = preset.gearModels?.[gearModel] ?? preset.realizations;
   return (preset.spherical && pair === 'sphere-diagram' ? [preset.spherical, diagram] :
-    preset.spherical && pair === 'cube-sphere' ? [cube, preset.spherical] : [cube, diagram]) as Realization[];
+    preset.spherical && (pair === 'cube-sphere' || pair === 'square-tiles') ? [cube, preset.spherical] : [cube, diagram]) as Realization[];
 }
 
 function download(filename: string, content: string): void {
@@ -100,7 +113,7 @@ export function App() {
   const [fatalError, setFatalError] = useState('');
   const [lastScramble, setLastScramble] = useState('');
   const kernel = useRef<KernelSession | undefined>(undefined);
-  const views = useRef<RenderView[]>([]);
+  const views = useRef<PuzzleView[]>([]);
   const cameraCache = useRef(new Map<string, unknown>());
   const pendingCameras = useRef<Map<string, unknown> | undefined>(undefined);
   const cubeHost = useRef<HTMLDivElement>(null);
@@ -118,7 +131,7 @@ export function App() {
   speedRef.current = duration;
   const availablePresets = customGear ? [...presets, customGear] : presets;
   const activePreset = availablePresets.find((item) => item.realizations[0].compatibleDefinitionDigest === snapshot?.definitionDigest);
-  const effectivePair = activePreset?.spherical ? viewPair : 'cube-diagram';
+  const effectivePair = activePreset?.surface ? 'square-tiles' : activePreset?.spherical ? viewPair === 'square-tiles' ? 'cube-sphere' : viewPair : 'cube-diagram';
 
   function install(runtime: MainModule, source: string, id: string): void {
     const next = new KernelSession(runtime, source);
@@ -133,7 +146,7 @@ export function App() {
     pendingCameras.current = undefined;
     setSourceId(id); setSnapshot(initial); setVisualDigest(initial.stateDigest);
     setSelected(undefined); setEvidence(undefined); setLastScramble(''); setVisualError('');
-    setAlgorithm(initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' :
+    setAlgorithm(initial.puzzleId.startsWith('flat-') ? "A B A' B'" : initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' :
       initial.puzzleId === 'bagua-experimental-v1' ? "U+ R' L' D2 R L U-" :
       parsedSource.kind === 'relational-gear-prototypes' ? (parsedSource.gearedEdges.length === 0 ? "Rq Uq Rq' Uq'" :
         initial.legalRequests.some((request) => request.operation === 'R') ? "R R'" : "Rq Rq'") : "R U R' U'");
@@ -156,7 +169,7 @@ export function App() {
     const session = kernel.current;
     const preset = availablePresets.find((item) => item.realizations[0].compatibleDefinitionDigest === session.definition.definitionDigest);
     if (!preset) { setVisualError('No compatible realization is installed for this definition. The headless engine and inspector remain available.'); return; }
-    const created: RenderView[] = [];
+    const created: PuzzleView[] = [];
     const realizations = realizationPair(preset, viewPair, gearModel);
     const cameras = cameraCache.current;
     const restoredCameras = pendingCameras.current;
@@ -164,7 +177,9 @@ export function App() {
     try {
       for (let i = 0; i < 2; i++) {
         const host = i === 0 ? cubeHost.current : diagramHost.current;
-        const view = new RenderView(module, host, session.native, realizations[i], setSelected, () => !busyRef.current, chooseDestination);
+        const view = preset.surface
+          ? new SurfaceView(module, host, session.native, realizations[i], setSelected, () => !busyRef.current, chooseDestination, i === 0 ? 'square' : 'tiles')
+          : new RenderView(module, host, session.native, realizations[i], setSelected, () => !busyRef.current, chooseDestination);
         view.restoreCamera(restoredCameras?.get(realizations[i].id) ?? cameras.get(realizations[i].id));
         view.setState(session.stateText()); created.push(view);
       }
@@ -271,7 +286,7 @@ export function App() {
         setSelected(undefined);
       } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
         event.preventDefault(); enqueue(() => event.shiftKey ? kernel.current!.redo() : kernel.current!.undo());
-      } else if (!event.ctrlKey && !event.metaKey && !event.altKey && /^[urfdlb]$/i.test(event.key)) {
+      } else if (!event.ctrlKey && !event.metaKey && !event.altKey && /^[urfdlabc]$/i.test(event.key)) {
         event.preventDefault();
         const face = event.key.toUpperCase(), inverse = event.shiftKey;
         if (kernel.current?.definition.operations.some((move) => move.id === face)) enqueue(() => {
@@ -305,7 +320,7 @@ export function App() {
     for (const view of views.current) view.setState(kernel.current.stateText());
     const presentation = JSON.parse(text).presentation as { layout?: Layout; viewPair?: ViewPair; gearModel?: GearModel; cameras?: unknown[] } | undefined;
     if (presentation?.layout && ['both', 'cube', 'diagram'].includes(presentation.layout)) setLayout(presentation.layout);
-    const pair = presentation?.viewPair && ['cube-diagram', 'sphere-diagram', 'cube-sphere'].includes(presentation.viewPair) ? presentation.viewPair : viewPair;
+    const pair = presentation?.viewPair && ['cube-diagram', 'sphere-diagram', 'cube-sphere', 'square-tiles'].includes(presentation.viewPair) ? presentation.viewPair : viewPair;
     const model = presentation?.gearModel === 'supplied' || presentation?.gearModel === '6' || presentation?.gearModel === '12' ? presentation.gearModel : gearModel;
     if (Array.isArray(presentation?.cameras)) {
       if (pair === viewPair && model === gearModel) presentation.cameras.forEach((camera, index) => views.current[index]?.restoreCamera(camera));
@@ -322,7 +337,7 @@ export function App() {
   const candidates = snapshot?.candidateRequests && new Set(snapshot.candidateRequests.map((request) => request.operation));
   const phaseRequests = definition?.operations.filter((operation) => candidates?.has(operation.id));
   const families = Array.from(new Set(definition?.operations.map((operation) => operation.family) ?? []));
-  const faceOrder = ['U', 'R', 'F', 'D', 'L', 'B'];
+  const faceOrder = activePreset?.surface ? ['A', 'B', 'C', 'D'] : ['U', 'R', 'F', 'D', 'L', 'B'];
   families.sort((a, b) => (faceOrder.includes(a) ? faceOrder.indexOf(a) : 6) - (faceOrder.includes(b) ? faceOrder.indexOf(b) : 6) || a.localeCompare(b));
   const selectedPiece = definition?.pieces.find((piece) => piece.id === selected);
   const selectedDomain = definition?.pieceTypes.find((type) => type.id === selectedPiece?.type)?.placementDomainId;
@@ -356,7 +371,7 @@ export function App() {
                 pendingCameras.current = new Map(realizationPair(activePreset, effectivePair, model).map((realization, index) => [realization.id, views.current[index]?.cameraState()]));
                 setGearModel(model);
               }}><option value="supplied">Supplied model · 6 teeth · 300° spin</option><option value="12">12 teeth · 60° spin</option><option value="6">6 teeth · 300° spin</option></select></label>}
-              <div className="segmented" aria-label="View layout">{(['both', 'cube', 'diagram'] as Layout[]).map((value) => <button key={value} aria-pressed={layout === value} onClick={() => requestLayout(value)}>{value === 'both' ? 'Both views' : value === 'cube' ? effectivePair === 'sphere-diagram' ? 'Sphere' : 'Cube' : effectivePair === 'cube-sphere' ? 'Sphere' : 'Diagram'}</button>)}</div>
+              <div className="segmented" aria-label="View layout">{(['both', 'cube', 'diagram'] as Layout[]).map((value) => <button key={value} aria-pressed={layout === value} onClick={() => requestLayout(value)}>{value === 'both' ? 'Both views' : activePreset?.surface ? value === 'cube' ? 'Square' : 'Tiled plane' : value === 'cube' ? effectivePair === 'sphere-diagram' ? 'Sphere' : 'Cube' : effectivePair === 'cube-sphere' ? 'Sphere' : 'Diagram'}</button>)}</div>
             </div>
           </div>
           {activePreset && JSON.parse(activePreset.source).kind === 'relational-gear-prototypes' && <fieldset className="gear-configuration" disabled={busy}>
@@ -376,14 +391,14 @@ export function App() {
 
           <div className={`views layout-${layout}`}>
             <article className={`view-panel cube-panel ${layout === 'diagram' ? 'hidden' : ''}`}>
-              <div className="view-title"><span>01 / {effectivePair === 'sphere-diagram' ? 'Spherical' : 'Euclidean'}</span><span className="subtle">{effectivePair === 'sphere-diagram' ? 'Drag to rotate freely · scroll to zoom' : 'Drag to orbit · scroll to zoom'}</span></div>
+              <div className="view-title"><span>01 / {activePreset?.surface ? 'Fundamental square' : effectivePair === 'sphere-diagram' ? 'Spherical' : 'Euclidean'}</span><span className="subtle">{activePreset?.surface ? 'Drag to pan · scroll to zoom' : effectivePair === 'sphere-diagram' ? 'Drag to rotate freely · scroll to zoom' : 'Drag to orbit · scroll to zoom'}</span></div>
               <div ref={cubeHost} className="canvas-host" data-testid="cube-view" data-state-digest={visualDigest} />
-              <span className="view-note" hidden={!!selected}>{effectivePair === 'sphere-diagram' ? 'Spherical regions · one exact state' : 'Rigid bodies & bound ports'}</span>
+              <span className="view-note" hidden={!!selected}>{activePreset?.surface ? activePreset.id === 'flat-klein-bottle' ? 'Horizontal seams reflect · paired arrows show the gluing' : 'Opposite edges join by translation' : effectivePair === 'sphere-diagram' ? 'Spherical regions · one exact state' : 'Rigid bodies & bound ports'}</span>
             </article>
             <article className={`view-panel diagram-panel ${layout === 'cube' ? 'hidden' : ''}`}>
-              <div className="view-title"><span>02 / {effectivePair === 'cube-sphere' ? 'Spherical' : 'Port diagram'}</span><span className="subtle">Click a piece, then a translucent destination</span></div>
+              <div className="view-title"><span>02 / {activePreset?.surface ? 'Tiled plane' : effectivePair === 'cube-sphere' ? 'Spherical' : 'Port diagram'}</span><span className="subtle">Click a piece, then a translucent destination</span></div>
               <div ref={diagramHost} className="canvas-host" data-testid="diagram-view" data-state-digest={visualDigest} />
-              <span className="view-note" hidden={!!selected}>Same identities. Same transition.</span>
+              <span className="view-note" hidden={!!selected}>{activePreset?.surface ? 'Neighboring tiles repeat the same 32 pieces' : 'Same identities. Same transition.'}</span>
             </article>
           </div>
 
@@ -397,7 +412,7 @@ export function App() {
           </div>
 
           <section className="commands">
-            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : snapshot?.puzzleId === 'bagua-experimental-v1' ? '+ / −: 45° · face keys: 90° · Shift for inverse' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
+            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{activePreset?.surface ? 'Face keys A B C D · 90° turns · Shift for inverse' : snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : snapshot?.puzzleId === 'bagua-experimental-v1' ? '+ / −: 45° · face keys: 90° · Shift for inverse' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
             <div className="moves">{families.map((family) => <div className={`move-pair ${(phaseRequests?.filter((op) => op.family === family).length ?? 0) > 2 ? 'many-moves' : ''}`} key={family}>{phaseRequests?.filter((operation) => operation.family === family).map((operation) => {
               const inverse = operation.id === `${family}'` || operation.id === `${family}_inv`;
               const half = operation.id === `${family}_half`;

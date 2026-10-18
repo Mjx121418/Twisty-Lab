@@ -52,8 +52,19 @@ export type VisualPart = {
 export type SceneDescriptor = {
   sceneId: string; realizationId: string; definitionDigest: string; requiredCapabilities: string[];
   meshAssets: MeshAsset[]; visualParts: VisualPart[]; diagram: boolean;
-  ambientSpace?: 'R3' | 'S2'; sphereRadius?: number; diskAngleDegrees?: number; fidelity?: string;
+  ambientSpace?: 'R3' | 'S2' | 'E2'; sphereRadius?: number; diskAngleDegrees?: number; fidelity?: string;
+  flatSurface?: FlatSurface;
   diskCenters?: Record<string, [number, number, number]>; surfaceTransportVerified?: boolean; catalogTransportVerified?: boolean;
+};
+/** Intrinsic quotient data. Displayed images, clipping and cameras belong to the renderer. */
+export type FlatSurface = {
+  topology: 'torus' | 'klein-bottle';
+  fundamentalBounds: [number, number, number, number];
+  /** Column-major proper 4x4 lifts of the two planar identification isometries. */
+  deckGenerators: [number[], number[]];
+  twoSided: true;
+  cutRadius?: number;
+  diskCenters?: Record<string, [number, number]>;
 };
 export type HitBinding = {
   status: string; pieceId?: string; portId?: string; operationCandidates?: Request[];
@@ -72,7 +83,8 @@ export type PolyhedralModel = {
   surfaceVertices?: number[][];
 };
 export type Realization = {
-  schemaVersion: number; id: string; kind: 'cube-euclidean' | 'cube-port-diagram' | 'cube-spherical' | 'polyhedral-euclidean' | 'polyhedral-port-diagram' | 'polyhedral-spherical' | 'articulated-euclidean' | 'articulated-port-diagram' | 'articulated-spherical';
+  schemaVersion: number; id: string; kind: 'cube-euclidean' | 'cube-port-diagram' | 'cube-spherical' | 'polyhedral-euclidean' | 'polyhedral-port-diagram' | 'polyhedral-spherical' | 'articulated-euclidean' | 'articulated-port-diagram' | 'articulated-spherical' | 'flat-quotient';
+  flatSurface?: { topology: 'torus' | 'klein-bottle'; sideLength: number; cutRadius?: number; diskCenters?: Record<string, [number, number]> };
   radius?: number;
   compatibleDefinitionDigest: string; requiredCapabilities: string[];
   models?: Record<string, PolyhedralModel>;

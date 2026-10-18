@@ -27,7 +27,8 @@
         "polyhedral-spherical",
         "articulated-euclidean",
         "articulated-port-diagram",
-        "articulated-spherical"
+        "articulated-spherical",
+        "flat-quotient"
       ]
     },
     "compatibleDefinitionDigest": {
@@ -40,7 +41,8 @@
       "items": {
         "enum": [
           "triangle-meshes",
-          "rigid-transforms"
+          "rigid-transforms",
+          "quotient-surface"
         ]
       }
     },
@@ -173,7 +175,10 @@
             "type": "array",
             "maxItems": 262144,
             "uniqueItems": true,
-            "items": {"type": "integer", "minimum": 0}
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            }
           },
           "triangles": {
             "type": "array",
@@ -200,6 +205,42 @@
         "maxItems": 32,
         "items": {
           "$ref": "#/$defs/component"
+        }
+      }
+    },
+    "flatSurface": {
+      "type": "object",
+      "required": [
+        "topology",
+        "sideLength"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "topology": {
+          "enum": [
+            "torus",
+            "klein-bottle"
+          ]
+        },
+        "sideLength": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 100
+        },
+        "cutRadius": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "diskCenters": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "number"
+            }
+          }
         }
       }
     }
@@ -451,8 +492,47 @@
       }
     },
     {
-      "if": {"properties": {"kind": {"const": "articulated-spherical"}}},
-      "then": {"required": ["radius"], "properties": {"radius": {"exclusiveMinimum": 0, "maximum": 100}}}
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "articulated-spherical"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "radius"
+        ],
+        "properties": {
+          "radius": {
+            "exclusiveMinimum": 0,
+            "maximum": 100
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "flat-quotient"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "flatSurface",
+          "assets",
+          "componentsByDomain"
+        ],
+        "properties": {
+          "requiredCapabilities": {
+            "contains": {
+              "const": "quotient-surface"
+            }
+          }
+        }
+      }
     }
   ]
 }

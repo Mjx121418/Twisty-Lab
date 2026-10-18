@@ -105,13 +105,14 @@ Geometry::Geometry(std::shared_ptr<const Execution> execution, const std::string
   if (kind != "cube-euclidean" && kind != "cube-port-diagram" && kind != "cube-spherical" &&
       kind != "polyhedral-euclidean" && kind != "polyhedral-port-diagram" && kind != "polyhedral-spherical" &&
       kind != "articulated-euclidean" && kind != "articulated-port-diagram" &&
-      kind != "articulated-spherical")
+      kind != "articulated-spherical" && kind != "flat-quotient")
     throw DiagnosticError("realization.unsupported", "/kind", "Unknown realization kind.");
   diagram_ = kind.ends_with("port-diagram");
   catalog_ = kind.starts_with("polyhedral-");
   spherical_ = kind == "cube-spherical";
   catalog_spherical_ = kind == "polyhedral-spherical";
-  articulated_ = kind.starts_with("articulated-");
+  flat_surface_ = kind == "flat-quotient";
+  articulated_ = kind.starts_with("articulated-") || flat_surface_;
   if (execution_->articulated_events() && !articulated_)
     throw DiagnosticError("realization.unsupported", "/kind",
                           "This binding catalog requires articulated event tracks.");
@@ -131,7 +132,10 @@ Geometry::Geometry(std::shared_ptr<const Execution> execution, const std::string
             {"labels", Json::array()},
             {"diagram", diagram_}};
   if (articulated_) {
-    build_articulated(realization);
+    if (flat_surface_)
+      build_flat_surface(realization);
+    else
+      build_articulated(realization);
     moving_.resize(definition_->pieces.size(), false);
     transforms_.resize(parts_.size() * 16);
     sample(0);

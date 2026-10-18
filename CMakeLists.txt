@@ -61,7 +61,8 @@ add_library(puzzle_geometry
   src/interpreter/catalog_geometry.cpp
   src/interpreter/spherical_geometry.cpp
   src/interpreter/catalog_spherical_geometry.cpp
-  src/interpreter/articulated_geometry.cpp)
+  src/interpreter/articulated_geometry.cpp
+  src/interpreter/flat_surface_geometry.cpp)
 target_link_libraries(puzzle_geometry PUBLIC puzzle_execution)
 
 add_library(puzzle_kernel INTERFACE)
@@ -125,6 +126,10 @@ else()
     target_link_libraries(runtime_api_tests PRIVATE puzzle_kernel)
     target_compile_definitions(runtime_api_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
     add_test(NAME runtime_all_presets COMMAND runtime_api_tests)
+    add_executable(flat_surface_tests tests/flat_surface_tests.cpp)
+    target_link_libraries(flat_surface_tests PRIVATE puzzle_kernel)
+    target_compile_definitions(flat_surface_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+    add_test(NAME flat_surfaces COMMAND flat_surface_tests)
     add_executable(gear_tests tests/legacy/gear_tests.cpp)
     target_link_libraries(gear_tests PRIVATE legacy_test_reference)
     target_compile_definitions(gear_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
@@ -134,6 +139,7 @@ else()
     target_compile_definitions(gear_language_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
     add_test(NAME gear_language_migration COMMAND gear_language_tests)
     find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    add_test(NAME flat_surface_packages COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/flat_surface_packages.py)
     add_test(NAME runtime_has_no_legacy_backend COMMAND ${Python3_EXECUTABLE}
       ${CMAKE_SOURCE_DIR}/tests/runtime_boundary.py
       $<TARGET_FILE:puzzle_catalog> $<TARGET_FILE:puzzle_execution>

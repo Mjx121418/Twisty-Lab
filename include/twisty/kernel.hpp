@@ -25,7 +25,7 @@ inline Json kernel_info() {
       {"realizationKinds",
        {"cube-euclidean", "cube-port-diagram", "cube-spherical", "polyhedral-euclidean",
         "polyhedral-port-diagram", "polyhedral-spherical", "articulated-euclidean",
-        "articulated-port-diagram", "articulated-spherical"}},
-      {"geometryCapabilities", {"triangle-meshes", "rigid-transforms"}}};
+        "articulated-port-diagram", "articulated-spherical", "flat-quotient"}},
+      {"geometryCapabilities", {"triangle-meshes", "rigid-transforms", "quotient-surface"}}};
 }
 } // namespace twisty

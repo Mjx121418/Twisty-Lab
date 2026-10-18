@@ -1,0 +1,88 @@
+# Face-turning flat surfaces
+
+The flat torus and Klein bottle presets use the square `[0,2) × [0,2)` with four
+unit squares. The cutting disks have radius `4/5` and centers A `(0.5,0.5)`,
+B `(1.5,0.5)`, C `(0.5,1.5)`, D `(1.5,1.5)`. A named turn is 90° clockwise in
+that center's fundamental chart; the inverse and half turn are also available.
+
+The full circle arrangement gives 32 pieces: 4 face regions, 8 edge regions,
+16 vertex lobes, and 4 vertex cores. A lobe is inside three disks; a core is
+inside four. These are two shapes within the vertex family. At this radius
+all vertex regions can move. The four initial unit squares supply the colors.
+An asymmetric L marking on each piece makes its orientation and handedness
+visible even where its color is uniform.
+
+## Identification and motion
+
+Both surfaces identify horizontal translations `H(x,y) = (x+2,y)`. The torus
+also uses `V(x,y) = (x,y+2)`. The Klein bottle instead uses the glide reflection
+`V(x,y) = (2−x,y+2)`, with `V H V⁻¹ = H⁻¹`. Thus its top/bottom pairing reverses
+horizontal direction. There is no global clockwise orientation on that surface.
+
+The offline authoring generator uses integer half-unit coordinates and signed
+permutation matrices for placements and quarter-turn transports. Canonical
+placement frames record chart orientation, including parity on the Klein bottle.
+The abstract program contains no coordinates, circles, or renderer logic. It
+uses the existing language, placement maps, completion profiles and occupancy
+predicates without a new core rule or catalog kind.
+
+Geometric motion is a rotation about the appropriate lift of the requested
+center. The interpreter validates its endpoint modulo the identifications.
+Sampling an intermediate frame retains a continuous lift; the final frame is
+the exact canonical target. A renderer's complete set of images makes this
+canonicalization visually continuous. Source placements near different seams
+can use different lifted centers, but no displayed tile is generated in C++.
+
+## Interpreter and renderer boundary
+
+`flat-quotient` realizations reuse planar indexed assets and rigid component
+frames/tracks. `flatSurface` declares `topology`, `sideLength`, and optional
+`cutRadius` and `diskCenters`. The scene exposes `ambientSpace: "E2"` and:
+
+```text
+flatSurface.topology                 torus | klein-bottle
+flatSurface.fundamentalBounds        [left, bottom, right, top]
+flatSurface.deckGenerators          [horizontal 4×4 matrix, vertical 4×4 matrix]
+flatSurface.twoSided                 true
+flatSurface.cutRadius                optional
+flatSurface.diskCenters              optional map of names to [x,y]
+```
+
+Frames and generators are column-major. A planar reflection is lifted to a
+proper 3D rigid frame by also reversing z. All assets lie at local z=0, so
+renderers must draw both sides. Mesh buffers and one-frame-per-visual-part
+ordering remain version 1. The interpreter emits each physical part once and
+never includes camera, viewport, tiled-copy or clipping state.
+
+The `quotient-surface` rendering capability means the client can apply these
+identifications, draw two-sided planar meshes, clip them to its chosen chart,
+and resolve displayed images to their original visual-part IDs. A reflected
+image naturally reverses apparent rotation when its matrix is composed with
+the sampled frame; it needs no additional per-copy angle rule.
+
+The reference Three.js renderer offers a fundamental-square view and a finite
+3×3 tiled view. It adds one tile of image padding on each side for seamless
+motion: 9 images in the square view and 25 in the tiled view. Shared assets and
+instanced drawing keep those images inexpensive. GPU clipping applies to all
+surfaces, previews and selection marks; picking separately excludes clipped
+points. All images select the same piece. Destinations group by abstract target
+placement rather than an image's displayed pose. Both views support panning,
+zoom, history and saved cameras. Neighboring images are copies, not new pieces.
+
+The standalone Canvas example implements the same square presentation using
+only the public buffers, identification matrices and Canvas clipping.
+
+## Reproduction and limits
+
+`python3 scripts/flat_surface_packages.py` checks the committed packages; add
+`--write` to regenerate them using the native compiler. Analytic shared circle
+arcs use a common 64-angle lattice plus exact intersection endpoints. The
+maximum chord error is below 0.001 unit. Four shared piece models, their color
+patches and markings use 210 unique triangles in each realization. Centroid fans
+preserve mesh connectivity under each body's symmetries; the authoring check
+verifies those symmetries for both body and color-patch triangles. The L marks
+deliberately distinguish orientation and therefore break the visual symmetry.
+
+The first release fixes radius 0.8 and square subdivision 2×2. Changing radius
+across a tangency changes the piece layout and requires new authoring. Embedded
+donut/Klein-bottle views and arbitrary fundamental polygons are deferred.
