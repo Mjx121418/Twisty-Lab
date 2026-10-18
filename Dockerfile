@@ -33,6 +33,10 @@ RUN apt-get update \
         zip \
     && rm -rf /var/lib/apt/lists/*
 
+# Keep this pin aligned with @playwright/test in package.json.
+RUN npx --yes playwright@1.64.0 install --with-deps --only-shell chromium \
+    && rm -rf /var/lib/apt/lists/*
+
 # emsdk selects the native Linux SDK architecture, including ARM64.
 # Pin the compiler release instead of installing the moving "latest" alias.
 RUN git clone --depth 1 https://github.com/emscripten-core/emsdk.git /opt/emsdk

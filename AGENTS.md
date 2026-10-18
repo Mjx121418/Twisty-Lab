@@ -10,6 +10,12 @@ The container has a 4 GB memory budget. The enforced cgroup limit is 4 GiB (4,29
 - Check cgroup memory usage before sustained heavy work. Reduce concurrency or workload size if memory pressure rises; do not retry an out-of-memory workload unchanged.
 - Do not choose concurrency from the CPU count alone or use unrestricted parallel builds.
 
+## Automated visual checks
+
+- Run browser checks headlessly with `DISPLAY`, `WAYLAND_DISPLAY`, and `PWDEBUG` unset for the check process. Inherited display settings can connect to a forwarded display and activate XQuartz on macOS.
+- Use `env -u DISPLAY -u WAYLAND_DISPLAY -u PWDEBUG npm run test:e2e`. Apply the same environment isolation to direct Playwright commands and screenshot scripts.
+- Avoid headed or debug browser modes unless the user explicitly requests them. Keep display settings unchanged for other processes.
+
 ## Dockerfile
 
 Do not modify, replace, regenerate, or reformat `Dockerfile` unless the user explicitly asks for a Dockerfile change. Read-only inspection is allowed.
