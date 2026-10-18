@@ -76,13 +76,6 @@ RUN printf '%s\n' \
     && rm -f /tmp/toolchain-check.cpp /tmp/native-check \
         /tmp/wasm-check.cjs /tmp/wasm-check.wasm
 
-# Keep Codex in its own late layer so changing its version reuses the SDK layers.
-# Include npm's optional platform package and verify that its native binary runs.
-ARG CODEX_VERSION=0.160.1
-RUN npm install --global --include=optional "@openai/codex@${CODEX_VERSION}" \
-    && codex --version \
-    && npm cache clean --force
-
 # Mount only the project directory here. Toolchains stay outside that mount.
 WORKDIR /workspace
 
