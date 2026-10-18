@@ -3,6 +3,8 @@ name: Deploy GitHub Pages
 # Pushing code and publishing the site are separate, user-controlled actions.
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
 
 permissions:
   contents: read
