@@ -13,7 +13,7 @@ if args.update_fixtures and not args.write:
     parser.error('--update-fixtures requires --write')
 root = Path(__file__).resolve().parent.parent
 digests = {}
-subprocess.run(['python3', str(root / 'scripts/relational-packages.py')] + (['--write'] if args.write else []), check=True)
+subprocess.run(['python3', str(root / 'scripts/cube-packages.py')] + (['--write'] if args.write else []), check=True)
 for name in ['cube3', 'bandaged']:
     package = root / 'packages' / name
     result = json.loads(subprocess.check_output([
@@ -44,13 +44,13 @@ for name in ['cube3', 'bandaged']:
             raise SystemExit(f'{path.relative_to(root)} is stale; review the change and run this script with --write.')
     print(f'{name}: {definition["definitionDigest"]}')
 subprocess.run(['python3', str(root / 'scripts/helicopter_model.py')], check=True)
-subprocess.run(['python3', str(root / 'scripts/helicopter_relational.py')] + (['--write'] if args.write else []), check=True)
+subprocess.run(['python3', str(root / 'scripts/helicopter_packages.py')] + (['--write'] if args.write else []), check=True)
 digests['helicopter'] = json.loads((root / 'packages/helicopter/definition.json').read_text())['definitionDigest']
 subprocess.run(['python3', str(root / 'scripts/bagua_model.py')], check=True)
-subprocess.run(['python3', str(root / 'scripts/bagua_relational.py')] + (['--write'] if args.write else []), check=True)
+subprocess.run(['python3', str(root / 'scripts/bagua_packages.py')] + (['--write'] if args.write else []), check=True)
 subprocess.run(['python3', str(root / 'scripts/gear_model.py')], check=True)
 subprocess.run(['python3', str(root / 'scripts/gear_normal.py')], check=True)
-subprocess.run(['python3', str(root / 'scripts/gear_relational.py')] + (['--write'] if args.write else []), check=True)
+subprocess.run(['python3', str(root / 'scripts/gear_packages.py')] + (['--write'] if args.write else []), check=True)
 subprocess.run(['python3', str(root / 'scripts/gear_spherical.py')], check=True)
 for name in ['gear', 'gear-extreme', 'gear-plain']:
     digests[name] = json.loads((root / 'packages' / name / 'definition.json').read_text())['definitionDigest']

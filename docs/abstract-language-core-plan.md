@@ -2,7 +2,7 @@
 
 **Design and migration plan — 17 October 2026**
 
-Status: all shipped puzzles, sessions, interpreters, and native/WASM clients use the domain-free executor and relational language. Public API 3 removes the legacy runtime imports, guard handlers, schema-1 replay, and conversion methods. The historical evaluator remains only in isolated native comparison tools; see the cleanup record at the end of this plan. General textual syntax and module/template tooling remain future work. See the [implementation and API guide](relational-core.md). The design uses general permission relations `R(s, u, a1, ..., an)` and keeps completion selection outside the executor. It replaces the domain-aware rule backends in Sections 2–6 of the [architecture proposal](../twisty_puzzle_simulator_architecture.md). The portable C++ kernel and separate geometric realizations remain the project boundary.
+Status: all shipped puzzles, sessions, interpreters, and native/WASM clients use the domain-free executor and relational language. Public API 3 removes the legacy runtime imports, guard handlers, schema-1 replay, and conversion methods. The historical evaluator remains only in isolated native comparison tools; see the cleanup record at the end of this plan. General textual syntax and module/template tooling remain future work. See the [implementation and API guide](core-language.md). The design uses general permission relations `R(s, u, a1, ..., an)` and keeps completion selection outside the executor. It replaces the domain-aware rule backends in Sections 2–6 of the [architecture proposal](../twisty_puzzle_simulator_architecture.md). The portable C++ kernel and separate geometric realizations remain the project boundary.
 
 ## 1. The intended split
 
@@ -380,22 +380,22 @@ Provide an explicit legacy converter for existing source/compiled packages and s
 | --- | --- | --- |
 | 0. Freeze the specification | General `R(s, u, a)`, tuple/completion semantics, flat IR, inverse expectations, examples, and existing-model baselines | Examples cover zero, one, and multiple permitted tuples, with explicit targets and witnesses |
 | 1. Build an authoring oracle | Canonical JSON AST and an independent relation evaluator; exhaustive tuple enumeration only for tiny models | Arbitrary Boolean interactions agree with their mathematical relations, including cyclic constraints and alternatives |
-| 2. Implement the flat executor | Domain-free C++ structures, finite-input `IN`/`RANGE` evaluation, complete-request validation, transport application, and witnesses | Given a tuple, the executor matches the relation oracle without invoking old rule modules or a solver |
+| 2. Implement the core executor | Domain-free C++ structures, finite-input `IN`/`RANGE` evaluation, complete-request validation, transport application, and witnesses | Given a tuple, the executor matches the relation oracle without invoking old rule modules or a solver |
 | 3. Implement the compiler and initial library | Relational lowering, finite expansion, profile/binder generation, then the textual parser; cube and compound-bandage modules | Both puzzles preserve legal requests, identities, states, and participation behavior through exact completions |
 | 4. Migrate interacting puzzles | Helicopter, Gear variants/custom masks, then Bagua, expressed through the general relation | Cross-blocking, conditional coupling, exact permitted profiles, and existing regression fixtures agree |
 | 5. Adapt the portable product | Sessions, codecs, interpreter bindings, public native/WASM declarations, independent examples, and the reference app | All existing views and controls work through the new public API and flat witnesses |
-| 6. Retire old execution paths | Remove runtime domain fields and the old guard/footprint/relation planners; retain a clearly isolated converter if needed | Only the flat executor is used by production planning and state validation |
+| 6. Retire old execution paths | Remove runtime domain fields and the old guard/footprint/relation planners; retain a clearly isolated converter if needed | Only the core executor is used by production planning and state validation |
 
 During migration, keep the old executor available as a **test oracle**, not as a permanent fallback hidden inside the new core. Do not switch a preset to the new format until its relevant gates pass.
 
 ### Initial implementation progress
 
 - Milestone 1's expanded JSON AST and independent source evaluator are implemented. Tiny models cover zero, one, and multiple permitted completions, cyclic constraints, arbitrary Boolean choices, occupancy, and different events with identical targets.
-- Milestone 2's flat executor is implemented in `Twisty::flat_core`, independently of JSON, authoring domains, geometry, and the existing executor. It validates supplied tuples and returns atomic transitions with complete witnesses.
-- The compiler lowering needed for those gates is implemented in `Twisty::relational`: disjoint catalogs, typed expressions, shared sets/maps/nodes, exact local transports, and explicit profiles. Profile binding and bounded discovery are separate helpers.
+- Milestone 2's core executor is implemented in `Twisty::core`, independently of JSON, authoring domains, geometry, and the existing executor. It validates supplied tuples and returns atomic transitions with complete witnesses.
+- The compiler lowering needed for those gates is implemented in `Twisty::language`: disjoint catalogs, typed expressions, shared sets/maps/nodes, exact local transports, and explicit profiles. Profile binding and bounded discovery are separate helpers.
 - Milestone 3's cube/bandage libraries and native parity gate are implemented. The libraries directly generate standard ASTs and separate port/event catalogs through finite symmetry expansion; they never invoke the old executor. All local tables, all 24 whole-cube orientations, sampled walks, inverse completions, full witnesses, and imported assignment mutations are compared against the existing definitions. Textual syntax and general module/template facilities remain.
 - Native and WASM consumers retain the experimental relational version 1 API alongside public API 2. The cube/bandage integration batch adds persisted packages and semantic identities, complete-tuple session replay, explicit legacy-save conversion, and a shared session/interpreter execution context. Richer source diagnostics, textual syntax, and general adapters remain.
-- All production presets now use the flat executor after their parity gates: cube, bandage, Helicopter, Gear variants/custom masks, and Bagua. Uniform and articulated event adapters preserve the existing views. Explicit legacy document kinds remain isolated compatibility/import and comparison paths; the new executor never calls them as a fallback.
+- All production presets now use the core executor after their parity gates: cube, bandage, Helicopter, Gear variants/custom masks, and Bagua. Uniform and articulated event adapters preserve the existing views. Explicit legacy document kinds remain isolated compatibility/import and comparison paths; the new executor never calls them as a fallback.
 
 Initial validation: all 12 native tests and 39 unit tests pass. An independent source evaluator agrees with both native and WASM execution on 13,254 state/tuple/witness checks across 34 tiny models. Installed native and copied WASM consumers also agree. Existing-puzzle regression passes describe the current production executor; they are not evidence that those presets have already migrated. Builds and heavy checks ran sequentially with one build job, peaking at approximately 2.5 GiB of container memory.
 
@@ -438,7 +438,7 @@ Integration validation: 15 native tests and 39 unit tests pass. Native/WASM comp
 
 Helicopter now uses three authoring domains (center, corner, mechanism), flattened to 420 placements for 44 persistent identities and 180 directed stop requests. All twelve mechanism identities retain their separate three-phase axis restrictions through ordinary membership invariants. Shared occupancy predicates express capacities, pair exclusions, and cross-domain obstruction; no core guard structures or predicate opcodes were added. Default profiles follow the current source phase, while the relation independently rejects incorrect supplied tuples.
 
-The uniform port adapter preserves the original meshes and animation events in all three views. Inspector/frame grouping is metadata; planning and state validation use only the flat executor. Candidate defaults are exposed separately from accepted requests for phase-aware controls. Rejection highlighting follows a Boolean proof through the generic predicate trace in the separate completion helper.
+The uniform port adapter preserves the original meshes and animation events in all three views. Inspector/frame grouping is metadata; planning and state validation use only the core executor. Candidate defaults are exposed separately from accepted requests for phase-aware controls. Rejection highlighting follows a Boolean proof through the generic predicate trace in the separate completion helper.
 
 The parity gate compares local tables, single-piece mutations, all directed requests over sampled walks, every source phase, full witnesses, inverses, replay, explicit legacy-save conversion, and unchanged sampled interpreter poses. Existing legacy definitions and shape-graph verification remain comparison tools. Gear variants/custom masks and Bagua have also passed their migration gates. Articulated per-piece event binding is described below; legacy production defaults have been retired.
 
@@ -470,7 +470,7 @@ The native gate covers all local entries, assignment mutations, sampled walks, a
 
 Bagua now lowers its eight authoring catalogs to 2,232 placements for 146 identities and 30 complete requests. Shared memberships, occupancy counts, and Boolean request relations express exclusions and cut blocking through the existing two predicate instructions. Its native gate passes 166,569 checks against the previous executor, including exact maps, source mutations, sampled walks, full witnesses, inverses, sessions, legacy conversion, and all three unchanged realizations. Named-predicate compilation caches prevent repeated expansion while retaining request specialization and state-only/depth checks.
 
-Every production preset, including custom Gear masks, now selects the flat executor. The app and independent client use new packages and pins; explicitly imported legacy formats remain isolated compatibility paths and comparison oracles. This retires the legacy production defaults without silently changing old document meanings. Physical deletion of compatibility code is deferred until legacy import support is deliberately removed. Textual syntax, general module/template facilities, and richer source diagnostics remain language follow-ups. The following section records the completed elongated bandage geometry follow-up.
+Every production preset, including custom Gear masks, now selects the core executor. The app and independent client use new packages and pins; explicitly imported legacy formats remain isolated compatibility paths and comparison oracles. This retires the legacy production defaults without silently changing old document meanings. Physical deletion of compatibility code is deferred until legacy import support is deliberately removed. Textual syntax, general module/template facilities, and richer source diagnostics remain language follow-ups. The following section records the completed elongated bandage geometry follow-up.
 
 
 ### Elongated bandage realization
@@ -493,10 +493,10 @@ The production build, package reproducibility check, schema/type checks, and whi
 
 Public API 3 (`0.3.0`) removes the alternative executor, old authoring compiler,
 schema-1 histories, and legacy save conversion from the production kernel. The
-portable C++ API no longer exports `core.hpp`, `compiler.hpp`, the old free rule
-functions, or metadata-only geometry construction. `catalog.hpp` holds only
-symbolic interpreter/inspector metadata and wire helpers; `flat_core.hpp` remains
-the geometry-free and domain-free abstract executor. The old guard structures
+portable C++ API retires the old root-level rule/compiler headers, free rule
+functions, and metadata-only geometry construction. `catalog.hpp` holds only
+symbolic interpreter/inspector metadata and wire helpers. The abstract executor
+remains geometry-free and domain-free; API 4 names its header `core.hpp`. The old guard structures
 are removed from the production catalog.
 
 The previous implementation is frozen under `tests/legacy` for native model
@@ -528,3 +528,18 @@ Successful batches peaked near 3.1 GiB. WASM remains capped at 256 MiB; removing
 the historical runtime reduces its binary from 1,729,345 to 1,329,789 bytes
 (about 23%). Dockerfile and source mesh edits are preserved; the migration
 commit's generated spherical snapshots match their committed source templates.
+
+
+## Core and language naming
+
+Public API 4 (`0.4.0`) removes the temporary legacy-distinguishing prefixes from
+current code. `twisty::core` / `Twisty::core` expose the executor, and
+`twisty::language` / `Twisty::language` expose the compiler and completion API.
+Authoring sources and public compiler/Cube/Gear headers live under `authoring`;
+geometric sources live under `src/interpreter`. WASM and TypeScript use `Puzzle`,
+`compilePuzzleJSON`, `cubeModuleJSON`, and `gearModuleJSON`; the SDK factories are
+`createCubeSource` and `createGearSource`. `languageAPIVersion` and
+`authoringLibraries` describe those capabilities. The isolated historical harness
+updates its shared-library imports only. Serialized format-1 identifiers, package
+filenames, semantic pins, schema-2 histories, and geometry buffers are preserved.
+The [API guide](kernel-api.md#api-4-naming) lists the consumer migration.

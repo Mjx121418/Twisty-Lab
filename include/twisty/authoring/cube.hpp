@@ -1,7 +1,7 @@
 #pragma once
-#include "twisty/relational_compiler.hpp"
+#include "twisty/authoring/compiler.hpp"
 
-namespace twisty::relational {
+namespace twisty::language {
 // Authoring library: returns an ordinary version-1 AST and separate exact
 // catalog/port/event bindings. Neither executor contains cube-specific logic.
 struct CubeModule {
@@ -10,4 +10,4 @@ struct CubeModule {
 };
 CubeModule cube_module(bool bandaged);
 std::string cube_module_json(bool bandaged);
-} // namespace twisty::relational
+} // namespace twisty::language

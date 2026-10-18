@@ -1,19 +1,19 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <twisty/relational_compiler.hpp>
-#include <twisty/relational_cube.hpp>
-#include <twisty/relational_gear.hpp>
+#include <twisty/authoring/compiler.hpp>
+#include <twisty/authoring/cube.hpp>
+#include <twisty/authoring/gear.hpp>
 
 // A standalone consumer, also used by the independent source-semantics oracle.
 int main(int argc, char **argv) {
   try {
     if (argc < 2 || argc > 3)
       throw std::runtime_error(
-          "Usage: twisty_relational source.pzl.json [--inspect] | --cube-module | --bandaged-module");
+          "Usage: twisty_language source.pzl.json [--inspect] | --cube-module | --bandaged-module");
     if (argc == 2 &&
         (std::string(argv[1]) == "--cube-module" || std::string(argv[1]) == "--bandaged-module")) {
-      std::cout << twisty::relational::cube_module_json(std::string(argv[1]) == "--bandaged-module") << '\n';
+      std::cout << twisty::language::cube_module_json(std::string(argv[1]) == "--bandaged-module") << '\n';
       return 0;
     }
     std::ifstream file(argv[1]);
@@ -22,10 +22,10 @@ int main(int argc, char **argv) {
     std::ostringstream source;
     source << file.rdbuf();
     if (argc == 3 && std::string(argv[2]) == "--gear-module") {
-      std::cout << twisty::relational::gear_module_json(source.str()) << '\n';
+      std::cout << twisty::language::gear_module_json(source.str()) << '\n';
       return 0;
     }
-    twisty::relational::Puzzle puzzle(source.str());
+    twisty::language::Puzzle puzzle(source.str());
     if (argc == 3) {
       if (std::string(argv[2]) != "--inspect")
         throw std::runtime_error("Expected --inspect");

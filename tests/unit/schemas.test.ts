@@ -27,19 +27,19 @@ it('validates the experimental relational AST and compiles the example', async (
   ajv.addSchema(JSON.parse(readFileSync('schemas/state.schema.json', 'utf8')));
   const validatePackage = ajv.compile(JSON.parse(readFileSync('schemas/relational-package.schema.json', 'utf8')));
   const validateSession = ajv.compile(JSON.parse(readFileSync('schemas/session-v2.schema.json', 'utf8')));
-  const text = readFileSync('examples/relational/coupled.pzl.json', 'utf8');
+  const text = readFileSync('examples/language/coupled.pzl.json', 'utf8');
   expect(validate(JSON.parse(text)), JSON.stringify(validate.errors)).toBe(true);
   const malformed = JSON.parse(text);
   malformed.requests[0].relation = { unregisteredGuard: true };
   expect(validate(malformed)).toBe(false);
   const module = await createModule();
-  expect(JSON.parse(module.compileRelationalJSON(text)).status).toBe('Compiled');
+  expect(JSON.parse(module.compilePuzzleJSON(text)).status).toBe('Compiled');
   for (const [name, bandaged] of [['cube3', false], ['bandaged', true]] as const) {
     const source = JSON.parse(readFileSync(`packages/${name}/relational.pzl.json`, 'utf8'));
     const catalog = JSON.parse(readFileSync(`packages/${name}/relational-bindings.json`, 'utf8'));
     expect(validate(source), JSON.stringify(validate.errors)).toBe(true);
-    expect(JSON.parse(module.relationalCubeModuleJSON(bandaged))).toEqual({ source, catalog });
-    expect(JSON.parse(module.compileRelationalJSON(JSON.stringify(source))).status).toBe('Compiled');
+    expect(JSON.parse(module.cubeModuleJSON(bandaged))).toEqual({ source, catalog });
+    expect(JSON.parse(module.compilePuzzleJSON(JSON.stringify(source))).status).toBe('Compiled');
     const packageText = readFileSync(`packages/${name}/relational-package.json`, 'utf8');
     expect(validatePackage(JSON.parse(packageText)), JSON.stringify(validatePackage.errors)).toBe(true);
     const session = new module.Session(packageText);
@@ -58,7 +58,7 @@ it('validates the experimental relational AST and compiles the example', async (
     const packageDocument = JSON.parse(readFileSync(`packages/${name}/relational-package.json`, 'utf8'));
     expect(validatePackage(packageDocument), JSON.stringify(validatePackage.errors)).toBe(true);
     expect(validate(packageDocument.source), JSON.stringify(validate.errors)).toBe(true);
-    expect(JSON.parse(module.relationalGearModuleJSON(JSON.stringify(wrapper)))).toEqual({ source: packageDocument.source, catalog: packageDocument.catalog });
+    expect(JSON.parse(module.gearModuleJSON(JSON.stringify(wrapper)))).toEqual({ source: packageDocument.source, catalog: packageDocument.catalog });
     const session = new module.Session(JSON.stringify(wrapper));
     try {
       const operation = name === 'gear' ? 'R' : name === 'gear-extreme' ? 'Uq' : 'Rq';

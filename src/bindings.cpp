@@ -1,5 +1,5 @@
 #include "twisty/kernel.hpp"
-#include "twisty/relational_compiler.hpp"
+#include "twisty/authoring/compiler.hpp"
 #include <emscripten/bind.h>
 
 using namespace emscripten;
@@ -32,17 +32,17 @@ Session *create_session_from_definition(const Session &session) {
 } // namespace
 EMSCRIPTEN_BINDINGS(twisty) {
   function("compileExecutionJSON", &compile_execution);
-  function("compileRelationalJSON", &twisty::relational::compile_json);
-  function("relationalCubeModuleJSON", &twisty::relational::cube_module_json);
-  function("relationalGearModuleJSON", &twisty::relational::gear_module_json);
+  function("compilePuzzleJSON", &twisty::language::compile_json);
+  function("cubeModuleJSON", &twisty::language::cube_module_json);
+  function("gearModuleJSON", &twisty::language::gear_module_json);
   function("kernelInfoJSON", &kernel_info_json);
   function("createGeometry", &create_geometry, return_value_policy::take_ownership());
   function("createSessionFromDefinition", &create_session_from_definition,
            return_value_policy::take_ownership());
-  class_<twisty::relational::Puzzle>("RelationalPuzzle")
+  class_<twisty::language::Puzzle>("Puzzle")
       .constructor<std::string>()
-      .function("inspectJSON", &twisty::relational::Puzzle::inspect_json)
-      .function("queryJSON", &twisty::relational::Puzzle::query_json);
+      .function("inspectJSON", &twisty::language::Puzzle::inspect_json)
+      .function("queryJSON", &twisty::language::Puzzle::query_json);
   class_<Session>("Session")
       .constructor<std::string>()
       .function("snapshotJSON", &Session::snapshot_json)

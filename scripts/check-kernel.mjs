@@ -15,9 +15,15 @@ try {
   execFileSync('cmake', ['--install', nativeBuild, '--prefix', installed], { cwd: root, stdio: 'inherit' });
   const headers = await readdir(join(installed, 'include/twisty'));
   assert.ok(headers.includes('catalog.hpp'));
-  assert.ok(!headers.includes('core.hpp') && !headers.includes('compiler.hpp'));
+  assert.ok(headers.includes('core.hpp') && headers.includes('completion.hpp'));
+  assert.ok(!headers.includes('flat_core.hpp') && !headers.includes('compiler.hpp'));
+  assert.ok(!headers.some((name) => name.startsWith('relational_')));
+  assert.match(await readFile(join(installed, 'include/twisty/core.hpp'), 'utf8'), /namespace twisty::core/);
+  assert.match(await readFile(join(installed, 'include/twisty/authoring/compiler.hpp'), 'utf8'), /namespace twisty::language/);
   const exported = await readFile(join(installed, 'lib/cmake/TwistyKernel/TwistyKernelTargets.cmake'), 'utf8');
-  assert.ok(!/Twisty::(?:core|compiler)|legacy_test_reference/.test(exported));
+  assert.match(exported, /Twisty::core/);
+  assert.match(exported, /Twisty::language/);
+  assert.ok(!/Twisty::(?:flat_core|relational|compiler)|legacy_test_reference/.test(exported));
   const consumer = join(temporary, 'consumer');
   await cp(new URL('../examples/native/', import.meta.url), consumer, { recursive: true });
   execFileSync('cmake', ['-S', consumer, '-B', join(consumer, 'build'), '-G', 'Ninja', `-DCMAKE_PREFIX_PATH=${installed}`], { stdio: 'inherit' });
@@ -34,29 +40,31 @@ try {
     schemaIDs.push(schema.$id);
   }
   for (const id of schemaIDs) assert.ok(schemas.getSchema(id), `Packaged schema cannot resolve: ${id}`);
-  const { createKernel, KernelSession, ExperimentalRelationalPuzzle, createRelationalCubeSource, createRelationalGearSource } = await import(pathToFileURL(join(javascript, 'index.js')).href);
+  const { createKernel, KernelSession, Puzzle, createCubeSource, createGearSource } = await import(pathToFileURL(join(javascript, 'index.js')).href);
   const module = await createKernel();
   const info = JSON.parse(module.kernelInfoJSON());
   const manifest = JSON.parse(await readFile(join(javascript, 'package.json'), 'utf8'));
-  assert.equal(info.apiVersion, 3); assert.equal(info.frameBufferVersion, 1);
+  assert.equal(info.apiVersion, 4); assert.equal(info.frameBufferVersion, 1);
   assert.equal(info.version, manifest.version);
   assert.deepEqual(info.ruleModules, ['relational@1']);
   assert.deepEqual(info.sessionSchemaVersions, [2]);
   assert.equal(typeof module.compileJSON, 'undefined');
   assert.equal(typeof module.Session.prototype.convertLegacyJSON, 'undefined');
   assert.ok(info.realizationKinds.includes('articulated-spherical'));
-  assert.equal(info.experimentalAPIs.relational, 1);
-  assert.deepEqual(info.relationalLibraries, ['cube3', 'bandaged-uf-ufr', 'gear-family']);
-  const relationalConsumer = join(temporary, 'relational-consumer');
-  await cp(join(javascript, 'examples/relational'), relationalConsumer, { recursive: true });
-  execFileSync('cmake', ['-S', relationalConsumer, '-B', join(relationalConsumer, 'build'), '-G', 'Ninja',
+  assert.equal(info.languageAPIVersion, 1);
+  assert.equal(typeof module.RelationalPuzzle, 'undefined');
+  assert.equal(typeof module.compileRelationalJSON, 'undefined');
+  assert.deepEqual(info.authoringLibraries, ['cube3', 'bandaged-uf-ufr', 'gear-family']);
+  const languageConsumer = join(temporary, 'language-consumer');
+  await cp(join(javascript, 'examples/language'), languageConsumer, { recursive: true });
+  execFileSync('cmake', ['-S', languageConsumer, '-B', join(languageConsumer, 'build'), '-G', 'Ninja',
     `-DCMAKE_PREFIX_PATH=${installed}`], { stdio: 'inherit' });
-  execFileSync('cmake', ['--build', join(relationalConsumer, 'build'), '--parallel', '1'], { stdio: 'inherit' });
-  const relationalSource = join(relationalConsumer, 'coupled.pzl.json');
-  const relational = new ExperimentalRelationalPuzzle(module, await readFile(relationalSource, 'utf8'));
+  execFileSync('cmake', ['--build', join(languageConsumer, 'build'), '--parallel', '1'], { stdio: 'inherit' });
+  const languageSource = join(languageConsumer, 'coupled.pzl.json');
+  const puzzle = new Puzzle(module, await readFile(languageSource, 'utf8'));
   try {
-    const executable = join(relationalConsumer, 'build/twisty_relational');
-    assert.deepEqual(JSON.parse(execFileSync(executable, [relationalSource, '--inspect'], { encoding: 'utf8' })), relational.preview);
+    const executable = join(languageConsumer, 'build/twisty_language');
+    assert.deepEqual(JSON.parse(execFileSync(executable, [languageSource, '--inspect'], { encoding: 'utf8' })), puzzle.preview);
     const queries = [
       { op: 'bind', state: [0, 2, 4], request: 'fixed' },
       { op: 'bind', state: [0, 2, 4], request: 'synchronize' },
@@ -64,17 +72,17 @@ try {
       { op: 'plan', state: [0, 2, 4], request: 'alternative', choices: ['turn', 'turn', 'idle'] },
       { op: 'discover', state: [0, 2, 4], request: 'none', candidateLimit: 1, resultLimit: 10 },
     ];
-    const native = execFileSync(executable, [relationalSource], { encoding: 'utf8',
+    const native = execFileSync(executable, [languageSource], { encoding: 'utf8',
       input: queries.map((q) => JSON.stringify(q)).join('\n') + '\n' }).trim().split('\n').map((line) => JSON.parse(line));
-    assert.deepEqual(queries.map((q) => relational.query(q)), native);
+    assert.deepEqual(queries.map((q) => puzzle.query(q)), native);
     console.log('Installed native and packaged WASM relational consumers agree.');
     for (const [name, bandaged] of [['cube3', false], ['bandaged', true]]) {
       const data = join(javascript, 'examples/canvas/data', name);
       const source = JSON.parse(await readFile(join(data, 'relational.pzl.json'), 'utf8'));
       const catalog = JSON.parse(await readFile(join(data, 'relational-bindings.json'), 'utf8'));
-      assert.deepEqual(createRelationalCubeSource(module, bandaged), { source, catalog });
+      assert.deepEqual(createCubeSource(module, bandaged), { source, catalog });
       assert.deepEqual(JSON.parse(execFileSync(executable, [bandaged ? '--bandaged-module' : '--cube-module'], { encoding: 'utf8' })), { source, catalog });
-      const cube = new ExperimentalRelationalPuzzle(module, JSON.stringify(source));
+      const cube = new Puzzle(module, JSON.stringify(source));
       try {
         const initial = cube.preview.program.initialPlacements;
         const selection = cube.query({ op: 'bind', state: initial, request: 'U' });
@@ -94,11 +102,11 @@ try {
       const wrapper = JSON.parse(await readFile(join(data, 'relational-source.json'), 'utf8'));
       const expected = { source: JSON.parse(await readFile(join(data, 'relational.pzl.json'), 'utf8')),
         catalog: JSON.parse(await readFile(join(data, 'relational-bindings.json'), 'utf8')) };
-      assert.deepEqual(createRelationalGearSource(module, wrapper), expected);
+      assert.deepEqual(createGearSource(module, wrapper), expected);
       assert.deepEqual(JSON.parse(execFileSync(executable, [join(data, 'relational-source.json'), '--gear-module'], { encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 })), expected);
     }
 
-  } finally { relational.dispose(); }
+  } finally { puzzle.dispose(); }
   const customDirectory = join(javascript, 'examples/canvas/data/gear-custom');
   await mkdir(customDirectory, { recursive: true });
   const custom = JSON.parse(module.compileExecutionJSON(JSON.stringify({ formatVersion: 1,

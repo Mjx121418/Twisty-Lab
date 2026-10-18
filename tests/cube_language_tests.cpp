@@ -1,6 +1,6 @@
 #include "twisty/core.hpp"
-#include "twisty/relational_completion.hpp"
-#include "twisty/relational_cube.hpp"
+#include "twisty/completion.hpp"
+#include "twisty/authoring/cube.hpp"
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -10,8 +10,8 @@
 namespace {
 using twisty::Index;
 using twisty::Json;
-namespace flat = twisty::flat;
-namespace language = twisty::relational;
+namespace core = twisty::core;
+namespace language = twisty::language;
 std::uint64_t checks = 0;
 void check(bool value, const std::string &message) {
   ++checks;
@@ -56,15 +56,15 @@ struct Comparison {
     for (Index d = 0; d < legacy->domains.size(); ++d)
       for (const auto &q : legacy->domains[d].placements)
         old_placement[d].push_back(find(compiled.bindings.placements, legacy->domains[d].id + "/" + q.key));
-    check(to_flat(legacy->initial) == compiled.program.data().initial, "Initial assignments differ");
+    check(to_core(legacy->initial) == compiled.program.data().initial, "Initial assignments differ");
     suite = {{"source", module.source.dump()},
              {"catalog", module.catalog},
              {"preview", language::inspect(compiled)},
              {"queries", Json::array()},
              {"expected", Json::array()}};
   }
-  flat::State to_flat(const twisty::State &old) const {
-    flat::State result;
+  core::State to_core(const twisty::State &old) const {
+    core::State result;
     for (auto p : old_piece)
       result.push_back(old_placement[legacy->pieces[p].domain][old.placement_of[p]]);
     return result;
@@ -75,22 +75,22 @@ struct Comparison {
         return i;
     throw std::runtime_error("Missing request " + id);
   }
-  Json choices(const flat::Choices &tuple) const {
+  Json choices(const core::Choices &tuple) const {
     auto result = Json::array();
     for (Index d = 0; d < tuple.size(); ++d)
       result.push_back(compiled.bindings.choice_values[d][tuple[d]]);
     return result;
   }
   Json expected(const twisty::Plan &old, const twisty::State &state, const std::string &id,
-                const flat::Choices &tuple) const {
+                const core::Choices &tuple) const {
     if (!old.transition)
       return {{"status", "Rejected"}, {"reason", "relation"}};
     auto actions = Json::array();
     for (const auto &a : old.transition->actions) {
       const auto &piece = legacy->pieces[a.piece];
-      const auto flat_piece = find(compiled.bindings.pieces, piece.id);
+      const auto core_piece = find(compiled.bindings.pieces, piece.id);
       const auto event = legacy->operations[legacy->operation_ids.at(id)].transport;
-      actions.push_back({{"piece", flat_piece},
+      actions.push_back({{"piece", core_piece},
                          {"from", old_placement[piece.domain][a.from]},
                          {"to", old_placement[piece.domain][a.to]},
                          {"event", find(compiled.bindings.events, event)}});
@@ -103,8 +103,8 @@ struct Comparison {
             {"transition",
              {{"request", id},
               {"choices", choices(tuple)},
-              {"before", to_flat(state)},
-              {"after", to_flat(old.transition->after)},
+              {"before", to_core(state)},
+              {"after", to_core(old.transition->after)},
               {"actions", actions}}}};
   }
   void catalogs() const {
@@ -162,25 +162,25 @@ struct Comparison {
     }
   }
   void state(const twisty::State &old, bool record) {
-    const auto flat_state = to_flat(old);
-    check(twisty::validate_state(*legacy, old).empty() && compiled.program.valid(flat_state),
+    const auto core_state = to_core(old);
+    check(twisty::validate_state(*legacy, old).empty() && compiled.program.valid(core_state),
           "Sample must be valid");
-    check(compiled.program.solved(flat_state) == twisty::solved(*legacy, old), "Goal changed");
+    check(compiled.program.solved(core_state) == twisty::solved(*legacy, old), "Goal changed");
     if (record) {
-      suite["queries"].push_back({{"op", "goal"}, {"state", flat_state}});
+      suite["queries"].push_back({{"op", "goal"}, {"state", core_state}});
       suite["expected"].push_back({{"status", "Evaluated"}, {"solved", twisty::solved(*legacy, old)}});
     }
     for (const auto &op : legacy->operations) {
       const auto r = request(op.id);
-      const auto tuple = language::bind_profile(compiled, r, flat_state);
+      const auto tuple = language::bind_profile(compiled, r, core_state);
       check(tuple.has_value(), "Fixed turn profile requires search");
       const auto old_plan = twisty::plan(*legacy, old, op.id);
-      const auto actual = compiled.program.plan(r, flat_state, *tuple);
+      const auto actual = compiled.program.plan(r, core_state, *tuple);
       const auto want = expected(old_plan, old, op.id, *tuple);
       check(actual.transition.has_value() == old_plan.transition.has_value(),
             "Legal request changed: " + op.id);
       if (actual.transition) {
-        check(actual.transition->after == to_flat(old_plan.transition->after), "Endpoint changed");
+        check(actual.transition->after == to_core(old_plan.transition->after), "Endpoint changed");
         auto actual_actions = Json::array();
         for (const auto &a : actual.transition->actions)
           actual_actions.push_back({{"piece", a.piece}, {"from", a.from}, {"to", a.to}, {"event", a.event}});
@@ -192,11 +192,11 @@ struct Comparison {
         const auto inverse_tuple =
             language::bind_profile(compiled, inverse_request, actual.transition->after);
         const auto inverse = compiled.program.plan(inverse_request, actual.transition->after, *inverse_tuple);
-        check(inverse.transition && inverse.transition->after == flat_state, "Inverse completion failed");
+        check(inverse.transition && inverse.transition->after == core_state, "Inverse completion failed");
       }
       if (record) {
         suite["queries"].push_back(
-            {{"op", "plan"}, {"state", flat_state}, {"request", op.id}, {"choices", choices(*tuple)}});
+            {{"op", "plan"}, {"state", core_state}, {"request", op.id}, {"choices", choices(*tuple)}});
         suite["expected"].push_back(want);
       }
     }
@@ -242,7 +242,7 @@ struct Comparison {
         auto changed = legacy->initial;
         changed.placement_of[p] = q;
         const bool valid = twisty::validate_state(*legacy, changed).empty();
-        const auto numeric = to_flat(changed);
+        const auto numeric = to_core(changed);
         check(compiled.program.valid(numeric) == valid, "Assignment invariant changed");
         suite["queries"].push_back({{"op", "validate"}, {"state", numeric}});
         suite["expected"].push_back({{"status", valid ? "Valid" : "Invalid"}});
@@ -287,7 +287,7 @@ int main(int argc, char **argv) {
       if (!output)
         throw std::runtime_error("Cannot write migration cases");
     } else if (argc != 1)
-      throw std::runtime_error("Usage: cube_relational_tests [--emit path]");
+      throw std::runtime_error("Usage: cube_language_tests [--emit path]");
     std::cout << checks << " cube/bandage migration checks passed\n";
     return 0;
   } catch (const std::exception &error) {

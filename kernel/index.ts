@@ -3,10 +3,10 @@ export type { MainModule } from './generated/twisty.mjs';
 
 export type KernelInfo = {
   apiVersion: number; version: string; documentKinds: string[]; frameBufferVersion: number;
-  experimentalAPIs?: { relational?: number };
-  relationalLibraries?: string[];
-  relationalCatalogKinds?: string[];
-  relationalDefinitionVersion?: number; sessionSchemaVersions?: number[]; sessionFeatures?: string[];
+  languageAPIVersion: number;
+  authoringLibraries?: string[];
+  catalogKinds?: string[];
+  definitionFormatVersion?: number; sessionSchemaVersions?: number[]; sessionFeatures?: string[];
   ruleModules: string[]; realizationKinds: string[]; geometryCapabilities: string[];
 };
 export type KernelOptions = { wasmURL?: string | URL; locateFile?: (filename: string, directory: string) => string };
@@ -15,7 +15,7 @@ export async function createKernel(options: KernelOptions = {}): Promise<MainMod
     filename.endsWith('.wasm') && options.wasmURL ? String(options.wasmURL) : directory + filename);
   const module = await createModule({ locateFile });
   const info = JSON.parse(module.kernelInfoJSON()) as KernelInfo;
-  if (info.apiVersion !== 3 || info.frameBufferVersion !== 1) throw new Error('Unsupported kernel API or frame-buffer version.');
+  if (info.apiVersion !== 4 || info.frameBufferVersion !== 1) throw new Error('Unsupported kernel API or frame-buffer version.');
   return module;
 }
 
@@ -96,28 +96,28 @@ export type ArticulatedComponent = {
 
 // Experimental version 1. Numeric placements are resolved through preview.bindings.
 // This pure preview/query API remains separate from persisted session packages.
-export type RelationalPredicate = boolean
+export type Predicate = boolean
   | { at: { piece: string; placements: string[] } }
   | { chosen: { domain: string; moves: string[] } }
-  | { request: string[] } | { ref: string } | { not: RelationalPredicate }
-  | { all: RelationalPredicate[] } | { any: RelationalPredicate[] }
-  | { implies: [RelationalPredicate, RelationalPredicate] } | { iff: [RelationalPredicate, RelationalPredicate] }
-  | { count: { min: number; max: number; of: RelationalPredicate[] } }
+  | { request: string[] } | { ref: string } | { not: Predicate }
+  | { all: Predicate[] } | { any: Predicate[] }
+  | { implies: [Predicate, Predicate] } | { iff: [Predicate, Predicate] }
+  | { count: { min: number; max: number; of: Predicate[] } }
   | { occupiedBy: { placement: string; pieces: string[] } };
-export type RelationalSource = {
+export type PuzzleSource = {
   kind: 'relational-puzzle'; languageVersion: 1; id: string;
   domains: {
     id: string; placements: string[]; pieces: { id: string; initial: string }[];
     moves: { id: string; support: string[]; transport: Record<string, string>;
-      pieces?: string[]; requires?: RelationalPredicate; event?: string }[];
+      pieces?: string[]; requires?: Predicate; event?: string }[];
   }[];
-  predicates?: Record<string, RelationalPredicate>;
-  relations?: { id: string; predicate: RelationalPredicate }[];
-  invariant?: RelationalPredicate; goal?: RelationalPredicate;
-  requests: { id: string; relation: RelationalPredicate;
-    profiles?: { id: string; choices: Record<string, string>; when?: RelationalPredicate }[]; defaultProfile?: string }[];
+  predicates?: Record<string, Predicate>;
+  relations?: { id: string; predicate: Predicate }[];
+  invariant?: Predicate; goal?: Predicate;
+  requests: { id: string; relation: Predicate;
+    profiles?: { id: string; choices: Record<string, string>; when?: Predicate }[]; defaultProfile?: string }[];
 };
-export type RelationalCubeCatalog = {
+export type CubeCatalog = {
   kind: 'relational-cube-bindings'; version: 1; puzzleId: string;
   faceLabels: string[]; symmetry: number[][]; resources: string[];
   domains: { id: string; pieces: string[]; placements: string[]; localPorts: string[] }[];
@@ -125,40 +125,40 @@ export type RelationalCubeCatalog = {
   placements: Record<string, { resources: string[]; ports: Record<string, { cell: string; attachment: string }> }>;
   requests: Record<string, { inverse: string; family: string; event: string; profile: string }>;
 };
-export type RelationalPortCatalog = Omit<RelationalCubeCatalog, 'kind' | 'faceLabels' | 'symmetry' | 'requests'> & {
+export type PortCatalog = Omit<CubeCatalog, 'kind' | 'faceLabels' | 'symmetry' | 'requests'> & {
   kind: 'relational-port-bindings'; symmetry?: number[][];
   requests: Record<string, { inverse: string; family: string; event: string; profile: string; unavailablePlacements: string[] }>;
 };
-export type RelationalArticulatedCatalog = Omit<RelationalPortCatalog, 'kind'> & {
+export type ArticulatedCatalog = Omit<PortCatalog, 'kind'> & {
   kind: 'relational-articulated-bindings';
   events: Record<string, { domain: string; request: string }>;
   moveInverses: Record<string, Record<string, string>>;
 };
-export type RelationalGearSource = {
+export type GearSource = {
   kind: 'relational-gear-prototypes'; formatVersion: 1; puzzleId: string; gearedEdges: string[];
 };
-export function createRelationalGearSource(module: MainModule, source: RelationalGearSource): {
-  source: RelationalSource; catalog: RelationalArticulatedCatalog;
+export function createGearSource(module: MainModule, source: GearSource): {
+  source: PuzzleSource; catalog: ArticulatedCatalog;
 } {
-  return JSON.parse(module.relationalGearModuleJSON(JSON.stringify(source))) as {
-    source: RelationalSource; catalog: RelationalArticulatedCatalog;
+  return JSON.parse(module.gearModuleJSON(JSON.stringify(source))) as {
+    source: PuzzleSource; catalog: ArticulatedCatalog;
   };
 }
-export type RelationalPackage = {
+export type PuzzlePackage = {
   kind: 'relational-package'; formatVersion: 1;
-  source: RelationalSource; catalog: RelationalCubeCatalog | RelationalPortCatalog | RelationalArticulatedCatalog;
+  source: PuzzleSource; catalog: CubeCatalog | PortCatalog | ArticulatedCatalog;
 };
-export type RelationalDefinition = CompiledDefinition & {
+export type PuzzleDefinition = CompiledDefinition & {
   kind: 'relational-definition'; formatVersion: 1; predicateVersion: 1;
-  source: RelationalSource; catalog: RelationalCubeCatalog | RelationalPortCatalog | RelationalArticulatedCatalog;
-  program: RelationalPreview['program']; bindings: RelationalPreview['bindings'];
+  source: PuzzleSource; catalog: CubeCatalog | PortCatalog | ArticulatedCatalog;
+  program: ProgramPreview['program']; bindings: ProgramPreview['bindings'];
 };
-export function createRelationalCubeSource(module: MainModule, bandaged = false): {
-  source: RelationalSource; catalog: RelationalCubeCatalog;
+export function createCubeSource(module: MainModule, bandaged = false): {
+  source: PuzzleSource; catalog: CubeCatalog;
 } {
-  return JSON.parse(module.relationalCubeModuleJSON(bandaged)) as { source: RelationalSource; catalog: RelationalCubeCatalog };
+  return JSON.parse(module.cubeModuleJSON(bandaged)) as { source: PuzzleSource; catalog: CubeCatalog };
 }
-export type RelationalPreview = {
+export type ProgramPreview = {
   kind: 'relational-preview'; experimentalVersion: 1; predicateVersion: 1;
   bindings: {
     puzzleId: string; pieces: string[]; placements: string[]; events: string[];
@@ -171,12 +171,12 @@ export type RelationalPreview = {
     requestPrograms: { choiceSizes: number[]; firstAction: number; actionCount: number; relationRoot: number }[];
     invariantRoot: number; goalRoot: number };
 };
-export type RelationalQuery = { state: number[] } & (
+export type ProgramQuery = { state: number[] } & (
   { op: 'validate' | 'goal' }
   | { op: 'plan'; request: string; choices: string[] }
   | { op: 'bind'; request: string; profile?: string }
   | { op: 'discover'; request: string; candidateLimit: number; resultLimit: number });
-export type RelationalResult =
+export type ProgramResult =
   | { status: 'Invalid'; diagnostics?: { code: string; message: string }[] }
   | { status: 'Valid' | 'ChoiceRequired' }
   | { status: 'Evaluated'; solved: boolean }
@@ -186,20 +186,20 @@ export type RelationalResult =
   | { status: 'Permitted'; transition: { request: string; choices: string[]; before: number[]; after: number[];
       actions: { piece: number; from: number; to: number; event: number }[] } };
 
-export class ExperimentalRelationalPuzzle {
-  readonly native: InstanceType<MainModule['RelationalPuzzle']>;
-  readonly preview: RelationalPreview;
+export class Puzzle {
+  readonly native: InstanceType<MainModule['Puzzle']>;
+  readonly preview: ProgramPreview;
   constructor(module: MainModule, source: string) {
     const info = JSON.parse(module.kernelInfoJSON()) as KernelInfo;
-    if (info.experimentalAPIs?.relational !== 1) throw new Error('Unsupported relational API version.');
-    try { this.native = new module.RelationalPuzzle(source); }
+    if (info.languageAPIVersion !== 1) throw new Error('Unsupported language API version.');
+    try { this.native = new module.Puzzle(source); }
     catch (error: unknown) {
-      const result = JSON.parse(module.compileRelationalJSON(source)) as { diagnostics?: { message: string }[] };
+      const result = JSON.parse(module.compilePuzzleJSON(source)) as { diagnostics?: { message: string }[] };
       throw new Error(result.diagnostics?.map((d) => d.message).join('\n') ?? String(error));
     }
-    this.preview = JSON.parse(this.native.inspectJSON()) as RelationalPreview;
+    this.preview = JSON.parse(this.native.inspectJSON()) as ProgramPreview;
   }
-  query(query: RelationalQuery): RelationalResult { return JSON.parse(this.native.queryJSON(JSON.stringify(query))) as RelationalResult; }
+  query(query: ProgramQuery): ProgramResult { return JSON.parse(this.native.queryJSON(JSON.stringify(query))) as ProgramResult; }
   dispose(): void { this.native.delete(); }
 }
 

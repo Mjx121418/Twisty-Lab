@@ -8,7 +8,7 @@
 
 namespace {
 using namespace twisty;
-namespace language = twisty::relational;
+namespace language = twisty::language;
 std::size_t checks = 0;
 std::string source_directory;
 void check(bool condition, const std::string &message) {
@@ -40,7 +40,7 @@ struct Comparison {
   std::shared_ptr<const Definition> old = load_definition(read("definition.json"));
   std::vector<Index> old_piece;
   std::vector<std::vector<Index>> placements;
-  std::vector<flat::Choices> tuples;
+  std::vector<core::Choices> tuples;
   Json queries = Json::array(), expected = Json::array();
   std::set<std::string> exercised;
   Comparison() {
@@ -61,20 +61,20 @@ struct Comparison {
       placements.push_back(std::move(map));
     }
     for (const auto &r : compiled.bindings.requests) {
-      flat::Choices tuple;
+      core::Choices tuple;
       for (const auto &values : compiled.bindings.choice_values)
         tuple.push_back(find(values, r.id));
       tuples.push_back(std::move(tuple));
     }
-    check(to_flat(old->initial) == data.initial, "Initial identity mapping changed");
+    check(to_core(old->initial) == data.initial, "Initial identity mapping changed");
   }
-  flat::State to_flat(const State &state) const {
-    flat::State result;
+  core::State to_core(const State &state) const {
+    core::State result;
     for (const auto p : old_piece)
       result.push_back(placements[old->pieces[p].domain][state.placement_of[p]]);
     return result;
   }
-  Json named(const flat::Choices &tuple) const {
+  Json named(const core::Choices &tuple) const {
     auto names = Json::array();
     for (Index i = 0; i < tuple.size(); ++i)
       names.push_back(compiled.bindings.choice_values[i][tuple[i]]);
@@ -142,13 +142,13 @@ struct Comparison {
   void compare(const State &state, Index request, bool export_case) {
     const auto &id = compiled.bindings.requests[request].id;
     const auto legacy = twisty::plan(*old, state, id);
-    const auto planned = compiled.program.plan(request, to_flat(state), tuples[request]);
+    const auto planned = compiled.program.plan(request, to_core(state), tuples[request]);
     check(planned.transition.has_value() == legacy.transition.has_value(), "Permission differs: " + id);
     Json answer;
     if (planned.transition) {
       exercised.insert(id);
       const auto &t = *planned.transition;
-      check(t.after == to_flat(legacy.transition->after), "Target differs: " + id);
+      check(t.after == to_core(legacy.transition->after), "Target differs: " + id);
       Json actual = Json::array();
       for (const auto &a : t.actions)
         actual.push_back({{"piece", a.piece}, {"from", a.from}, {"to", a.to}, {"event", a.event}});
@@ -169,23 +169,23 @@ struct Comparison {
                   {"after", t.after},
                   {"actions", wanted}}}};
     } else {
-      check(planned.rejection == flat::Rejection::relation, "Blocked tuple reached target validation: " + id);
+      check(planned.rejection == core::Rejection::relation, "Blocked tuple reached target validation: " + id);
       answer = {{"status", "Rejected"}, {"reason", "relation"}};
     }
     if (export_case) {
       queries.push_back(
-          {{"op", "plan"}, {"request", id}, {"state", to_flat(state)}, {"choices", named(tuples[request])}});
+          {{"op", "plan"}, {"request", id}, {"state", to_core(state)}, {"choices", named(tuples[request])}});
       expected.push_back(std::move(answer));
     }
   }
   void states() {
     const auto validate = [&](const State &state, bool export_case) {
       const auto valid = validate_state(*old, state).empty();
-      check(compiled.program.valid(to_flat(state)) == valid, "Assignment validity differs");
+      check(compiled.program.valid(to_core(state)) == valid, "Assignment validity differs");
       if (valid)
-        check(compiled.program.solved(to_flat(state)) == solved(*old, state), "Goal differs");
+        check(compiled.program.solved(to_core(state)) == solved(*old, state), "Goal differs");
       if (export_case) {
-        queries.push_back({{"op", "validate"}, {"state", to_flat(state)}});
+        queries.push_back({{"op", "validate"}, {"state", to_core(state)}});
         expected.push_back({{"status", valid ? "Valid" : "Invalid"}});
       }
     };
@@ -222,7 +222,7 @@ struct Comparison {
     }
     auto state = old->initial;
     for (int step = 0; step < 33; ++step) {
-      check(compiled.program.solved(to_flat(state)) == solved(*old, state), "Walk goal differs");
+      check(compiled.program.solved(to_core(state)) == solved(*old, state), "Walk goal differs");
       for (Index r = 0; r < tuples.size(); ++r)
         compare(state, r, step < 3);
       std::vector<std::string> legal;
@@ -235,7 +235,7 @@ struct Comparison {
       compare(old->initial, r, true);
       auto wrong = tuples[r];
       wrong[r % 8] = 0;
-      check(!compiled.program.plan(r, to_flat(old->initial), wrong).transition,
+      check(!compiled.program.plan(r, to_core(old->initial), wrong).transition,
             "Incomplete domain tuple accepted");
     }
     check(exercised.size() == 30, "Some Bagua requests were not exercised");

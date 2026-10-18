@@ -1,8 +1,8 @@
-#include "twisty/relational_completion.hpp"
+#include "twisty/completion.hpp"
 #include <iostream>
 
-using namespace twisty::flat;
-using twisty::relational::Json;
+using namespace twisty::core;
+using twisty::language::Json;
 namespace {
 int checks = 0;
 void check(bool value, const char *message) {
@@ -39,7 +39,7 @@ void execution() {
   Program p(toggle());
   const State source{0};
   const auto t = p.plan(0, source, Choices{1});
-  check(t.transition && t.transition->after == State{1}, "Flat transport failed");
+  check(t.transition && t.transition->after == State{1}, "Core transport failed");
   check(source == State{0}, "Planning changed caller state");
   check(t.transition->request == 0 && t.transition->choices == Choices{1} &&
             t.transition->actions[0].event == 7,
@@ -57,12 +57,12 @@ void execution() {
   const auto rejected = constrained.plan(0, source, Choices{0});
   check(rejected.rejection == Rejection::target_invariant && !rejected.transition,
         "Target invariant used cached source results");
-  rejects([&] { constrained.plan(0, State{1}, Choices{0}); }, "flat.state");
-  rejects([&] { p.plan(0, State{0}, Choices{}); }, "flat.choice");
-  rejects([&] { p.plan(0, State{0}, Choices{2}); }, "flat.choice");
-  rejects([&] { p.plan(1, State{0}, Choices{0}); }, "flat.request");
-  rejects([&] { p.plan(0, State{2}, Choices{0}); }, "flat.state");
-  rejects([&] { p.valid(State{}); }, "flat.state");
+  rejects([&] { constrained.plan(0, State{1}, Choices{0}); }, "core.state");
+  rejects([&] { p.plan(0, State{0}, Choices{}); }, "core.choice");
+  rejects([&] { p.plan(0, State{0}, Choices{2}); }, "core.choice");
+  rejects([&] { p.plan(1, State{0}, Choices{0}); }, "core.request");
+  rejects([&] { p.plan(0, State{2}, Choices{0}); }, "core.state");
+  rejects([&] { p.valid(State{}); }, "core.state");
   d = toggle();
   d.maps[0] = {{0, 0}};
   const auto loop = Program(d).plan(0, State{0}, Choices{0});
@@ -88,41 +88,41 @@ void execution() {
 void malformed_programs() {
   auto d = toggle();
   d.predicates[0].set = 8;
-  rejects([&] { Program bad(d); }, "flat.program");
+  rejects([&] { Program bad(d); }, "core.program");
   d = toggle();
   d.maps[0].push_back({1, 1});
-  rejects([&] { Program bad(d); }, "flat.program");
+  rejects([&] { Program bad(d); }, "core.program");
   d = toggle();
   d.maps[0] = {{0, 1}, {1, 1}};
-  rejects([&] { Program bad(d); }, "flat.program");
+  rejects([&] { Program bad(d); }, "core.program");
   d = toggle();
   d.requests[0].first_action = 100;
-  rejects([&] { Program bad(d); }, "flat.program");
+  rejects([&] { Program bad(d); }, "core.program");
   d = toggle();
   d.finite_sets[0] = {1, 0};
-  rejects([&] { Program bad(d); }, "flat.program");
+  rejects([&] { Program bad(d); }, "core.program");
   d = toggle();
   d.predicates[0].bank = Bank::choice;
   d.invariant = 2;
-  rejects([&] { Program bad(d); }, "flat.program");
+  rejects([&] { Program bad(d); }, "core.program");
   d = toggle();
   d.predicates[0].bank = Bank::choice;
   d.predicates[0].input = 1;
   d.goal = true_ref;
   d.requests[0].relation = 2;
-  rejects([&] { Program bad(d); }, "flat.program");
+  rejects([&] { Program bad(d); }, "core.program");
   d = toggle();
   d.predicates[0].bank = Bank::choice;
   d.finite_sets[0] = {2};
   d.goal = true_ref;
   d.requests[0].relation = 2;
-  rejects([&] { Program bad(d); }, "flat.program");
+  rejects([&] { Program bad(d); }, "core.program");
   d = toggle();
   d.predicates[0].opcode = Opcode::range;
   d.predicates[0].child_count = 1;
   d.predicates[0].upper = 1;
   d.child_references = {2};
-  rejects([&] { Program bad(d); }, "flat.program");
+  rejects([&] { Program bad(d); }, "core.program");
   // Deep graphs use an iterative evaluator, including on small native/WASM stacks.
   d = toggle();
   for (Index i = 0; i < 12000; ++i) {
@@ -144,7 +144,7 @@ Json toy() {
     {"id":"turn","choices":{"d":"flip"}}]}]})");
 }
 void language_and_completion() {
-  using namespace twisty::relational;
+  using namespace twisty::language;
   auto source = toy();
   auto compiled = compile(source);
   check(!bind_profile(compiled, 0, State{0}), "No implicit first-solution/default policy is allowed");
@@ -202,7 +202,7 @@ void language_and_completion() {
   rejects([&] { compile(bad); }, "language.invalid");
   bad = toy();
   bad["invariant"] = false;
-  rejects([&] { compile(bad); }, "flat.initial");
+  rejects([&] { compile(bad); }, "core.initial");
   Puzzle api(toy().dump());
   check(Json::parse(api.query_json(R"({"op":"plan","state":[0],"request":"u","choices":[]})"))["status"] ==
             "Invalid",
@@ -212,7 +212,7 @@ void language_and_completion() {
         "Exact state API accepted a floating placement");
 }
 void shared_named_predicates() {
-  using namespace twisty::relational;
+  using namespace twisty::language;
   auto source = toy();
   source["predicates"] = {{"leaf", {{"at", {{"piece", "p"}, {"placements", {"d/0"}}}}}}};
   std::string previous = "leaf";
@@ -260,7 +260,7 @@ void shared_named_predicates() {
   rejects([&] { compile(source); }, "language.invalid");
 }
 void rejection_proofs() {
-  using namespace twisty::relational;
+  using namespace twisty::language;
   auto source = toy();
   source["domains"][0]["pieces"].push_back({{"id", "other"}, {"initial", "1"}});
   const Json home = {{"at", {{"piece", "p"}, {"placements", {"d/0"}}}}};
@@ -283,8 +283,8 @@ void rejection_proofs() {
       compiled.program.predicate_trace(compiled.program.data().requests[0].relation, State{0, 1}, Choices{0});
   check(trace.at(compiled.program.data().requests[0].relation) == 0,
         "Predicate trace disagrees with planning");
-  rejects([&] { compiled.program.predicate_trace(9999, State{0, 1}, Choices{0}); }, "flat.input");
-  rejects([&] { compiled.program.predicate_trace(true_ref, State{0}); }, "flat.state");
+  rejects([&] { compiled.program.predicate_trace(9999, State{0, 1}, Choices{0}); }, "core.input");
+  rejects([&] { compiled.program.predicate_trace(true_ref, State{0}); }, "core.state");
   source["requests"][0]["relation"] = {{"any", {home, other, chosen}}};
   compiled = compile(source);
   const auto complete_trace =
@@ -295,10 +295,10 @@ void rejection_proofs() {
       [&] {
         compiled.program.state_predicate(compiled.program.data().requests[0].relation, State{0, 1});
       },
-      "flat.input");
+      "core.input");
 }
 void bounded_json() {
-  using namespace twisty::relational;
+  using namespace twisty::language;
   auto source = toy();
   const auto id = std::string(300, '[') + R"({ "quoted\" \\ } ])";
   source["id"] = id;
@@ -316,7 +316,7 @@ void bounded_json() {
         "Nesting boundary changed for an empty deepest container");
   Puzzle puzzle(toy().dump());
   const auto rejected = Json::parse(puzzle.query_json(deep));
-  check(rejected.at("status") == "Invalid" && rejected.at("diagnostics")[0].at("code") == "flat.limit",
+  check(rejected.at("status") == "Invalid" && rejected.at("diagnostics")[0].at("code") == "core.limit",
         "Query nesting limit was lost");
 }
 } // namespace

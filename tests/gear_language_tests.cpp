@@ -7,7 +7,7 @@
 
 namespace {
 using namespace twisty;
-namespace language = twisty::relational;
+namespace language = twisty::language;
 std::size_t checks = 0;
 void check(bool ok, const std::string &message) {
   ++checks;
@@ -29,7 +29,7 @@ struct Comparison {
   std::shared_ptr<const Definition> old;
   std::vector<Index> old_piece;
   std::vector<std::vector<Index>> global;
-  std::vector<flat::Choices> tuples;
+  std::vector<core::Choices> tuples;
   Json queries = Json::array(), expected = Json::array();
   Comparison(std::vector<std::string> mask, std::string name)
       : id(std::move(name)), geared(std::move(mask)), module(language::gear_module(geared, id)),
@@ -70,8 +70,8 @@ struct Comparison {
     }
     check(flatten(old->initial) == compiled.program.data().initial, "Initial state changed");
   }
-  flat::State flatten(const State &state) const {
-    flat::State result;
+  core::State flatten(const State &state) const {
+    core::State result;
     for (auto p : old_piece)
       result.push_back(global[old->pieces[p].domain][state.placement_of[p]]);
     return result;
@@ -107,7 +107,7 @@ struct Comparison {
         }
       }
   }
-  Json names(const flat::Choices &choices) const {
+  Json names(const core::Choices &choices) const {
     auto result = Json::array();
     for (Index d = 0; d < choices.size(); ++d)
       result.push_back(compiled.bindings.choice_values[d][choices[d]]);
@@ -156,7 +156,7 @@ struct Comparison {
       const auto reversed = compiled.program.plan(back, t.after, tuples[back]);
       check(reversed.transition && reversed.transition->after == t.before, "Inverse tuple failed");
     } else
-      check(planned.rejection == flat::Rejection::relation, "Coupling reached the wrong rejection stage");
+      check(planned.rejection == core::Rejection::relation, "Coupling reached the wrong rejection stage");
     if (emit) {
       queries.push_back(
           {{"op", "plan"}, {"request", id}, {"state", flatten(state)}, {"choices", names(tuples[r])}});

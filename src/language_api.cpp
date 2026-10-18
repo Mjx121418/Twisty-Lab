@@ -1,8 +1,8 @@
 #include "json_input.hpp"
-#include "twisty/relational_completion.hpp"
+#include "twisty/completion.hpp"
 #include <algorithm>
 
-namespace twisty::relational {
+namespace twisty::language {
 namespace {
 Json error_json(const std::string &code, const std::string &message) {
   return {{"status", "Invalid"}, {"diagnostics", Json::array({{{"code", code}, {"message", message}}})}};
@@ -10,52 +10,52 @@ Json error_json(const std::string &code, const std::string &message) {
 template <class F> std::string report(F action) {
   try {
     return action().dump();
-  } catch (const flat::Error &error) {
+  } catch (const core::Error &error) {
     return error_json(error.code, error.what()).dump();
   } catch (const Json::exception &error) {
     return error_json("language.invalid", error.what()).dump();
   }
 }
-flat::Index index_of(const std::vector<std::string> &values, const std::string &name) {
+core::Index index_of(const std::vector<std::string> &values, const std::string &name) {
   const auto it = std::find(values.begin(), values.end(), name);
   if (it == values.end())
-    throw flat::Error("flat.input", "Unknown name: " + name);
-  return static_cast<flat::Index>(it - values.begin());
+    throw core::Error("core.input", "Unknown name: " + name);
+  return static_cast<core::Index>(it - values.begin());
 }
-flat::State numbers(const Json &value) {
+core::State numbers(const Json &value) {
   if (!value.is_array() || value.size() > 4096)
-    throw flat::Error("flat.input", "Expected a finite input array");
-  flat::State result;
+    throw core::Error("core.input", "Expected a finite input array");
+  core::State result;
   for (const auto &x : value) {
     if (!x.is_number_integer() || (!x.is_number_unsigned() && x.get<std::int64_t>() < 0) ||
         x.get<std::uint64_t>() > 1000000)
-      throw flat::Error("flat.input", "Expected finite nonnegative integer inputs");
-    result.push_back(x.get<flat::Index>());
+      throw core::Error("core.input", "Expected finite nonnegative integer inputs");
+    result.push_back(x.get<core::Index>());
   }
   return result;
 }
-Json named_choices(const Bindings &bindings, const flat::Choices &choices) {
+Json named_choices(const Bindings &bindings, const core::Choices &choices) {
   auto result = Json::array();
   for (std::size_t i = 0; i < choices.size(); ++i)
     result.push_back(bindings.choice_values[i][choices[i]]);
   return result;
 }
-flat::Choices read_choices(const Bindings &bindings, const Json &value) {
+core::Choices read_choices(const Bindings &bindings, const Json &value) {
   if (!value.is_array() || value.size() != bindings.choice_slots.size())
-    throw flat::Error("flat.choice", "Supply one movement name per choice slot, including idle");
-  flat::Choices result;
+    throw core::Error("core.choice", "Supply one movement name per choice slot, including idle");
+  core::Choices result;
   for (std::size_t i = 0; i < value.size(); ++i)
     result.push_back(index_of(bindings.choice_values[i], value[i].get<std::string>()));
   return result;
 }
 Json query(const CompiledPuzzle &p, const Json &q) {
   if (!q.is_object())
-    throw flat::Error("flat.input", "Expected a query object");
+    throw core::Error("core.input", "Expected a query object");
   for (auto it = q.begin(); it != q.end(); ++it) {
     const std::vector<std::string> allowed{"op",      "state",          "request",    "choices",
                                            "profile", "candidateLimit", "resultLimit"};
     if (std::find(allowed.begin(), allowed.end(), it.key()) == allowed.end())
-      throw flat::Error("flat.input", "Unknown query field: " + it.key());
+      throw core::Error("core.input", "Unknown query field: " + it.key());
   }
   const auto state = numbers(q.at("state"));
   const auto op = q.at("op").get<std::string>();
@@ -67,8 +67,8 @@ Json query(const CompiledPuzzle &p, const Json &q) {
   const auto request_it = std::find_if(p.bindings.requests.begin(), p.bindings.requests.end(),
                                        [&](const auto &r) { return r.id == request_name; });
   if (request_it == p.bindings.requests.end())
-    throw flat::Error("flat.request", "Unknown request: " + request_name);
-  const auto request = static_cast<flat::Index>(request_it - p.bindings.requests.begin());
+    throw core::Error("core.request", "Unknown request: " + request_name);
+  const auto request = static_cast<core::Index>(request_it - p.bindings.requests.begin());
   if (op == "bind") {
     std::optional<std::string> profile;
     if (q.contains("profile"))
@@ -91,11 +91,11 @@ Json query(const CompiledPuzzle &p, const Json &q) {
             {"choices", choices}};
   }
   if (op != "plan")
-    throw flat::Error("flat.input", "Unknown query operation: " + op);
+    throw core::Error("core.input", "Unknown query operation: " + op);
   const auto result = p.program.plan(request, state, read_choices(p.bindings, q.at("choices")));
   if (!result.transition) {
-    const auto reason = result.rejection == flat::Rejection::relation           ? "relation"
-                        : result.rejection == flat::Rejection::target_invariant ? "target-invariant"
+    const auto reason = result.rejection == core::Rejection::relation           ? "relation"
+                        : result.rejection == core::Rejection::target_invariant ? "target-invariant"
                                                                                 : "conflicting-writes";
     return {{"status", "Rejected"}, {"reason", reason}};
   }
@@ -117,9 +117,9 @@ Json inspect(const CompiledPuzzle &p) {
   const auto &d = p.program.data();
   auto predicates = Json::array(), maps = Json::array(), actions = Json::array(), requests = Json::array();
   for (const auto &node : d.predicates) {
-    if (node.opcode == flat::Opcode::in)
+    if (node.opcode == core::Opcode::in)
       predicates.push_back({{"op", "IN"},
-                            {"bank", node.bank == flat::Bank::state ? "state" : "choice"},
+                            {"bank", node.bank == core::Bank::state ? "state" : "choice"},
                             {"input", node.input},
                             {"set", node.set}});
     else
@@ -184,12 +184,12 @@ std::string Puzzle::inspect_json() const {
 std::string Puzzle::query_json(const std::string &text) const {
   return report([&]() {
     if (text.size() > 1024 * 1024)
-      throw flat::Error("flat.limit", "Query exceeds 1 MiB");
-    detail::check_json_depth(text, 64, [] { throw flat::Error("flat.limit", "Query nesting exceeds 64"); });
+      throw core::Error("core.limit", "Query exceeds 1 MiB");
+    detail::check_json_depth(text, 64, [] { throw core::Error("core.limit", "Query nesting exceeds 64"); });
     return query(puzzle_, Json::parse(text));
   });
 }
 std::string compile_json(const std::string &source) {
   return report([&]() { return Json{{"status", "Compiled"}, {"preview", inspect(compile_text(source))}}; });
 }
-} // namespace twisty::relational
+} // namespace twisty::language

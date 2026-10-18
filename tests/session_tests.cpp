@@ -20,7 +20,7 @@ std::string read(const std::string &path) {
   return result.str();
 }
 Json bundle(bool bandaged) {
-  const auto module = relational::cube_module(bandaged);
+  const auto module = language::cube_module(bandaged);
   return {{"kind", "relational-package"},
           {"formatVersion", 1},
           {"source", module.source},
@@ -51,7 +51,7 @@ void elongated_bandage(Session &session, Geometry &geometry) {
   check(assets.at("bandage/body").at("vertexCount") == 24 && assets.at("bandage/body").at("indexCount") == 36,
         "Elongated cuboid exceeded its shared mesh budget");
   const auto definition = session.definition();
-  const auto catalog = relational::cube_module(true).catalog;
+  const auto catalog = language::cube_module(true).catalog;
   const auto labels = catalog.at("faceLabels").get<std::vector<std::string>>();
   const auto world = [&](const std::string &port, std::size_t vertex) {
     std::array<double, 3> point{};
@@ -284,7 +284,7 @@ void alternative() {
   check(!unsolved.snapshot().at("solved").get<bool>(), "Relational session used the old home goal");
 }
 void retired_formats() {
-  check(kernel_info().at("apiVersion") == 3 && kernel_info().at("sessionSchemaVersions") == Json::array({2}),
+  check(kernel_info().at("apiVersion") == 4 && kernel_info().at("sessionSchemaVersions") == Json::array({2}),
         "Runtime still advertises retired APIs");
   for (const auto &path : {"packages/cube3/source.json", "packages/cube3/definition.json",
                            "packages/helicopter/definition.json", "packages/gear/source.json"}) {

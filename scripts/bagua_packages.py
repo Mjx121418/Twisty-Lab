@@ -109,7 +109,7 @@ def main():
             for name, content in documents.items():
                 (Path(temporary) / name).write_text(json.dumps(content, separators=(',', ':'), sort_keys=True))
             if args.write:
-                subprocess.run([str(ROOT / 'build/native/bagua_relational_tests'), '--source-dir', temporary], check=True)
+                subprocess.run([str(ROOT / 'build/native/bagua_language_tests'), '--source-dir', temporary], check=True)
             result = json.loads(subprocess.check_output([str(ROOT / 'build/native/twisty'), 'validate', '--definition',
                                 str(Path(temporary) / 'relational-package.json'), '--json'], text=True))
             assert result['status'] == 'Valid', result

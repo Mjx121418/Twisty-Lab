@@ -9,7 +9,8 @@ with `BUILD_TESTING=ON`. They are never installed, exported through CMake, linke
 into the production CLI or WASM module, or copied into the SDK. Test executables
 link either this harness or the production kernel; they must never link both.
 The separate include directory prevents historical catalog layouts and APIs
-from entering runtime targets.
+from entering runtime targets. Shared compiler/core imports follow the current
+API names; historical rule and replay behavior remains frozen.
 
 Offline historical package reproducibility checks use the reference CLI. Its
 saved documents and conversion API describe the historical meaning only. The

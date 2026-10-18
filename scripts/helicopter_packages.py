@@ -133,7 +133,7 @@ def main():
             # Test the newly generated candidate, before changing checked-in
             # sources or compatibility pins. Legacy oracle files stay unchanged.
             if args.write:
-                subprocess.run([str(ROOT / 'build/native/helicopter_relational_tests'),
+                subprocess.run([str(ROOT / 'build/native/helicopter_language_tests'),
                                 '--source-dir', temporary], check=True)
             path = Path(temporary) / 'relational-package.json'
             result = json.loads(subprocess.check_output([str(ROOT / 'build/native/twisty'), 'compile',

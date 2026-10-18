@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace twisty {
-// Symbolic interpreter/inspector catalog. The abstract executor lives in flat_core.hpp.
+// Symbolic interpreter/inspector catalog. The abstract executor lives in core.hpp.
 
 using Json = nlohmann::json;
 using Index = std::uint32_t;

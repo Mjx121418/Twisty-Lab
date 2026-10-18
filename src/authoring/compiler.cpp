@@ -1,12 +1,12 @@
-#include "twisty/relational_compiler.hpp"
-#include "json_input.hpp"
+#include "twisty/authoring/compiler.hpp"
+#include "../json_input.hpp"
 #include <algorithm>
 #include <map>
 #include <set>
 
-namespace twisty::relational {
+namespace twisty::language {
 namespace {
-using namespace flat;
+using namespace core;
 [[noreturn]] void fail(const std::string &message) {
   throw Error("language.invalid", message);
 }
@@ -494,20 +494,20 @@ CompiledPuzzle compile(const Json &source) {
   try {
     return compile_checked(source);
   } catch (const Json::exception &error) {
-    throw flat::Error("language.invalid", error.what());
+    throw core::Error("language.invalid", error.what());
   }
 }
 CompiledPuzzle compile_text(const std::string &source) {
   if (source.size() > 8 * 1024 * 1024)
-    throw flat::Error("language.limit", "Source exceeds 8 MiB");
+    throw core::Error("language.limit", "Source exceeds 8 MiB");
   // Bound nesting before constructing the DOM, including unreferenced source data.
   try {
     detail::check_json_depth(source, 256,
-                             [] { throw flat::Error("language.limit", "Source nesting exceeds 256"); });
+                             [] { throw core::Error("language.limit", "Source nesting exceeds 256"); });
     auto parsed = Json::parse(source);
     return compile(parsed);
   } catch (const Json::exception &error) {
-    throw flat::Error("language.invalid", error.what());
+    throw core::Error("language.invalid", error.what());
   }
 }
-} // namespace twisty::relational
+} // namespace twisty::language

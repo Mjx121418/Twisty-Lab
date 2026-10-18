@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(twisty_lab VERSION 0.3.0 LANGUAGES CXX)
+project(twisty_lab VERSION 0.4.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -27,43 +27,53 @@ target_include_directories(puzzle_catalog PUBLIC
 target_compile_features(puzzle_catalog PUBLIC cxx_std_20)
 target_link_libraries(puzzle_catalog PUBLIC json_headers project_options)
 
-add_library(puzzle_symmetry src/symmetry.cpp)
+add_library(puzzle_symmetry src/authoring/symmetry.cpp)
 target_include_directories(puzzle_symmetry PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_compile_features(puzzle_symmetry PUBLIC cxx_std_20)
 target_link_libraries(puzzle_symmetry PUBLIC project_options)
 
-# The replacement executor is independently linkable and needs only the STL.
+# The executor is independently linkable and needs only the STL.
 # Authoring, JSON, completion policy, and discovery stay in a separate library.
-add_library(puzzle_flat_core src/flat_core.cpp)
-target_include_directories(puzzle_flat_core PUBLIC
+add_library(puzzle_core src/core.cpp)
+target_include_directories(puzzle_core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-target_compile_features(puzzle_flat_core PUBLIC cxx_std_20)
-target_link_libraries(puzzle_flat_core PUBLIC project_options)
-add_library(puzzle_relational src/relational_compiler.cpp src/relational_completion.cpp src/relational_api.cpp src/relational_cube.cpp src/relational_gear.cpp)
-target_link_libraries(puzzle_relational PUBLIC puzzle_flat_core puzzle_symmetry json_headers)
+target_compile_features(puzzle_core PUBLIC cxx_std_20)
+target_link_libraries(puzzle_core PUBLIC project_options)
+add_library(puzzle_language
+  src/authoring/compiler.cpp
+  src/authoring/cube.cpp
+  src/authoring/gear.cpp
+  src/completion.cpp
+  src/language_api.cpp)
+target_link_libraries(puzzle_language PUBLIC puzzle_core puzzle_symmetry json_headers)
 
 add_library(puzzle_execution src/execution.cpp)
-target_link_libraries(puzzle_execution PUBLIC puzzle_catalog puzzle_relational)
+target_link_libraries(puzzle_execution PUBLIC puzzle_catalog puzzle_language)
 
 add_library(puzzle_session src/session.cpp src/notation.cpp)
 target_link_libraries(puzzle_session PUBLIC puzzle_execution)
 
-add_library(puzzle_geometry src/geometry.cpp src/catalog_geometry.cpp src/spherical_geometry.cpp src/catalog_spherical_geometry.cpp src/articulated_geometry.cpp)
+add_library(puzzle_geometry
+  src/interpreter/geometry.cpp
+  src/interpreter/catalog_geometry.cpp
+  src/interpreter/spherical_geometry.cpp
+  src/interpreter/catalog_spherical_geometry.cpp
+  src/interpreter/articulated_geometry.cpp)
 target_link_libraries(puzzle_geometry PUBLIC puzzle_execution)
 
 add_library(puzzle_kernel INTERFACE)
-target_link_libraries(puzzle_kernel INTERFACE puzzle_session puzzle_geometry puzzle_relational)
-foreach(component IN ITEMS catalog execution session geometry symmetry flat_core relational kernel)
+target_link_libraries(puzzle_kernel INTERFACE puzzle_session puzzle_geometry puzzle_language)
+foreach(component IN ITEMS catalog execution session geometry symmetry core language kernel)
   add_library(Twisty::${component} ALIAS puzzle_${component})
   set_target_properties(puzzle_${component} PROPERTIES EXPORT_NAME ${component})
 endforeach()
 
 if(EMSCRIPTEN)
   add_executable(twisty_wasm src/bindings.cpp)
-  target_link_libraries(twisty_wasm PRIVATE puzzle_session puzzle_geometry puzzle_relational embind)
+  target_link_libraries(twisty_wasm PRIVATE puzzle_session puzzle_geometry puzzle_language embind)
   set_target_properties(twisty_wasm PROPERTIES
     OUTPUT_NAME twisty SUFFIX .mjs
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/kernel/generated")
@@ -74,7 +84,7 @@ if(EMSCRIPTEN)
     -sMAXIMUM_MEMORY=268435456 -sSTACK_SIZE=1048576
     --emit-tsd "${CMAKE_SOURCE_DIR}/kernel/generated/twisty.d.mts")
 else()
-  install(TARGETS puzzle_catalog puzzle_execution puzzle_session puzzle_geometry puzzle_symmetry puzzle_flat_core puzzle_relational puzzle_kernel
+  install(TARGETS puzzle_catalog puzzle_execution puzzle_session puzzle_geometry puzzle_symmetry puzzle_core puzzle_language puzzle_kernel
     json_headers project_options EXPORT TwistyKernelTargets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -95,8 +105,8 @@ else()
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TwistyKernel)
   add_executable(twisty src/cli.cpp)
   target_link_libraries(twisty PRIVATE puzzle_session)
-  add_executable(twisty_relational examples/relational/main.cpp)
-  target_link_libraries(twisty_relational PRIVATE puzzle_relational)
+  add_executable(twisty_language examples/language/main.cpp)
+  target_link_libraries(twisty_language PRIVATE puzzle_language)
   if(BUILD_TESTING)
     # Historical comparison harness. Its headers and symbols must never be
     # mixed with production targets; each executable links exactly one runtime.
@@ -108,61 +118,61 @@ else()
       tests/legacy/articulated_geometry.cpp)
     target_include_directories(legacy_test_reference BEFORE PUBLIC
       ${CMAKE_SOURCE_DIR}/tests/legacy/include ${CMAKE_SOURCE_DIR}/include)
-    target_link_libraries(legacy_test_reference PUBLIC puzzle_relational)
+    target_link_libraries(legacy_test_reference PUBLIC puzzle_language)
     add_executable(twisty_legacy_reference tests/legacy/cli.cpp)
     target_link_libraries(twisty_legacy_reference PRIVATE legacy_test_reference)
     add_executable(runtime_api_tests tests/runtime_api_tests.cpp)
     target_link_libraries(runtime_api_tests PRIVATE puzzle_kernel)
     target_compile_definitions(runtime_api_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
-    add_test(NAME relational_runtime_all_presets COMMAND runtime_api_tests)
+    add_test(NAME runtime_all_presets COMMAND runtime_api_tests)
     add_executable(gear_tests tests/legacy/gear_tests.cpp)
     target_link_libraries(gear_tests PRIVATE legacy_test_reference)
     target_compile_definitions(gear_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
     add_test(NAME gear_and_articulated_realizations COMMAND gear_tests)
-    add_executable(gear_relational_tests tests/gear_relational_tests.cpp)
-    target_link_libraries(gear_relational_tests PRIVATE legacy_test_reference)
-    target_compile_definitions(gear_relational_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
-    add_test(NAME gear_relational_migration COMMAND gear_relational_tests)
+    add_executable(gear_language_tests tests/gear_language_tests.cpp)
+    target_link_libraries(gear_language_tests PRIVATE legacy_test_reference)
+    target_compile_definitions(gear_language_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+    add_test(NAME gear_language_migration COMMAND gear_language_tests)
     find_package(Python3 COMPONENTS Interpreter REQUIRED)
     add_test(NAME runtime_has_no_legacy_backend COMMAND ${Python3_EXECUTABLE}
       ${CMAKE_SOURCE_DIR}/tests/runtime_boundary.py
       $<TARGET_FILE:puzzle_catalog> $<TARGET_FILE:puzzle_execution>
       $<TARGET_FILE:puzzle_session> $<TARGET_FILE:puzzle_geometry>)
-    add_test(NAME relational_gear_packages COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/gear_relational.py)
-    add_executable(flat_core_tests tests/flat_core_tests.cpp)
-    target_link_libraries(flat_core_tests PRIVATE puzzle_relational)
-    add_test(NAME flat_core_relations COMMAND flat_core_tests)
-    add_executable(cube_relational_tests tests/cube_relational_tests.cpp)
-    target_link_libraries(cube_relational_tests PRIVATE legacy_test_reference)
-    target_compile_definitions(cube_relational_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
-    add_test(NAME cube_relational_migration COMMAND cube_relational_tests)
-    add_executable(relational_session_tests tests/relational_session_tests.cpp)
-    target_link_libraries(relational_session_tests PRIVATE puzzle_kernel)
-    target_compile_definitions(relational_session_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
-    add_test(NAME relational_sessions_and_interpreters COMMAND relational_session_tests)
-    add_executable(helicopter_relational_tests tests/helicopter_relational_tests.cpp)
-    target_link_libraries(helicopter_relational_tests PRIVATE legacy_test_reference)
-    target_compile_definitions(helicopter_relational_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
-    add_test(NAME helicopter_relational_migration COMMAND helicopter_relational_tests)
-    add_executable(bagua_relational_tests tests/bagua_relational_tests.cpp)
-    target_link_libraries(bagua_relational_tests PRIVATE legacy_test_reference)
-    target_compile_definitions(bagua_relational_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
-    add_test(NAME bagua_relational_migration COMMAND bagua_relational_tests)
-    add_test(NAME relational_helicopter_package
-      COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/helicopter_relational.py)
-    add_test(NAME relational_cube_packages
-      COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/relational-packages.py --native $<TARGET_FILE:twisty_relational>)
-    add_test(NAME relational_source_oracle
-      COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/relational_oracle.py
-      $<TARGET_FILE:twisty_relational> ${CMAKE_SOURCE_DIR}/examples/relational/coupled.pzl.json)
+    add_test(NAME gear_packages COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/gear_packages.py)
+    add_executable(core_tests tests/core_tests.cpp)
+    target_link_libraries(core_tests PRIVATE puzzle_language)
+    add_test(NAME core_relations COMMAND core_tests)
+    add_executable(cube_language_tests tests/cube_language_tests.cpp)
+    target_link_libraries(cube_language_tests PRIVATE legacy_test_reference)
+    target_compile_definitions(cube_language_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+    add_test(NAME cube_language_migration COMMAND cube_language_tests)
+    add_executable(session_tests tests/session_tests.cpp)
+    target_link_libraries(session_tests PRIVATE puzzle_kernel)
+    target_compile_definitions(session_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+    add_test(NAME sessions_and_interpreters COMMAND session_tests)
+    add_executable(helicopter_language_tests tests/helicopter_language_tests.cpp)
+    target_link_libraries(helicopter_language_tests PRIVATE legacy_test_reference)
+    target_compile_definitions(helicopter_language_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+    add_test(NAME helicopter_language_migration COMMAND helicopter_language_tests)
+    add_executable(bagua_language_tests tests/bagua_language_tests.cpp)
+    target_link_libraries(bagua_language_tests PRIVATE legacy_test_reference)
+    target_compile_definitions(bagua_language_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+    add_test(NAME bagua_language_migration COMMAND bagua_language_tests)
+    add_test(NAME helicopter_package
+      COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/helicopter_packages.py)
+    add_test(NAME cube_packages
+      COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/cube-packages.py --native $<TARGET_FILE:twisty_language>)
+    add_test(NAME language_source_oracle
+      COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/language_oracle.py
+      $<TARGET_FILE:twisty_language> ${CMAKE_SOURCE_DIR}/examples/language/coupled.pzl.json)
     add_test(NAME gear_spherical_candidate_audit
       COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/gear_spherical_audit.py)
-    add_executable(core_tests tests/legacy/core_tests.cpp)
-    target_link_libraries(core_tests PRIVATE legacy_test_reference)
-    target_compile_definitions(core_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+    add_executable(legacy_core_tests tests/legacy/core_tests.cpp)
+    target_link_libraries(legacy_core_tests PRIVATE legacy_test_reference)
+    target_compile_definitions(legacy_core_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
     add_executable(geometry_probe tests/geometry_probe.cpp)
     target_link_libraries(geometry_probe PRIVATE puzzle_session puzzle_geometry)
-    add_test(NAME core_and_realizations COMMAND core_tests)
+    add_test(NAME core_and_realizations COMMAND legacy_core_tests)
     add_executable(spherical_geometry_tests tests/legacy/spherical_geometry_tests.cpp)
     target_link_libraries(spherical_geometry_tests PRIVATE legacy_test_reference)
     target_compile_definitions(spherical_geometry_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")

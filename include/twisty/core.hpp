@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-namespace twisty::flat {
+namespace twisty::core {
 using Index = std::uint32_t;
 using State = std::vector<Index>;
 using Choices = std::vector<Index>;
@@ -90,4 +90,4 @@ private:
   ProgramData data_;
   void check_state_shape(std::span<const Index> state) const;
 };
-} // namespace twisty::flat
+} // namespace twisty::core

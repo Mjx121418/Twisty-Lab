@@ -1,6 +1,6 @@
 #pragma once
 #include "twisty/catalog.hpp"
-#include "twisty/relational_completion.hpp"
+#include "twisty/completion.hpp"
 
 namespace twisty {
 // Grouped State/Definition are symbolic presentation and interpreter catalogs.
@@ -37,16 +37,16 @@ public:
 private:
   Execution(Json source, Json catalog);
   std::shared_ptr<const Definition> definition_;
-  relational::CompiledPuzzle puzzle_;
+  language::CompiledPuzzle puzzle_;
   std::vector<std::vector<Index>> global_of_local_;
   std::vector<Index> local_of_global_;
-  std::vector<Index> flat_piece_of_display_, display_piece_of_flat_;
+  std::vector<Index> core_piece_of_display_, display_piece_of_core_;
   std::map<std::string, Index> request_ids_;
   bool articulated_events_ = false;
   std::map<std::pair<Index, std::string>, Index> event_operations_;
   std::vector<std::map<std::string, std::string>> inverse_moves_;
-  flat::State flatten(const State &) const;
-  State display(const flat::State &) const;
+  core::State flatten(const State &) const;
+  State display(const core::State &) const;
 };
 // Compiles an explicit relational package or Gear module; failures
 // retain the structured compiler diagnostic rather than crossing the ABI.

@@ -1,9 +1,9 @@
-#include "twisty/relational_gear.hpp"
+#include "twisty/authoring/gear.hpp"
 #include "twisty/symmetry.hpp"
 #include <algorithm>
 #include <set>
 
-namespace twisty::relational {
+namespace twisty::language {
 namespace {
 const std::vector<std::string> faces{"U", "R", "F", "D", "L", "B"};
 std::string gear_key(const std::string &base, int phase) {
@@ -19,7 +19,7 @@ Json chosen(const std::string &domain, const std::string &move) {
 }
 void expect(bool value, const char *message) {
   if (!value)
-    throw flat::Error("library.gear", message);
+    throw core::Error("library.gear", message);
 }
 } // namespace
 
@@ -201,4 +201,4 @@ std::string gear_module_json(const std::string &text) {
   auto module = gear_module_source(Json::parse(text));
   return Json{{"source", module.source}, {"catalog", module.catalog}}.dump();
 }
-} // namespace twisty::relational
+} // namespace twisty::language

@@ -1,9 +1,9 @@
-#include "twisty/relational_cube.hpp"
+#include "twisty/authoring/cube.hpp"
 #include "twisty/symmetry.hpp"
 #include <algorithm>
 #include <map>
 
-namespace twisty::relational {
+namespace twisty::language {
 namespace {
 using symmetry::Permutation;
 using Labels = std::vector<std::string>;
@@ -27,7 +27,7 @@ std::string cell(Labels labels) {
     }
   if (labels.size() == 1)
     return labels.front();
-  throw flat::Error("library.cube", "Unknown cube slot");
+  throw core::Error("library.cube", "Unknown cube slot");
 }
 Labels acted(const Labels &labels, const Permutation &permutation) {
   Labels result;
@@ -80,7 +80,7 @@ CubeModule cube_module(bool bandaged) {
                {"faceLabels", faces},
                {"symmetry", group}};
   // This is authoring data. Slot incidence is compiled away into ordinary IN/count
-  // predicates. The flat executor never sees cells, footprints, or these families.
+  // predicates. The core executor never sees cells, footprints, or these families.
   std::map<std::string, std::map<std::string, Labels>> placements;
   for (const auto &[family, prototype] : prototypes) {
     for (const auto &g : group) {
@@ -210,4 +210,4 @@ std::string cube_module_json(bool bandaged) {
   const auto module = cube_module(bandaged);
   return Json{{"source", module.source}, {"catalog", module.catalog}}.dump();
 }
-} // namespace twisty::relational
+} // namespace twisty::language

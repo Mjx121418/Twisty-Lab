@@ -16,12 +16,12 @@ if (process.argv.includes('--stage-web')) {
   await writeFile(new URL('package.json', output), JSON.stringify({
     name: '@twisty/kernel', version, type: 'module',
     exports: { '.': { types: './index.d.ts', import: './index.js' }, './runtime': './generated/twisty.mjs', './wasm': './generated/twisty.wasm' },
-    files: ['index.js', 'index.d.ts', 'generated', 'examples', 'schemas', 'README.md', 'relational-core.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'bagua-verification.md', 'gear-model.md', 'gear-spherical-feasibility.md'],
+    files: ['index.js', 'index.d.ts', 'generated', 'examples', 'schemas', 'README.md', 'core-language.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'bagua-verification.md', 'gear-model.md', 'gear-spherical-feasibility.md'],
   }, null, 2) + '\n');
   const readme = (await readFile(new URL('../docs/kernel-api.md', import.meta.url), 'utf8'))
     .replaceAll('../schemas/', 'schemas/').replaceAll('../examples/', 'examples/');
   await writeFile(new URL('README.md', output), readme);
-  for (const file of ['relational-core.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'bagua-verification.md', 'gear-model.md', 'gear-spherical-feasibility.md']) {
+  for (const file of ['core-language.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'bagua-verification.md', 'gear-model.md', 'gear-spherical-feasibility.md']) {
     const guide = (await readFile(new URL(`../docs/${file}`, import.meta.url), 'utf8'))
       .replaceAll('../packages/', 'examples/canvas/data/').replaceAll('../examples/', 'examples/')
       .replaceAll('../schemas/', 'schemas/').replaceAll('[migration plan](abstract-language-core-plan.md)', 'migration plan')
@@ -29,7 +29,7 @@ if (process.argv.includes('--stage-web')) {
     await writeFile(new URL(file, output), guide);
   }
   await cp(new URL('../examples/canvas/', import.meta.url), new URL('examples/canvas/', output), { recursive: true });
-  await cp(new URL('../examples/relational/', import.meta.url), new URL('examples/relational/', output), { recursive: true });
+  await cp(new URL('../examples/language/', import.meta.url), new URL('examples/language/', output), { recursive: true });
   await mkdir(new URL('schemas/', output));
   await cp(new URL('../schemas/relational-puzzle.schema.json', import.meta.url), new URL('schemas/relational-puzzle.schema.json', output));
   for (const file of ['relational-package.schema.json', 'relational-gear-source.schema.json', 'session-v2.schema.json', 'state.schema.json', 'realization.schema.json'])

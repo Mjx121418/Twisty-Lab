@@ -13,7 +13,7 @@ template <class F> std::string guarded(F function) {
         result["transitionRecords"].push_back(transition.dump());
     }
     return result.dump();
-  } catch (const flat::Error &error) {
+  } catch (const core::Error &error) {
     return Json{{"status", "Invalid"},
                 {"diagnostics",
                  Json::array({{{"reasonCode", error.code}, {"source", "/"}, {"message", error.what()}}})}}

@@ -1,8 +1,8 @@
-# Experimental relational language and flat executor
+# Puzzle language and core executor
 
-This implements the initial milestones of the [migration plan](abstract-language-core-plan.md): an expanded JSON AST, a portable C++ compiler, a domain-free executor, a separate completion helper, and migrated cube/bandage/Helicopter/Bagua/Gear definitions. These presets now use relational sessions and interpreters in the reference app and independent clients, with comparison tests against the legacy executor. All production presets select the flat executor. The production runtime supports relational formats only. Historical definitions are evaluated solely by isolated native comparison tools under `tests/legacy`.
+This implements the initial milestones of the [migration plan](abstract-language-core-plan.md): an expanded JSON AST, a portable C++ compiler, a domain-free executor, a separate completion helper, and migrated cube/bandage/Helicopter/Bagua/Gear definitions. These presets now use relational sessions and interpreters in the reference app and independent clients, with comparison tests against the legacy executor. All production presets select the core executor. The production runtime supports relational formats only. Historical definitions are evaluated solely by isolated native comparison tools under `tests/legacy`.
 
-The new path is available through `Twisty::flat_core` (standard C++ library only), `Twisty::relational` (compiler, completion helpers, and JSON facade), and the WASM `RelationalPuzzle` class. It is advertised as `experimentalAPIs.relational = 1`. Public API 2 adds persisted relational packages and complete-tuple session replay through `Twisty::execution`; frame-buffer version 1 is unchanged. The experimental preview remains a separate inspection format without its own semantic digest or replay codec.
+The implementation is available through `Twisty::core` (standard C++ library only), `Twisty::language` (compiler, completion helpers, and JSON facade), and the WASM/TypeScript `Puzzle` class. It is advertised as `languageAPIVersion = 1`. Public API 4 uses the current core/language names; see [the naming migration](kernel-api.md#api-4-naming). Persisted definitions, complete-tuple session replay, and frame-buffer version 1 are unchanged. The program preview remains a separate inspection format without its own semantic digest or replay codec.
 
 ## Execution and completion
 
@@ -23,7 +23,7 @@ Distinct choices remain distinct even when their targets coincide. Every permitt
 
 ## JSON AST version 1
 
-The [complete example](../examples/relational/coupled.pzl.json) covers synchronization, cyclic implications, alternatives, obstruction, fixed profiles, and different winding events. The [JSON schema](../schemas/relational-puzzle.schema.json) describes the structural contract; the C++ compiler additionally checks names, types, supports, recursion, and bounds.
+The [complete example](../examples/language/coupled.pzl.json) covers synchronization, cyclic implications, alternatives, obstruction, fixed profiles, and different winding events. The [JSON schema](../schemas/relational-puzzle.schema.json) describes the structural contract; the C++ compiler additionally checks names, types, supports, recursion, and bounds.
 
 ```json
 {
@@ -102,60 +102,60 @@ The generated artifacts are:
 
 The separate catalogs preserve piece names, local ports, port labels, abstract resource incidence, qualified placement names, inverse requests, and event names. They contain no coordinates, meshes, or rotation angles. These are the bindings needed for the later interpreter migration, rather than extra fields in the executing core.
 
-Native clients can call `cube_module(false)` or `cube_module(true)` from `<twisty/relational_cube.hpp>` and pass its `source` to `compile()`. WASM exposes `relationalCubeModuleJSON(bandaged)`; TypeScript clients can use:
+Native clients can call `cube_module(false)` or `cube_module(true)` from `<twisty/authoring/cube.hpp>` and pass its `source` to `compile()`. WASM exposes `cubeModuleJSON(bandaged)`; TypeScript clients can use:
 
 ```js
-const { source, catalog } = createRelationalCubeSource(kernel, true);
-const puzzle = new ExperimentalRelationalPuzzle(kernel, JSON.stringify(source));
+const { source, catalog } = createCubeSource(kernel, true);
+const puzzle = new Puzzle(kernel, JSON.stringify(source));
 // catalog carries names/ports/events; puzzle carries the executable program.
 ```
 
-Import `createRelationalCubeSource` from the SDK entry point. Libraries are advertised in `kernelInfoJSON().relationalLibraries`. Checked-in ASTs can also be loaded directly without invoking the authoring library.
+Import `createCubeSource` from the SDK entry point. Libraries are advertised in `kernelInfoJSON().authoringLibraries`. Checked-in ASTs can also be loaded directly without invoking the authoring library.
 
 Regenerate or check the artifacts after building the native example:
 
 ```sh
-python3 scripts/relational-packages.py --write
-python3 scripts/relational-packages.py
+python3 scripts/cube-packages.py --write
+python3 scripts/cube-packages.py
 ```
 
-`twisty_relational --cube-module` and `--bandaged-module` print the source/catalog pair. The package checker includes their reproducibility check. Existing schema-1 definitions and their pins remain comparison oracles only. Production cube/bandage sessions use relational packages and schema-2 histories; legacy imports and conversion methods have been retired in API 3.
+`twisty_language --cube-module` and `--bandaged-module` print the source/catalog pair. The package checker includes their reproducibility check. Existing schema-1 definitions and their pins remain comparison oracles only. Production cube/bandage sessions use relational packages and schema-2 histories; legacy imports and conversion methods have been retired in API 3.
 
 ## Native use
 
 ```cpp
-#include <twisty/relational_completion.hpp>
+#include <twisty/completion.hpp>
 
-auto puzzle = twisty::relational::compile_text(source_text);
+auto puzzle = twisty::language::compile_text(source_text);
 auto state = puzzle.program.data().initial;
-auto choices = twisty::relational::bind_profile(puzzle, 0, state);
+auto choices = twisty::language::bind_profile(puzzle, 0, state);
 if (choices) {
   auto plan = puzzle.program.plan(0, state, *choices);
   if (plan.transition) state = plan.transition->after;
 }
 ```
 
-`Program` validates its data at construction and exposes only const execution data. Each query owns its scratch; a const program can be shared across threads. The compiler package and its metadata should be treated as immutable. Native input/program errors throw `flat::Error` with a `code`. A well-formed but forbidden tuple returns a `Plan` rejection. No session state is mutated by planning, binding, discovery, or goal tests.
+`Program` validates its data at construction and exposes only const execution data. Each query owns its scratch; a const program can be shared across threads. The compiler package and its metadata should be treated as immutable. Native input/program errors throw `core::Error` with a `code`. A well-formed but forbidden tuple returns a `Plan` rejection. No session state is mutated by planning, binding, discovery, or goal tests.
 
-For optional native diagnostics, `Program::predicate_trace(root, state, choices)` returns an owned vector indexed by predicate reference: evaluated values are 0 or 1, with −1 for unvisited nodes. It checks input shape, not invariants or request permission. The separate `relational::rejection_inputs()` helper follows a sufficient Boolean proof for a rejected relation and returns owned state-input indices; it adds no predicate kinds or completion policy to the core.
+For optional native diagnostics, `Program::predicate_trace(root, state, choices)` returns an owned vector indexed by predicate reference: evaluated values are 0 or 1, with −1 for unvisited nodes. It checks input shape, not invariants or request permission. The separate `language::rejection_inputs()` helper follows a sufficient Boolean proof for a rejected relation and returns owned state-input indices; it adds no predicate kinds or completion policy to the core.
 
 The independently linkable example accepts a source path and one JSON query per stdin line, or `--inspect` for the compiler preview:
 
 ```sh
 cmake --preset native
-cmake --build --preset native --target twisty_relational flat_core_tests cube_relational_tests
-build/native/twisty_relational examples/relational/coupled.pzl.json --inspect
-ctest --preset native -R 'flat_core_relations|relational_source_oracle|cube_relational_migration|relational_cube_packages'
+cmake --build --preset native --target twisty_language core_tests cube_language_tests
+build/native/twisty_language examples/language/coupled.pzl.json --inspect
+ctest --preset native -R 'core_relations|language_source_oracle|cube_language_migration|cube_packages'
 ```
 
-The example's separate CMake project can also consume an installed `Twisty::relational` package. Linking only `Twisty::flat_core` adds neither the JSON compiler nor the existing executor/geometry.
+The example's separate CMake project can also consume an installed `Twisty::language` package. Linking only `Twisty::core` adds neither the JSON compiler nor the existing executor/geometry.
 
 ## WASM and TypeScript use
 
 ```js
-import { createKernel, ExperimentalRelationalPuzzle } from '@twisty/kernel';
+import { createKernel, Puzzle } from '@twisty/kernel';
 const kernel = await createKernel();
-const puzzle = new ExperimentalRelationalPuzzle(kernel, sourceText);
+const puzzle = new Puzzle(kernel, sourceText);
 try {
   const state = puzzle.preview.program.initialPlacements;
   const candidate = puzzle.query({ op: 'bind', state, request: 'fixed' });
@@ -166,7 +166,7 @@ try {
 } finally { puzzle.dispose(); }
 ```
 
-The low-level equivalents are `new kernel.RelationalPuzzle(sourceText)`, `inspectJSON()`, and `queryJSON(queryText)`. `compileRelationalJSON(sourceText)` returns `Compiled` with a preview, or `Invalid` with diagnostics, without retaining a handle. Constructors throw on invalid source. Query JSON errors return `Invalid`; an invariant-invalid source differs from a valid source with a rejected tuple.
+The low-level equivalents are `new kernel.Puzzle(sourceText)`, `inspectJSON()`, and `queryJSON(queryText)`. `compilePuzzleJSON(sourceText)` returns `Compiled` with a preview, or `Invalid` with diagnostics, without retaining a handle. Constructors throw on invalid source. Query JSON errors return `Invalid`; an invariant-invalid source differs from a valid source with a rejected tuple.
 
 Every query supplies `state: number[]`. The supported operations are:
 
@@ -186,23 +186,23 @@ Source text is limited to 8 MiB and nesting 256; expressions expand to at most 1
 
 The native C++ tests exercise atomic execution, input/program validation, conflicting writers, source/target predicate rebinding, self-loop participation, deep graphs, candidate binding, and truncated/exhaustive discovery. The independent Python evaluator reads the source AST directly and exhausts tiny global assignments and local tuples, including invalid cross-catalog imports. Its expected states and witnesses never use compiled predicates or maps. Seeded Boolean formulas and a separate occupancy model broaden the comparison.
 
-After building native, WASM, and the packaged SDK, run `npm run check:relational`. Optional positional arguments select the native example executable and SDK entry point when using separate build directories. That check compares both the native consumer and WASM API with the source oracle, including complete transition witnesses and compiler previews.
+After building native, WASM, and the packaged SDK, run `npm run check:language`. Optional positional arguments select the native example executable and SDK entry point when using separate build directories. That check compares both the native consumer and WASM API with the source oracle, including complete transition witnesses and compiler previews.
 
 The cube/bandage migration gate exhausts every local transport entry and all 24 whole-cube orientations, then checks all directed requests along deterministic sampled walks. It compares goals, legal requests, exact targets, inverse permission, full participant/event witnesses, labels and ports, and every single-piece placement substitution into the origin. Wrong local choices—including omitted movements represented as idle—are rejected. The native test exports reference cases for WASM comparison, and installed/copied SDK consumers exercise the same authoring library and migrated programs. This is not exhaustive enumeration of either puzzle's complete reachable state graph.
 
 
 ## Session and interpreter migration
 
-The cube/bandage abstract parity gate now also gates their explicit `relational-package` documents and three rebundled realization pins. The reference app, default headless CLI, and independent Canvas example use those packages. `Twisty::execution` is a transitional wire/frame adapter: it maps the existing symbolic inspector state and grouped port frames to the domain-free executor. All new permission, validity, and goal checks use `flat::Program`; the shipped runtime has no alternative execution backend.
+The cube/bandage abstract parity gate now also gates their explicit `relational-package` documents and three rebundled realization pins. The reference app, default headless CLI, and independent Canvas example use those packages. `Twisty::execution` is a transitional wire/frame adapter: it maps the existing symbolic inspector state and grouped port frames to the domain-free executor. All new permission, validity, and goal checks use `core::Program`; the shipped runtime has no alternative execution backend.
 
-Public API 3 retains persisted relational definitions and session schema 2 with complete choices, and removes legacy runtime APIs. Planning, interactive/transactional algorithms, revision checks, seeded scrambles, undo/redo, and history loading share this execution context. The interpreter also shares it and validates the concrete tuple and event witness. The existing standalone preview format and its version remain experimental and unchanged. See [the session contracts](kernel-api.md#relational-sessions).
+Public API 4 retains persisted definitions and session schema 2 with complete choices, with the legacy runtime APIs removed. Planning, interactive/transactional algorithms, revision checks, seeded scrambles, undo/redo, and history loading share this execution context. The interpreter also shares it and validates the concrete tuple and event witness. The existing standalone preview format and its version remain experimental and unchanged. See [the session contracts](kernel-api.md#sessions-and-checked-replay).
 
 The adapter accepts the parity-gated cube catalog and the uniform port catalog used by Helicopter. It requires reciprocal named moves and one uniform event per request. It is not a general realization compiler for every raw AST. Richer source diagnostics and textual/module syntax remain ahead. Articulated catalogs now bind local events to certified request tracks. The new core's two predicate opcodes and disjoint placement layout are unchanged.
 
 
 ## Helicopter migration
 
-[The Helicopter AST](../packages/helicopter/relational.pzl.json) is authored offline by `scripts/helicopter_relational.py` from the same exact rational catalog as the original model. No legacy compiler or planner is called to generate its movement tables. The separate [port catalog](../packages/helicopter/relational-bindings.json) and compact `relational-package.json` load through the portable API without Python.
+[The Helicopter AST](../packages/helicopter/relational.pzl.json) is authored offline by `scripts/helicopter_packages.py` from the same exact rational catalog as the original model. No legacy compiler or planner is called to generate its movement tables. The separate [port catalog](../packages/helicopter/relational-bindings.json) and compact `relational-package.json` load through the portable API without Python.
 
 Its three authoring domains have 144 center, 240 corner, and 36 mechanism placements. All 44 identities survive, including twelve distinct mechanism pieces. Ordinary membership invariants restrict each mechanism to its own three axis phases. The compiler flattens the disjoint catalogs to 420 placements; domain names never enter the core. Shared lowering produces 8,847 predicate nodes, 53,061 child references, 276 sparse maps, and 7,920 action records. Occupancy and exclusion use shared location predicates and capacity counts. Each of 180 directed stop requests relates its three local choices and prohibits occupied unavailable locations. A mechanism move's source-phase requirement also applies to explicitly supplied tuples.
 
@@ -212,16 +212,16 @@ The declared default profile is available only in its source phase. `snapshot.ca
 
 The native migration gate exhausts all local transport entries, all unavailable placement labels, and single-piece substitutions, then checks all directed requests along 33 sampled states and exercises every source phase. It compares exact targets and full participation/event witnesses, axis restrictions, goals, inverse completions, all three interpreters, replay and legacy conversion. Exported cases compare the same independent legacy expectations against WASM. This is not exhaustive enumeration of the labeled state graph; the existing separate shape-graph verifier remains in the regression suite.
 
-Build `helicopter_relational_tests` and `twisty` before regenerating with `python3 scripts/helicopter_relational.py --write`. Generation runs the native parity gate before repinning realizations. Omit `--write` for the reproducibility check. Gear variants/custom masks and Bagua are also migrated.
+Build `helicopter_language_tests` and `twisty` before regenerating with `python3 scripts/helicopter_packages.py --write`. Generation runs the native parity gate before repinning realizations. Omit `--write` for the reproducibility check. Gear variants/custom masks and Bagua are also migrated.
 
 
 ## Gear family migration
 
-The portable `gear_module(gearedEdges, puzzleId)` authoring library in `<twisty/relational_gear.hpp>` derives ordinary ASTs from the new cube library and exact finite face-label permutations. It never calls the old compiler or executor. Normal, Extreme, all-plain, and custom masks retain 26 identities and 198 flat placements: six center, 24 corner, 24 plain-edge, and 144 geared-edge placements. An empty plain/geared authoring domain is allowed. Gear identity is persistent; phase has six exact values.
+The portable `gear_module(gearedEdges, puzzleId)` authoring library in `<twisty/authoring/gear.hpp>` derives ordinary ASTs from the new cube library and exact finite face-label permutations. It never calls the old compiler or executor. Normal, Extreme, all-plain, and custom masks retain 26 identities and 198 flat placements: six center, 24 corner, 24 plain-edge, and 144 geared-edge placements. An empty plain/geared authoring domain is allowed. Gear identity is persistent; phase has six exact values.
 
 Each domain supplies ordinary and coupled local movements. For each requested face and inverse, `R` selects the authored tuple and counts geared identities occupying the middle slice: ordinary requests require zero; coupled requests require one through four. Coupled tables turn both opposite faces, leave middle carriers fixed, and advance each driven cog phase with its intrinsic handedness. Occupancy is an ordinary count invariant shared across plain and geared edge domains. No new predicate opcode, guard class, core domain field, or automatic propagation rule is needed.
 
-Runtime authoring uses `{kind: "relational-gear-prototypes", formatVersion: 1, puzzleId, gearedEdges}`. This is a new explicit source kind; `gear-cube-prototypes` is rejected by the runtime; historical authoring is available only in test tools. C++ `gear_module_source()`, WASM `relationalGearModuleJSON(sourceText)`, and TypeScript `createRelationalGearSource(kernel, source)` expose the library. The standalone native consumer accepts `source.json --gear-module`. `kernelInfoJSON().relationalLibraries` includes `gear-family`. Static ASTs and complete packages remain loadable without using the factory.
+Runtime authoring uses `{kind: "relational-gear-prototypes", formatVersion: 1, puzzleId, gearedEdges}`. This is a new explicit source kind; `gear-cube-prototypes` is rejected by the runtime; historical authoring is available only in test tools. C++ `gear_module_source()`, WASM `gearModuleJSON(sourceText)`, and TypeScript `createGearSource(kernel, source)` expose the library. The standalone native consumer accepts `source.json --gear-module`. `kernelInfoJSON().authoringLibraries` includes `gear-family`. Static ASTs and complete packages remain loadable without using the factory.
 
 `relational-articulated-bindings` version 1 adds `moveInverses[domain][localMove]` and `events[event] = {domain, request}`. Inverse names must be reciprocal. An event certifies exactly the local movement selected by that request's declared default profile in the named domain. All local moves need such a certificate; these profiles select concrete moves in each slot. Event names are separate from legacy transport labels and contain no geometry. The kernel checks bindings when loading, rather than deriving a rotation from endpoints.
 
@@ -229,16 +229,16 @@ The interpreter verifies each certificate against the existing per-domain/per-pl
 
 All procedural, supplied, six/twelve-tooth, diagram, and spherical meshes and authored rotations are unchanged. New `relational-*` realization files carry new pins. The 300°/60° winding distinction remains in interpreter data; events and exact source placements choose the whole authored path, including self-loops. Legacy save conversion compares the bound transport and complete participants after validating both replays.
 
-Regenerate with `python3 scripts/gear_relational.py --write`, which runs the native migration gate before repinning. The default checks generated sources, catalogs, manifests, and all realization pins. The gate compares all local tables, source mutations, requests along sampled walks, exact phase/event witnesses, and seven existing geometric models across 29 masks, including UF-only and UF/UR. It does not enumerate the full reachable labeled state graph or every mask's entire state graph. Exported cases also compare native and WASM compiler output and execution.
+Regenerate with `python3 scripts/gear_packages.py --write`, which runs the native migration gate before repinning. The default checks generated sources, catalogs, manifests, and all realization pins. The gate compares all local tables, source mutations, requests along sampled walks, exact phase/event witnesses, and seven existing geometric models across 29 masks, including UF-only and UF/UR. It does not enumerate the full reachable labeled state graph or every mask's entire state graph. Exported cases also compare native and WASM compiler output and execution.
 
 
 ## Bagua migration
 
-Bagua uses eight authoring domains, 146 identities, 2,232 disjoint placements, and 30 complete requests. Exact offline geometry authoring still constructs the finite catalog and exclusion resources. `scripts/bagua_relational.py` lowers those data to ordinary placement memberships, shared occupancy predicates, capacity counts, and cross-domain obstruction relations. Runtime permission, validity, and goals use the same flat executor as every other preset. The port catalog retains unavailable-placement certificates for the interpreter, not executable guards.
+Bagua uses eight authoring domains, 146 identities, 2,232 disjoint placements, and 30 complete requests. Exact offline geometry authoring still constructs the finite catalog and exclusion resources. `scripts/bagua_packages.py` lowers those data to ordinary placement memberships, shared occupancy predicates, capacity counts, and cross-domain obstruction relations. Runtime permission, validity, and goals use the same core executor as every other preset. The port catalog retains unavailable-placement certificates for the interpreter, not executable guards.
 
 The module compiles to 54,618 predicate nodes, 129,997 child references, 240 sparse maps, and 4,380 action records. Named source predicates share lowering across state and relation contexts, with request-dependent aliases specialized as needed; sharing does not weaken cycle, depth, or state-only checks. Boolean evaluation stops when a count bound is decided. Diagnostic traces remain exhaustive over reachable nodes so rejection proofs retain all relevant inputs. No predicate opcodes or puzzle-specific executor rules were added.
 
-Generation runs the parity gate against fresh temporary authoring files before updating sources and realization pins. It compares all local transports and blocked placements, representative catalog substitutions for every family, all home-cell orientations for other identities, sampled pair mutations and walks, full witnesses, inverses, replay, explicit legacy conversion, and unchanged assets and sampled poses in all three views. This is finite regression coverage, not a proof covering every reachable state. Build `bagua_relational_tests` and `twisty`, then use `python3 scripts/bagua_relational.py --write`; omit the flag for reproducibility checking.
+Generation runs the parity gate against fresh temporary authoring files before updating sources and realization pins. It compares all local transports and blocked placements, representative catalog substitutions for every family, all home-cell orientations for other identities, sampled pair mutations and walks, full witnesses, inverses, replay, explicit legacy conversion, and unchanged assets and sampled poses in all three views. This is finite regression coverage, not a proof covering every reachable state. Build `bagua_language_tests` and `twisty`, then use `python3 scripts/bagua_packages.py --write`; omit the flag for reproducibility checking.
 
 Imports use a string-aware linear depth scan followed by the normal JSON parser. This avoids quadratic discard scans in the callback parser while preserving its nesting boundary, quoted escapes, and syntax validation. In this container, Bagua first-session construction fell from roughly 17 seconds to 1.4 seconds in WASM; a 30-turn published sequence takes about 0.3 seconds.
 

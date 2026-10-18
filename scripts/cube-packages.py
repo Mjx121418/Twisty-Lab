@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--native', default='build/native/twisty_relational')
+parser.add_argument('--native', default='build/native/twisty_language')
 parser.add_argument('--write', action='store_true')
 args = parser.parse_args()
 root = Path(__file__).resolve().parent.parent
@@ -15,13 +15,13 @@ executable = root / args.native
 session_executable = executable.parent / 'twisty'
 if args.write:
     # Rebinding a geometric asset requires passing the abstract parity gate.
-    subprocess.run([str(executable.parent / 'cube_relational_tests')], check=True)
+    subprocess.run([str(executable.parent / 'cube_language_tests')], check=True)
 for package, flag in [('cube3', '--cube-module'), ('bandaged', '--bandaged-module')]:
     module = json.loads(subprocess.check_output([str(executable), flag], text=True))
     bundle = dict(kind='relational-package', formatVersion=1, source=module['source'], catalog=module['catalog'])
     documents = {'relational.pzl.json': module['source'], 'relational-bindings.json': module['catalog'],
                  'relational-package.json': bundle}
-    with tempfile.TemporaryDirectory(prefix='twisty-relational-') as directory:
+    with tempfile.TemporaryDirectory(prefix='twisty-language-') as directory:
         source_file = Path(directory) / 'package.json'
         source_file.write_text(json.dumps(bundle))
         result = json.loads(subprocess.check_output([str(session_executable), 'compile', '--definition', str(source_file), '--json'], text=True))

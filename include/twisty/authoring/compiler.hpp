@@ -1,18 +1,18 @@
 #pragma once
-#include "twisty/flat_core.hpp"
+#include "../core.hpp"
 #include <nlohmann/json.hpp>
 
-namespace twisty::relational {
+namespace twisty::language {
 using Json = nlohmann::json;
 struct Profile {
   std::string id;
-  flat::Choices choices;
-  flat::Ref when = flat::true_ref;
+  core::Choices choices;
+  core::Ref when = core::true_ref;
 };
 struct RequestBinding {
   std::string id;
   std::vector<Profile> profiles;
-  std::optional<flat::Index> default_profile;
+  std::optional<core::Index> default_profile;
 };
 struct Bindings {
   std::string puzzle_id;
@@ -21,7 +21,7 @@ struct Bindings {
   std::vector<RequestBinding> requests;
 };
 struct CompiledPuzzle {
-  flat::Program program;
+  core::Program program;
   Bindings bindings;
 };
 
@@ -42,4 +42,4 @@ private:
   CompiledPuzzle puzzle_;
 };
 std::string compile_json(const std::string &source);
-} // namespace twisty::relational
+} // namespace twisty::language

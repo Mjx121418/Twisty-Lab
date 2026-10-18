@@ -1,6 +1,6 @@
 #include "twisty/execution.hpp"
 #include "json_input.hpp"
-#include "twisty/relational_gear.hpp"
+#include "twisty/authoring/gear.hpp"
 #include <algorithm>
 #include <set>
 
@@ -10,7 +10,7 @@ Json compile_execution_json(const std::string &text) {
     return {{"status", "Compiled"},
             {"definition", Execution::from_source(text)->definition_json()},
             {"diagnostics", Json::array()}};
-  } catch (const flat::Error &error) {
+  } catch (const core::Error &error) {
     return {{"status", "Invalid"},
             {"diagnostics",
              Json::array({{{"reasonCode", error.code}, {"source", "/"}, {"message", error.what()}}})}};
@@ -46,7 +46,7 @@ std::shared_ptr<const Execution> Execution::from_source(const std::string &text)
   auto document = Json::parse(text);
   const auto kind = document.value("kind", std::string{});
   if (kind == "relational-gear-prototypes") {
-    auto module = relational::gear_module_source(document);
+    auto module = language::gear_module_source(document);
     return std::shared_ptr<const Execution>(
         new Execution(std::move(module.source), std::move(module.catalog)));
   }
@@ -86,7 +86,7 @@ std::shared_ptr<const Execution> Execution::from_source(const std::string &text)
   return legacy(load_definition(result.at("definition")));
 }
 
-Execution::Execution(Json source, Json catalog) : puzzle_(relational::compile(source)) {
+Execution::Execution(Json source, Json catalog) : puzzle_(language::compile(source)) {
   // Grouped tables below are frame/inspector metadata. State validity and move
   // permission always come from the separately compiled relational program.
   const bool port_catalog = catalog.at("kind") == "relational-port-bindings";
@@ -189,11 +189,11 @@ Execution::Execution(Json source, Json catalog) : puzzle_(relational::compile(so
   // are independently mapped, never inferred from that ordering.
   auto sorted_pieces = bindings.pieces;
   std::sort(sorted_pieces.begin(), sorted_pieces.end());
-  display_piece_of_flat_.resize(sorted_pieces.size());
+  display_piece_of_core_.resize(sorted_pieces.size());
   for (const auto &id : sorted_pieces) {
     const auto p = index_of(bindings.pieces, id);
-    flat_piece_of_display_.push_back(p);
-    display_piece_of_flat_[p] = static_cast<Index>(definition->pieces.size());
+    core_piece_of_display_.push_back(p);
+    display_piece_of_core_[p] = static_cast<Index>(definition->pieces.size());
     const auto &entry = catalog.at("pieces").at(id);
     const auto d = domain_ids.at(entry.at("domain").get<std::string>());
     const auto home = lookup(placement_ids, entry.at("home").get<std::string>());
@@ -223,7 +223,7 @@ Execution::Execution(Json source, Json catalog) : puzzle_(relational::compile(so
     ensure(request.default_profile.has_value(),
            "A uniform rotation track requires a declared default profile.");
     const auto &profile = request.profiles.at(*request.default_profile);
-    ensure(port_catalog || profile.when == flat::true_ref,
+    ensure(port_catalog || profile.when == core::true_ref,
            "The cube frame adapter requires a constant declared default profile.");
     const auto &choices = profile.choices;
     Operation operation;
@@ -304,7 +304,7 @@ Execution::Execution(Json source, Json catalog) : puzzle_(relational::compile(so
                             {"adapter", articulated_events_ ? "articulated-events@1"
                                         : port_catalog      ? "uniform-port-tracks@1"
                                                             : "cube-ports@1"}};
-  auto preview = relational::inspect(*puzzle_);
+  auto preview = language::inspect(*puzzle_);
   definition->canonical = {{"kind", "relational-definition"}, {"formatVersion", 1},
                            {"predicateVersion", 1},           {"puzzleId", definition->id},
                            {"ruleModule", "relational@1"},    {"cells", definition->cells},
@@ -337,25 +337,25 @@ Index Execution::event_operation(Index piece, const std::string &event) const {
   ensure(found != event_operations_.end(), "Unknown or incompatible participation event.");
   return found->second;
 }
-flat::State Execution::flatten(const State &state) const {
+core::State Execution::flatten(const State &state) const {
   if (state.placement_of.size() != definition_->pieces.size() || !state.mechanism.is_object() ||
       !state.mechanism.empty())
     throw DiagnosticError("state.invalid", "/state",
                           "Expected exactly the declared pieces and an empty mechanism record.");
-  flat::State result(state.placement_of.size());
+  core::State result(state.placement_of.size());
   for (Index p = 0; p < result.size(); ++p) {
     const auto &map = global_of_local_.at(definition_->pieces[p].domain);
     if (state.placement_of[p] >= map.size())
       throw DiagnosticError("state.placement", "/placementOf", "Placement is outside the declared catalog.");
-    result[flat_piece_of_display_[p]] = map[state.placement_of[p]];
+    result[core_piece_of_display_[p]] = map[state.placement_of[p]];
   }
   return result;
 }
-State Execution::display(const flat::State &state) const {
+State Execution::display(const core::State &state) const {
   State result;
   result.placement_of.resize(state.size());
   for (Index p = 0; p < state.size(); ++p)
-    result.placement_of[display_piece_of_flat_[p]] = local_of_global_.at(state[p]);
+    result.placement_of[display_piece_of_core_[p]] = local_of_global_.at(state[p]);
   return result;
 }
 void Execution::validate(const State &state) const {
@@ -402,15 +402,15 @@ ExecutionPlan Execution::plan(const State &state, const std::string &operation,
     throw DiagnosticError("request.unknown", "/operation", "Unknown request.");
   const auto request = request_ids_.at(operation);
   const auto before = flatten(state);
-  std::optional<flat::Choices> choices;
+  std::optional<core::Choices> choices;
   if (named_choices.is_null())
-    choices = relational::bind_profile(*puzzle_, request, before);
+    choices = language::bind_profile(*puzzle_, request, before);
   else {
     const auto names = named_choices.get<std::vector<std::string>>();
     if (names.size() != puzzle_->bindings.choice_slots.size())
       throw DiagnosticError("request.choices", "/choices",
                             "Supply one choice for every declared choice slot.");
-    choices = flat::Choices{};
+    choices = core::Choices{};
     for (Index i = 0; i < names.size(); ++i)
       choices->push_back(index_of(puzzle_->bindings.choice_values[i], names[i]));
   }
@@ -418,14 +418,14 @@ ExecutionPlan Execution::plan(const State &state, const std::string &operation,
     return {std::nullopt, {{"status", "ChoiceRequired"}, {"operation", operation}}};
   const auto result = puzzle_->program.plan(request, before, *choices);
   if (!result.transition) {
-    const auto reason = result.rejection == flat::Rejection::relation ? "relation.rejected"
-                        : result.rejection == flat::Rejection::target_invariant
+    const auto reason = result.rejection == core::Rejection::relation ? "relation.rejected"
+                        : result.rejection == core::Rejection::target_invariant
                             ? "state.target_invariant"
                             : "transport.conflicting_writes";
     std::set<std::string> inputs;
     const auto root = puzzle_->program.data().requests[request].relation;
-    if (result.rejection == flat::Rejection::relation)
-      for (const auto p : relational::rejection_inputs(puzzle_->program, request, before, *choices))
+    if (result.rejection == core::Rejection::relation)
+      for (const auto p : language::rejection_inputs(puzzle_->program, request, before, *choices))
         inputs.insert(puzzle_->bindings.pieces[p]);
     return {std::nullopt,
             {{"status", "Blocked"},
@@ -441,7 +441,7 @@ ExecutionPlan Execution::plan(const State &state, const std::string &operation,
     transition.choices.push_back(puzzle_->bindings.choice_values[i][choices->at(i)]);
   for (const auto &a : w.actions) {
     transition.actions.push_back(
-        {display_piece_of_flat_[a.piece], local_of_global_[a.from], local_of_global_[a.to]});
+        {display_piece_of_core_[a.piece], local_of_global_[a.from], local_of_global_[a.to]});
     transition.events.push_back(puzzle_->bindings.events[a.event]);
   }
   return {std::move(transition), {}};
@@ -470,7 +470,7 @@ Json Execution::legal(const State &state) const {
     return legal_operations(*definition_, state);
   auto requests = Json::array();
   const auto before = flatten(state);
-  const auto candidates = relational::bind_default_profiles(*puzzle_, before);
+  const auto candidates = language::bind_default_profiles(*puzzle_, before);
   for (Index r = 0; r < candidates.size(); ++r) {
     if (candidates[r] && puzzle_->program.plan(r, before, *candidates[r]).transition) {
       auto choices = Json::array();
@@ -486,7 +486,7 @@ Json Execution::legal(const State &state) const {
 Json Execution::candidates(const State &state) const {
   ensure(relational(), "Candidate tuples are declared by relational profile bindings.");
   const auto source = flatten(state);
-  const auto candidates = relational::bind_default_profiles(*puzzle_, source);
+  const auto candidates = language::bind_default_profiles(*puzzle_, source);
   auto requests = Json::array();
   for (Index r = 0; r < puzzle_->bindings.requests.size(); ++r)
     if (const auto &tuple = candidates[r]) {
