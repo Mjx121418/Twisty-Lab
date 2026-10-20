@@ -75,8 +75,9 @@ public:
     if (j.is_boolean())
       return {};
     expect(j.is_object() && j.size() == 1, "A predicate must have exactly one operator");
-    const auto op = j.begin().key();
-    const auto &value = j.begin().value();
+    const auto member = j.begin();
+    const auto op = member.key();
+    const auto &value = member.value();
     if (op == "request")
       return {true, false, 0};
     if (op == "chosen")
@@ -205,8 +206,9 @@ public:
     if (j.is_boolean())
       return j.get<bool>() ? true_ref : false_ref;
     expect(j.is_object() && j.size() == 1, "A predicate must have exactly one operator");
-    const auto op = j.begin().key();
-    const auto &value = j.begin().value();
+    const auto member = j.begin();
+    const auto op = member.key();
+    const auto &value = member.value();
     const auto sub = [&](const Json &x) { return expression(x, request, state_only, depth + 1); };
     if (op == "at") {
       fields(value, {"piece", "placements"});
