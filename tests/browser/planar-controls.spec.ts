@@ -1,3 +1,4 @@
+import { setViews } from './view-controls';
 import { expect, test, type Page } from '@playwright/test';
 
 async function nextFrame(page: Page): Promise<void> {
@@ -11,7 +12,7 @@ for (const puzzle of ['flat-torus', 'flat-hex-klein-bottle']) {
     await page.goto('./');
     await expect(page.getByTestId('state-digest')).toHaveText(/[0-9a-f]{64}/);
     await page.getByLabel('Puzzle', { exact: true }).selectOption(puzzle);
-    const domain=page.getByTestId('cube-view'),plane=page.getByTestId('diagram-view');
+    const domain=page.getByTestId('cube-view'),plane=page.locator('[data-view-id="tiled-plane"]');
     await expect(domain).toHaveAttribute('data-topology',puzzle.includes('klein')?'klein-bottle':'torus');
     const origin=await page.getByTestId('state-digest').textContent();
     const outline=domain.locator('.surface-viewport polygon'),points=await outline.getAttribute('points');
@@ -29,7 +30,7 @@ for (const puzzle of ['flat-torus', 'flat-hex-klein-bottle']) {
     await expect(plane).toHaveAttribute('data-selected-piece',/^(face|edge|vertex)-/);
     await page.keyboard.press('Escape');
     await expect(plane).toHaveAttribute('data-selected-piece','');
-    await page.getByRole('button',{name:'Tiled plane',exact:true}).click();
+    await setViews(page, ['tiled-plane']);
     await canvas.hover();await page.mouse.wheel(0,1000);
     await expect.poll(async()=>Number(await plane.getAttribute('data-camera-zoom'))).toBeLessThan(1);
     await canvas.click({position:{x:12,y:15}});

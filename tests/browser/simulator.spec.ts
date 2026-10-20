@@ -1,3 +1,4 @@
+import { setViews, expectViews } from './view-controls';
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -20,7 +21,7 @@ test('realizes Bagua turns, published pair cycles, blocking and saved sessions',
   test.setTimeout(60_000);
   await page.getByLabel('Puzzle', { exact: true }).selectOption('bagua');
   await expect(page.getByRole('button', { name: 'Select corner/00', exact: true })).toBeVisible();
-  await page.getByLabel('Geometry views').selectOption('cube-diagram');
+  await setViews(page, 'cube-diagram');
   await expect(page.locator('canvas')).toHaveCount(2);
   await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', 'bagua-euclidean-v1');
   await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-realization-id', 'bagua-port-diagram-v1');
@@ -70,7 +71,7 @@ test('realizes Bagua turns, published pair cycles, blocking and saved sessions',
 test('realizes spherical Bagua jumbling, picking, inherited blockers and saved views', async ({ page }) => {
   test.setTimeout(60_000);
   await page.getByLabel('Puzzle', { exact: true }).selectOption('bagua');
-  await expect(page.getByLabel('Geometry views')).toHaveValue('cube-sphere');
+  await expectViews(page, 'cube-sphere');
   const sphere = page.getByLabel('Spherical puzzle', { exact: true });
   await expect(sphere).toBeVisible();
   await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-realization-id', 'bagua-spherical-v1');
@@ -93,7 +94,7 @@ test('realizes spherical Bagua jumbling, picking, inherited blockers and saved v
   await expect(page.getByTestId('blocking-evidence')).toContainText('relation.rejected');
   await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-blocked-pieces', /(?:^|,)corner\/07(?:,|$)/);
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
-  await page.getByLabel('Geometry views').selectOption('sphere-diagram');
+  await setViews(page, 'sphere-diagram');
   await resting(page);
   await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', 'bagua-spherical-v1');
   await expect(page.getByTestId('cube-view')).toHaveAttribute('data-selected-piece', selected!);
@@ -101,22 +102,22 @@ test('realizes spherical Bagua jumbling, picking, inherited blockers and saved v
   const downloading = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save session ↗' }).click();
   const saved = readFileSync((await (await downloading).path())!, 'utf8');
-  expect(JSON.parse(saved).presentation.viewPair).toBe('sphere-diagram');
+  expect(JSON.parse(saved).presentation.visibleViews).toEqual(['sphere', 'diagram']);
   await page.getByLabel('Algorithm', { exact: true }).fill(`(${algorithm})'`);
   await page.getByRole('button', { name: 'Play algorithm →' }).click();
   await resting(page);
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
-  await page.getByLabel('Geometry views').selectOption('cube-diagram');
+  await setViews(page, 'cube-diagram');
   await page.getByLabel('Open session file').setInputFiles({ name: 'bagua-sphere.json', mimeType: 'application/json', buffer: Buffer.from(saved) });
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
-  await expect(page.getByLabel('Geometry views')).toHaveValue('sphere-diagram');
+  await expectViews(page, 'sphere-diagram');
   await resting(page);
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
 
 test('runs the same cube on a sphere, preserves state across views, and restores presentation', async ({ page }) => {
   const initial = await page.getByTestId('state-digest').textContent();
-  await expect(page.getByLabel('Geometry views')).toHaveValue('cube-sphere');
+  await expectViews(page, 'cube-sphere');
   const sphere = page.getByLabel('Spherical puzzle', { exact: true });
   await expect(sphere).toBeVisible();
   await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-realization-id', 'cube3-cube-spherical-v1');
@@ -131,7 +132,7 @@ test('runs the same cube on a sphere, preserves state across views, and restores
   await resting(page);
   const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--algorithm', 'U R F D L B', '--json'], { encoding: 'utf8' }));
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
-  await page.getByLabel('Geometry views').selectOption('sphere-diagram');
+  await setViews(page, 'sphere-diagram');
   await expect(page.getByTestId('cube-view').getByLabel('Spherical puzzle')).toBeVisible();
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
   await expect(page.getByTestId('cube-view')).toHaveAttribute('data-selected-piece', selected!);
@@ -144,19 +145,19 @@ test('runs the same cube on a sphere, preserves state across views, and restores
   const document = JSON.parse(saved);
   expect(document.schemaVersion).toBe(2);
   expect(document.logical.requests.every((request: { choices?: string[] }) => request.choices?.length === 3)).toBe(true);
-  expect(document.presentation.viewPair).toBe('sphere-diagram');
+  expect(document.presentation.visibleViews).toEqual(['sphere', 'diagram']);
   document.presentation.cameras = [
     { position: [4, 3, 7], target: [0, 0, 0], zoom: 1.2 },
     { position: [2, 1, 15], target: [1.5, 0, 0], zoom: 1.3 },
   ];
-  await page.getByLabel('Geometry views').selectOption('cube-diagram');
+  await setViews(page, 'cube-diagram');
   await page.getByLabel('Algorithm', { exact: true }).fill("(U R F D L B)'");
   await page.getByRole('button', { name: 'Play algorithm →' }).click();
   await resting(page);
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
   await page.getByLabel('Open session file').setInputFiles({ name: 'sphere-session.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(document)) });
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
-  await expect(page.getByLabel('Geometry views')).toHaveValue('sphere-diagram');
+  await expectViews(page, 'sphere-diagram');
   await resting(page);
   const restoredDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save session ↗' }).click();
@@ -175,7 +176,7 @@ test('tracks spherical drags in screen direction and preserves full camera orien
     await page.getByRole('button', { name: 'Save session ↗' }).click();
     return JSON.parse(readFileSync((await (await downloading).path())!, 'utf8'));
   };
-  await page.getByLabel('Geometry views').selectOption('cube-sphere');
+  await setViews(page, 'cube-sphere');
   const sphere = page.getByLabel('Spherical puzzle', { exact: true });
   const initial = await page.getByTestId('state-digest').textContent();
   const bounds = (await sphere.boundingBox())!;
@@ -216,13 +217,13 @@ test('tracks spherical drags in screen direction and preserves full camera orien
   const stopped = (await saved()).presentation.cameras[1] as Camera;
   stopped.position.forEach((value, i) => expect(value).toBeCloseTo(rotated.position[i], 9));
   stopped.up.forEach((value, i) => expect(value).toBeCloseTo(rotated.up[i], 9));
-  await page.getByLabel('Geometry views').selectOption('sphere-diagram');
+  await setViews(page, 'sphere-diagram');
   const switched = (await saved()).presentation.cameras[0] as Camera;
   switched.position.forEach((value, i) => expect(value).toBeCloseTo(rotated.position[i], 7));
   switched.up.forEach((value, i) => expect(value).toBeCloseTo(rotated.up[i], 7));
-  await page.getByLabel('Geometry views').selectOption('cube-diagram');
+  await setViews(page, 'cube-diagram');
   await page.getByLabel('Open session file').setInputFiles({ name: 'trackball-session.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(previous)) });
-  await expect(page.getByLabel('Geometry views')).toHaveValue('cube-sphere');
+  await expectViews(page, 'cube-sphere');
   await resting(page);
   const restored = (await saved()).presentation.cameras[1] as Camera;
   restored.position.forEach((value, i) => expect(value).toBeCloseTo(rotated.position[i], 7));
@@ -233,7 +234,7 @@ test('tracks spherical drags in screen direction and preserves full camera orien
 
 test('keeps bandage blocking and identity on the spherical surface', async ({ page }) => {
   await page.getByLabel('Puzzle', { exact: true }).selectOption('bandaged-uf-ufr');
-  await page.getByLabel('Geometry views').selectOption('sphere-diagram');
+  await setViews(page, 'sphere-diagram');
   await expect(page.getByLabel('Spherical puzzle')).toBeVisible();
   const initial = await page.getByTestId('state-digest').textContent();
   await page.getByRole('button', { name: 'Move R', exact: true }).click();
@@ -254,17 +255,17 @@ test('keeps bandage blocking and identity on the spherical surface', async ({ pa
 });
 
 test('executes algorithms in both views, switches layout, and restores exact state', async ({ page }) => {
-  await page.getByLabel('Geometry views').selectOption('cube-diagram');
+  await setViews(page, 'cube-diagram');
   const initial = await page.getByTestId('state-digest').textContent();
   await page.getByLabel('Algorithm', { exact: true }).fill("R U R' U'");
   await page.getByRole('button', { name: 'Play algorithm →' }).click();
   await resting(page);
   const expected = JSON.parse(execFileSync('build/native/twisty', ['run', '--algorithm', "R U R' U'", '--json'], { encoding: 'utf8' }));
   await expect(page.getByTestId('state-digest')).toHaveText(expected.snapshot.stateDigest);
-  await page.getByRole('button', { name: 'Diagram', exact: true }).click();
-  await expect(page.getByTestId('cube-view')).not.toBeVisible();
+  await setViews(page, ['diagram']);
+  await expect(page.locator('[data-view-id="cube"]')).toHaveCount(0);
   await expect(page.getByTestId('state-digest')).toHaveText(expected.snapshot.stateDigest);
-  await page.getByRole('button', { name: 'Both views' }).click();
+  await setViews(page, 'cube-diagram');
   await page.getByLabel('Algorithm', { exact: true }).fill("[R,U]'");
   await page.getByRole('button', { name: 'Play algorithm →' }).click();
   await resting(page);
@@ -304,7 +305,7 @@ test('supports transactional rollback and interactive legal prefixes', async ({ 
 });
 
 test('picks a visual port, shares selection, and leaves camera motion outside state', async ({ page }) => {
-  await page.getByLabel('Geometry views').selectOption('cube-diagram');
+  await setViews(page, 'cube-diagram');
   const initial = await page.getByTestId('state-digest').textContent();
   // The fixed net's front center is left of its camera target; click a visible port.
   const diagram = await page.getByTestId('diagram-view').boundingBox();
@@ -444,7 +445,7 @@ test('renders the Helicopter preset through jumbling, inverse, picking, and save
 
 test('realizes Helicopter jumbling on a sphere with shared blocking, picking and replay', async ({ page }) => {
   await page.getByLabel('Puzzle', { exact: true }).selectOption('helicopter');
-  await page.getByLabel('Geometry views').selectOption('cube-sphere');
+  await setViews(page, 'cube-sphere');
   const sphere = page.getByLabel('Spherical puzzle', { exact: true });
   await expect(sphere).toBeVisible();
   await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-realization-id', 'helicopter-spherical-v1');
@@ -472,7 +473,7 @@ test('realizes Helicopter jumbling on a sphere with shared blocking, picking and
   await resting(page);
   const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/helicopter/relational-package.json', '--algorithm', algorithm, '--json'], { encoding: 'utf8' }));
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
-  await page.getByLabel('Geometry views').selectOption('sphere-diagram');
+  await setViews(page, 'sphere-diagram');
   await resting(page);
   await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', 'helicopter-spherical-v1');
   await page.screenshot({ path: 'test-results/helicopter-spherical-jumbled.png', fullPage: true });
@@ -483,10 +484,10 @@ test('realizes Helicopter jumbling on a sphere with shared blocking, picking and
   await page.getByRole('button', { name: 'Play algorithm →' }).click();
   await resting(page);
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
-  await page.getByLabel('Geometry views').selectOption('cube-diagram');
+  await setViews(page, 'cube-diagram');
   await page.getByLabel('Open session file').setInputFiles({ name: 'helicopter-sphere.json', mimeType: 'application/json', buffer: Buffer.from(saved) });
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
-  await expect(page.getByLabel('Geometry views')).toHaveValue('sphere-diagram');
+  await expectViews(page, 'sphere-diagram');
   await resting(page);
   await expect(page.getByRole('alert')).toHaveCount(0);
 });

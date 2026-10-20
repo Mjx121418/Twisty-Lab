@@ -1,3 +1,4 @@
+import { setViews, expectViews } from './view-controls';
 import { test, expect, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -95,7 +96,7 @@ for (const [label, viewId, realization, pair] of [
   ['sphere', 'diagram-view', 'cube-spherical', 'cube-sphere'],
   ['diagram', 'diagram-view', 'cube-port-diagram', 'cube-diagram'],
 ]) test(`clicks a selected-piece destination in the ${label} and refreshes after undo/redo`, async ({ page }) => {
-  await page.getByLabel('Geometry views').selectOption(pair);
+  await setViews(page, pair);
   const initial = await page.getByTestId('state-digest').textContent();
   await page.getByRole('button', { name: 'Select corner/UFR', exact: true }).click();
   for (const id of ['cube-view', 'diagram-view']) {
@@ -162,7 +163,7 @@ test('filters bandaged destinations and keeps camera drags and keyboard focus pu
   await page.mouse.up();
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
   await expect(host).toHaveAttribute('data-selected-piece', 'bandage/UF-UFR');
-  await page.getByLabel('Geometry views').selectOption('sphere-diagram');
+  await setViews(page, 'sphere-diagram');
   await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-destination-operations', "F,F',U,U'");
   await page.getByTestId('diagram-view').getByText('4 twists', { exact: true }).click();
   await page.getByTestId('diagram-view').getByRole('button', { name: 'Twist F', exact: true }).click();
@@ -172,7 +173,7 @@ test('filters bandaged destinations and keeps camera drags and keyboard focus pu
 
 test('shows Helicopter candidates, executes a clicked destination, and clears previews during playback', async ({ page }) => {
   await page.getByLabel('Puzzle', { exact: true }).selectOption('helicopter');
-  await page.getByLabel('Geometry views').selectOption('sphere-diagram');
+  await setViews(page, 'sphere-diagram');
   await page.getByRole('button', { name: 'Select corner/BDL', exact: true }).click();
   for (const id of ['cube-view', 'diagram-view']) await expect(page.getByTestId(id)).toHaveAttribute('data-destination-count', '15');
   await page.screenshot({ path: 'test-results/destinations-helicopter.png', fullPage: true });

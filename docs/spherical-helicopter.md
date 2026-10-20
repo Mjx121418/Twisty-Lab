@@ -1,6 +1,6 @@
 # Spherical Helicopter realization
 
-Select **Helicopter Cube · jumbling**, then **Geometry views → Cube + sphere** or **Sphere + diagram**. Both views share the existing abstract session, move controls, blocking evidence, selection, undo/redo, and saved replay. Switching views preserves state and history.
+Select **Helicopter Cube · jumbling**. It opens with **Cube** and **Sphere**; the **Views** list also offers **Port diagram**, with checkboxes for visibility and arrows for display order. Both views share the existing abstract session, move controls, blocking evidence, selection, undo/redo, and saved replay. Switching views preserves state and history.
 
 Drag or swipe the sphere with free trackball controls to rotate along the pointer's direction, stopping on release. Scroll to zoom and click a region to select its piece. View switching and saved sessions preserve the camera's full orientation. Camera movement changes only the presentation.
 

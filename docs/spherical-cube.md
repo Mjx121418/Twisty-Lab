@@ -1,6 +1,6 @@
 # Spherical cube realization
 
-Choose **Geometry views → Cube + sphere** or **Sphere + diagram** for the 3×3 or bandaged cube. Both views follow one session, including selection, blocking, algorithms, undo/redo, and saved history. Changing views preserves the exact state and revision. Session presentation saves the selected pair and its cameras.
+The 3×3 and bandaged cubes open with **Cube** and **Sphere**. Open **Views** to show or hide **Cube**, **Sphere** and **Port diagram**, or reorder them with ↑ / ↓. All displayed views follow one session, including selection, blocking, algorithms, undo/redo and saved history. Changing views preserves the exact state and revision. Session presentation saves view order, visibility and cameras, including cameras of hidden views.
 
 Spherical views use free trackball rotation. Drag or swipe to rotate the sphere along the pointer's direction; rotation stops on release. Scroll to zoom and click a region to select its piece. View switching and saved sessions preserve the full camera orientation, including its up vector. Older sessions use the original upright orientation. The Euclidean view retains orbit controls.
 

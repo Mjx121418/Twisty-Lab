@@ -1,3 +1,4 @@
+import { expectViews } from './view-controls';
 import { expect, test, type Page } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -23,8 +24,7 @@ for(const name of ['torus','klein-bottle','hex-torus','hex-klein-bottle'])test(`
   await page.getByLabel('Puzzle',{exact:true}).selectOption('flat-'+name);await resting(page);
   await expect(page.getByLabel('Algorithm',{exact:true})).toHaveValue("A B A' B'");
   await expect(page.locator('canvas')).toHaveCount(2);
-  await expect(page.getByRole('button',{name:'Fundamental domain',exact:true})).toBeVisible();
-  await expect(page.getByText(`Neighboring tiles repeat the same ${hex?24:32} pieces`,{exact:true})).toBeVisible();
+  await expectViews(page, 'square-tiles');
   for(const [id,mode,images] of [['cube-view','square','25'],['diagram-view','tiles',hex?'117':'81']]){
     const host=page.getByTestId(id);await expect(host).toHaveAttribute('data-topology',topology);
     await expect(host).toHaveAttribute('data-surface-mode',mode);await expect(host).toHaveAttribute('data-image-count',images);
@@ -56,7 +56,7 @@ for(const name of ['torus','klein-bottle','hex-torus','hex-klein-bottle'])test(`
   await page.waitForTimeout(170);await page.screenshot({path:`test-results/flat-${name}-motion.png`,fullPage:true});
   await resting(page);await expect(page.getByTestId('state-digest')).toHaveText(initial!);
   await page.getByLabel('Puzzle',{exact:true}).selectOption('cube3');await resting(page);
-  await expect(page.getByLabel('Geometry views')).toHaveValue('cube-sphere');
+  await expectViews(page, 'cube-sphere');
   await expect(page.getByRole('alert')).toHaveCount(0);expect(errors).toEqual([]);
 });
 
@@ -83,7 +83,7 @@ for(const name of ['torus','klein-bottle','hex-torus','hex-klein-bottle'])test(`
   const downloading=page.waitForEvent('download');await page.getByRole('button',{name:'Save session ↗'}).click();
   const saved=await(await downloading).path();
   const presentation=JSON.parse(readFileSync(saved!,'utf8')).presentation;
-  expect(presentation.viewPair).toBe('square-tiles');
+  expect(presentation.visibleViews).toEqual(['fundamental-domain', 'tiled-plane']);
   expect(presentation.cameras[0].position[0]).toBeLessThan(hex?1.5:1);
   expect(presentation.cameras[0].position[1]).toBeGreaterThan(hex?Math.sqrt(3)/2:1);
   expect(presentation.cameras[0].zoom).toBe(1);
@@ -125,7 +125,7 @@ for(const name of ['torus','klein-bottle','hex-torus','hex-klein-bottle'])test(`
   await page.getByLabel('Open session file').setInputFiles(saved!);
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);await resting(page);
   await page.getByLabel('Puzzle',{exact:true}).selectOption('cube3');await resting(page);
-  await expect(page.getByLabel('Geometry views')).toHaveValue('cube-sphere');
+  await expectViews(page, 'cube-sphere');
   await expect(page.getByRole('alert')).toHaveCount(0);expect(errors).toEqual([]);
 });
 

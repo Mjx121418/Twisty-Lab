@@ -65,7 +65,9 @@ image naturally reverses apparent rotation when its matrix is composed with
 the sampled frame; it needs no additional per-copy angle rule.
 
 The reference Three.js renderer offers a fixed square/rhombus fundamental-domain
-window and a tiled plane filling its rectangular panel. Dragging moves the
+window and a tiled plane filling its rectangular panel. Both are shown by
+default. The **Views** list lets users hide either view, reorder them or restore
+the default selection. Dragging moves the
 orthographic camera over the covering plane. The fundamental window stays
 anchored on screen, with zoom disabled; loading a saved camera also restores
 its zoom to one. Its GPU clipping planes follow the camera, and picking uses

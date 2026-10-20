@@ -41,10 +41,13 @@ import hexTorusRealization from '../../packages/flat-hex-torus/flat-quotient.jso
 import hexKleinSource from '../../packages/flat-hex-klein-bottle/relational-package.json?raw';
 import hexKleinRealization from '../../packages/flat-hex-klein-bottle/flat-quotient.json';
 import { pieceDestinations, type PieceDestination } from './destinations';
+import { defaultViews, moveView, restoreViews, viewLabels, type ViewId, type ViewSelection } from './viewSelection';
 
 type GearModel = 'supplied' | '12' | '6';
 type Preset = { id: string; label: string; source: string; realizations: Realization[]; spherical?: Realization; surface?: boolean; gearModels?: Record<GearModel, Realization[]> };
 type PuzzleView = RenderView | SurfaceView;
+type ViewDefinition = { id: ViewId; realization: Realization; surfaceMode?: 'square' | 'tiles' };
+type MountedView = { view: PuzzleView; realizationId: string; generation: number; cameras: Map<ViewId, unknown> };
 function surfacePreset(id: string, label: string, source: string, realization: unknown): Preset {
   const model = realization as Realization;
   return { id, label, source, surface: true, realizations: ['square', 'tiles'].map((mode) => ({ ...model, id: `${model.id}-${mode}` })) };
@@ -78,15 +81,16 @@ const presets = [
   surfacePreset('flat-hex-torus', 'Hexagonal torus · face turning', hexTorusSource, hexTorusRealization),
   surfacePreset('flat-hex-klein-bottle', 'Hexagonal Klein bottle · face turning', hexKleinSource, hexKleinRealization),
 ] as unknown as Preset[];
-type Layout = 'both' | 'cube' | 'diagram';
-type ViewPair = 'cube-diagram' | 'sphere-diagram' | 'cube-sphere' | 'square-tiles';
 type Inspector = 'pieces' | 'history' | 'definition';
 
-function realizationPair(preset: Preset, pair: ViewPair, gearModel: GearModel = 'supplied'): Realization[] {
-  if (preset.surface) return preset.realizations;
+function availableViews(preset: Preset, gearModel: GearModel = 'supplied'): ViewDefinition[] {
+  if (preset.surface) return [
+    { id: 'fundamental-domain', realization: preset.realizations[0], surfaceMode: 'square' },
+    { id: 'tiled-plane', realization: preset.realizations[1], surfaceMode: 'tiles' },
+  ];
   const [cube, diagram] = preset.gearModels?.[gearModel] ?? preset.realizations;
-  return (preset.spherical && pair === 'sphere-diagram' ? [preset.spherical, diagram] :
-    preset.spherical && (pair === 'cube-sphere' || pair === 'square-tiles') ? [cube, preset.spherical] : [cube, diagram]) as Realization[];
+  return [{ id: 'cube', realization: cube }, ...(preset.spherical ? [{ id: 'sphere' as const, realization: preset.spherical }] : []),
+    { id: 'diagram', realization: diagram }];
 }
 
 function download(filename: string, content: string): void {
@@ -101,8 +105,7 @@ export function App() {
   const [generation, setGeneration] = useState(0);
   const [sourceId, setSourceId] = useState('cube3');
   const [customGear, setCustomGear] = useState<Preset>();
-  const [layout, setLayout] = useState<Layout>('both');
-  const [viewPair, setViewPair] = useState<ViewPair>('cube-sphere');
+  const [viewSelection, setViewSelection] = useState<ViewSelection>(() => defaultViews(['cube', 'sphere', 'diagram']));
   const [gearModel, setGearModel] = useState<GearModel>('supplied');
   const [inspector, setInspector] = useState<Inspector>('pieces');
   const [algorithm, setAlgorithm] = useState("R U R' U'");
@@ -120,16 +123,16 @@ export function App() {
   const [lastScramble, setLastScramble] = useState('');
   const kernel = useRef<KernelSession | undefined>(undefined);
   const views = useRef<PuzzleView[]>([]);
-  const cameraCache = useRef(new Map<string, unknown>());
-  const pendingCameras = useRef<Map<string, unknown> | undefined>(undefined);
-  const cubeHost = useRef<HTMLDivElement>(null);
-  const diagramHost = useRef<HTMLDivElement>(null);
+  const mountedViews = useRef(new Map<ViewId, MountedView>());
+  const cameraCache = useRef(new Map<ViewId, unknown>());
+  const pendingCameras = useRef<Map<ViewId, unknown> | undefined>(undefined);
+  const viewHosts = useRef(new Map<ViewId, HTMLDivElement>());
+  const viewPicker = useRef<HTMLDetailsElement>(null);
   const progressBar = useRef<HTMLDivElement>(null);
   const sourceInput = useRef<HTMLInputElement>(null);
   const sessionInput = useRef<HTMLInputElement>(null);
   const busyRef = useRef(false);
   const speedRef = useRef(duration);
-  const deferredLayout = useRef<Layout | undefined>(undefined);
   const commands = useRef<(() => Result)[]>([]);
   const drain = useRef<() => void>(() => {});
   const animationFrame = useRef(0);
@@ -137,7 +140,9 @@ export function App() {
   speedRef.current = duration;
   const availablePresets = customGear ? [...presets, customGear] : presets;
   const activePreset = availablePresets.find((item) => item.realizations[0].compatibleDefinitionDigest === snapshot?.definitionDigest);
-  const effectivePair = activePreset?.surface ? 'square-tiles' : activePreset?.spherical ? viewPair === 'square-tiles' ? 'cube-sphere' : viewPair : 'cube-diagram';
+  const viewDefinitions = useMemo(() => activePreset ? availableViews(activePreset, gearModel) : [], [activePreset, gearModel]);
+  const orderedViews = viewSelection.order.flatMap(id => viewDefinitions.filter(view => view.id === id));
+  const displayedViews = orderedViews.filter(view => viewSelection.visible.includes(view.id));
   const rhombus = activePreset?.realizations[0].flatSurface?.chart === 'rhombus-60';
 
   function install(runtime: MainModule, source: string, id: string): void {
@@ -151,6 +156,9 @@ export function App() {
     commands.current = [];
     cameraCache.current = new Map();
     pendingCameras.current = undefined;
+    const preset = presets.find(item => item.realizations[0].compatibleDefinitionDigest === initial.definitionDigest);
+    const available: ViewId[] = preset ? availableViews(preset).map(view => view.id) : ['cube', 'sphere', 'diagram'];
+    setViewSelection(current => current.order.length === available.length && current.order.every(id => available.includes(id)) ? current : defaultViews(available));
     setSourceId(id); setSnapshot(initial); setVisualDigest(initial.stateDigest);
     setSelected(undefined); setEvidence(undefined); setLastScramble(''); setVisualError('');
     setAlgorithm(initial.puzzleId.startsWith('flat-') ? "A B A' B'" : initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' :
@@ -167,43 +175,53 @@ export function App() {
     }).catch((error: unknown) => { if (alive) setFatalError(String(error)); });
     return () => {
       alive = false; epoch.current++; cancelAnimationFrame(animationFrame.current);
+      for (const { view } of mountedViews.current.values()) view.dispose();
+      mountedViews.current.clear(); views.current = [];
       kernel.current?.dispose(); kernel.current = undefined;
     };
   }, []);
 
   useEffect(() => {
-    if (!module || !kernel.current || !cubeHost.current || !diagramHost.current) return;
+    if (!module || !kernel.current) return;
     const session = kernel.current;
-    const preset = availablePresets.find((item) => item.realizations[0].compatibleDefinitionDigest === session.definition.definitionDigest);
-    if (!preset) { setVisualError('No compatible realization is installed for this definition. The headless engine and inspector remain available.'); return; }
-    const created: PuzzleView[] = [];
-    const realizations = realizationPair(preset, viewPair, gearModel);
     const cameras = cameraCache.current;
     const restoredCameras = pendingCameras.current;
     pendingCameras.current = undefined;
+    // Reconcile by view identity: reordering moves the existing canvas, while
+    // hiding a view releases its renderer and retains its camera for later.
+    for (const [id, entry] of mountedViews.current) {
+      if (entry.generation === generation && displayedViews.some(view => view.id === id && view.realization.id === entry.realizationId)) continue;
+      entry.cameras.set(id, entry.view.cameraState()); entry.view.dispose(); mountedViews.current.delete(id);
+    }
+    if (!activePreset) {
+      views.current = [];
+      setVisualError('No compatible realization is installed for this definition. The headless engine and inspector remain available.'); return;
+    }
     try {
-      for (let i = 0; i < 2; i++) {
-        const host = i === 0 ? cubeHost.current : diagramHost.current;
-        const view = preset.surface
-          ? new SurfaceView(module, host, session.native, realizations[i], setSelected, () => !busyRef.current, chooseDestination, i === 0 ? 'square' : 'tiles')
-          : new RenderView(module, host, session.native, realizations[i], setSelected, () => !busyRef.current, chooseDestination);
-        view.restoreCamera(restoredCameras?.get(realizations[i].id) ?? cameras.get(realizations[i].id));
-        view.setState(session.stateText()); created.push(view);
+      for (const { id, realization, surfaceMode } of displayedViews) {
+        const existing = mountedViews.current.get(id);
+        if (existing) {
+          if (restoredCameras?.has(id)) existing.view.restoreCamera(restoredCameras.get(id));
+          continue;
+        }
+        const host = viewHosts.current.get(id);
+        if (!host) continue;
+        const view = surfaceMode
+          ? new SurfaceView(module, host, session.native, realization, setSelected, () => !busyRef.current, chooseDestination, surfaceMode)
+          : new RenderView(module, host, session.native, realization, setSelected, () => !busyRef.current, chooseDestination);
+        view.restoreCamera(restoredCameras?.get(id) ?? cameras.get(id));
+        view.setState(session.stateText());
+        mountedViews.current.set(id, { view, realizationId: realization.id, generation, cameras });
       }
-      views.current = created;
       setVisualError('');
     } catch (error: unknown) {
-      for (const view of created) view.dispose();
-      created.length = 0;
       setVisualError(`Visual limitation: ${String(error)}`);
     }
-    return () => {
-      created.forEach((view, index) => { cameras.set(realizations[index].id, view.cameraState()); view.dispose(); });
-      views.current = [];
-    };
-  }, [module, generation, viewPair, gearModel]);
+    restoredCameras?.forEach((camera, id) => cameras.set(id, camera));
+    views.current = displayedViews.flatMap(({ id }) => { const entry = mountedViews.current.get(id); return entry ? [entry.view] : []; });
+  }, [module, generation, viewSelection, viewDefinitions]);
 
-  useEffect(() => { for (const view of views.current) view.highlight(selected, evidence?.implicatedPieces ?? []); }, [selected, evidence, generation, viewPair, gearModel]);
+  useEffect(() => { for (const view of views.current) view.highlight(selected, evidence?.implicatedPieces ?? []); }, [selected, evidence, generation, viewSelection, viewDefinitions]);
 
   useEffect(() => {
     if (!kernel.current || !snapshot || !views.current.length) return;
@@ -214,7 +232,7 @@ export function App() {
       for (const view of views.current) view.setDestinations(undefined, []);
       setVisualError(`Destination preview unavailable: ${String(error)}`);
     }
-  }, [selected, snapshot, busy, generation, viewPair, gearModel]);
+  }, [selected, snapshot, busy, generation, viewSelection, viewDefinitions]);
 
   function chooseDestination(destination: PieceDestination): void {
     const session = kernel.current;
@@ -255,7 +273,6 @@ export function App() {
         setVisualDigest(kernel.current.snapshot().stateDigest);
         busyRef.current = false; setBusy(false); setPlaying('');
         if (progressBar.current) progressBar.current.style.width = '0%';
-        if (deferredLayout.current) { setLayout(deferredLayout.current); deferredLayout.current = undefined; }
         drain.current();
       }
     }
@@ -294,12 +311,12 @@ export function App() {
     setSelected(undefined); setEvidence(undefined); setLastScramble(''); setVisualError('');
     setGeneration((value) => value + 1);
   }
-  function requestLayout(value: Layout): void {
-    if (busyRef.current) deferredLayout.current = value; else setLayout(value);
-  }
 
   useEffect(() => {
     const keydown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape' && viewPicker.current?.open) {
+        viewPicker.current.open = false; viewPicker.current.querySelector('summary')?.focus(); return;
+      }
       const element = event.target as HTMLElement;
       if (event.repeat || ['INPUT', 'TEXTAREA', 'SELECT'].includes(element.tagName)) return;
       if (event.key === 'Escape') {
@@ -318,8 +335,12 @@ export function App() {
         });
       }
     };
+    const dismissViews = (event: PointerEvent): void => {
+      if (viewPicker.current?.open && !viewPicker.current.contains(event.target as Node)) viewPicker.current.open = false;
+    };
     window.addEventListener('keydown', keydown);
-    return () => window.removeEventListener('keydown', keydown);
+    document.addEventListener('pointerdown', dismissViews);
+    return () => { window.removeEventListener('keydown', keydown); document.removeEventListener('pointerdown', dismissViews); };
   }, []);
 
   async function importSource(file?: File): Promise<void> {
@@ -338,15 +359,27 @@ export function App() {
     if (result.status !== 'Loaded') { setEvidence(result); return; }
     setSnapshot(kernel.current.snapshot()); setVisualDigest(kernel.current.snapshot().stateDigest); setEvidence(undefined);
     for (const view of views.current) view.setState(kernel.current.stateText());
-    const presentation = JSON.parse(text).presentation as { layout?: Layout; viewPair?: ViewPair; gearModel?: GearModel; cameras?: unknown[] } | undefined;
-    if (presentation?.layout && ['both', 'cube', 'diagram'].includes(presentation.layout)) setLayout(presentation.layout);
-    const pair = presentation?.viewPair && ['cube-diagram', 'sphere-diagram', 'cube-sphere', 'square-tiles'].includes(presentation.viewPair) ? presentation.viewPair : viewPair;
+    const presentation = JSON.parse(text).presentation as { gearModel?: GearModel; cameras?: unknown[] } | undefined;
+    if (!presentation) return;
     const model = presentation?.gearModel === 'supplied' || presentation?.gearModel === '6' || presentation?.gearModel === '12' ? presentation.gearModel : gearModel;
+    const restored = restoreViews(presentation, viewDefinitions.map(view => view.id));
     if (Array.isArray(presentation?.cameras)) {
-      if (pair === viewPair && model === gearModel) presentation.cameras.forEach((camera, index) => views.current[index]?.restoreCamera(camera));
-      else if (activePreset) pendingCameras.current = new Map(realizationPair(activePreset, pair, model).map((realization, index) => [realization.id, presentation.cameras![index]]));
+      pendingCameras.current = new Map(restored.cameraOrder.flatMap((id, index) => {
+        const camera = presentation.cameras![index];
+        return id && camera != null ? [[id, camera] as const] : [];
+      }));
     }
-    setViewPair(pair); setGearModel(model);
+    setViewSelection(restored.selection); setGearModel(model);
+  }
+
+  function saveSession(): void {
+    if (!snapshot || !kernel.current) return;
+    const order = orderedViews.map(view => view.id);
+    download(`${snapshot.puzzleId}-session.json`, kernel.current.save({
+      viewOrder: order, visibleViews: order.filter(id => viewSelection.visible.includes(id)),
+      ...(activePreset?.gearModels ? { gearModel } : {}),
+      cameras: order.map(id => mountedViews.current.get(id)?.view.cameraState() ?? cameraCache.current.get(id) ?? null),
+    }));
   }
 
   const definition = kernel.current?.definition;
@@ -370,7 +403,7 @@ export function App() {
         <div className="top-actions">
           <button onClick={() => sourceInput.current?.click()} disabled={!snapshot || busy}>Import definition</button>
           <button onClick={() => sessionInput.current?.click()} disabled={!snapshot || busy}>Open session</button>
-          <button className="primary" disabled={!snapshot || busy} onClick={() => download(`${snapshot!.puzzleId}-session.json`, kernel.current!.save({ layout, viewPair: effectivePair, ...(activePreset?.gearModels ? { gearModel } : {}), cameras: views.current.map((view) => view.cameraState()) }))}>Save session ↗</button>
+          <button className="primary" disabled={!snapshot || busy} onClick={saveSession}>Save session ↗</button>
         </div>
         <input ref={sourceInput} aria-label="Import definition file" className="file-input" type="file" accept=".json,application/json" onChange={(event) => { void importSource(event.target.files?.[0]); event.target.value = ''; }} />
         <input ref={sessionInput} aria-label="Open session file" className="file-input" type="file" accept=".json,application/json" onChange={(event) => { void importSession(event.target.files?.[0]); event.target.value = ''; }} />
@@ -385,13 +418,26 @@ export function App() {
               {sourceId === 'imported' && <option value="imported">Imported definition</option>}
             </select></div>
             <div className="view-options">
-              {activePreset?.spherical && <label className="realization-choice"><span className="eyebrow">GEOMETRY VIEWS</span><select aria-label="Geometry views" value={effectivePair} disabled={busy} onChange={(event) => setViewPair(event.target.value as ViewPair)}><option value="cube-diagram">Cube + diagram</option><option value="sphere-diagram">Sphere + diagram</option><option value="cube-sphere">Cube + sphere</option></select></label>}
               {activePreset?.gearModels && <label className="realization-choice"><span className="eyebrow">EDGE MODEL</span><select aria-label="Gear edge model" value={gearModel} disabled={busy} onChange={(event) => {
-                const model = event.target.value as GearModel;
-                pendingCameras.current = new Map(realizationPair(activePreset, effectivePair, model).map((realization, index) => [realization.id, views.current[index]?.cameraState()]));
-                setGearModel(model);
+                setGearModel(event.target.value as GearModel);
               }}><option value="supplied">Supplied model · 6 teeth · 300° spin</option><option value="12">12 teeth · 60° spin</option><option value="6">6 teeth · 300° spin</option></select></label>}
-              <div className="segmented" aria-label="View layout">{(['both', 'cube', 'diagram'] as Layout[]).map((value) => <button key={value} aria-pressed={layout === value} onClick={() => requestLayout(value)}>{value === 'both' ? 'Both views' : activePreset?.surface ? value === 'cube' ? 'Fundamental domain' : 'Tiled plane' : value === 'cube' ? effectivePair === 'sphere-diagram' ? 'Sphere' : 'Cube' : effectivePair === 'cube-sphere' ? 'Sphere' : 'Diagram'}</button>)}</div>
+              {activePreset && <details ref={viewPicker} className="view-picker">
+                <summary>Views <span>{displayedViews.length} shown</span></summary>
+                <fieldset disabled={busy}>
+                  <legend>Available views</legend>
+                  <p>Select views and arrange their display order.</p>
+                  <ol>{orderedViews.map(({ id }, index) => <li key={id} data-view-option={id}>
+                    <label><input type="checkbox" checked={viewSelection.visible.includes(id)}
+                      disabled={viewSelection.visible.includes(id) && displayedViews.length === 1}
+                      onChange={(event) => setViewSelection(current => ({ ...current, visible: event.target.checked ? [...current.visible, id] : current.visible.filter(value => value !== id) }))} />{viewLabels[id]}</label>
+                    <div className="view-order-controls">
+                      <button aria-label={`Move ${viewLabels[id]} earlier`} disabled={index === 0} onClick={() => setViewSelection(current => moveView(current, id, -1))}>↑</button>
+                      <button aria-label={`Move ${viewLabels[id]} later`} disabled={index === orderedViews.length - 1} onClick={() => setViewSelection(current => moveView(current, id, 1))}>↓</button>
+                    </div>
+                  </li>)}</ol>
+                  <button className="restore-views" onClick={() => setViewSelection(defaultViews(viewDefinitions.map(view => view.id)))}>Restore default views</button>
+                </fieldset>
+              </details>}
             </div>
           </div>
           {activePreset && JSON.parse(activePreset.source).kind === 'relational-gear-prototypes' && <fieldset className="gear-configuration" disabled={busy}>
@@ -409,17 +455,15 @@ export function App() {
             <small>Face keys choose coupled turns when any middle-layer edge is geared, otherwise ordinary quarter-turns. F = coupled turn; Fq = ordinary turn.</small>
           </fieldset>}
 
-          <div className={`views layout-${layout}`}>
-            <article className={`view-panel cube-panel ${layout === 'diagram' ? 'hidden' : ''}`}>
-              <div className="view-title"><span>01 / {activePreset?.surface ? 'Fundamental domain' : effectivePair === 'sphere-diagram' ? 'Spherical' : 'Euclidean'}</span><span className="subtle">{activePreset?.surface ? 'Drag to pan' : effectivePair === 'sphere-diagram' ? 'Drag to rotate freely · scroll to zoom' : 'Drag to orbit · scroll to zoom'}</span></div>
-              <div ref={cubeHost} className="canvas-host" data-testid="cube-view" data-state-digest={visualDigest} />
-              <span className="view-note" hidden={!!selected}>{activePreset?.surface ? activePreset.id.includes('klein-bottle') ? 'Neighboring copies can be reflected' : 'Neighboring copies repeat by translation' : effectivePair === 'sphere-diagram' ? 'Spherical regions · one exact state' : 'Rigid bodies & bound ports'}</span>
-            </article>
-            <article className={`view-panel diagram-panel ${layout === 'cube' ? 'hidden' : ''}`}>
-              <div className="view-title"><span>02 / {activePreset?.surface ? 'Tiled plane' : effectivePair === 'cube-sphere' ? 'Spherical' : 'Port diagram'}</span><span className="subtle">{activePreset?.surface?'Drag to pan · scroll to zoom':'Click a piece, then a translucent destination'}</span></div>
-              <div ref={diagramHost} className="canvas-host" data-testid="diagram-view" data-state-digest={visualDigest} />
-              <span className="view-note" hidden={!!selected}>{activePreset?.surface ? `Neighboring tiles repeat the same ${definition?.pieces.length ?? '—'} pieces` : 'Same identities. Same transition.'}</span>
-            </article>
+          <div className={`views view-count-${displayedViews.length}`}>
+            {displayedViews.map(({ id }, index) => <article key={id} className={`view-panel ${id === 'diagram' ? 'diagram-panel' : ''}`} data-view={id}>
+              <div className="view-title"><span>{String(index + 1).padStart(2, '0')} / {viewLabels[id]}</span><span className="subtle">{
+                id === 'fundamental-domain' ? 'Drag to pan' : id === 'tiled-plane' ? 'Drag to pan · scroll to zoom' :
+                id === 'sphere' ? 'Drag to rotate freely · scroll to zoom' : id === 'cube' ? 'Drag to orbit · scroll to zoom' : 'Click a piece, then a translucent destination'
+              }</span></div>
+              <div ref={host => { if (host) viewHosts.current.set(id, host); else viewHosts.current.delete(id); }} className="canvas-host"
+                data-testid={index === 0 ? 'cube-view' : index === 1 ? 'diagram-view' : 'extra-view'} data-view-id={id} data-state-digest={visualDigest} />
+            </article>)}
           </div>
 
           {(fatalError || visualError) && <div className="notice" role="alert">{fatalError || visualError}</div>}
