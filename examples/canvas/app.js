@@ -22,7 +22,7 @@ function inverseRigid(m) {
   return out;
 }
 function power(m,n) { let out=identity();if(n<0)m=inverseRigid(m);for(let i=0;i<Math.abs(n);i++)out=multiply(out,m);return out; }
-let images=[identity()], clipPixels;
+let images=[identity()], clipPixels, clipPolygon;
 
 function draw() {
   context.clearRect(0, 0, canvas.width, canvas.height);
@@ -30,10 +30,13 @@ function draw() {
   const bounds=descriptor.flatSurface?.fundamentalBounds;
   const scale = bounds ? Math.min(canvas.width/(bounds[2]*1.2),canvas.height/(bounds[3]*1.2)) : Math.min(canvas.width / 13, canvas.height / 10);
   const project=(x,y)=>[(x-(bounds?bounds[2]/2:1.5))*scale+canvas.width/2,canvas.height/2-(y-(bounds?bounds[3]/2:0))*scale];
-  context.save();clipPixels=undefined;
+  context.save();clipPixels=undefined;clipPolygon=undefined;
   if(bounds){
     const [left,top]=project(bounds[0],bounds[3]),[right,bottom]=project(bounds[2],bounds[1]);
-    clipPixels=[left,top,right,bottom];context.beginPath();context.rect(left,top,right-left,bottom-top);context.clip();
+    clipPixels=[left,top,right,bottom];
+    const polygon=descriptor.flatSurface.fundamentalPolygon??[[bounds[0],bounds[1]],[bounds[2],bounds[1]],[bounds[2],bounds[3]],[bounds[0],bounds[3]]];
+    clipPolygon=polygon.map(([x,y])=>project(x,y));
+    context.beginPath();clipPolygon.forEach(([x,y],i)=>i?context.lineTo(x,y):context.moveTo(x,y));context.closePath();context.clip();
   }
   const parts=descriptor.visualParts.map((part,index)=>({part,index}));
   if(bounds)parts.sort((a,b)=>layer(a.part)-layer(b.part));
@@ -66,7 +69,7 @@ function draw() {
     if(bounds)context.fill();
   });
   context.restore();
-  if(clipPixels){context.strokeStyle='#758ca5';context.lineWidth=2;context.strokeRect(clipPixels[0],clipPixels[1],clipPixels[2]-clipPixels[0],clipPixels[3]-clipPixels[1]);}
+  if(clipPolygon){context.strokeStyle='#758ca5';context.lineWidth=2;context.beginPath();clipPolygon.forEach(([x,y],i)=>i?context.lineTo(x,y):context.moveTo(x,y));context.closePath();context.stroke();}
 }
 function sample(progress) {
   geometry.sample(progress);
@@ -110,7 +113,7 @@ async function install(puzzle) {
     view = module.createGeometry(next.native, realization);
     if (!view) throw new Error('Cannot create geometric interpreter.');
     const scene = JSON.parse(view.sceneJSON());
-    if ((!scene.diagram&&!scene.flatSurface) || scene.requiredCapabilities.some((capability) => !supported.has(capability))) throw new Error('This renderer supports flat triangle-mesh diagrams and square quotients.');
+    if ((!scene.diagram&&!scene.flatSurface) || scene.requiredCapabilities.some((capability) => !supported.has(capability))) throw new Error('This renderer supports flat triangle-mesh diagrams and polygonal quotients.');
     geometry?.delete(); session?.dispose();
     session = next; geometry = view; descriptor = scene;
   } catch (error) { view?.delete(); next.dispose(); throw error; }
@@ -118,7 +121,17 @@ async function install(puzzle) {
   indices = copyIndexView(geometry.indices());
   transforms = copyFloatView(geometry.transforms());
   images=[identity()];
-  if(descriptor.flatSurface){const [a,b]=descriptor.flatSurface.deckGenerators;images=[];for(let y=-1;y<=1;y++)for(let x=-1;x<=1;x++)images.push(multiply(power(a,x),power(b,y)));}
+  if(descriptor.flatSurface){
+    const surface=descriptor.flatSurface,[a,b]=surface.deckGenerators;images=[];
+    for(let y=-1;y<=1;y++)for(let x=-1;x<=1;x++){
+      let matrix;
+      if(surface.latticeBasis){
+        const [u,v]=surface.latticeBasis;matrix=identity();matrix[12]=x*u[0]+y*v[0];matrix[13]=x*u[1]+y*v[1];
+        if(surface.tileReflection&&(x+y)%2!==0)matrix=multiply(matrix,surface.tileReflection);
+      }else matrix=multiply(power(a,x),power(b,y));
+      images.push(matrix);
+    }
+  }
   assets.clear(); descriptor.meshAssets.forEach((asset) => assets.set(asset.id, asset));
   selected = undefined; blocked = [];
   document.querySelector('#selection').textContent = 'No piece selected';
@@ -160,6 +173,7 @@ canvas.addEventListener('click', (event) => {
   const point = [(event.clientX - bounds.left) * canvas.width / bounds.width, (event.clientY - bounds.top) * canvas.height / bounds.height];
   if(clipPixels&&(point[0]<clipPixels[0]||point[0]>clipPixels[2]||point[1]<clipPixels[1]||point[1]>clipPixels[3]))return;
   const cross = (a, b, p) => (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0]);
+  if(clipPolygon&&!clipPolygon.every((a,i)=>cross(a,clipPolygon[(i+1)%clipPolygon.length],point)<=1e-6))return;
   const hit = [...hits].reverse().find(({ triangle: [a, b, c] }) => {
     const signs = [cross(a, b, point), cross(b, c, point), cross(c, a, point)];
     return signs.every((value) => value >= 0) || signs.every((value) => value <= 0);

@@ -140,6 +140,7 @@ else()
     add_test(NAME gear_language_migration COMMAND gear_language_tests)
     find_package(Python3 COMPONENTS Interpreter REQUIRED)
     add_test(NAME flat_surface_packages COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/flat_surface_packages.py)
+    add_test(NAME hex_surface_packages COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/hex_surface_packages.py)
     add_test(NAME runtime_has_no_legacy_backend COMMAND ${Python3_EXECUTABLE}
       ${CMAKE_SOURCE_DIR}/tests/runtime_boundary.py
       $<TARGET_FILE:puzzle_catalog> $<TARGET_FILE:puzzle_execution>

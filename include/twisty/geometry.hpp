@@ -46,6 +46,7 @@ private:
   bool articulated_ = false;
   bool flat_surface_ = false;
   bool flat_twisted_ = false;
+  bool flat_rhombus_ = false;
   double flat_side_ = 2;
   using Frame = std::array<double, 16>;
   using Point = std::array<double, 3>;
@@ -94,6 +95,7 @@ private:
   void build_articulated(const Json &);
   void build_flat_surface(const Json &);
   Frame canonical_flat_frame(Frame) const;
+  bool flat_chart_contains(double x, double y) const;
   Frame articulated_resting(const Part &, const State &) const;
   Frame articulated_sample(const Part &, double) const;
   Frame catalog_resting(const Part &, const State &) const;

@@ -162,6 +162,20 @@ The public `SceneDescriptor`, `MeshAsset`, `VisualPart`, and `HitBinding` TypeSc
 
 The additive `flat-quotient` realization exposes `ambientSpace: "E2"` and a `FlatSurface` scene descriptor with `topology`, `fundamentalBounds`, two column-major `deckGenerators`, and `twoSided: true`; optional `cutRadius` and `diskCenters` describe the cuts. It retains API 4, realization schema 1 and buffer version 1. The interpreter emits intrinsic physical parts and continuous lifted rotation frames; displayed copies, reflections, clipping and picking belong to the renderer. Renderers advertising `quotient-surface` must support those operations and two-sided planar assets. Native and WASM constructors and borrowed-view lifetimes are unchanged. See [flat surfaces](flat-surfaces.md) for the exact matrix conventions, square/tiled presentation, preset construction and reproduction.
 
+Authoring may add `flatSurface.chart: "rhombus-60"` (the default is `"square"`).
+The scene then includes `chart`, `fundamentalPolygon` (counterclockwise `[x,y]`
+vertices), `latticeBasis: [a,b]` (Cartesian side vectors), and optional
+`tileReflection` (a column-major proper 4×4 frame). For integer tile `(i,j)`,
+compose translation `i*a+j*b` with `tileReflection` when `i+j` is odd. Without
+that field all tiles are translated. Polygon clipping and point tests are
+required; `fundamentalBounds` is its enclosing box, not its boundary. The
+rhombus Klein bottle's two deck generators are a translation `T` and glide
+reflection `G`, with `G T G⁻¹=T⁻¹`; their normal-form exponents are distinct
+from lattice tile coordinates. Invalid chart names, nonplanar/out-of-chart
+frames and nonembedded cut radii produce `realization.flat_surface` or
+`realization.articulated` diagnostics. This additive metadata retains API 4,
+schema 1 and buffer 1, with unchanged ownership and borrowed-view lifetimes.
+
 `kernelInfoJSON()` also advertises the `cube-spherical` realization. Its optional scene metadata identifies `ambientSpace: "S2"`, the six `diskCenters`, `sphereRadius`, `diskAngleDegrees`, `fidelity`, and `surfaceTransportVerified`. Mesh assets may declare `rotationSymmetryOrder`; featureless spherical centers use order four. These additive descriptors use the same buffer format and rendering capabilities as other realizations. Custom clients pass a compatible `relational-cube-spherical.json` into the existing geometry constructor; the packaged example data includes both reference cube realizations. See [the spherical construction](spherical-cube.md) for its geometric verification and surface-model scope.
 
 `polyhedral-spherical` intersects catalog prototypes with the unit sphere and uses the existing catalog frames and rotation tracks. The Helicopter package provides twelve 45° disks, seven shared assets, 44 existing pieces, and 48 ports. Local mesh vertices lie on unit shells; the frame includes the uniform display scale, equal to `sphereRadius`. It retains the abstract model's volume, phase, catalog, and exclusion guards; a spherical outline can therefore show tangency for a request blocked by a volume-derived rule. See [the spherical Helicopter construction](spherical-helicopter.md). The copied example data includes `helicopter/relational-helicopter-spherical.json`.

@@ -270,8 +270,8 @@ void Geometry::build_articulated(const Json &realization) {
         ensure(!flat_surface_ ||
                    (std::abs(m[2]) + std::abs(m[6]) + std::abs(m[8]) + std::abs(m[9]) +
                         std::abs(m[14]) < 1e-9 &&
-                    m[12] >= 0 && m[12] < flat_side_ && m[13] >= 0 && m[13] < flat_side_),
-               id, "Flat-surface frames must be planar and anchored in the fundamental square.");
+                    flat_chart_contains(m[12], m[13])),
+               id, "Flat-surface frames must be planar and anchored in the fundamental chart.");
         ensure(!spherical || (m[12] == 0 && m[13] == 0 && m[14] == 0), id,
                "Spherical component frames must rotate about the sphere origin.");
       }

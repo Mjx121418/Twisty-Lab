@@ -1,5 +1,9 @@
 # Face-turning flat surfaces
 
+There are square-grid and hexagonal-grid presets for both surfaces. All four
+share the abstract language, quotient interpreter and renderer; the new grids
+introduce no core rule.
+
 The flat torus and Klein bottle presets use the square `[0,2) × [0,2)` with four
 unit squares. The cutting disks have radius `4/5` and centers A `(0.5,0.5)`,
 B `(1.5,0.5)`, C `(0.5,1.5)`, D `(1.5,1.5)`. A named turn is 90° clockwise in
@@ -72,6 +76,51 @@ zoom, history and saved cameras. Neighboring images are copies, not new pieces.
 The standalone Canvas example implements the same square presentation using
 only the public buffers, identification matrices and Canvas clipping.
 
+## Hexagonal presets
+
+`flat-hex-torus` and `flat-hex-klein-bottle` use the rhombus with side vectors
+`a=(2,0)` and `b=(1,√3)`, an acute angle of 60°. The four cutting centers are
+A `0`, B `a/2`, C `b/2`, D `(a+b)/2`: one vertex, two edge midpoints, and the
+center. Their lifts form a triangular lattice of spacing one, whose Voronoi
+cells are regular hexagons. The radius is 0.8. The arrangement has 24 pieces:
+4 face regions, 12 two-disk edge regions and 8 three-disk vertex regions.
+The hexagonal Voronoi cells supply the initial colors.
+
+`A B C D` turn 60° clockwise in the named center's chart. Prime reverses a
+turn; `A2` and `A2'` turn −120° and +120°, and `A3` turns 180°. Six basic
+turns return the exact state. Integer coordinates in sixths of the triangular
+basis give exact C6/D6 placements and transports. Three shared models, color
+patches and L markings use 236 unique triangles, sampled on a common 96-angle
+grid. Body and color-patch mesh connectivity respects their shape symmetries.
+
+The torus glues opposite sides by translations `a,b`. The Klein bottle glues
+**adjacent** sides: bottom to right by `G(x)=Sx+a`, left to top by `Sx+b`, where
+`S` swaps the rhombus basis vectors (reflection in the long diagonal). In
+Cartesian coordinates `S=[[1/2,√3/2],[√3/2,−1/2]]`. This is an isometric gluing
+with no fixed points. All four corners identify with total angle 360°. Its
+deck group has generators `T(x)=x+a−b` and `G`, satisfying
+`G T G⁻¹=T⁻¹`; `G²` translates by `a+b`. The smallest glide displacement is
+`√3`, so radius 0.8 is below the global injectivity bound `√3/2`.
+
+For a displayed lattice tile `(i,j)`, the deck map is translation `i*a+j*b`
+after `S^(i+j)` on the Klein bottle, or just translation on the torus.
+Consequently neighboring rhombi alternate handedness. The interpreter still
+emits 100 physical visual parts once, with continuous intrinsic motion. The
+Three.js and independent Canvas renderers compose the image matrices and clip
+against the actual rhombus, including destinations and picking. The tiled view
+shows a 3×3 rhombus patch with the same one-tile animation padding.
+
+The additive `flatSurface.chart: "rhombus-60"` authoring field enables this
+chart. Its scene adds `fundamentalPolygon` (counterclockwise Cartesian points),
+`latticeBasis: [a,b]`, and, for the Klein bottle, `tileReflection` (a proper
+column-major 4×4 lift of `S`). `fundamentalBounds` is only the enclosing box;
+clients must clip and pick against the polygon. The two `deckGenerators` are
+`[T,G]` for the Klein bottle and translations `[a,b]` for the torus. No image
+list, viewport or camera is supplied by the interpreter.
+
+Run `python3 scripts/hex_surface_packages.py` to verify these packages, or add
+`--write` to regenerate them using the native compiler.
+
 ## Reproduction and limits
 
 `python3 scripts/flat_surface_packages.py` checks the committed packages; add
@@ -83,6 +132,7 @@ preserve mesh connectivity under each body's symmetries; the authoring check
 verifies those symmetries for both body and color-patch triangles. The L marks
 deliberately distinguish orientation and therefore break the visual symmetry.
 
-The first release fixes radius 0.8 and square subdivision 2×2. Changing radius
+The presets fix radius 0.8 and four cutting centers. Changing radius
 across a tangency changes the piece layout and requires new authoring. Embedded
-donut/Klein-bottle views and arbitrary fundamental polygons are deferred.
+donut/Klein-bottle views and arbitrary fundamental polygons are deferred; the
+supported charts are the square and the 60° rhombus.

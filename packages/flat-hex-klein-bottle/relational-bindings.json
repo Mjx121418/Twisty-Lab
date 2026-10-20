@@ -1,0 +1,2736 @@
+{
+  "domains": [
+    {
+      "id": "face",
+      "localPorts": [
+        "0"
+      ],
+      "pieces": [
+        "face-00",
+        "face-01",
+        "face-02",
+        "face-03"
+      ],
+      "placements": [
+        "face/0,0/1,0,0,1",
+        "face/0,0/0,-1,1,1",
+        "face/0,0/-1,-1,1,0",
+        "face/0,0/-1,0,0,-1",
+        "face/0,0/0,1,-1,-1",
+        "face/0,0/1,1,-1,0",
+        "face/0,0/0,1,1,0",
+        "face/0,0/-1,0,1,1",
+        "face/0,0/-1,-1,0,1",
+        "face/0,0/0,-1,-1,0",
+        "face/0,0/1,0,-1,-1",
+        "face/0,0/1,1,0,-1",
+        "face/6,0/1,0,0,1",
+        "face/6,0/0,-1,1,1",
+        "face/6,0/-1,-1,1,0",
+        "face/6,0/-1,0,0,-1",
+        "face/6,0/0,1,-1,-1",
+        "face/6,0/1,1,-1,0",
+        "face/6,0/0,1,1,0",
+        "face/6,0/-1,0,1,1",
+        "face/6,0/-1,-1,0,1",
+        "face/6,0/0,-1,-1,0",
+        "face/6,0/1,0,-1,-1",
+        "face/6,0/1,1,0,-1",
+        "face/0,6/1,0,0,1",
+        "face/0,6/0,-1,1,1",
+        "face/0,6/-1,-1,1,0",
+        "face/0,6/-1,0,0,-1",
+        "face/0,6/0,1,-1,-1",
+        "face/0,6/1,1,-1,0",
+        "face/0,6/0,1,1,0",
+        "face/0,6/-1,0,1,1",
+        "face/0,6/-1,-1,0,1",
+        "face/0,6/0,-1,-1,0",
+        "face/0,6/1,0,-1,-1",
+        "face/0,6/1,1,0,-1",
+        "face/6,6/1,0,0,1",
+        "face/6,6/0,-1,1,1",
+        "face/6,6/-1,-1,1,0",
+        "face/6,6/-1,0,0,-1",
+        "face/6,6/0,1,-1,-1",
+        "face/6,6/1,1,-1,0",
+        "face/6,6/0,1,1,0",
+        "face/6,6/-1,0,1,1",
+        "face/6,6/-1,-1,0,1",
+        "face/6,6/0,-1,-1,0",
+        "face/6,6/1,0,-1,-1",
+        "face/6,6/1,1,0,-1"
+      ]
+    },
+    {
+      "id": "edge",
+      "localPorts": [
+        "0",
+        "1"
+      ],
+      "pieces": [
+        "edge-00",
+        "edge-01",
+        "edge-02",
+        "edge-03",
+        "edge-04",
+        "edge-05",
+        "edge-06",
+        "edge-07",
+        "edge-08",
+        "edge-09",
+        "edge-10",
+        "edge-11"
+      ],
+      "placements": [
+        "edge/3,0/1,0,0,1",
+        "edge/3,0/-1,0,0,-1",
+        "edge/3,0/-1,-1,0,1",
+        "edge/3,0/1,1,0,-1",
+        "edge/9,0/1,0,0,1",
+        "edge/9,0/-1,0,0,-1",
+        "edge/9,0/-1,-1,0,1",
+        "edge/9,0/1,1,0,-1",
+        "edge/0,3/0,-1,1,1",
+        "edge/0,3/0,1,-1,-1",
+        "edge/0,3/0,1,1,0",
+        "edge/0,3/0,-1,-1,0",
+        "edge/3,3/-1,-1,1,0",
+        "edge/3,3/1,1,-1,0",
+        "edge/3,3/-1,0,1,1",
+        "edge/3,3/1,0,-1,-1",
+        "edge/6,3/0,-1,1,1",
+        "edge/6,3/0,1,-1,-1",
+        "edge/6,3/0,1,1,0",
+        "edge/6,3/0,-1,-1,0",
+        "edge/9,3/-1,-1,1,0",
+        "edge/9,3/1,1,-1,0",
+        "edge/9,3/-1,0,1,1",
+        "edge/9,3/1,0,-1,-1",
+        "edge/3,6/1,0,0,1",
+        "edge/3,6/-1,0,0,-1",
+        "edge/3,6/-1,-1,0,1",
+        "edge/3,6/1,1,0,-1",
+        "edge/9,6/1,0,0,1",
+        "edge/9,6/-1,0,0,-1",
+        "edge/9,6/-1,-1,0,1",
+        "edge/9,6/1,1,0,-1",
+        "edge/0,9/0,-1,1,1",
+        "edge/0,9/0,1,-1,-1",
+        "edge/0,9/0,1,1,0",
+        "edge/0,9/0,-1,-1,0",
+        "edge/3,9/-1,-1,1,0",
+        "edge/3,9/1,1,-1,0",
+        "edge/3,9/-1,0,1,1",
+        "edge/3,9/1,0,-1,-1",
+        "edge/6,9/0,-1,1,1",
+        "edge/6,9/0,1,-1,-1",
+        "edge/6,9/0,1,1,0",
+        "edge/6,9/0,-1,-1,0",
+        "edge/9,9/-1,-1,1,0",
+        "edge/9,9/1,1,-1,0",
+        "edge/9,9/-1,0,1,1",
+        "edge/9,9/1,0,-1,-1"
+      ]
+    },
+    {
+      "id": "vertex",
+      "localPorts": [
+        "0",
+        "1",
+        "2"
+      ],
+      "pieces": [
+        "vertex-00",
+        "vertex-01",
+        "vertex-02",
+        "vertex-03",
+        "vertex-04",
+        "vertex-05",
+        "vertex-06",
+        "vertex-07"
+      ],
+      "placements": [
+        "vertex/2,2/1,0,0,1",
+        "vertex/2,2/-1,-1,1,0",
+        "vertex/2,2/0,1,-1,-1",
+        "vertex/2,2/0,1,1,0",
+        "vertex/2,2/-1,-1,0,1",
+        "vertex/2,2/1,0,-1,-1",
+        "vertex/8,2/1,0,0,1",
+        "vertex/8,2/-1,-1,1,0",
+        "vertex/8,2/0,1,-1,-1",
+        "vertex/8,2/0,1,1,0",
+        "vertex/8,2/-1,-1,0,1",
+        "vertex/8,2/1,0,-1,-1",
+        "vertex/2,8/1,0,0,1",
+        "vertex/2,8/-1,-1,1,0",
+        "vertex/2,8/0,1,-1,-1",
+        "vertex/2,8/0,1,1,0",
+        "vertex/2,8/-1,-1,0,1",
+        "vertex/2,8/1,0,-1,-1",
+        "vertex/8,8/1,0,0,1",
+        "vertex/8,8/-1,-1,1,0",
+        "vertex/8,8/0,1,-1,-1",
+        "vertex/8,8/0,1,1,0",
+        "vertex/8,8/-1,-1,0,1",
+        "vertex/8,8/1,0,-1,-1",
+        "vertex/4,4/0,-1,1,1",
+        "vertex/4,4/-1,0,0,-1",
+        "vertex/4,4/1,1,-1,0",
+        "vertex/4,4/-1,0,1,1",
+        "vertex/4,4/0,-1,-1,0",
+        "vertex/4,4/1,1,0,-1",
+        "vertex/10,4/0,-1,1,1",
+        "vertex/10,4/-1,0,0,-1",
+        "vertex/10,4/1,1,-1,0",
+        "vertex/10,4/-1,0,1,1",
+        "vertex/10,4/0,-1,-1,0",
+        "vertex/10,4/1,1,0,-1",
+        "vertex/4,10/0,-1,1,1",
+        "vertex/4,10/-1,0,0,-1",
+        "vertex/4,10/1,1,-1,0",
+        "vertex/4,10/-1,0,1,1",
+        "vertex/4,10/0,-1,-1,0",
+        "vertex/4,10/1,1,0,-1",
+        "vertex/10,10/0,-1,1,1",
+        "vertex/10,10/-1,0,0,-1",
+        "vertex/10,10/1,1,-1,0",
+        "vertex/10,10/-1,0,1,1",
+        "vertex/10,10/0,-1,-1,0",
+        "vertex/10,10/1,1,0,-1"
+      ]
+    }
+  ],
+  "kind": "relational-port-bindings",
+  "pieces": {
+    "edge-00": {
+      "domain": "edge",
+      "home": "edge/3,0/1,0,0,1",
+      "portLabels": {
+        "0": "A",
+        "1": "B"
+      }
+    },
+    "edge-01": {
+      "domain": "edge",
+      "home": "edge/9,0/1,0,0,1",
+      "portLabels": {
+        "0": "B",
+        "1": "A"
+      }
+    },
+    "edge-02": {
+      "domain": "edge",
+      "home": "edge/0,3/0,-1,1,1",
+      "portLabels": {
+        "0": "A",
+        "1": "C"
+      }
+    },
+    "edge-03": {
+      "domain": "edge",
+      "home": "edge/3,3/-1,-1,1,0",
+      "portLabels": {
+        "0": "B",
+        "1": "C"
+      }
+    },
+    "edge-04": {
+      "domain": "edge",
+      "home": "edge/6,3/0,-1,1,1",
+      "portLabels": {
+        "0": "B",
+        "1": "D"
+      }
+    },
+    "edge-05": {
+      "domain": "edge",
+      "home": "edge/9,3/-1,-1,1,0",
+      "portLabels": {
+        "0": "A",
+        "1": "D"
+      }
+    },
+    "edge-06": {
+      "domain": "edge",
+      "home": "edge/3,6/1,0,0,1",
+      "portLabels": {
+        "0": "C",
+        "1": "D"
+      }
+    },
+    "edge-07": {
+      "domain": "edge",
+      "home": "edge/9,6/1,0,0,1",
+      "portLabels": {
+        "0": "D",
+        "1": "B"
+      }
+    },
+    "edge-08": {
+      "domain": "edge",
+      "home": "edge/0,9/0,-1,1,1",
+      "portLabels": {
+        "0": "C",
+        "1": "A"
+      }
+    },
+    "edge-09": {
+      "domain": "edge",
+      "home": "edge/3,9/-1,-1,1,0",
+      "portLabels": {
+        "0": "D",
+        "1": "A"
+      }
+    },
+    "edge-10": {
+      "domain": "edge",
+      "home": "edge/6,9/0,-1,1,1",
+      "portLabels": {
+        "0": "D",
+        "1": "C"
+      }
+    },
+    "edge-11": {
+      "domain": "edge",
+      "home": "edge/9,9/-1,-1,1,0",
+      "portLabels": {
+        "0": "B",
+        "1": "C"
+      }
+    },
+    "face-00": {
+      "domain": "face",
+      "home": "face/0,0/1,0,0,1",
+      "portLabels": {
+        "0": "A"
+      }
+    },
+    "face-01": {
+      "domain": "face",
+      "home": "face/6,0/1,0,0,1",
+      "portLabels": {
+        "0": "B"
+      }
+    },
+    "face-02": {
+      "domain": "face",
+      "home": "face/0,6/1,0,0,1",
+      "portLabels": {
+        "0": "C"
+      }
+    },
+    "face-03": {
+      "domain": "face",
+      "home": "face/6,6/1,0,0,1",
+      "portLabels": {
+        "0": "D"
+      }
+    },
+    "vertex-00": {
+      "domain": "vertex",
+      "home": "vertex/2,2/1,0,0,1",
+      "portLabels": {
+        "0": "A",
+        "1": "B",
+        "2": "C"
+      }
+    },
+    "vertex-01": {
+      "domain": "vertex",
+      "home": "vertex/8,2/1,0,0,1",
+      "portLabels": {
+        "0": "B",
+        "1": "A",
+        "2": "D"
+      }
+    },
+    "vertex-02": {
+      "domain": "vertex",
+      "home": "vertex/2,8/1,0,0,1",
+      "portLabels": {
+        "0": "C",
+        "1": "D",
+        "2": "A"
+      }
+    },
+    "vertex-03": {
+      "domain": "vertex",
+      "home": "vertex/8,8/1,0,0,1",
+      "portLabels": {
+        "0": "D",
+        "1": "B",
+        "2": "C"
+      }
+    },
+    "vertex-04": {
+      "domain": "vertex",
+      "home": "vertex/4,4/0,-1,1,1",
+      "portLabels": {
+        "0": "B",
+        "1": "D",
+        "2": "C"
+      }
+    },
+    "vertex-05": {
+      "domain": "vertex",
+      "home": "vertex/10,4/0,-1,1,1",
+      "portLabels": {
+        "0": "A",
+        "1": "B",
+        "2": "D"
+      }
+    },
+    "vertex-06": {
+      "domain": "vertex",
+      "home": "vertex/4,10/0,-1,1,1",
+      "portLabels": {
+        "0": "D",
+        "1": "C",
+        "2": "A"
+      }
+    },
+    "vertex-07": {
+      "domain": "vertex",
+      "home": "vertex/10,10/0,-1,1,1",
+      "portLabels": {
+        "0": "B",
+        "1": "A",
+        "2": "C"
+      }
+    }
+  },
+  "placements": {
+    "edge/0,3/0,-1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/edge/02"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/edge/02"
+        }
+      },
+      "resources": [
+        "location/edge/02"
+      ]
+    },
+    "edge/0,3/0,-1,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/edge/02"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/edge/02"
+        }
+      },
+      "resources": [
+        "location/edge/02"
+      ]
+    },
+    "edge/0,3/0,1,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/edge/02"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/edge/02"
+        }
+      },
+      "resources": [
+        "location/edge/02"
+      ]
+    },
+    "edge/0,3/0,1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/edge/02"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/edge/02"
+        }
+      },
+      "resources": [
+        "location/edge/02"
+      ]
+    },
+    "edge/0,9/0,-1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/edge/08"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/edge/08"
+        }
+      },
+      "resources": [
+        "location/edge/08"
+      ]
+    },
+    "edge/0,9/0,-1,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/edge/08"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/edge/08"
+        }
+      },
+      "resources": [
+        "location/edge/08"
+      ]
+    },
+    "edge/0,9/0,1,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/edge/08"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/edge/08"
+        }
+      },
+      "resources": [
+        "location/edge/08"
+      ]
+    },
+    "edge/0,9/0,1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/edge/08"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/edge/08"
+        }
+      },
+      "resources": [
+        "location/edge/08"
+      ]
+    },
+    "edge/3,0/-1,-1,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/edge/00"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/edge/00"
+        }
+      },
+      "resources": [
+        "location/edge/00"
+      ]
+    },
+    "edge/3,0/-1,0,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/edge/00"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/edge/00"
+        }
+      },
+      "resources": [
+        "location/edge/00"
+      ]
+    },
+    "edge/3,0/1,0,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/edge/00"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/edge/00"
+        }
+      },
+      "resources": [
+        "location/edge/00"
+      ]
+    },
+    "edge/3,0/1,1,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/edge/00"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/edge/00"
+        }
+      },
+      "resources": [
+        "location/edge/00"
+      ]
+    },
+    "edge/3,3/-1,-1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/edge/03"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/edge/03"
+        }
+      },
+      "resources": [
+        "location/edge/03"
+      ]
+    },
+    "edge/3,3/-1,0,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/edge/03"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/edge/03"
+        }
+      },
+      "resources": [
+        "location/edge/03"
+      ]
+    },
+    "edge/3,3/1,0,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/edge/03"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/edge/03"
+        }
+      },
+      "resources": [
+        "location/edge/03"
+      ]
+    },
+    "edge/3,3/1,1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/edge/03"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/edge/03"
+        }
+      },
+      "resources": [
+        "location/edge/03"
+      ]
+    },
+    "edge/3,6/-1,-1,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/edge/06"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/edge/06"
+        }
+      },
+      "resources": [
+        "location/edge/06"
+      ]
+    },
+    "edge/3,6/-1,0,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/edge/06"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/edge/06"
+        }
+      },
+      "resources": [
+        "location/edge/06"
+      ]
+    },
+    "edge/3,6/1,0,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/edge/06"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/edge/06"
+        }
+      },
+      "resources": [
+        "location/edge/06"
+      ]
+    },
+    "edge/3,6/1,1,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/edge/06"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/edge/06"
+        }
+      },
+      "resources": [
+        "location/edge/06"
+      ]
+    },
+    "edge/3,9/-1,-1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/edge/09"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/edge/09"
+        }
+      },
+      "resources": [
+        "location/edge/09"
+      ]
+    },
+    "edge/3,9/-1,0,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/edge/09"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/edge/09"
+        }
+      },
+      "resources": [
+        "location/edge/09"
+      ]
+    },
+    "edge/3,9/1,0,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/edge/09"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/edge/09"
+        }
+      },
+      "resources": [
+        "location/edge/09"
+      ]
+    },
+    "edge/3,9/1,1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/edge/09"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/edge/09"
+        }
+      },
+      "resources": [
+        "location/edge/09"
+      ]
+    },
+    "edge/6,3/0,-1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/edge/04"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/edge/04"
+        }
+      },
+      "resources": [
+        "location/edge/04"
+      ]
+    },
+    "edge/6,3/0,-1,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/edge/04"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/edge/04"
+        }
+      },
+      "resources": [
+        "location/edge/04"
+      ]
+    },
+    "edge/6,3/0,1,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/edge/04"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/edge/04"
+        }
+      },
+      "resources": [
+        "location/edge/04"
+      ]
+    },
+    "edge/6,3/0,1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/edge/04"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/edge/04"
+        }
+      },
+      "resources": [
+        "location/edge/04"
+      ]
+    },
+    "edge/6,9/0,-1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/edge/10"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/edge/10"
+        }
+      },
+      "resources": [
+        "location/edge/10"
+      ]
+    },
+    "edge/6,9/0,-1,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/edge/10"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/edge/10"
+        }
+      },
+      "resources": [
+        "location/edge/10"
+      ]
+    },
+    "edge/6,9/0,1,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/edge/10"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/edge/10"
+        }
+      },
+      "resources": [
+        "location/edge/10"
+      ]
+    },
+    "edge/6,9/0,1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/edge/10"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/edge/10"
+        }
+      },
+      "resources": [
+        "location/edge/10"
+      ]
+    },
+    "edge/9,0/-1,-1,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/edge/01"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/edge/01"
+        }
+      },
+      "resources": [
+        "location/edge/01"
+      ]
+    },
+    "edge/9,0/-1,0,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/edge/01"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/edge/01"
+        }
+      },
+      "resources": [
+        "location/edge/01"
+      ]
+    },
+    "edge/9,0/1,0,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/edge/01"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/edge/01"
+        }
+      },
+      "resources": [
+        "location/edge/01"
+      ]
+    },
+    "edge/9,0/1,1,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/edge/01"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/edge/01"
+        }
+      },
+      "resources": [
+        "location/edge/01"
+      ]
+    },
+    "edge/9,3/-1,-1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/edge/05"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/edge/05"
+        }
+      },
+      "resources": [
+        "location/edge/05"
+      ]
+    },
+    "edge/9,3/-1,0,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/edge/05"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/edge/05"
+        }
+      },
+      "resources": [
+        "location/edge/05"
+      ]
+    },
+    "edge/9,3/1,0,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/edge/05"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/edge/05"
+        }
+      },
+      "resources": [
+        "location/edge/05"
+      ]
+    },
+    "edge/9,3/1,1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/edge/05"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/edge/05"
+        }
+      },
+      "resources": [
+        "location/edge/05"
+      ]
+    },
+    "edge/9,6/-1,-1,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/edge/07"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/edge/07"
+        }
+      },
+      "resources": [
+        "location/edge/07"
+      ]
+    },
+    "edge/9,6/-1,0,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/edge/07"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/edge/07"
+        }
+      },
+      "resources": [
+        "location/edge/07"
+      ]
+    },
+    "edge/9,6/1,0,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/edge/07"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/edge/07"
+        }
+      },
+      "resources": [
+        "location/edge/07"
+      ]
+    },
+    "edge/9,6/1,1,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/edge/07"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/edge/07"
+        }
+      },
+      "resources": [
+        "location/edge/07"
+      ]
+    },
+    "edge/9,9/-1,-1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/edge/11"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/edge/11"
+        }
+      },
+      "resources": [
+        "location/edge/11"
+      ]
+    },
+    "edge/9,9/-1,0,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/edge/11"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/edge/11"
+        }
+      },
+      "resources": [
+        "location/edge/11"
+      ]
+    },
+    "edge/9,9/1,0,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/edge/11"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/edge/11"
+        }
+      },
+      "resources": [
+        "location/edge/11"
+      ]
+    },
+    "edge/9,9/1,1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/edge/11"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/edge/11"
+        }
+      },
+      "resources": [
+        "location/edge/11"
+      ]
+    },
+    "face/0,0/-1,-1,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/face/00"
+        }
+      },
+      "resources": [
+        "location/face/00"
+      ]
+    },
+    "face/0,0/-1,-1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/face/00"
+        }
+      },
+      "resources": [
+        "location/face/00"
+      ]
+    },
+    "face/0,0/-1,0,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/face/00"
+        }
+      },
+      "resources": [
+        "location/face/00"
+      ]
+    },
+    "face/0,0/-1,0,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/face/00"
+        }
+      },
+      "resources": [
+        "location/face/00"
+      ]
+    },
+    "face/0,0/0,-1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/face/00"
+        }
+      },
+      "resources": [
+        "location/face/00"
+      ]
+    },
+    "face/0,0/0,-1,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/face/00"
+        }
+      },
+      "resources": [
+        "location/face/00"
+      ]
+    },
+    "face/0,0/0,1,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/face/00"
+        }
+      },
+      "resources": [
+        "location/face/00"
+      ]
+    },
+    "face/0,0/0,1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/face/00"
+        }
+      },
+      "resources": [
+        "location/face/00"
+      ]
+    },
+    "face/0,0/1,0,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/face/00"
+        }
+      },
+      "resources": [
+        "location/face/00"
+      ]
+    },
+    "face/0,0/1,0,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/face/00"
+        }
+      },
+      "resources": [
+        "location/face/00"
+      ]
+    },
+    "face/0,0/1,1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/face/00"
+        }
+      },
+      "resources": [
+        "location/face/00"
+      ]
+    },
+    "face/0,0/1,1,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/face/00"
+        }
+      },
+      "resources": [
+        "location/face/00"
+      ]
+    },
+    "face/0,6/-1,-1,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/face/02"
+        }
+      },
+      "resources": [
+        "location/face/02"
+      ]
+    },
+    "face/0,6/-1,-1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/face/02"
+        }
+      },
+      "resources": [
+        "location/face/02"
+      ]
+    },
+    "face/0,6/-1,0,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/face/02"
+        }
+      },
+      "resources": [
+        "location/face/02"
+      ]
+    },
+    "face/0,6/-1,0,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/face/02"
+        }
+      },
+      "resources": [
+        "location/face/02"
+      ]
+    },
+    "face/0,6/0,-1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/face/02"
+        }
+      },
+      "resources": [
+        "location/face/02"
+      ]
+    },
+    "face/0,6/0,-1,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/face/02"
+        }
+      },
+      "resources": [
+        "location/face/02"
+      ]
+    },
+    "face/0,6/0,1,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/face/02"
+        }
+      },
+      "resources": [
+        "location/face/02"
+      ]
+    },
+    "face/0,6/0,1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/face/02"
+        }
+      },
+      "resources": [
+        "location/face/02"
+      ]
+    },
+    "face/0,6/1,0,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/face/02"
+        }
+      },
+      "resources": [
+        "location/face/02"
+      ]
+    },
+    "face/0,6/1,0,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/face/02"
+        }
+      },
+      "resources": [
+        "location/face/02"
+      ]
+    },
+    "face/0,6/1,1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/face/02"
+        }
+      },
+      "resources": [
+        "location/face/02"
+      ]
+    },
+    "face/0,6/1,1,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/face/02"
+        }
+      },
+      "resources": [
+        "location/face/02"
+      ]
+    },
+    "face/6,0/-1,-1,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/face/01"
+        }
+      },
+      "resources": [
+        "location/face/01"
+      ]
+    },
+    "face/6,0/-1,-1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/face/01"
+        }
+      },
+      "resources": [
+        "location/face/01"
+      ]
+    },
+    "face/6,0/-1,0,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/face/01"
+        }
+      },
+      "resources": [
+        "location/face/01"
+      ]
+    },
+    "face/6,0/-1,0,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/face/01"
+        }
+      },
+      "resources": [
+        "location/face/01"
+      ]
+    },
+    "face/6,0/0,-1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/face/01"
+        }
+      },
+      "resources": [
+        "location/face/01"
+      ]
+    },
+    "face/6,0/0,-1,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/face/01"
+        }
+      },
+      "resources": [
+        "location/face/01"
+      ]
+    },
+    "face/6,0/0,1,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/face/01"
+        }
+      },
+      "resources": [
+        "location/face/01"
+      ]
+    },
+    "face/6,0/0,1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/face/01"
+        }
+      },
+      "resources": [
+        "location/face/01"
+      ]
+    },
+    "face/6,0/1,0,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/face/01"
+        }
+      },
+      "resources": [
+        "location/face/01"
+      ]
+    },
+    "face/6,0/1,0,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/face/01"
+        }
+      },
+      "resources": [
+        "location/face/01"
+      ]
+    },
+    "face/6,0/1,1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/face/01"
+        }
+      },
+      "resources": [
+        "location/face/01"
+      ]
+    },
+    "face/6,0/1,1,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/face/01"
+        }
+      },
+      "resources": [
+        "location/face/01"
+      ]
+    },
+    "face/6,6/-1,-1,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/face/03"
+        }
+      },
+      "resources": [
+        "location/face/03"
+      ]
+    },
+    "face/6,6/-1,-1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/face/03"
+        }
+      },
+      "resources": [
+        "location/face/03"
+      ]
+    },
+    "face/6,6/-1,0,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/face/03"
+        }
+      },
+      "resources": [
+        "location/face/03"
+      ]
+    },
+    "face/6,6/-1,0,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/face/03"
+        }
+      },
+      "resources": [
+        "location/face/03"
+      ]
+    },
+    "face/6,6/0,-1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/face/03"
+        }
+      },
+      "resources": [
+        "location/face/03"
+      ]
+    },
+    "face/6,6/0,-1,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/face/03"
+        }
+      },
+      "resources": [
+        "location/face/03"
+      ]
+    },
+    "face/6,6/0,1,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/face/03"
+        }
+      },
+      "resources": [
+        "location/face/03"
+      ]
+    },
+    "face/6,6/0,1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/face/03"
+        }
+      },
+      "resources": [
+        "location/face/03"
+      ]
+    },
+    "face/6,6/1,0,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/face/03"
+        }
+      },
+      "resources": [
+        "location/face/03"
+      ]
+    },
+    "face/6,6/1,0,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/face/03"
+        }
+      },
+      "resources": [
+        "location/face/03"
+      ]
+    },
+    "face/6,6/1,1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/face/03"
+        }
+      },
+      "resources": [
+        "location/face/03"
+      ]
+    },
+    "face/6,6/1,1,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/face/03"
+        }
+      },
+      "resources": [
+        "location/face/03"
+      ]
+    },
+    "vertex/10,10/-1,0,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/vertex/07"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/vertex/07"
+        },
+        "2": {
+          "attachment": "B",
+          "cell": "location/vertex/07"
+        }
+      },
+      "resources": [
+        "location/vertex/07"
+      ]
+    },
+    "vertex/10,10/-1,0,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/vertex/07"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/vertex/07"
+        },
+        "2": {
+          "attachment": "A",
+          "cell": "location/vertex/07"
+        }
+      },
+      "resources": [
+        "location/vertex/07"
+      ]
+    },
+    "vertex/10,10/0,-1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/vertex/07"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/vertex/07"
+        },
+        "2": {
+          "attachment": "C",
+          "cell": "location/vertex/07"
+        }
+      },
+      "resources": [
+        "location/vertex/07"
+      ]
+    },
+    "vertex/10,10/0,-1,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/vertex/07"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/vertex/07"
+        },
+        "2": {
+          "attachment": "C",
+          "cell": "location/vertex/07"
+        }
+      },
+      "resources": [
+        "location/vertex/07"
+      ]
+    },
+    "vertex/10,10/1,1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/vertex/07"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/vertex/07"
+        },
+        "2": {
+          "attachment": "A",
+          "cell": "location/vertex/07"
+        }
+      },
+      "resources": [
+        "location/vertex/07"
+      ]
+    },
+    "vertex/10,10/1,1,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/vertex/07"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/vertex/07"
+        },
+        "2": {
+          "attachment": "B",
+          "cell": "location/vertex/07"
+        }
+      },
+      "resources": [
+        "location/vertex/07"
+      ]
+    },
+    "vertex/10,4/-1,0,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/vertex/05"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/vertex/05"
+        },
+        "2": {
+          "attachment": "A",
+          "cell": "location/vertex/05"
+        }
+      },
+      "resources": [
+        "location/vertex/05"
+      ]
+    },
+    "vertex/10,4/-1,0,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/vertex/05"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/vertex/05"
+        },
+        "2": {
+          "attachment": "B",
+          "cell": "location/vertex/05"
+        }
+      },
+      "resources": [
+        "location/vertex/05"
+      ]
+    },
+    "vertex/10,4/0,-1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/vertex/05"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/vertex/05"
+        },
+        "2": {
+          "attachment": "D",
+          "cell": "location/vertex/05"
+        }
+      },
+      "resources": [
+        "location/vertex/05"
+      ]
+    },
+    "vertex/10,4/0,-1,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/vertex/05"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/vertex/05"
+        },
+        "2": {
+          "attachment": "D",
+          "cell": "location/vertex/05"
+        }
+      },
+      "resources": [
+        "location/vertex/05"
+      ]
+    },
+    "vertex/10,4/1,1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/vertex/05"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/vertex/05"
+        },
+        "2": {
+          "attachment": "B",
+          "cell": "location/vertex/05"
+        }
+      },
+      "resources": [
+        "location/vertex/05"
+      ]
+    },
+    "vertex/10,4/1,1,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/vertex/05"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/vertex/05"
+        },
+        "2": {
+          "attachment": "A",
+          "cell": "location/vertex/05"
+        }
+      },
+      "resources": [
+        "location/vertex/05"
+      ]
+    },
+    "vertex/2,2/-1,-1,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/vertex/00"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/vertex/00"
+        },
+        "2": {
+          "attachment": "C",
+          "cell": "location/vertex/00"
+        }
+      },
+      "resources": [
+        "location/vertex/00"
+      ]
+    },
+    "vertex/2,2/-1,-1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/vertex/00"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/vertex/00"
+        },
+        "2": {
+          "attachment": "A",
+          "cell": "location/vertex/00"
+        }
+      },
+      "resources": [
+        "location/vertex/00"
+      ]
+    },
+    "vertex/2,2/0,1,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/vertex/00"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/vertex/00"
+        },
+        "2": {
+          "attachment": "B",
+          "cell": "location/vertex/00"
+        }
+      },
+      "resources": [
+        "location/vertex/00"
+      ]
+    },
+    "vertex/2,2/0,1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/vertex/00"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/vertex/00"
+        },
+        "2": {
+          "attachment": "B",
+          "cell": "location/vertex/00"
+        }
+      },
+      "resources": [
+        "location/vertex/00"
+      ]
+    },
+    "vertex/2,2/1,0,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/vertex/00"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/vertex/00"
+        },
+        "2": {
+          "attachment": "A",
+          "cell": "location/vertex/00"
+        }
+      },
+      "resources": [
+        "location/vertex/00"
+      ]
+    },
+    "vertex/2,2/1,0,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/vertex/00"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/vertex/00"
+        },
+        "2": {
+          "attachment": "C",
+          "cell": "location/vertex/00"
+        }
+      },
+      "resources": [
+        "location/vertex/00"
+      ]
+    },
+    "vertex/2,8/-1,-1,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/vertex/02"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/vertex/02"
+        },
+        "2": {
+          "attachment": "A",
+          "cell": "location/vertex/02"
+        }
+      },
+      "resources": [
+        "location/vertex/02"
+      ]
+    },
+    "vertex/2,8/-1,-1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/vertex/02"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/vertex/02"
+        },
+        "2": {
+          "attachment": "C",
+          "cell": "location/vertex/02"
+        }
+      },
+      "resources": [
+        "location/vertex/02"
+      ]
+    },
+    "vertex/2,8/0,1,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/vertex/02"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/vertex/02"
+        },
+        "2": {
+          "attachment": "D",
+          "cell": "location/vertex/02"
+        }
+      },
+      "resources": [
+        "location/vertex/02"
+      ]
+    },
+    "vertex/2,8/0,1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/vertex/02"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/vertex/02"
+        },
+        "2": {
+          "attachment": "D",
+          "cell": "location/vertex/02"
+        }
+      },
+      "resources": [
+        "location/vertex/02"
+      ]
+    },
+    "vertex/2,8/1,0,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/vertex/02"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/vertex/02"
+        },
+        "2": {
+          "attachment": "C",
+          "cell": "location/vertex/02"
+        }
+      },
+      "resources": [
+        "location/vertex/02"
+      ]
+    },
+    "vertex/2,8/1,0,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/vertex/02"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/vertex/02"
+        },
+        "2": {
+          "attachment": "A",
+          "cell": "location/vertex/02"
+        }
+      },
+      "resources": [
+        "location/vertex/02"
+      ]
+    },
+    "vertex/4,10/-1,0,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/vertex/06"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/vertex/06"
+        },
+        "2": {
+          "attachment": "D",
+          "cell": "location/vertex/06"
+        }
+      },
+      "resources": [
+        "location/vertex/06"
+      ]
+    },
+    "vertex/4,10/-1,0,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/vertex/06"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/vertex/06"
+        },
+        "2": {
+          "attachment": "C",
+          "cell": "location/vertex/06"
+        }
+      },
+      "resources": [
+        "location/vertex/06"
+      ]
+    },
+    "vertex/4,10/0,-1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/vertex/06"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/vertex/06"
+        },
+        "2": {
+          "attachment": "A",
+          "cell": "location/vertex/06"
+        }
+      },
+      "resources": [
+        "location/vertex/06"
+      ]
+    },
+    "vertex/4,10/0,-1,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/vertex/06"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/vertex/06"
+        },
+        "2": {
+          "attachment": "A",
+          "cell": "location/vertex/06"
+        }
+      },
+      "resources": [
+        "location/vertex/06"
+      ]
+    },
+    "vertex/4,10/1,1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/vertex/06"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/vertex/06"
+        },
+        "2": {
+          "attachment": "C",
+          "cell": "location/vertex/06"
+        }
+      },
+      "resources": [
+        "location/vertex/06"
+      ]
+    },
+    "vertex/4,10/1,1,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/vertex/06"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/vertex/06"
+        },
+        "2": {
+          "attachment": "D",
+          "cell": "location/vertex/06"
+        }
+      },
+      "resources": [
+        "location/vertex/06"
+      ]
+    },
+    "vertex/4,4/-1,0,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/vertex/04"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/vertex/04"
+        },
+        "2": {
+          "attachment": "B",
+          "cell": "location/vertex/04"
+        }
+      },
+      "resources": [
+        "location/vertex/04"
+      ]
+    },
+    "vertex/4,4/-1,0,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/vertex/04"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/vertex/04"
+        },
+        "2": {
+          "attachment": "D",
+          "cell": "location/vertex/04"
+        }
+      },
+      "resources": [
+        "location/vertex/04"
+      ]
+    },
+    "vertex/4,4/0,-1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/vertex/04"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/vertex/04"
+        },
+        "2": {
+          "attachment": "C",
+          "cell": "location/vertex/04"
+        }
+      },
+      "resources": [
+        "location/vertex/04"
+      ]
+    },
+    "vertex/4,4/0,-1,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/vertex/04"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/vertex/04"
+        },
+        "2": {
+          "attachment": "C",
+          "cell": "location/vertex/04"
+        }
+      },
+      "resources": [
+        "location/vertex/04"
+      ]
+    },
+    "vertex/4,4/1,1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/vertex/04"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/vertex/04"
+        },
+        "2": {
+          "attachment": "D",
+          "cell": "location/vertex/04"
+        }
+      },
+      "resources": [
+        "location/vertex/04"
+      ]
+    },
+    "vertex/4,4/1,1,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/vertex/04"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/vertex/04"
+        },
+        "2": {
+          "attachment": "B",
+          "cell": "location/vertex/04"
+        }
+      },
+      "resources": [
+        "location/vertex/04"
+      ]
+    },
+    "vertex/8,2/-1,-1,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/vertex/01"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/vertex/01"
+        },
+        "2": {
+          "attachment": "D",
+          "cell": "location/vertex/01"
+        }
+      },
+      "resources": [
+        "location/vertex/01"
+      ]
+    },
+    "vertex/8,2/-1,-1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/vertex/01"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/vertex/01"
+        },
+        "2": {
+          "attachment": "B",
+          "cell": "location/vertex/01"
+        }
+      },
+      "resources": [
+        "location/vertex/01"
+      ]
+    },
+    "vertex/8,2/0,1,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/vertex/01"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/vertex/01"
+        },
+        "2": {
+          "attachment": "A",
+          "cell": "location/vertex/01"
+        }
+      },
+      "resources": [
+        "location/vertex/01"
+      ]
+    },
+    "vertex/8,2/0,1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/vertex/01"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/vertex/01"
+        },
+        "2": {
+          "attachment": "A",
+          "cell": "location/vertex/01"
+        }
+      },
+      "resources": [
+        "location/vertex/01"
+      ]
+    },
+    "vertex/8,2/1,0,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/vertex/01"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/vertex/01"
+        },
+        "2": {
+          "attachment": "B",
+          "cell": "location/vertex/01"
+        }
+      },
+      "resources": [
+        "location/vertex/01"
+      ]
+    },
+    "vertex/8,2/1,0,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/vertex/01"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/vertex/01"
+        },
+        "2": {
+          "attachment": "D",
+          "cell": "location/vertex/01"
+        }
+      },
+      "resources": [
+        "location/vertex/01"
+      ]
+    },
+    "vertex/8,8/-1,-1,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/vertex/03"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/vertex/03"
+        },
+        "2": {
+          "attachment": "C",
+          "cell": "location/vertex/03"
+        }
+      },
+      "resources": [
+        "location/vertex/03"
+      ]
+    },
+    "vertex/8,8/-1,-1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/vertex/03"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/vertex/03"
+        },
+        "2": {
+          "attachment": "D",
+          "cell": "location/vertex/03"
+        }
+      },
+      "resources": [
+        "location/vertex/03"
+      ]
+    },
+    "vertex/8,8/0,1,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/vertex/03"
+        },
+        "1": {
+          "attachment": "D",
+          "cell": "location/vertex/03"
+        },
+        "2": {
+          "attachment": "B",
+          "cell": "location/vertex/03"
+        }
+      },
+      "resources": [
+        "location/vertex/03"
+      ]
+    },
+    "vertex/8,8/0,1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/vertex/03"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/vertex/03"
+        },
+        "2": {
+          "attachment": "B",
+          "cell": "location/vertex/03"
+        }
+      },
+      "resources": [
+        "location/vertex/03"
+      ]
+    },
+    "vertex/8,8/1,0,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/vertex/03"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/vertex/03"
+        },
+        "2": {
+          "attachment": "D",
+          "cell": "location/vertex/03"
+        }
+      },
+      "resources": [
+        "location/vertex/03"
+      ]
+    },
+    "vertex/8,8/1,0,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "D",
+          "cell": "location/vertex/03"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/vertex/03"
+        },
+        "2": {
+          "attachment": "C",
+          "cell": "location/vertex/03"
+        }
+      },
+      "resources": [
+        "location/vertex/03"
+      ]
+    }
+  },
+  "puzzleId": "flat-hex-klein-bottle-v1",
+  "requests": {
+    "A": {
+      "event": "A.motion",
+      "family": "A",
+      "inverse": "A'",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "A'": {
+      "event": "A'.motion",
+      "family": "A",
+      "inverse": "A",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "A2": {
+      "event": "A2.motion",
+      "family": "A",
+      "inverse": "A2'",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "A2'": {
+      "event": "A2'.motion",
+      "family": "A",
+      "inverse": "A2",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "A3": {
+      "event": "A3.motion",
+      "family": "A",
+      "inverse": "A3",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "B": {
+      "event": "B.motion",
+      "family": "B",
+      "inverse": "B'",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "B'": {
+      "event": "B'.motion",
+      "family": "B",
+      "inverse": "B",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "B2": {
+      "event": "B2.motion",
+      "family": "B",
+      "inverse": "B2'",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "B2'": {
+      "event": "B2'.motion",
+      "family": "B",
+      "inverse": "B2",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "B3": {
+      "event": "B3.motion",
+      "family": "B",
+      "inverse": "B3",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "C": {
+      "event": "C.motion",
+      "family": "C",
+      "inverse": "C'",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "C'": {
+      "event": "C'.motion",
+      "family": "C",
+      "inverse": "C",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "C2": {
+      "event": "C2.motion",
+      "family": "C",
+      "inverse": "C2'",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "C2'": {
+      "event": "C2'.motion",
+      "family": "C",
+      "inverse": "C2",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "C3": {
+      "event": "C3.motion",
+      "family": "C",
+      "inverse": "C3",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "D": {
+      "event": "D.motion",
+      "family": "D",
+      "inverse": "D'",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "D'": {
+      "event": "D'.motion",
+      "family": "D",
+      "inverse": "D",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "D2": {
+      "event": "D2.motion",
+      "family": "D",
+      "inverse": "D2'",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "D2'": {
+      "event": "D2'.motion",
+      "family": "D",
+      "inverse": "D2",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "D3": {
+      "event": "D3.motion",
+      "family": "D",
+      "inverse": "D3",
+      "profile": "default",
+      "unavailablePlacements": []
+    }
+  },
+  "resources": [
+    "location/face/00",
+    "location/face/01",
+    "location/face/02",
+    "location/face/03",
+    "location/edge/00",
+    "location/edge/01",
+    "location/edge/02",
+    "location/edge/03",
+    "location/edge/04",
+    "location/edge/05",
+    "location/edge/06",
+    "location/edge/07",
+    "location/edge/08",
+    "location/edge/09",
+    "location/edge/10",
+    "location/edge/11",
+    "location/vertex/00",
+    "location/vertex/01",
+    "location/vertex/02",
+    "location/vertex/03",
+    "location/vertex/04",
+    "location/vertex/05",
+    "location/vertex/06",
+    "location/vertex/07"
+  ],
+  "version": 1
+}

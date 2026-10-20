@@ -1,0 +1,11 @@
+{
+  "cutRadius": 0.8,
+  "definitionDigest": "0ef537bd60854be2cf5164bfd7c58b438946d88c7a1ed03a01026c3d61bf07d3",
+  "pieceCounts": {
+    "edge": 12,
+    "face": 4,
+    "vertex": 8
+  },
+  "topology": "klein-bottle",
+  "uniqueTriangles": 236
+}

@@ -55,7 +55,7 @@ if (process.argv.includes('--stage-web')) {
       await cp(new URL(`../packages/${puzzle}/${file}`, import.meta.url), new URL(file, directory));
     }
   }
-  for (const puzzle of ['flat-torus', 'flat-klein-bottle']) {
+  for (const puzzle of ['flat-torus', 'flat-klein-bottle', 'flat-hex-torus', 'flat-hex-klein-bottle']) {
     const directory = new URL(`examples/canvas/data/${puzzle}/`, output);
     await mkdir(directory, { recursive: true });
     for (const file of ['relational.pzl.json', 'relational-bindings.json', 'relational-package.json', 'flat-quotient.json', 'manifest.json'])

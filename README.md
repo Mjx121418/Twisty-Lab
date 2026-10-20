@@ -8,6 +8,12 @@ The cube presets also support an [ideal spherical realization](docs/spherical-cu
 
 The [flat torus and Klein bottle](docs/flat-surfaces.md) presets use four radius-0.8 cutting disks in a 2×2 square grid, giving 4 face pieces, 8 edge pieces and 20 vertex pieces of two shapes. Their synchronized **Square + tiled plane** views show identified boundaries and reflected Klein-bottle copies. Drag to pan, scroll to zoom, and use face keys `A B C D` with Shift for inverse. Displayed copies share the same piece identities and destination choices. The geometric interpreter supplies intrinsic motion; each renderer handles the copies and clipping.
 
+The **Hexagonal torus** and **Hexagonal Klein bottle** use a 60° rhombus with
+centers at a vertex, two edge midpoints and its center. These radius-0.8 puzzles
+have 4 faces, 12 edges and 8 vertices, with 60° face turns. The synchronized
+**Rhombus + tiled plane** views show the hexagonal color cells and matched
+boundary arrows; the Klein bottle pairs adjacent sides by glide reflections.
+
 An experimental Helicopter Cube preset adds exact jumbling stops, placement-dependent blocking, a complete shape-graph verifier, and synchronized polyhedral, spherical, and port-diagram realizations. Its [spherical interpretation](docs/spherical-helicopter.md) has twelve 45° disks and reuses all 44 pieces, with the existing mechanism pieces visible as uncolored regions. It retains the core's volume-derived legality rules. Its [model specification](docs/helicopter-model.md) records the finite catalogs, geometric interpretation, external acceptance targets, and remaining independent review.
 
 An experimental [Bagua Cube](docs/bagua-model.md) preset adds 146 pieces, exact 45° face turns, placement-dependent blocking, polygonal stickers and synchronized cube, [sphere](docs/spherical-bagua.md) and port-diagram views. It opens in **Cube + sphere**, retaining all existing pieces and ports. Its [verification record](docs/bagua-verification.md) covers published pair/kite cycles, sliver behavior and an independent audit of all cut guards and overlap pairs; whole-model human review and a reproducible physical blocked-state comparison remain open. Select **Bagua Cube · experimental**; `+` / `−` buttons turn 45°, while face keys turn 90°.

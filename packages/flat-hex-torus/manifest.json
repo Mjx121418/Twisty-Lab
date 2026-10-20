@@ -1,0 +1,11 @@
+{
+  "cutRadius": 0.8,
+  "definitionDigest": "3d8754c724449efcf53cb5fbf8e8a70d0c99e3bef6f5b19adda057c9e65f088c",
+  "pieceCounts": {
+    "edge": 12,
+    "face": 4,
+    "vertex": 8
+  },
+  "topology": "torus",
+  "uniqueTriangles": 236
+}

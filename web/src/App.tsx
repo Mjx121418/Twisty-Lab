@@ -36,6 +36,10 @@ import torusSource from '../../packages/flat-torus/relational-package.json?raw';
 import torusRealization from '../../packages/flat-torus/flat-quotient.json';
 import kleinSource from '../../packages/flat-klein-bottle/relational-package.json?raw';
 import kleinRealization from '../../packages/flat-klein-bottle/flat-quotient.json';
+import hexTorusSource from '../../packages/flat-hex-torus/relational-package.json?raw';
+import hexTorusRealization from '../../packages/flat-hex-torus/flat-quotient.json';
+import hexKleinSource from '../../packages/flat-hex-klein-bottle/relational-package.json?raw';
+import hexKleinRealization from '../../packages/flat-hex-klein-bottle/flat-quotient.json';
 import { pieceDestinations, type PieceDestination } from './destinations';
 
 type GearModel = 'supplied' | '12' | '6';
@@ -71,6 +75,8 @@ const presets = [
   gearPreset('gear-plain', 'Gear family · all plain', gearPlainSource, gearPlainManifest.definitionDigest),
   surfacePreset('flat-torus', 'Flat torus · face turning', torusSource, torusRealization),
   surfacePreset('flat-klein-bottle', 'Klein bottle · face turning', kleinSource, kleinRealization),
+  surfacePreset('flat-hex-torus', 'Hexagonal torus · face turning', hexTorusSource, hexTorusRealization),
+  surfacePreset('flat-hex-klein-bottle', 'Hexagonal Klein bottle · face turning', hexKleinSource, hexKleinRealization),
 ] as unknown as Preset[];
 type Layout = 'both' | 'cube' | 'diagram';
 type ViewPair = 'cube-diagram' | 'sphere-diagram' | 'cube-sphere' | 'square-tiles';
@@ -132,6 +138,7 @@ export function App() {
   const availablePresets = customGear ? [...presets, customGear] : presets;
   const activePreset = availablePresets.find((item) => item.realizations[0].compatibleDefinitionDigest === snapshot?.definitionDigest);
   const effectivePair = activePreset?.surface ? 'square-tiles' : activePreset?.spherical ? viewPair === 'square-tiles' ? 'cube-sphere' : viewPair : 'cube-diagram';
+  const rhombus = activePreset?.realizations[0].flatSurface?.chart === 'rhombus-60';
 
   function install(runtime: MainModule, source: string, id: string): void {
     const next = new KernelSession(runtime, source);
@@ -274,6 +281,19 @@ export function App() {
     if (commands.current.length >= 100) { setEvidence({ status: 'Invalid', diagnostics: [{ reasonCode: 'queue.limit', source: '/commands', message: 'The command queue is full.' }] }); return; }
     commands.current.push(command); drain.current();
   }
+  function resetPuzzle(): void {
+    const current = kernel.current;
+    if (!module || !current || busyRef.current) return;
+    // Share the compiled definition, including imported/custom puzzles, while
+    // starting a fresh controller history. Recreated views retain their cameras.
+    const next = new KernelSession(module, current);
+    kernel.current = next; current.dispose();
+    commands.current = [];
+    const initial = next.snapshot();
+    setSnapshot(initial); setVisualDigest(initial.stateDigest);
+    setSelected(undefined); setEvidence(undefined); setLastScramble(''); setVisualError('');
+    setGeneration((value) => value + 1);
+  }
   function requestLayout(value: Layout): void {
     if (busyRef.current) deferredLayout.current = value; else setLayout(value);
   }
@@ -371,7 +391,7 @@ export function App() {
                 pendingCameras.current = new Map(realizationPair(activePreset, effectivePair, model).map((realization, index) => [realization.id, views.current[index]?.cameraState()]));
                 setGearModel(model);
               }}><option value="supplied">Supplied model · 6 teeth · 300° spin</option><option value="12">12 teeth · 60° spin</option><option value="6">6 teeth · 300° spin</option></select></label>}
-              <div className="segmented" aria-label="View layout">{(['both', 'cube', 'diagram'] as Layout[]).map((value) => <button key={value} aria-pressed={layout === value} onClick={() => requestLayout(value)}>{value === 'both' ? 'Both views' : activePreset?.surface ? value === 'cube' ? 'Square' : 'Tiled plane' : value === 'cube' ? effectivePair === 'sphere-diagram' ? 'Sphere' : 'Cube' : effectivePair === 'cube-sphere' ? 'Sphere' : 'Diagram'}</button>)}</div>
+              <div className="segmented" aria-label="View layout">{(['both', 'cube', 'diagram'] as Layout[]).map((value) => <button key={value} aria-pressed={layout === value} onClick={() => requestLayout(value)}>{value === 'both' ? 'Both views' : activePreset?.surface ? value === 'cube' ? rhombus ? 'Rhombus' : 'Square' : 'Tiled plane' : value === 'cube' ? effectivePair === 'sphere-diagram' ? 'Sphere' : 'Cube' : effectivePair === 'cube-sphere' ? 'Sphere' : 'Diagram'}</button>)}</div>
             </div>
           </div>
           {activePreset && JSON.parse(activePreset.source).kind === 'relational-gear-prototypes' && <fieldset className="gear-configuration" disabled={busy}>
@@ -391,14 +411,14 @@ export function App() {
 
           <div className={`views layout-${layout}`}>
             <article className={`view-panel cube-panel ${layout === 'diagram' ? 'hidden' : ''}`}>
-              <div className="view-title"><span>01 / {activePreset?.surface ? 'Fundamental square' : effectivePair === 'sphere-diagram' ? 'Spherical' : 'Euclidean'}</span><span className="subtle">{activePreset?.surface ? 'Drag to pan · scroll to zoom' : effectivePair === 'sphere-diagram' ? 'Drag to rotate freely · scroll to zoom' : 'Drag to orbit · scroll to zoom'}</span></div>
+              <div className="view-title"><span>01 / {activePreset?.surface ? rhombus ? 'Fundamental rhombus' : 'Fundamental square' : effectivePair === 'sphere-diagram' ? 'Spherical' : 'Euclidean'}</span><span className="subtle">{activePreset?.surface ? 'Drag to pan · scroll to zoom' : effectivePair === 'sphere-diagram' ? 'Drag to rotate freely · scroll to zoom' : 'Drag to orbit · scroll to zoom'}</span></div>
               <div ref={cubeHost} className="canvas-host" data-testid="cube-view" data-state-digest={visualDigest} />
-              <span className="view-note" hidden={!!selected}>{activePreset?.surface ? activePreset.id === 'flat-klein-bottle' ? 'Horizontal seams reflect · paired arrows show the gluing' : 'Opposite edges join by translation' : effectivePair === 'sphere-diagram' ? 'Spherical regions · one exact state' : 'Rigid bodies & bound ports'}</span>
+              <span className="view-note" hidden={!!selected}>{activePreset?.surface ? activePreset.id.includes('klein-bottle') ? rhombus ? 'Adjacent edges join by glide reflection' : 'Horizontal seams reflect · paired arrows show the gluing' : 'Opposite edges join by translation' : effectivePair === 'sphere-diagram' ? 'Spherical regions · one exact state' : 'Rigid bodies & bound ports'}</span>
             </article>
             <article className={`view-panel diagram-panel ${layout === 'cube' ? 'hidden' : ''}`}>
               <div className="view-title"><span>02 / {activePreset?.surface ? 'Tiled plane' : effectivePair === 'cube-sphere' ? 'Spherical' : 'Port diagram'}</span><span className="subtle">Click a piece, then a translucent destination</span></div>
               <div ref={diagramHost} className="canvas-host" data-testid="diagram-view" data-state-digest={visualDigest} />
-              <span className="view-note" hidden={!!selected}>{activePreset?.surface ? 'Neighboring tiles repeat the same 32 pieces' : 'Same identities. Same transition.'}</span>
+              <span className="view-note" hidden={!!selected}>{activePreset?.surface ? `Neighboring tiles repeat the same ${definition?.pieces.length ?? '—'} pieces` : 'Same identities. Same transition.'}</span>
             </article>
           </div>
 
@@ -412,13 +432,13 @@ export function App() {
           </div>
 
           <section className="commands">
-            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{activePreset?.surface ? 'Face keys A B C D · 90° turns · Shift for inverse' : snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : snapshot?.puzzleId === 'bagua-experimental-v1' ? '+ / −: 45° · face keys: 90° · Shift for inverse' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
+            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{activePreset?.surface ? `Face keys A B C D · ${rhombus ? 60 : 90}° turns · Shift for inverse` : snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : snapshot?.puzzleId === 'bagua-experimental-v1' ? '+ / −: 45° · face keys: 90° · Shift for inverse' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
             <div className="moves">{families.map((family) => <div className={`move-pair ${(phaseRequests?.filter((op) => op.family === family).length ?? 0) > 2 ? 'many-moves' : ''}`} key={family}>{phaseRequests?.filter((operation) => operation.family === family).map((operation) => {
               const inverse = operation.id === `${family}'` || operation.id === `${family}_inv`;
               const half = operation.id === `${family}_half`;
               return <button key={operation.id} aria-label={`Move ${inverse ? `${family} inverse` : half ? `${family} half turn` : operation.id}`} className={!legal.has(operation.id) ? 'may-block' : ''} disabled={!snapshot} onClick={() => enqueue(() => kernel.current!.move(operation.id))}>{inverse ? '′' : half ? `${family}2` : operation.id}</button>;
             })}</div>)}
-              <div className="history-controls"><button disabled={!snapshot?.canUndo} onClick={() => enqueue(() => kernel.current!.undo())}>↶ Undo</button><button disabled={!snapshot?.canRedo} onClick={() => enqueue(() => kernel.current!.redo())}>↷ Redo</button></div>
+              <div className="history-controls"><button disabled={!snapshot?.canUndo} onClick={() => enqueue(() => kernel.current!.undo())}>↶ Undo</button><button disabled={!snapshot?.canRedo} onClick={() => enqueue(() => kernel.current!.redo())}>↷ Redo</button><button disabled={!snapshot || busy} onClick={resetPuzzle}>Reset puzzle</button></div>
             </div>
             <div className="algorithm-row"><textarea aria-label="Algorithm" value={algorithm} onChange={(event) => setAlgorithm(event.target.value)} spellCheck={false} rows={2} />
               <div className="algorithm-actions"><select aria-label="Execution policy" value={policy} onChange={(event) => setPolicy(event.target.value)}><option value="interactive">Keep legal prefix</option><option value="transactional">All or nothing</option></select><button className="primary" disabled={!snapshot} onClick={() => { const notation = algorithm, execution = policy; enqueue(() => kernel.current!.run(notation, execution)); }}>Play algorithm →</button></div>

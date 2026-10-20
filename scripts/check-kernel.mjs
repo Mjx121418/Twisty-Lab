@@ -141,6 +141,8 @@ try {
     ['gear-custom', "F U R Dq L Bq (F U R Dq L Bq)'", 'F', 'gear-custom-spherical'],
     ['flat-torus', "A B C D (A B C D)'", 'A', 'flat-quotient'],
     ['flat-klein-bottle', "A B C D (A B C D)'", 'A', 'flat-quotient'],
+    ['flat-hex-torus', "A B C2 D3 (A B C2 D3)'", 'A', 'flat-quotient'],
+    ['flat-hex-klein-bottle', "A B C2 D3 (A B C2 D3)'", 'A', 'flat-quotient'],
   ]) {
     const directory = join(javascript, 'examples/canvas/data', puzzle);
     const shipped = await readdir(directory);
@@ -156,7 +158,7 @@ try {
       if (kind === 'flat-quotient') {
         const scene = JSON.parse(geometry.sceneJSON());
         assert.equal(scene.flatSurface.deckGenerators.length, 2);
-        assert.equal(scene.visualParts.length, 116, 'Interpreter emits each physical part once.');
+        assert.equal(scene.visualParts.length, puzzle.startsWith('flat-hex-') ? 100 : 116, 'Interpreter emits each physical part once.');
         assert.ok(!('images' in scene.flatSurface), 'Renderer owns displayed copies.');
       }
       if (puzzle.startsWith('gear')) {

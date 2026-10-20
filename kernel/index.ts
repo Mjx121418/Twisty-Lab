@@ -60,6 +60,13 @@ export type SceneDescriptor = {
 export type FlatSurface = {
   topology: 'torus' | 'klein-bottle';
   fundamentalBounds: [number, number, number, number];
+  chart?: 'rhombus-60';
+  /** Counterclockwise Cartesian boundary; absent for the original square chart. */
+  fundamentalPolygon?: [number, number][];
+  /** Chart side vectors. A displayed tile (i,j) is translated by i*a+j*b. */
+  latticeBasis?: [[number, number], [number, number]];
+  /** Optional proper lift applied on tiles with odd i+j, before translation. */
+  tileReflection?: number[];
   /** Column-major proper 4x4 lifts of the two planar identification isometries. */
   deckGenerators: [number[], number[]];
   twoSided: true;
@@ -84,7 +91,7 @@ export type PolyhedralModel = {
 };
 export type Realization = {
   schemaVersion: number; id: string; kind: 'cube-euclidean' | 'cube-port-diagram' | 'cube-spherical' | 'polyhedral-euclidean' | 'polyhedral-port-diagram' | 'polyhedral-spherical' | 'articulated-euclidean' | 'articulated-port-diagram' | 'articulated-spherical' | 'flat-quotient';
-  flatSurface?: { topology: 'torus' | 'klein-bottle'; sideLength: number; cutRadius?: number; diskCenters?: Record<string, [number, number]> };
+  flatSurface?: { topology: 'torus' | 'klein-bottle'; sideLength: number; chart?: 'square' | 'rhombus-60'; cutRadius?: number; diskCenters?: Record<string, [number, number]> };
   radius?: number;
   compatibleDefinitionDigest: string; requiredCapabilities: string[];
   models?: Record<string, PolyhedralModel>;

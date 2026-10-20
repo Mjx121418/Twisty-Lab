@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { copyFloatView, copyIndexView, type FlatSurface, type MainModule, type Realization, type SceneDescriptor } from '../../kernel/index';
 import type { PieceDestination } from './destinations';
-import { insideBounds, surfaceBounds, surfaceImages, type Bounds, type SurfaceImage, type SurfaceMode } from './flatSurface';
+import { insidePolygon, surfaceBounds, surfaceImages, surfacePolygon, type Polygon, type Bounds, type SurfaceImage, type SurfaceMode } from './flatSurface';
 
 const palette: Record<string, number> = { A:0xe76561, B:0x66c7a0, C:0xf1cf67, D:0x7fa5ed, body:0x24313b, ink:0x16252d };
 type SurfaceMesh = THREE.InstancedMesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
@@ -17,6 +17,7 @@ export class SurfaceView {
   private readonly descriptor: SceneDescriptor;
   private readonly surface: FlatSurface;
   private readonly bounds: Bounds;
+  private readonly polygon: Polygon;
   private readonly images: SurfaceImage[];
   private readonly scene = new THREE.Scene();
   private readonly renderer: THREE.WebGLRenderer;
@@ -61,6 +62,7 @@ export class SurfaceView {
     }
     this.surface = this.descriptor.flatSurface;
     this.bounds = surfaceBounds(this.surface,mode);
+    this.polygon = surfacePolygon(this.surface,mode);
     this.images = surfaceImages(this.surface,mode);
     this.frameData = copyFloatView(geometry.transforms() as Float32Array);
     try { this.renderer = new THREE.WebGLRenderer({antialias:true,alpha:true}); }
@@ -68,10 +70,11 @@ export class SurfaceView {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.5));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     const [left,bottom,right,top] = this.bounds;
-    this.renderer.clippingPlanes = [new THREE.Plane(new THREE.Vector3(1,0,0),-left),
-      new THREE.Plane(new THREE.Vector3(-1,0,0),right),new THREE.Plane(new THREE.Vector3(0,1,0),-bottom),
-      new THREE.Plane(new THREE.Vector3(0,-1,0),top)];
-    this.renderer.domElement.setAttribute('aria-label',mode === 'square' ? 'Fundamental square puzzle' : 'Tiled plane puzzle');
+    this.renderer.clippingPlanes = this.polygon.map((a,i)=>{
+      const b=this.polygon[(i+1)%this.polygon.length],normal=new THREE.Vector3(a[1]-b[1],b[0]-a[0],0).normalize();
+      return new THREE.Plane(normal,-normal.x*a[0]-normal.y*a[1]);
+    });
+    this.renderer.domElement.setAttribute('aria-label',mode === 'square' ? this.surface.chart==='rhombus-60'?'Fundamental rhombus puzzle':'Fundamental square puzzle' : 'Tiled plane puzzle');
     this.host.dataset.realizationId = realization.id;
     this.host.dataset.surfaceMode = mode;
     this.host.dataset.topology = this.surface.topology;
@@ -133,22 +136,41 @@ export class SurfaceView {
       const line=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color,transparent:true,opacity:.7,depthTest:false}));
       line.renderOrder=4; this.decorations.push(line); this.scene.add(line);
     };
-    for (let i=low;i<=high;i++) {
-      lines([i*side,low*side,0,i*side,high*side,0],0x758ca5);
-      lines([low*side,i*side,0,high*side,i*side,0],this.surface.topology==='klein-bottle'?0xbc729b:0x758ca5);
-    }
-    // Matched seam arrows. Their direction, including the twisted pair, is
-    // attached to the chart rather than to a moving puzzle piece.
-    for (let y=low;y<high;y++) for (let x=low;x<high;x++) {
-      const vertical=(sx:number)=>lines([sx,y*side+.85,0,sx,y*side+1.15,0,sx,y*side+1.15,0,sx-.045,y*side+1.07,0,sx,y*side+1.15,0,sx+.045,y*side+1.07,0],0x416e99);
-      const horizontal=(sy:number,sign:number)=>{
-        const cx=x*side+1;
-        lines([cx-sign*.15,sy,0,cx+sign*.15,sy,0,cx+sign*.15,sy,0,cx+sign*.07,sy-.045,0,cx+sign*.15,sy,0,cx+sign*.07,sy+.045,0],0xad4c83);
-      };
-      const seamDirection=(row:number)=>this.surface.topology==='klein-bottle'&&row%2!==0?-1:1;
-      vertical(x*side+.012); horizontal(y*side+.012,seamDirection(y));
-      if (x===high-1) vertical((x+1)*side-.012);
-      if (y===high-1) horizontal((y+1)*side-.012,seamDirection(y+1));
+    if(this.surface.latticeBasis){
+      const base=this.surface.fundamentalPolygon!;
+      for(const image of this.images){
+        if(image.x<low||image.x>=high||image.y<low||image.y>=high)continue;
+        const points=base.map(p=>new THREE.Vector3(p[0],p[1],0).applyMatrix4(image.matrix));
+        const center=points.reduce((p,v)=>p.add(v),new THREE.Vector3()).multiplyScalar(.25);
+        for(let i=0;i<4;i++){
+          const a=points[i],b=points[(i+1)%4];
+          lines([...a.toArray(),...b.toArray()],0x758ca5);
+          const paired=this.surface.topology==='klein-bottle'?[0,0,1,1]:[0,1,0,1];
+          const sign=i<2?1:-1,dir=b.clone().sub(a).normalize().multiplyScalar(sign),normal=new THREE.Vector3(-dir.y,dir.x,0);
+          const mid=a.clone().add(b).multiplyScalar(.5),offset=center.clone().sub(mid).normalize().multiplyScalar(.012);
+          const start=mid.clone().add(offset).addScaledVector(dir,-.15),tip=mid.clone().add(offset).addScaledVector(dir,.15);
+          lines([...start.toArray(),...tip.toArray(),...tip.toArray(),...tip.clone().addScaledVector(dir,-.08).addScaledVector(normal,.045).toArray(),
+            ...tip.toArray(),...tip.clone().addScaledVector(dir,-.08).addScaledVector(normal,-.045).toArray()],paired[i]?0xad4c83:0x416e99);
+        }
+      }
+    }else{
+      for (let i=low;i<=high;i++) {
+        lines([i*side,low*side,0,i*side,high*side,0],0x758ca5);
+        lines([low*side,i*side,0,high*side,i*side,0],this.surface.topology==='klein-bottle'?0xbc729b:0x758ca5);
+      }
+      // Matched seam arrows. Their direction, including the twisted pair, is
+      // attached to the chart rather than to a moving puzzle piece.
+      for (let y=low;y<high;y++) for (let x=low;x<high;x++) {
+        const vertical=(sx:number)=>lines([sx,y*side+.85,0,sx,y*side+1.15,0,sx,y*side+1.15,0,sx-.045,y*side+1.07,0,sx,y*side+1.15,0,sx+.045,y*side+1.07,0],0x416e99);
+        const horizontal=(sy:number,sign:number)=>{
+          const cx=x*side+1;
+          lines([cx-sign*.15,sy,0,cx+sign*.15,sy,0,cx+sign*.15,sy,0,cx+sign*.07,sy-.045,0,cx+sign*.15,sy,0,cx+sign*.07,sy+.045,0],0xad4c83);
+        };
+        const seamDirection=(row:number)=>this.surface.topology==='klein-bottle'&&row%2!==0?-1:1;
+        vertical(x*side+.012); horizontal(y*side+.012,seamDirection(y));
+        if (x===high-1) vertical((x+1)*side-.012);
+        if (y===high-1) horizontal((y+1)*side-.012,seamDirection(y+1));
+      }
     }
     for (const [name,center] of Object.entries(this.surface.diskCenters ?? {})) {
       const canvas=document.createElement('canvas'); canvas.width=128;canvas.height=128;
@@ -157,7 +179,7 @@ export class SurfaceView {
       const texture=new THREE.CanvasTexture(canvas);this.textures.push(texture);
       for (const image of this.images) {
         const p=new THREE.Vector3(center[0],center[1],0).applyMatrix4(image.matrix);
-        if (!insideBounds(this.bounds,p.x,p.y)) continue;
+        if (!insidePolygon(this.polygon,p.x,p.y)) continue;
         const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,depthTest:false,depthWrite:false}));
         sprite.position.copy(p).add(new THREE.Vector3(0,.125,0));sprite.scale.set(.14,.14,1);sprite.renderOrder=5;
         this.decorations.push(sprite);this.scene.add(sprite);
@@ -225,7 +247,7 @@ export class SurfaceView {
         this.chooser.replaceChildren(title,close,list);this.chooser.hidden=false;this.position(this.chooser,e.clientX,e.clientY);}
       return;
     }
-    const hit=this.raycaster.intersectObjects(this.batches.map(b=>b.mesh)).find(h=>insideBounds(this.bounds,h.point.x,h.point.y));
+    const hit=this.raycaster.intersectObjects(this.batches.map(b=>b.mesh)).find(h=>insidePolygon(this.polygon,h.point.x,h.point.y));
     if(!hit||hit.instanceId===undefined){this.onPick(undefined);return;}
     const batch=this.batches.find(b=>b.mesh===hit.object)!;
     const part=this.descriptor.visualParts[batch.instances[hit.instanceId].part];
@@ -255,7 +277,7 @@ export class SurfaceView {
   private destinationHits():DestinationGroup[]{
     const result=new Set<DestinationGroup>();
     for(const hit of this.raycaster.intersectObjects(this.ghosts.map(b=>b.mesh))){
-      if(hit.instanceId===undefined||!insideBounds(this.bounds,hit.point.x,hit.point.y))continue;
+      if(hit.instanceId===undefined||!insidePolygon(this.polygon,hit.point.x,hit.point.y))continue;
       const batch=this.ghosts.find(b=>b.mesh===hit.object)!;result.add(batch.groups[hit.instanceId]);
     }
     return [...result];

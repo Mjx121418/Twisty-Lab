@@ -22,8 +22,8 @@ void reject(const std::shared_ptr<const Execution> &execution, const Json &reali
   catch (const DiagnosticError &) { return; }
   throw std::runtime_error("Malformed flat realization was accepted");
 }
-void puzzle(const std::string &topology) {
-  const auto directory = "packages/flat-" + topology + "/";
+void puzzle(const std::string &topology, bool hex = false) {
+  const auto directory = std::string("packages/flat-") + (hex ? "hex-" : "") + topology + "/";
   Session session(read(directory + "relational-package.json"));
   const auto document = Json::parse(read(directory + "flat-quotient.json"));
   Geometry geometry(session.execution(), document.dump());
@@ -31,12 +31,18 @@ void puzzle(const std::string &topology) {
   check(scene.at("ambientSpace") == "E2", "Not a flat chart");
   check(scene.at("flatSurface").at("topology") == topology, "Wrong topology");
   check(scene.at("flatSurface").at("deckGenerators").size() == 2, "Missing identifications");
-  check(scene.at("visualParts").size() == 116, "Interpreter must emit physical parts once");
-  check(session.definition()->pieces.size() == 32, "Wrong piece count");
-  check(session.definition()->operations.size() == 12, "Missing turns");
+  check(scene.at("visualParts").size() == (hex ? 100 : 116), "Interpreter must emit physical parts once");
+  check(session.definition()->pieces.size() == (hex ? 24 : 32), "Wrong piece count");
+  check(session.definition()->operations.size() == (hex ? 20 : 12), "Missing turns");
+  if (hex) {
+    check(scene.at("flatSurface").at("fundamentalPolygon").size() == 4, "Missing rhombus boundary");
+    check(scene.at("flatSurface").contains("tileReflection") == (topology == "klein-bottle"), "Wrong tile holonomy");
+  }
   const auto origin = session.snapshot().at("stateDigest");
   for (const std::string name : {"A", "B", "C", "D"}) {
-    for (const auto &algorithm : {name + " " + name + "'", "(" + name + ")4", name + "2 " + name + "2"}) {
+    for (const auto &algorithm : {name + " " + name + "'", "(" + name + (hex ? ")6" : ")4"),
+                                 name + (hex ? "3 " : "2 ") + name + (hex ? "3" : "2"),
+                                 name + "2 " + name + (hex ? "2'" : "2")}) {
       const auto result = session.run(algorithm, "transactional", session.revision());
       check(result.at("status") == "Committed", "Turn rejected");
       for (const auto &record : result.at("transitions")) {
@@ -93,10 +99,14 @@ void puzzle(const std::string &topology) {
   malformed = document;
   auto &track = malformed["componentsByDomain"]["face"][0]["operationTracks"]["A"].begin().value();
   track[0]["angle"] = .1; reject(session.execution(), malformed);
-  std::cout << topology << ": exact transports, quotient holonomy, frames and rejection checks passed\n";
+  malformed = document; malformed["flatSurface"]["chart"] = "skew"; reject(session.execution(), malformed);
+  if (hex && topology == "klein-bottle") {
+    malformed = document; malformed["flatSurface"]["cutRadius"] = .9; reject(session.execution(), malformed);
+  }
+  std::cout << (hex ? "hexagonal " : "") << topology << ": exact transports, quotient holonomy, frames and rejection checks passed\n";
 }
 } // namespace
 int main() {
-  try { puzzle("torus"); puzzle("klein-bottle"); }
+  try { puzzle("torus"); puzzle("klein-bottle"); puzzle("torus", true); puzzle("klein-bottle", true); }
   catch (const std::exception &e) { std::cerr << e.what() << '\n'; return 1; }
 }
