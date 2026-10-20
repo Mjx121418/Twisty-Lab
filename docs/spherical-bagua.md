@@ -1,6 +1,6 @@
 # Spherical Bagua realization
 
-Select **Bagua Cube · experimental**. It opens in **Cube + sphere**; **Geometry views** also offers **Sphere + diagram** and **Cube + diagram**. All views share the existing session, selection, blocking evidence, undo/redo and saved replay. Drag the sphere with the existing trackball controls; its rotation follows the pointer and stops on release.
+Select **Bagua Cube**. It opens in **Cube + sphere**; **Geometry views** also offers **Sphere + diagram** and **Cube + diagram**. All views share the existing session, selection, blocking evidence, undo/redo and saved replay. Drag the sphere with the existing trackball controls; its rotation follows the pointer and stops on release.
 
 The package [bagua-spherical.json](../packages/bagua/bagua-spherical.json) uses the C++ `polyhedral-spherical` interpreter. Three.js consumes shared mesh assets and sampled frames through the existing [kernel API](kernel-api.md). The abstract definition and its semantic digest are unchanged: there are still **146 pieces, 198 ports, 2,232 labeled placements and 30 directed operations**.
 
