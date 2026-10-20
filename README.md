@@ -31,7 +31,7 @@ npm run build
 npm run dev
 ```
 
-Open `http://localhost:5173`. `npm run dev` also rebuilds the WASM module when needed. `npm run build` produces the native CLI, the WASM module and TypeScript declarations, and a static browser application in `dist/`.
+Open `http://localhost:5173`. `npm run dev` also rebuilds the WASM module when needed. `npm run build` checks the prebuilt puzzle data, compiles the WASM engine and TypeScript declarations, and produces the browser application and standalone SDK in `dist/`. It does not build native tools or regenerate puzzles. Use `npm run build:native` when you need the native CLI or native tests.
 
 To serve the production bundle locally:
 
@@ -115,7 +115,19 @@ The browser's **Import definition** accepts relational packages, persisted relat
 
 Regression fixtures pin a definition digest and specify a replay prefix, request, expected outcome, optional explicit movement choices, and optional blocking evidence or unchanged participant. Update a fixture's semantic pin deliberately when changing its rules. Its source path is an authoring convenience, not a replacement for the digest.
 
-`npm run check:packages` reproduces current sources, bindings, realization geometry, compatibility digests, and fixture pins without changing them. After reviewing authoring changes, regenerate with `python3 scripts/compile-packages.py --write`, or use a puzzle's package script with `--write`. The Helicopter and Bagua model entry points also export current relational packages. Generation validates candidates through the current portable compiler before writing pins. Add `--update-fixtures` to the package script only when deliberately accepting a new semantic identity. Build the native CLI and language consumer before using these scripts; no legacy test tools are required.
+Puzzle authoring is separate from app builds:
+
+```sh
+npm run build:puzzles                # Build native authoring tools and regenerate all 11 packages
+npm run check:puzzles -- --files-only # Check recorded input and artifact hashes; no compiler needed
+npm run check:puzzles                # Also validate schemas, semantic pins, and all WASM realizations
+npm run check:packages               # Expensive regeneration-based reproducibility audit
+```
+
+`build:puzzles` records `packages/build-manifest.json` only after every generator and semantic-pin check succeeds. The shared inventory in `scripts/puzzle-inventory.json` defines the generation order, authoring dependencies, and runtime artifacts copied into the SDK. Transitive local Python imports and C++ authoring/compiler inputs are hashed along with source meshes and templates. Reference web app code, documentation, and build outputs are excluded. The manifest uses format version 1 with `inputs` and `artifacts` maps from repository-relative paths to lowercase SHA-256 hashes; it contains no timestamps or machine-specific paths. Normal builds and publishing reject stale inputs or altered artifacts and never refresh the manifest automatically.
+
+After changing authoring code or data, run `npm run build:puzzles` and review both the generated packages and manifest before committing. To deliberately accept new fixture identities, run `npm run build:puzzles -- --update-fixtures`; ordinary generation rejects changed fixture pins. Individual Python exporters remain useful during authoring, but finish with `build:puzzles` to validate all packages and record provenance. The shared engine still compiles and validates rules when a puzzle is loaded; offline catalog and mesh generation happens only in the authoring command.
+
 
 ## Build boundaries and memory ownership
 
@@ -146,7 +158,7 @@ Install Chromium and its container libraries once:
 npx playwright install --with-deps chromium
 ```
 
-Then run the checks sequentially:
+Run the comprehensive development checks sequentially (including the native build and expensive puzzle reproducibility audit):
 
 ```sh
 npm run check

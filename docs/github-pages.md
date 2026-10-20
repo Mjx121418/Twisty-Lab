@@ -39,9 +39,20 @@ git push origin main
 
 To update the live site immediately, manually run **Deploy GitHub Pages** on `main` again; otherwise, wait for the next scheduled run. Each run builds the checked-out commit. The deployment replaces the whole static site, including the WASM SDK and example data. To republish an earlier version, revert the relevant source commits, push, and run the workflow again.
 
-The build uses Node 24.21.0, Emscripten 6.0.11, and the checked-in npm lockfile. `npm run build:web` compiles WASM, packages the independent SDK, checks TypeScript, and builds `dist/` from the checked-in puzzle packages. `npm run test:publish` then runs two browser smoke checks: every preset must load, move, and undo in both the simulator and the standalone Canvas client, without missing assets or uncaught browser errors. Failures prevent deployment. Compilation uses one job, browser checks use one worker, and heavy workloads run sequentially. The workflow installs its tools directly and does not build or modify the development Dockerfile.
+The build uses Node 24.21.0, Emscripten 6.0.11, and the checked-in npm lockfile. `npm run check:puzzles -- --files-only` first verifies the checked-in manifest before build tools are installed. `npm run build:web` checks freshness again, compiles WASM, validates all 11 prebuilt packages and their 35 realizations with that engine, packages the independent SDK, checks TypeScript, and builds `dist/`. Validation checks JSON schemas, package/source/catalog agreement, realization and fixture semantic pins, and construction of every declared realization. `npm run test:publish` then runs two browser smoke checks: every preset must load, move, and undo in both the simulator and the standalone Canvas client, without missing assets or uncaught browser errors. Failures prevent deployment. Compilation uses one job, browser checks use one worker, and heavy workloads run sequentially. The workflow installs its tools directly and does not build or modify the development Dockerfile.
 
-Publishing skips native compilation, package regeneration audits, native/WASM parity tests, and the detailed browser regression suite. Run `npm run check` during development before publishing changes to rules, geometry, or generated packages. That full check remains unchanged; the shorter publishing check verifies that the built site and SDK work at the Pages URL.
+Publishing skips native compilation, package regeneration audits, native/WASM parity tests, and the detailed browser regression suite. Run `npm run check` during development before publishing changes to rules, geometry, or generated packages. That command explicitly includes the native build and full reproducibility audit; the shorter publishing check verifies that the built site and SDK work at the Pages URL.
+
+## Updating puzzle data
+
+App code and documentation changes can use the committed puzzle packages directly. Changes to recorded authoring inputs or runtime artifacts cause publishing to fail with the affected path and a rebuild instruction. In the development environment, run:
+
+```sh
+npm run build:puzzles
+npm run check:packages
+```
+
+Review and commit the generated data and `packages/build-manifest.json` together. Use `npm run build:puzzles -- --update-fixtures` only when deliberately accepting new semantic identities. The action never regenerates puzzles or updates their hashes. The WASM engine continues to build from source, independently of the puzzle authoring process.
 
 ## Check the repository path locally
 

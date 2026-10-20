@@ -1,0 +1,179 @@
+{
+  "formatVersion": 1,
+  "generators": [
+    "cube-packages.py",
+    "helicopter_packages.py",
+    "bagua_packages.py",
+    "flat_surface_packages.py",
+    "hex_surface_packages.py",
+    "gear_model.py",
+    "gear_normal.py",
+    "gear_spherical.py",
+    "gear_packages.py"
+  ],
+  "inputs": [
+    "scripts/puzzle-inventory.json",
+    "scripts/compile-packages.py",
+    "scripts/build-puzzles.mjs",
+    "scripts/puzzle-data.mjs",
+    "src/authoring",
+    "include/twisty/authoring",
+    "include/twisty/core.hpp",
+    "include/twisty/symmetry.hpp",
+    "include/twisty/catalog.hpp",
+    "include/twisty/execution.hpp",
+    "include/twisty/completion.hpp",
+    "src/core.cpp",
+    "src/catalog.cpp",
+    "src/execution.cpp",
+    "src/language_api.cpp",
+    "src/completion.cpp",
+    "src/sha256.cpp",
+    "src/json_input.hpp",
+    "third_party/nlohmann/json.hpp",
+    "packages/cube3/cube-euclidean.json",
+    "packages/cube3/cube-port-diagram.json",
+    "packages/cube3/cube-spherical.json",
+    "packages/bandaged/cube-euclidean.json",
+    "packages/bandaged/cube-port-diagram.json",
+    "packages/bandaged/cube-spherical.json",
+    "packages/gear/definition.json",
+    "packages/gear/relational-source.json",
+    "packages/gear-extreme/definition.json",
+    "packages/gear-extreme/relational-source.json",
+    "packages/gear-plain/definition.json",
+    "packages/gear-plain/relational-source.json",
+    "packages/gear/normal-meshes.json",
+    "packages/gear/spherical-meshes.json",
+    "packages/gear-extreme/plain-edge-meshes.json",
+    "src/cli.cpp",
+    "examples/language/main.cpp",
+    "src/session.cpp",
+    "src/notation.cpp",
+    "CMakeLists.txt",
+    "CMakePresets.json"
+  ],
+  "puzzles": [
+    {
+      "id": "cube3",
+      "realizations": [
+        "relational-cube-euclidean.json",
+        "relational-cube-port-diagram.json",
+        "relational-cube-spherical.json"
+      ],
+      "files": []
+    },
+    {
+      "id": "bandaged",
+      "realizations": [
+        "relational-cube-euclidean.json",
+        "relational-cube-port-diagram.json",
+        "relational-cube-spherical.json"
+      ],
+      "files": []
+    },
+    {
+      "id": "helicopter",
+      "realizations": [
+        "relational-helicopter-euclidean.json",
+        "relational-helicopter-port-diagram.json",
+        "relational-helicopter-spherical.json"
+      ],
+      "files": []
+    },
+    {
+      "id": "bagua",
+      "realizations": [
+        "relational-bagua-euclidean.json",
+        "relational-bagua-port-diagram.json",
+        "relational-bagua-spherical.json"
+      ],
+      "files": []
+    },
+    {
+      "id": "gear",
+      "realizations": [
+        "relational-gear-euclidean.json",
+        "relational-gear-port-diagram.json",
+        "relational-gear-six-teeth-euclidean.json",
+        "relational-gear-six-teeth-port-diagram.json",
+        "relational-gear-supplied-euclidean.json",
+        "relational-gear-spherical.json",
+        "relational-gear-normal-euclidean.json"
+      ],
+      "files": [
+        "relational-source.json",
+        "relational-manifest.json",
+        "normal-meshes.json",
+        "spherical-meshes.json"
+      ]
+    },
+    {
+      "id": "gear-extreme",
+      "realizations": [
+        "relational-gear-extreme-euclidean.json",
+        "relational-gear-extreme-port-diagram.json",
+        "relational-gear-extreme-six-teeth-euclidean.json",
+        "relational-gear-extreme-six-teeth-port-diagram.json",
+        "relational-gear-extreme-supplied-euclidean.json",
+        "relational-gear-extreme-spherical.json"
+      ],
+      "files": [
+        "relational-source.json",
+        "relational-manifest.json",
+        "plain-edge-meshes.json"
+      ]
+    },
+    {
+      "id": "gear-plain",
+      "realizations": [
+        "relational-gear-plain-euclidean.json",
+        "relational-gear-plain-port-diagram.json",
+        "relational-gear-plain-six-teeth-euclidean.json",
+        "relational-gear-plain-six-teeth-port-diagram.json",
+        "relational-gear-plain-supplied-euclidean.json",
+        "relational-gear-plain-spherical.json"
+      ],
+      "files": [
+        "relational-source.json",
+        "relational-manifest.json"
+      ]
+    },
+    {
+      "id": "flat-torus",
+      "realizations": [
+        "flat-quotient.json"
+      ],
+      "files": [
+        "manifest.json"
+      ]
+    },
+    {
+      "id": "flat-klein-bottle",
+      "realizations": [
+        "flat-quotient.json"
+      ],
+      "files": [
+        "manifest.json"
+      ]
+    },
+    {
+      "id": "flat-hex-torus",
+      "realizations": [
+        "flat-quotient.json"
+      ],
+      "files": [
+        "manifest.json"
+      ]
+    },
+    {
+      "id": "flat-hex-klein-bottle",
+      "realizations": [
+        "flat-quotient.json"
+      ],
+      "files": [
+        "manifest.json"
+      ]
+    }
+  ]
+}

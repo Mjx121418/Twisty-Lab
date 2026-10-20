@@ -1,12 +1,15 @@
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { checkFreshness, puzzleFiles, readInventory } from './puzzle-data.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 if (process.argv.includes('--stage-web')) {
   await rm(new URL('../dist/kernel/', import.meta.url), { recursive: true, force: true });
   await cp(new URL('../build/kernel/', import.meta.url), new URL('../dist/kernel/', import.meta.url), { recursive: true });
 } else {
+  const inventory = await readInventory(root);
+  await checkFreshness(root, inventory);
   const output = new URL('../build/kernel/', import.meta.url);
   await rm(output, { recursive: true, force: true });
   await mkdir(output, { recursive: true });
@@ -34,32 +37,11 @@ if (process.argv.includes('--stage-web')) {
   await cp(new URL('../schemas/relational-puzzle.schema.json', import.meta.url), new URL('schemas/relational-puzzle.schema.json', output));
   for (const file of ['relational-package.schema.json', 'relational-gear-source.schema.json', 'session-v2.schema.json', 'state.schema.json', 'realization.schema.json'])
     await cp(new URL(`../schemas/${file}`, import.meta.url), new URL(`schemas/${file}`, output));
-  for (const puzzle of ['cube3', 'bandaged', 'helicopter', 'bagua', 'gear', 'gear-extreme', 'gear-plain']) {
-    const directory = new URL(`examples/canvas/data/${puzzle}/`, output);
+  for (const puzzle of inventory.puzzles) {
+    const directory = new URL(`examples/canvas/data/${puzzle.id}/`, output);
     await mkdir(directory, { recursive: true });
-    const prefix = puzzle === 'helicopter' || puzzle === 'bagua' || puzzle.startsWith('gear') ? puzzle : 'cube';
-    // Ship only formats accepted by the current runtime. Historical definitions,
-    // wrappers, and realization pins remain in repository comparison fixtures.
-    const files = ['relational.pzl.json', 'relational-bindings.json', 'relational-package.json'];
-    if (puzzle === 'gear') files.push('normal-meshes.json', 'spherical-meshes.json');
-    if (puzzle === 'gear-extreme') files.push('plain-edge-meshes.json');
-    if (puzzle.startsWith('gear')) {
-      files.push('relational-source.json', 'relational-manifest.json');
-      const variants = ['euclidean', 'port-diagram', 'six-teeth-euclidean', 'six-teeth-port-diagram', 'supplied-euclidean', 'spherical'];
-      if (puzzle === 'gear') variants.push('normal-euclidean');
-      files.push(...variants.map((variant) => `relational-${puzzle}-${variant}.json`));
-    } else {
-      files.push(...['euclidean', 'port-diagram', 'spherical'].map((variant) => `relational-${prefix}-${variant}.json`));
-    }
-    for (const file of files) {
-      await cp(new URL(`../packages/${puzzle}/${file}`, import.meta.url), new URL(file, directory));
-    }
-  }
-  for (const puzzle of ['flat-torus', 'flat-klein-bottle', 'flat-hex-torus', 'flat-hex-klein-bottle']) {
-    const directory = new URL(`examples/canvas/data/${puzzle}/`, output);
-    await mkdir(directory, { recursive: true });
-    for (const file of ['relational.pzl.json', 'relational-bindings.json', 'relational-package.json', 'flat-quotient.json', 'manifest.json'])
-      await cp(new URL(`../packages/${puzzle}/${file}`, import.meta.url), new URL(file, directory));
+    for (const file of puzzleFiles(puzzle))
+      await cp(new URL(`../packages/${puzzle.id}/${file}`, import.meta.url), new URL(file, directory));
   }
   console.log(`Portable kernel ${version}: build/kernel`);
 }

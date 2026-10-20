@@ -14,9 +14,8 @@ if args.update_fixtures and not args.write:
 root = Path(__file__).resolve().parent.parent
 # Reproduce current packages and geometry without the retired compiler.
 # Historical JSON catalogs remain input data for some geometry generators.
-for script in ['cube-packages.py', 'helicopter_packages.py', 'bagua_packages.py',
-               'flat_surface_packages.py', 'hex_surface_packages.py',
-               'gear_model.py', 'gear_normal.py', 'gear_spherical.py', 'gear_packages.py']:
+inventory = json.loads((root / 'scripts/puzzle-inventory.json').read_text())
+for script in inventory['generators']:
     subprocess.run(['python3', str(root / 'scripts' / script)] + (['--write'] if args.write else []), check=True)
 fixture_path = root / 'tests/fixtures/core.json'
 fixtures = json.loads(fixture_path.read_text())
