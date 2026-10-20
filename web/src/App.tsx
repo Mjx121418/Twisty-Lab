@@ -391,7 +391,7 @@ export function App() {
                 pendingCameras.current = new Map(realizationPair(activePreset, effectivePair, model).map((realization, index) => [realization.id, views.current[index]?.cameraState()]));
                 setGearModel(model);
               }}><option value="supplied">Supplied model · 6 teeth · 300° spin</option><option value="12">12 teeth · 60° spin</option><option value="6">6 teeth · 300° spin</option></select></label>}
-              <div className="segmented" aria-label="View layout">{(['both', 'cube', 'diagram'] as Layout[]).map((value) => <button key={value} aria-pressed={layout === value} onClick={() => requestLayout(value)}>{value === 'both' ? 'Both views' : activePreset?.surface ? value === 'cube' ? rhombus ? 'Rhombus' : 'Square' : 'Tiled plane' : value === 'cube' ? effectivePair === 'sphere-diagram' ? 'Sphere' : 'Cube' : effectivePair === 'cube-sphere' ? 'Sphere' : 'Diagram'}</button>)}</div>
+              <div className="segmented" aria-label="View layout">{(['both', 'cube', 'diagram'] as Layout[]).map((value) => <button key={value} aria-pressed={layout === value} onClick={() => requestLayout(value)}>{value === 'both' ? 'Both views' : activePreset?.surface ? value === 'cube' ? 'Fundamental domain' : 'Tiled plane' : value === 'cube' ? effectivePair === 'sphere-diagram' ? 'Sphere' : 'Cube' : effectivePair === 'cube-sphere' ? 'Sphere' : 'Diagram'}</button>)}</div>
             </div>
           </div>
           {activePreset && JSON.parse(activePreset.source).kind === 'relational-gear-prototypes' && <fieldset className="gear-configuration" disabled={busy}>
@@ -411,12 +411,12 @@ export function App() {
 
           <div className={`views layout-${layout}`}>
             <article className={`view-panel cube-panel ${layout === 'diagram' ? 'hidden' : ''}`}>
-              <div className="view-title"><span>01 / {activePreset?.surface ? rhombus ? 'Fundamental rhombus' : 'Fundamental square' : effectivePair === 'sphere-diagram' ? 'Spherical' : 'Euclidean'}</span><span className="subtle">{activePreset?.surface ? 'Drag to pan · scroll to zoom' : effectivePair === 'sphere-diagram' ? 'Drag to rotate freely · scroll to zoom' : 'Drag to orbit · scroll to zoom'}</span></div>
+              <div className="view-title"><span>01 / {activePreset?.surface ? 'Fundamental domain' : effectivePair === 'sphere-diagram' ? 'Spherical' : 'Euclidean'}</span><span className="subtle">{activePreset?.surface ? 'Drag to pan' : effectivePair === 'sphere-diagram' ? 'Drag to rotate freely · scroll to zoom' : 'Drag to orbit · scroll to zoom'}</span></div>
               <div ref={cubeHost} className="canvas-host" data-testid="cube-view" data-state-digest={visualDigest} />
-              <span className="view-note" hidden={!!selected}>{activePreset?.surface ? activePreset.id.includes('klein-bottle') ? rhombus ? 'Adjacent edges join by glide reflection' : 'Horizontal seams reflect · paired arrows show the gluing' : 'Opposite edges join by translation' : effectivePair === 'sphere-diagram' ? 'Spherical regions · one exact state' : 'Rigid bodies & bound ports'}</span>
+              <span className="view-note" hidden={!!selected}>{activePreset?.surface ? activePreset.id.includes('klein-bottle') ? 'Neighboring copies can be reflected' : 'Neighboring copies repeat by translation' : effectivePair === 'sphere-diagram' ? 'Spherical regions · one exact state' : 'Rigid bodies & bound ports'}</span>
             </article>
             <article className={`view-panel diagram-panel ${layout === 'cube' ? 'hidden' : ''}`}>
-              <div className="view-title"><span>02 / {activePreset?.surface ? 'Tiled plane' : effectivePair === 'cube-sphere' ? 'Spherical' : 'Port diagram'}</span><span className="subtle">Click a piece, then a translucent destination</span></div>
+              <div className="view-title"><span>02 / {activePreset?.surface ? 'Tiled plane' : effectivePair === 'cube-sphere' ? 'Spherical' : 'Port diagram'}</span><span className="subtle">{activePreset?.surface?'Drag to pan · scroll to zoom':'Click a piece, then a translucent destination'}</span></div>
               <div ref={diagramHost} className="canvas-host" data-testid="diagram-view" data-state-digest={visualDigest} />
               <span className="view-note" hidden={!!selected}>{activePreset?.surface ? `Neighboring tiles repeat the same ${definition?.pieces.length ?? '—'} pieces` : 'Same identities. Same transition.'}</span>
             </article>

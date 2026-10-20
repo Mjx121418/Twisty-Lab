@@ -64,14 +64,25 @@ and resolve displayed images to their original visual-part IDs. A reflected
 image naturally reverses apparent rotation when its matrix is composed with
 the sampled frame; it needs no additional per-copy angle rule.
 
-The reference Three.js renderer offers a fundamental-square view and a finite
-3×3 tiled view. It adds one tile of image padding on each side for seamless
-motion: 9 images in the square view and 25 in the tiled view. Shared assets and
-instanced drawing keep those images inexpensive. GPU clipping applies to all
-surfaces, previews and selection marks; picking separately excludes clipped
-points. All images select the same piece. Destinations group by abstract target
-placement rather than an image's displayed pose. Both views support panning,
-zoom, history and saved cameras. Neighboring images are copies, not new pieces.
+The reference Three.js renderer offers a fixed square/rhombus fundamental-domain
+window and a tiled plane filling its rectangular panel. Dragging moves the
+orthographic camera over the covering plane. The fundamental window stays
+anchored on screen, with zoom disabled; loading a saved camera also restores
+its zoom to one. Its GPU clipping planes follow the camera, and picking uses
+the matching world-space window. The tiled plane supports pan and zoom, with
+no additional polygon clipping or viewport outline. Neither view draws
+fundamental-domain seams or arrows. Disk labels move with the contents.
+
+Fixed pools of 25 copies for the fundamental window and 81/117 copies for the
+square/hexagonal tiled planes cover the supported zoom range plus animation
+padding. The tiled camera fits a bounded portion of the plane to fill any
+panel aspect ratio, including single-view layouts. Deck addresses follow the
+camera as it crosses chart cells, permitting continuous panning without
+accumulating meshes or pieces.
+Destination previews, highlights and hit bounds follow the recycled copies.
+All images select the same piece. Destinations group by abstract target
+placement rather than an image's displayed pose. Both views support history
+and saved cameras. Neighboring images are copies, not new pieces.
 
 The standalone Canvas example implements the same square presentation using
 only the public buffers, identification matrices and Canvas clipping.
@@ -106,15 +117,15 @@ For a displayed lattice tile `(i,j)`, the deck map is translation `i*a+j*b`
 after `S^(i+j)` on the Klein bottle, or just translation on the torus.
 Consequently neighboring rhombi alternate handedness. The interpreter still
 emits 100 physical visual parts once, with continuous intrinsic motion. The
-Three.js and independent Canvas renderers compose the image matrices and clip
-against the actual rhombus, including destinations and picking. The tiled view
-shows a 3×3 rhombus patch with the same one-tile animation padding.
+Three.js and independent Canvas renderers compose the image matrices. Their
+fundamental-domain views clip against the actual rhombus, including destinations
+and picking. The Three.js tiled plane fills its rectangular panel.
 
 The additive `flatSurface.chart: "rhombus-60"` authoring field enables this
 chart. Its scene adds `fundamentalPolygon` (counterclockwise Cartesian points),
 `latticeBasis: [a,b]`, and, for the Klein bottle, `tileReflection` (a proper
 column-major 4×4 lift of `S`). `fundamentalBounds` is only the enclosing box;
-clients must clip and pick against the polygon. The two `deckGenerators` are
+fundamental-domain clients clip and pick against the polygon. The two `deckGenerators` are
 `[T,G]` for the Klein bottle and translations `[a,b]` for the torus. No image
 list, viewport or camera is supplied by the interpreter.
 

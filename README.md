@@ -6,13 +6,13 @@ The initial release includes a 3×3 cube and a reference bandaged cube with the 
 
 The cube presets also support an [ideal spherical realization](docs/spherical-cube.md): six overlapping 70° face disks partition a sphere into the same center, edge, and corner regions. Their larger radius retains the existing pieces. **Cube + sphere** is the default view; choose another pair under **Geometry views**. C++ verifies the disk transports against the existing definition; changing views preserves state and history.
 
-The [flat torus and Klein bottle](docs/flat-surfaces.md) presets use four radius-0.8 cutting disks in a 2×2 square grid, giving 4 face pieces, 8 edge pieces and 20 vertex pieces of two shapes. Their synchronized **Square + tiled plane** views show identified boundaries and reflected Klein-bottle copies. Drag to pan, scroll to zoom, and use face keys `A B C D` with Shift for inverse. Displayed copies share the same piece identities and destination choices. The geometric interpreter supplies intrinsic motion; each renderer handles the copies and clipping.
+The [flat torus and Klein bottle](docs/flat-surfaces.md) presets use four radius-0.8 cutting disks in a 2×2 square grid, giving 4 face pieces, 8 edge pieces and 20 vertex pieces of two shapes. Their synchronized **Fundamental domain + tiled plane** views show a square viewport and reflected Klein-bottle copies. Drag to pan, scroll in the tiled plane to zoom, and use face keys `A B C D` with Shift for inverse. Displayed copies share the same piece identities and destination choices. The geometric interpreter supplies intrinsic motion; each renderer handles the copies and clipping.
 
 The **Hexagonal torus** and **Hexagonal Klein bottle** use a 60° rhombus with
 centers at a vertex, two edge midpoints and its center. These radius-0.8 puzzles
 have 4 faces, 12 edges and 8 vertices, with 60° face turns. The synchronized
-**Rhombus + tiled plane** views show the hexagonal color cells and matched
-boundary arrows; the Klein bottle pairs adjacent sides by glide reflections.
+**Fundamental domain + tiled plane** views show the hexagonal color cells across repeated
+copies; the Klein bottle pairs adjacent sides by glide reflections.
 
 An experimental Helicopter Cube preset adds exact jumbling stops, placement-dependent blocking, a complete shape-graph verifier, and synchronized polyhedral, spherical, and port-diagram realizations. Its [spherical interpretation](docs/spherical-helicopter.md) has twelve 45° disks and reuses all 44 pieces, with the existing mechanism pieces visible as uncolored regions. It retains the core's volume-derived legality rules. Its [model specification](docs/helicopter-model.md) records the finite catalogs, geometric interpretation, external acceptance targets, and remaining independent review.
 

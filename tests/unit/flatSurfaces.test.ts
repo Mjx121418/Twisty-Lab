@@ -3,7 +3,7 @@ import Ajv from 'ajv';
 import { expect, it } from 'vitest';
 import { Matrix4, Vector3 } from 'three';
 import { createKernel, KernelSession, copyFloatView, type SceneDescriptor } from '../../kernel/index';
-import { surfaceImages, surfaceBounds, insideBounds, surfacePolygon, insidePolygon } from '../../web/src/flatSurface';
+import { cameraWindowPolygon, surfaceImageOrigin, surfaceImages, surfaceBounds, insideBounds, surfacePolygon, insidePolygon } from '../../web/src/flatSurface';
 
 it.each(['torus','klein-bottle','hex-torus','hex-klein-bottle'])('keeps %s geometry intrinsic and reverses only reflected displayed images', async(name)=>{
   const hex=name.startsWith('hex-'),topology=hex?name.slice(4):name;
@@ -22,6 +22,21 @@ it.each(['torus','klein-bottle','hex-torus','hex-klein-bottle'])('keeps %s geome
     expect(surfaceBounds(surface,'square')).toEqual(hex?[0,0,3,Math.sqrt(3)]:[0,0,2,2]);
     expect(surfaceBounds(surface,'tiles')).toEqual(hex?[-3,-Math.sqrt(3),6,2*Math.sqrt(3)]:[-2,-2,4,4]);
     const polygon=surfacePolygon(surface,'square');
+    const center:[number,number]=hex?[1.5,Math.sqrt(3)/2]:[1,1];
+    for(const zoom of [.7,2,5]){
+      const target:[number,number]=[45.3,-29.6],window=cameraWindowPolygon(polygon,center,target,zoom);
+      window.forEach((p,i)=>p.forEach((v,axis)=>expect((v-target[axis])*zoom).toBeCloseTo(polygon[i][axis]-center[axis],10)));
+      expect(insidePolygon(window,...target)).toBe(true);
+      expect(insidePolygon(window,100,100)).toBe(false);
+    }
+    const basis=surface.latticeBasis??[[2,0],[0,2]],u=37.3,v=-11.6;
+    expect(surfaceImageOrigin(surface,u*basis[0][0]+v*basis[1][0],u*basis[0][1]+v*basis[1][1])).toEqual([37,-12]);
+    const recycled=surfaceImages(surface,'tiles',[37,-12],3);
+    expect(recycled).toHaveLength(49);
+    expect(recycled[0].x).toBe(34);expect(recycled[0].y).toBe(-15);
+    expect(recycled.some(i=>i.reflected)).toBe(topology==='klein-bottle');
+    const planePool=surfaceImages(surface,'tiles',[37,-12],hex?[6,4]:4);
+    expect(planePool).toHaveLength(hex?117:81);
     expect(insidePolygon(polygon,1.5,Math.sqrt(3)/2)).toBe(true);
     if(hex){
       expect(insidePolygon(polygon,.1,1.5)).toBe(false);
