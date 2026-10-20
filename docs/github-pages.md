@@ -1,8 +1,8 @@
 # GitHub Pages deployment
 
-Twisty Lab is a static site. GitHub Pages serves the JavaScript, WebAssembly, meshes, and puzzle data; simulation and rendering run in the visitor's browser. The native CLI is used during the build and checks, and is not needed on the hosting server.
+Twisty Lab is a static site. GitHub Pages serves the JavaScript, WebAssembly, meshes, and puzzle data; simulation and rendering run in the visitor's browser. Publishing needs only the WASM build; the native CLI is used by the full development checks.
 
-The workflow in [`.github/workflows/pages.yml`](../.github/workflows/pages.yml) runs only when you manually request it. You control when to push source from macOS and, separately, when to publish the site.
+The workflow in [`.github/workflows/pages.yml`](../.github/workflows/pages.yml) supports manual runs and a daily schedule at 00:13 UTC. Push source from macOS; a push alone does not start deployment. Scheduled runs publish the default branch and may start later than the scheduled time.
 
 ## First upload from macOS
 
@@ -37,21 +37,23 @@ Commit the changes you want to upload, then push from macOS:
 git push origin main
 ```
 
-When you want to update the live site, manually run **Deploy GitHub Pages** on `main` again. A push alone leaves the published site unchanged. Each run builds the selected branch's checked-out commit; later pushes require another manual run to publish them. The deployment replaces the whole static site, including the WASM SDK and example data. To republish an earlier version, revert the relevant source commits, push, and run the workflow again.
+To update the live site immediately, manually run **Deploy GitHub Pages** on `main` again; otherwise, wait for the next scheduled run. Each run builds the checked-out commit. The deployment replaces the whole static site, including the WASM SDK and example data. To republish an earlier version, revert the relevant source commits, push, and run the workflow again.
 
-The build uses Node 24.21.0, Emscripten 6.0.11, and the checked-in npm lockfile. It runs native, WASM/unit, and browser checks before uploading `dist/`; failures prevent deployment. Compilation uses two jobs and browser tests use one worker, with heavy workloads kept sequential. The workflow installs its tools directly and does not build or modify the development Dockerfile.
+The build uses Node 24.21.0, Emscripten 6.0.11, and the checked-in npm lockfile. `npm run build:web` compiles WASM, packages the independent SDK, checks TypeScript, and builds `dist/` from the checked-in puzzle packages. `npm run test:publish` then runs two browser smoke checks: every preset must load, move, and undo in both the simulator and the standalone Canvas client, without missing assets or uncaught browser errors. Failures prevent deployment. Compilation uses one job, browser checks use one worker, and heavy workloads run sequentially. The workflow installs its tools directly and does not build or modify the development Dockerfile.
+
+Publishing skips native compilation, package regeneration audits, native/WASM parity tests, and the detailed browser regression suite. Run `npm run check` during development before publishing changes to rules, geometry, or generated packages. That full check remains unchanged; the shorter publishing check verifies that the built site and SDK work at the Pages URL.
 
 ## Check the repository path locally
 
 In the development container, build and test with the same base path. Replace `twisty-lab` with your repository name and keep the leading and trailing slashes:
 
 ```sh
-SITE_BASE_PATH=/twisty-lab/ npm run build
-SITE_BASE_PATH=/twisty-lab/ npm run test:e2e
+SITE_BASE_PATH=/twisty-lab/ npm run build:web
+env -u DISPLAY -u WAYLAND_DISPLAY -u PWDEBUG SITE_BASE_PATH=/twisty-lab/ npm run test:publish
 SITE_BASE_PATH=/twisty-lab/ npm run preview
 ```
 
-Open `http://localhost:4173/twisty-lab/` or `http://localhost:4173/twisty-lab/kernel/examples/canvas/`. Stop preview with Ctrl+C. Build and preview must use the same path; after this check, run `npm run build` without `SITE_BASE_PATH` to restore the normal `/` build. Generated build output stays ignored by Git and is uploaded as an Actions artifact rather than committed.
+Open `http://localhost:4173/twisty-lab/` or `http://localhost:4173/twisty-lab/kernel/examples/canvas/`. Stop preview with Ctrl+C. Build and preview must use the same path; after this check, run `npm run build:web` without `SITE_BASE_PATH` to restore the normal `/` build. Generated build output stays ignored by Git and is uploaded as an Actions artifact rather than committed.
 
 If deployment fails, open the failed step in its Actions run. A missing Pages site usually means **Settings → Pages** has not been switched to **GitHub Actions**. Missing JS or WASM assets usually mean the build base path and hosting path differ; rerun the workflow after any Pages URL or custom-domain change. Browser-local saved data is not shared between different site origins.
 

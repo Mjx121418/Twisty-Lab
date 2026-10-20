@@ -41,7 +41,7 @@ npm run preview
 
 ## Publish on GitHub Pages
 
-Push this repository from macOS, choose **GitHub Actions** as the repository's Pages source, and manually run **Deploy GitHub Pages** when you want to publish. Pushing commits does not trigger deployment. GitHub builds the C++ kernel into WebAssembly and publishes `dist/`, including the independent Canvas client; no application server is needed.
+Push this repository from macOS, choose **GitHub Actions** as the repository's Pages source, and manually run **Deploy GitHub Pages** when you want to publish immediately, or wait for the daily 00:13 UTC run. Pushing commits does not trigger deployment. GitHub runs `npm run build:web` and `npm run test:publish`, then publishes `dist/`, including the independent Canvas client; no application server is needed. Publishing checks every preset's loading, move, and undo behavior without rebuilding native test tools or repeating the full regression suite. Use `npm run check` for full development validation.
 
 See [the deployment guide](docs/github-pages.md) for initial repository setup, later updates, and testing a repository subpath locally. The workflow discovers the site's base path automatically, so repository names are not hardcoded.
 
