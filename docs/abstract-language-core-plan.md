@@ -33,7 +33,7 @@ This is a replacement of the current execution model, rather than another rule-m
 
 ## 2. What must change in the current implementation
 
-At the design baseline, [core.hpp](../tests/legacy/include/twisty/core.hpp) stored `Domain`, `Piece::domain`, domain-indexed transport/role arrays, `piece_guards`, `placement_count_guards`, and mechanism guard/update records. [core.cpp](../tests/legacy/core.cpp) branched between footprint and placement-relation rules and evaluates those guard forms separately. Even state validation uses domain-specific placement ranges and occupancy behavior selected by the rule module.
+At the design baseline, `core.hpp` (the pre-migration version in Git history) stored `Domain`, `Piece::domain`, domain-indexed transport/role arrays, `piece_guards`, `placement_count_guards`, and mechanism guard/update records. `core.cpp` (the pre-migration version) branched between footprint and placement-relation rules and evaluates those guard forms separately. Even state validation uses domain-specific placement ranges and occupancy behavior selected by the rule module.
 
 The migration must replace all of those execution paths, including state validation and goal checking. Merely flattening `Operation::maps` would leave most of the old abstraction in place.
 
@@ -499,18 +499,7 @@ symbolic interpreter/inspector metadata and wire helpers. The abstract executor
 remains geometry-free and domain-free; API 4 names its header `core.hpp`. The old guard structures
 are removed from the production catalog.
 
-The previous implementation is frozen under `tests/legacy` for native model
-audits and migration comparisons. Its library/CLI exist only with
-`BUILD_TESTING=ON`, use a separate include tree, and are never linked into
-production targets, installed, or packaged. Production tests and independent
-native/WASM consumers cover the actual shipped runtime. Distributed data and
-portable regression fixtures use relational packages and schema-2 histories.
-No semantic digest or geometry-buffer change is required for this cleanup.
-
-Remaining cleanup concerns the historical test harness and offline fixture
-assets, which can be replaced by standalone recorded references after preserving
-the independent model audits. This does not leave a legacy execution path in the
-shipped kernel. General language tooling remains separate future work.
+The previous implementation and its native migration/model-audit executables have now been removed. `BUILD_TESTING` builds only current-kernel tests and tools. Package regeneration and `check:language` use the current compiler, independent source oracle, and native/WASM consumers, with no legacy executable dependency. Historical JSON catalogs remain static geometry inputs and archived review records; they are not a supported runtime format. The migration counts and audit results recorded above describe validation performed before retirement. No semantic digest, public API, or geometry-buffer change is required for this cleanup.
 
 
 Cleanup validation: all 22 native suites pass, including the production runtime

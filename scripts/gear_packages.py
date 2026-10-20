@@ -14,14 +14,9 @@ def main():
     parser.add_argument('--write', action='store_true')
     args = parser.parse_args()
     native = ROOT / 'build/native'
-    if args.write:
-        # The tested source comes from the current C++ library, including masks.
-        subprocess.run([str(native / 'gear_language_tests')], check=True)
     for name in ['gear', 'gear-extreme', 'gear-plain']:
         directory = ROOT / 'packages' / name
-        old = json.loads((directory / 'source.json').read_text())
-        wrapper = dict(kind='relational-gear-prototypes', formatVersion=1,
-                       puzzleId=old['puzzleId'], gearedEdges=old['gearedEdges'])
+        wrapper = json.loads((directory / 'relational-source.json').read_text())
         with tempfile.TemporaryDirectory(prefix='twisty-gear-') as temporary:
             path = Path(temporary) / 'source.json'
             path.write_text(json.dumps(wrapper))
@@ -33,7 +28,7 @@ def main():
         documents = {'relational-source.json': wrapper, 'relational.pzl.json': module['source'],
                      'relational-bindings.json': module['catalog'],
                      'relational-package.json': dict(kind='relational-package', formatVersion=1, **module),
-                     'relational-manifest.json': dict(puzzleId=old['puzzleId'], definitionDigest=digest)}
+                     'relational-manifest.json': dict(puzzleId=wrapper['puzzleId'], definitionDigest=digest)}
         for path in sorted(directory.glob(name + '-*.json')):
             model = json.loads(path.read_text())
             if not model.get('kind', '').startswith('articulated-'):

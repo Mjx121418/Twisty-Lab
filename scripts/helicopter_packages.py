@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Project the exact offline Helicopter authoring catalog into language data.
 
-The legacy definition and this AST are independent exports of the same rational
-authoring model. No old executor or old runtime compiler creates these rules.
-Geometry stays in separately pinned realizations.
+The AST and geometry are exports of the same rational authoring model. The
+current portable compiler validates the package before realization pins change.
 """
 import argparse
 from collections import defaultdict
@@ -119,30 +118,25 @@ def module(document):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--write', action='store_true')
-    parser.add_argument('--write-source', action='store_true', help='Bootstrap source/bindings before building the parity gate.')
+    parser.add_argument('--write-source', action='store_true', help='Write only the source and bindings, without compiling geometry pins.')
     args = parser.parse_args()
-    source, catalog = module(AuthoringModel().definition())
+    model = AuthoringModel()
+    document = model.definition()
+    source, catalog = module(document)
     package = dict(kind='relational-package', formatVersion=1, source=source, catalog=catalog)
     documents = {'relational.pzl.json': source, 'relational-bindings.json': catalog,
                  'relational-package.json': package}
     directory = ROOT / 'packages/helicopter'
     if not args.write_source:
         with tempfile.TemporaryDirectory(prefix='twisty-helicopter-') as temporary:
-            for name, document in documents.items():
-                (Path(temporary) / name).write_text(json.dumps(document, sort_keys=True))
-            # Test the newly generated candidate, before changing checked-in
-            # sources or compatibility pins. Legacy oracle files stay unchanged.
-            if args.write:
-                subprocess.run([str(ROOT / 'build/native/helicopter_language_tests'),
-                                '--source-dir', temporary], check=True)
+            for name, content in documents.items():
+                (Path(temporary) / name).write_text(json.dumps(content, sort_keys=True))
             path = Path(temporary) / 'relational-package.json'
             result = json.loads(subprocess.check_output([str(ROOT / 'build/native/twisty'), 'compile',
                                 '--definition', str(path), '--json'], text=True))
             assert result['status'] == 'Compiled', result
-        for kind in ('euclidean', 'port-diagram', 'spherical'):
-            filename = f'helicopter-{kind}.json'
-            realization = json.loads((directory / filename).read_text())
-            realization['compatibleDefinitionDigest'] = result['definition']['definitionDigest']
+        geometry_catalog = {**document, 'definitionDigest': result['definition']['definitionDigest']}
+        for filename, realization in model.realizations(geometry_catalog).items():
             realization['modelByDomain'] = {'center': 'center', 'corner': 'corner', 'mechanism': 'edge'}
             documents['relational-' + filename] = realization
     for name, content in documents.items():

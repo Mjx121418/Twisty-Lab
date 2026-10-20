@@ -4,16 +4,13 @@
 All coordinates live in this offline tool and separate realization documents.
 The C++ core receives finite placement relations and capacity-one resources.
 """
-import argparse
 from dataclasses import dataclass
 from fractions import Fraction as F
 from functools import total_ordering
 from itertools import combinations, permutations, product
 from math import sqrt, gcd, lcm, pi, acos
 from pathlib import Path
-import json
 import resource
-import subprocess
 import sys
 
 
@@ -530,39 +527,9 @@ class AuthoringModel:
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--write', action='store_true')
-    parser.add_argument('--probe', action='store_true', help='Write an unreviewed candidate to build/.')
-    args = parser.parse_args()
-    # An authoring-process ceiling, independent of the container's 4 GiB cap.
-    # Fail instead of consuming the memory needed by the editor and runtime.
-    ceiling = 384 * 1024 * 1024
-    current, hard = resource.getrlimit(resource.RLIMIT_AS)
-    resource.setrlimit(resource.RLIMIT_AS, (min(current, ceiling) if current >= 0 else ceiling, hard))
-    model = AuthoringModel()
-    document = model.definition(exclusions=not args.probe)
-    temporary = ROOT / 'build/bagua-source.json'
-    temporary.write_text(json.dumps(document, separators=(',', ':')) + '\n')
-    result = json.loads(subprocess.check_output([str(ROOT / 'build/native/twisty_legacy_reference'), 'compile',
-                                                '--definition', str(temporary), '--json'], text=True))
-    assert result['status'] == 'Compiled', result
-    compiled = result['definition']
-    if args.probe:
-        (ROOT / 'build/bagua-candidate.json').write_text(json.dumps(compiled, separators=(',', ':')) + '\n')
-        return
-    documents = {'definition.json': compiled}
-    documents.update(model.realizations(compiled['definitionDigest']))
-    for filename, data in documents.items():
-        destination = ROOT / 'packages/bagua' / filename
-        # Keep definitions below the kernel's 4 MiB document bound.
-        serialized = json.dumps(data, sort_keys=True, separators=(',', ':')) + '\n'
-        assert len(serialized.encode()) < 4 * 1024 * 1024
-        if args.write:
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            destination.write_text(serialized)
-        elif json.loads(destination.read_text()) != data:
-            raise SystemExit(f'Bagua {filename} is stale; review it before using --write.')
-    print(f'bagua: {compiled["definitionDigest"]}', flush=True)
+    # Preserve the authoring entry point using only the current compiler.
+    from bagua_packages import main as export_package
+    export_package()
 
 
 if __name__ == '__main__':

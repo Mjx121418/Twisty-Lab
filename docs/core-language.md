@@ -1,6 +1,6 @@
 # Puzzle language and core executor
 
-This implements the initial milestones of the [migration plan](abstract-language-core-plan.md): an expanded JSON AST, a portable C++ compiler, a domain-free executor, a separate completion helper, and migrated cube/bandage/Helicopter/Bagua/Gear definitions. These presets now use relational sessions and interpreters in the reference app and independent clients, with comparison tests against the legacy executor. All production presets select the core executor. The production runtime supports relational formats only. Historical definitions are evaluated solely by isolated native comparison tools under `tests/legacy`.
+This implements the initial milestones of the [migration plan](abstract-language-core-plan.md): an expanded JSON AST, a portable C++ compiler, a domain-free executor, a separate completion helper, and cube/bandage/Helicopter/Bagua/Gear definitions. All production presets use relational sessions and interpreters in the reference application and independent clients. The legacy evaluator and migration comparison tests have been removed. Historical JSON catalogs remain offline geometry inputs and archived review data.
 
 The implementation is available through `Twisty::core` (standard C++ library only), `Twisty::language` (compiler, completion helpers, and JSON facade), and the WASM/TypeScript `Puzzle` class. It is advertised as `languageAPIVersion = 1`. Public API 4 uses the current core/language names; see [the naming migration](kernel-api.md#api-4-naming). Persisted definitions, complete-tuple session replay, and frame-buffer version 1 are unchanged. The program preview remains a separate inspection format without its own semantic digest or replay codec.
 
@@ -84,7 +84,7 @@ The AST is the initial expanded form. The cube/bandage authoring library now sup
 
 ## Cube and bandage migration
 
-The portable authoring library generates ordinary version-1 ASTs directly from the 24-element permutation action on six abstract face labels. It does not load a legacy definition or call the legacy planner. The old and new compilers share a standalone `Twisty::symmetry` library for finite permutation/group/coset operations; that library depends only on standard C++.
+The portable authoring library generates ordinary version-1 ASTs directly from the 24-element permutation action on six abstract face labels. It does not load a legacy definition or call the legacy planner. The authoring compiler uses the standalone `Twisty::symmetry` library for finite permutation/group/coset operations; that library depends only on standard C++.
 
 | Model | Persistent pieces | Flat placements | Directed requests |
 | --- | --- | --- | --- |
@@ -119,7 +119,7 @@ python3 scripts/cube-packages.py --write
 python3 scripts/cube-packages.py
 ```
 
-`twisty_language --cube-module` and `--bandaged-module` print the source/catalog pair. The package checker includes their reproducibility check. Existing schema-1 definitions and their pins remain comparison oracles only. Production cube/bandage sessions use relational packages and schema-2 histories; legacy imports and conversion methods have been retired in API 3.
+`twisty_language --cube-module` and `--bandaged-module` print the source/catalog pair. The package checker includes their reproducibility check. Existing schema-1 definitions and their pins remain static geometry catalogs and archived review data only. Production cube/bandage sessions use relational packages and schema-2 histories; legacy imports and conversion methods have been retired in API 3.
 
 ## Native use
 
@@ -143,9 +143,9 @@ The independently linkable example accepts a source path and one JSON query per 
 
 ```sh
 cmake --preset native
-cmake --build --preset native --target twisty_language core_tests cube_language_tests
+cmake --build --preset native --target twisty_language core_tests
 build/native/twisty_language examples/language/coupled.pzl.json --inspect
-ctest --preset native -R 'core_relations|language_source_oracle|cube_language_migration|cube_packages'
+ctest --preset native -R 'core_relations|language_source_oracle|cube_packages'
 ```
 
 The example's separate CMake project can also consume an installed `Twisty::language` package. Linking only `Twisty::core` adds neither the JSON compiler nor the existing executor/geometry.
@@ -188,12 +188,12 @@ The native C++ tests exercise atomic execution, input/program validation, confli
 
 After building native, WASM, and the packaged SDK, run `npm run check:language`. Optional positional arguments select the native example executable and SDK entry point when using separate build directories. That check compares both the native consumer and WASM API with the source oracle, including complete transition witnesses and compiler previews.
 
-The cube/bandage migration gate exhausts every local transport entry and all 24 whole-cube orientations, then checks all directed requests along deterministic sampled walks. It compares goals, legal requests, exact targets, inverse permission, full participant/event witnesses, labels and ports, and every single-piece placement substitution into the origin. Wrong local choices—including omitted movements represented as idle—are rejected. The native test exports reference cases for WASM comparison, and installed/copied SDK consumers exercise the same authoring library and migrated programs. This is not exhaustive enumeration of either puzzle's complete reachable state graph.
+The completed cube/bandage migration compared every local transport entry, all 24 whole-cube orientations, deterministic sampled walks, labels, ports, and complete event witnesses against the previous executor. Those comparison executables and their exported WASM cases have been retired. Current compiler/core tests, package reproducibility, native/WASM unit checks, and installed/copied SDK consumers exercise the current authoring library and programs directly.
 
 
 ## Session and interpreter migration
 
-The cube/bandage abstract parity gate now also gates their explicit `relational-package` documents and three rebundled realization pins. The reference app, default headless CLI, and independent Canvas example use those packages. `Twisty::execution` is a transitional wire/frame adapter: it maps the existing symbolic inspector state and grouped port frames to the domain-free executor. All new permission, validity, and goal checks use `core::Program`; the shipped runtime has no alternative execution backend.
+Current package checks reproduce cube/bandage `relational-package` documents and all three realization pins. The reference app, default headless CLI, and independent Canvas example use those packages. `Twisty::execution` is a transitional wire/frame adapter: it maps the existing symbolic inspector state and grouped port frames to the domain-free executor. All new permission, validity, and goal checks use `core::Program`; the shipped runtime has no alternative execution backend.
 
 Public API 4 retains persisted definitions and session schema 2 with complete choices, with the legacy runtime APIs removed. Planning, interactive/transactional algorithms, revision checks, seeded scrambles, undo/redo, and history loading share this execution context. The interpreter also shares it and validates the concrete tuple and event witness. The existing standalone preview format and its version remain experimental and unchanged. See [the session contracts](kernel-api.md#sessions-and-checked-replay).
 
@@ -208,11 +208,11 @@ Its three authoring domains have 144 center, 240 corner, and 36 mechanism placem
 
 The declared default profile is available only in its source phase. `snapshot.candidateRequests` lists the 60 bound defaults before checking permission; `legalRequests` keeps only permitted candidates. This lets controls show five destinations per current grip while retaining blocked requests for explanations. Neither list is exhaustive discovery of arbitrary completions. Request selection remains outside the core.
 
-`relational-port-bindings` version 1 preserves ports, frames, inverse names, and uniform stop events. `unavailablePlacements` certifies the interpreter's cut sections; it is frame metadata, never a runtime guard. Existing polyhedral, spherical, and port-diagram meshes and sampled tracks are unchanged. New `relational-helicopter-*.json` files carry the new semantic pin and the merged mechanism authoring-domain binding. Saves use schema 2; old saves use the explicit checked converter.
+`relational-port-bindings` version 1 preserves ports, frames, inverse names, and uniform stop events. `unavailablePlacements` certifies the interpreter's cut sections; it is frame metadata, never a runtime guard. Existing polyhedral, spherical, and port-diagram meshes and sampled tracks are unchanged. New `relational-helicopter-*.json` files carry the new semantic pin and the merged mechanism authoring-domain binding. Saves use schema 2; old saves require conversion with a previous release.
 
-The native migration gate exhausts all local transport entries, all unavailable placement labels, and single-piece substitutions, then checks all directed requests along 33 sampled states and exercises every source phase. It compares exact targets and full participation/event witnesses, axis restrictions, goals, inverse completions, all three interpreters, replay and legacy conversion. Exported cases compare the same independent legacy expectations against WASM. This is not exhaustive enumeration of the labeled state graph; the existing separate shape-graph verifier remains in the regression suite.
+The completed migration was checked against the previous executor before that evaluator was retired. Current checks exercise the production kernel directly: package reproducibility, mechanism-axis restrictions, blocking, inverse/replay behavior, full native/WASM witnesses, and all three interpreters. The historical migration comparisons and exhaustive legacy shape-graph verifier are no longer built.
 
-Build `helicopter_language_tests` and `twisty` before regenerating with `python3 scripts/helicopter_packages.py --write`. Generation runs the native parity gate before repinning realizations. Omit `--write` for the reproducibility check. Gear variants/custom masks and Bagua are also migrated.
+Build `twisty_language` and `twisty`, then regenerate with `python3 scripts/helicopter_packages.py --write`. Generation compiles the fresh candidate before changing source files or realization pins. Omit `--write` for the reproducibility check.
 
 
 ## Gear family migration
@@ -221,15 +221,15 @@ The portable `gear_module(gearedEdges, puzzleId)` authoring library in `<twisty/
 
 Each domain supplies ordinary and coupled local movements. For each requested face and inverse, `R` selects the authored tuple and counts geared identities occupying the middle slice: ordinary requests require zero; coupled requests require one through four. Coupled tables turn both opposite faces, leave middle carriers fixed, and advance each driven cog phase with its intrinsic handedness. Occupancy is an ordinary count invariant shared across plain and geared edge domains. No new predicate opcode, guard class, core domain field, or automatic propagation rule is needed.
 
-Runtime authoring uses `{kind: "relational-gear-prototypes", formatVersion: 1, puzzleId, gearedEdges}`. This is a new explicit source kind; `gear-cube-prototypes` is rejected by the runtime; historical authoring is available only in test tools. C++ `gear_module_source()`, WASM `gearModuleJSON(sourceText)`, and TypeScript `createGearSource(kernel, source)` expose the library. The standalone native consumer accepts `source.json --gear-module`. `kernelInfoJSON().authoringLibraries` includes `gear-family`. Static ASTs and complete packages remain loadable without using the factory.
+Runtime authoring uses `{kind: "relational-gear-prototypes", formatVersion: 1, puzzleId, gearedEdges}`. This is a new explicit source kind; `gear-cube-prototypes` is rejected by the runtime; historical source kinds are unsupported. C++ `gear_module_source()`, WASM `gearModuleJSON(sourceText)`, and TypeScript `createGearSource(kernel, source)` expose the library. The standalone native consumer accepts `source.json --gear-module`. `kernelInfoJSON().authoringLibraries` includes `gear-family`. Static ASTs and complete packages remain loadable without using the factory.
 
 `relational-articulated-bindings` version 1 adds `moveInverses[domain][localMove]` and `events[event] = {domain, request}`. Inverse names must be reciprocal. An event certifies exactly the local movement selected by that request's declared default profile in the named domain. All local moves need such a certificate; these profiles select concrete moves in each slot. Event names are separate from legacy transport labels and contain no geometry. The kernel checks bindings when loading, rather than deriving a rotation from endpoints.
 
 The interpreter verifies each certificate against the existing per-domain/per-placement tracks, then selects a track separately for every participant's recorded event. Different domains can execute different local movements in one permitted tuple; explicit idle choices leave their pieces stationary. Inverses and replay use recorded local choices. A separate synthetic gate exercises an alternative tuple whose corners follow R while other domains follow F, including animation, inverse restoration, and saved replay. This prevents the adapter from silently using one global request track for every piece.
 
-All procedural, supplied, six/twelve-tooth, diagram, and spherical meshes and authored rotations are unchanged. New `relational-*` realization files carry new pins. The 300°/60° winding distinction remains in interpreter data; events and exact source placements choose the whole authored path, including self-loops. Legacy save conversion compares the bound transport and complete participants after validating both replays.
+All procedural, supplied, six/twelve-tooth, diagram, and spherical meshes and authored rotations are unchanged. New `relational-*` realization files carry new pins. The 300°/60° winding distinction remains in interpreter data; events and exact source placements choose the whole authored path, including self-loops. Current saved histories preserve the completed choices and full event witnesses; legacy save conversion has been retired.
 
-Regenerate with `python3 scripts/gear_packages.py --write`, which runs the native migration gate before repinning. The default checks generated sources, catalogs, manifests, and all realization pins. The gate compares all local tables, source mutations, requests along sampled walks, exact phase/event witnesses, and seven existing geometric models across 29 masks, including UF-only and UF/UR. It does not enumerate the full reachable labeled state graph or every mask's entire state graph. Exported cases also compare native and WASM compiler output and execution.
+Regenerate with `python3 scripts/gear_packages.py --write`. The current authoring library generates and compiles the sources, catalogs, manifests, and realization pins. Historical migration comparisons have been retired; current unit and SDK checks cover custom masks, mixed coupling, phase/event witnesses, geometric motion, and native/WASM parity.
 
 
 ## Bagua migration
@@ -238,10 +238,10 @@ Bagua uses eight authoring domains, 146 identities, 2,232 disjoint placements, a
 
 The module compiles to 54,618 predicate nodes, 129,997 child references, 240 sparse maps, and 4,380 action records. Named source predicates share lowering across state and relation contexts, with request-dependent aliases specialized as needed; sharing does not weaken cycle, depth, or state-only checks. Boolean evaluation stops when a count bound is decided. Diagnostic traces remain exhaustive over reachable nodes so rejection proofs retain all relevant inputs. No predicate opcodes or puzzle-specific executor rules were added.
 
-Generation runs the parity gate against fresh temporary authoring files before updating sources and realization pins. It compares all local transports and blocked placements, representative catalog substitutions for every family, all home-cell orientations for other identities, sampled pair mutations and walks, full witnesses, inverses, replay, explicit legacy conversion, and unchanged assets and sampled poses in all three views. This is finite regression coverage, not a proof covering every reachable state. Build `bagua_language_tests` and `twisty`, then use `python3 scripts/bagua_packages.py --write`; omit the flag for reproducibility checking.
+Generation compiles the fresh Bagua candidate through the current kernel before updating sources and realization pins. Build `twisty`, then use `python3 scripts/bagua_packages.py --write`; omit the flag for reproducibility checking. Current runtime, fixture, and native/WASM checks exercise blocking, published algorithms, witnesses, inverses, replay, and all three views. The historical migration comparison and legacy geometric-audit executables have been retired.
 
 Imports use a string-aware linear depth scan followed by the normal JSON parser. This avoids quadratic discard scans in the callback parser while preserving its nesting boundary, quoted escapes, and syntax validation. In this container, Bagua first-session construction fell from roughly 17 seconds to 1.4 seconds in WASM; a 30-turn published sequence takes about 0.3 seconds.
 
 The compact AST stays within the existing 8 MiB language limit; the complete package is approximately 9.3 MiB. Session/geometry handles share immutable compiled definitions. Creating a second session from an existing one starts with fresh state/history and avoids recompilation. Execution documents use a separate 16 MiB limit; the WASM heap ceiling remains 256 MiB.
 
-All production presets and the independent Canvas client load relational packages. API 3 removes compatibility imports, schema-1 replay, and save conversion from the runtime. The previous implementation lives under `tests/legacy` only for comparison and model audits, behind `BUILD_TESTING`; it is not installed or packaged. Production archives are checked for retired symbols, and separate runtime integration tests cover every preset. Textual syntax, general authoring modules/templates, and replacing the historical test harness with standalone reference cases remain follow-ups.
+All production presets and the independent Canvas client load relational packages. API 3 removed compatibility imports, schema-1 replay, and save conversion from the runtime. The old evaluator and native migration/model-audit executables have now been deleted. Production archives remain checked for retired symbols, and runtime integration tests and independent native/WASM consumers cover the current kernel. Textual syntax and general authoring modules/templates remain follow-ups.

@@ -13,9 +13,6 @@ args = parser.parse_args()
 root = Path(__file__).resolve().parent.parent
 executable = root / args.native
 session_executable = executable.parent / 'twisty'
-if args.write:
-    # Rebinding a geometric asset requires passing the abstract parity gate.
-    subprocess.run([str(executable.parent / 'cube_language_tests')], check=True)
 for package, flag in [('cube3', '--cube-module'), ('bandaged', '--bandaged-module')]:
     module = json.loads(subprocess.check_output([str(executable), flag], text=True))
     bundle = dict(kind='relational-package', formatVersion=1, source=module['source'], catalog=module['catalog'])

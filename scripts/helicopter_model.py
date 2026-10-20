@@ -6,13 +6,10 @@ definition contains only abstract identifiers, resources, guards, and transports
 Rule construction uses rational or integer arithmetic, including collision tests.
 Visual frames and angular stops are exported separately as floating-point data.
 """
-import argparse
 from fractions import Fraction as Q
 from itertools import combinations, permutations, product
-import json
 from math import acos, gcd, lcm, pi
 from pathlib import Path
-import subprocess
 
 ROOT = Path(__file__).resolve().parent.parent
 IDENTITY = ((1, 0, 0), (0, 1, 0), (0, 0, 1))
@@ -380,27 +377,9 @@ class AuthoringModel:
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--write', action='store_true', help='Regenerate after reviewing semantic changes.')
-    args = parser.parse_args()
-    model = AuthoringModel()
-    document = model.definition()
-    package = ROOT / 'packages/helicopter'
-    temporary = ROOT / 'build/helicopter-source.json'
-    temporary.write_text(json.dumps(document, separators=(',', ':')) + '\n')
-    result = json.loads(subprocess.check_output([str(ROOT / 'build/native/twisty_legacy_reference'), 'compile',
-                                                '--definition', str(temporary), '--json'], text=True))
-    compiled = result['definition']
-    documents = {'definition.json': compiled, 'review.json': model.review(compiled['definitionDigest'])}
-    documents.update(model.realizations(compiled))
-    for filename, data in documents.items():
-        destination = package / filename
-        if args.write:
-            package.mkdir(parents=True, exist_ok=True)
-            destination.write_text(json.dumps(data, indent=2, sort_keys=True) + '\n')
-        elif json.loads(destination.read_text()) != data:
-            raise SystemExit(f'Helicopter {filename} is stale; review it before using --write.')
-    print(f'helicopter: {compiled["definitionDigest"]} (240 corner, 144 center, 36 hidden-edge placements)')
+    # Preserve the authoring entry point using only the current compiler.
+    from helicopter_packages import main as export_package
+    export_package()
 
 
 if __name__ == '__main__':

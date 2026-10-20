@@ -90,33 +90,36 @@ def module(document):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--write', action='store_true')
-    parser.add_argument('--write-source', action='store_true', help='Bootstrap source files before building the parity gate.')
+    parser.add_argument('--write-source', action='store_true', help='Write only the source and bindings, without compiling geometry pins.')
+    parser.add_argument('--probe', action='store_true', help='Write an unreviewed relational package without exclusion constraints to build/.')
     args = parser.parse_args()
     # Keep exact offline geometry authoring within its existing process budget.
     ceiling = 384 * 1024**2
     current, hard = resource.getrlimit(resource.RLIMIT_AS)
     resource.setrlimit(resource.RLIMIT_AS, (min(current, ceiling) if current >= 0 else ceiling, hard))
-    document = AuthoringModel().definition()
+    model = AuthoringModel()
+    document = model.definition(exclusions=not args.probe)
     resource.setrlimit(resource.RLIMIT_AS, (current, hard))
     source, catalog = module(document)
     del document
     assert len(json.dumps(source, separators=(',', ':')).encode()) <= 8 * 1024**2, 'AST exceeds the public source limit'
     package = dict(kind='relational-package', formatVersion=1, source=source, catalog=catalog)
+    if args.probe:
+        destination = ROOT / 'build/bagua-candidate.json'
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(json.dumps(package, separators=(',', ':'), sort_keys=True) + '\n')
+        return
     documents = {'relational.pzl.json': source, 'relational-bindings.json': catalog, 'relational-package.json': package}
     directory = ROOT / 'packages/bagua'
     if not args.write_source:
         with tempfile.TemporaryDirectory(prefix='twisty-bagua-') as temporary:
             for name, content in documents.items():
                 (Path(temporary) / name).write_text(json.dumps(content, separators=(',', ':'), sort_keys=True))
-            if args.write:
-                subprocess.run([str(ROOT / 'build/native/bagua_language_tests'), '--source-dir', temporary], check=True)
             result = json.loads(subprocess.check_output([str(ROOT / 'build/native/twisty'), 'validate', '--definition',
                                 str(Path(temporary) / 'relational-package.json'), '--json'], text=True))
             assert result['status'] == 'Valid', result
-        for kind in ('euclidean', 'port-diagram', 'spherical'):
-            realization = json.loads((directory / f'bagua-{kind}.json').read_text())
-            realization['compatibleDefinitionDigest'] = result['definitionDigest']
-            documents[f'relational-bagua-{kind}.json'] = realization
+        for filename, realization in model.realizations(result['definitionDigest']).items():
+            documents['relational-' + filename] = realization
     for name, content in documents.items():
         path = directory / name
         if args.write or args.write_source:

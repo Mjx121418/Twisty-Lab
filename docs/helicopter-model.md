@@ -104,14 +104,13 @@ The additional `helicopter-spherical.json` package uses `polyhedral-spherical`: 
 ```sh
 npm run build:native
 npm run check:packages
-build/native/twisty validate --definition packages/helicopter/definition.json --json
-build/native/twisty run --definition packages/helicopter/definition.json \
+build/native/twisty validate --definition packages/helicopter/relational-package.json --json
+build/native/twisty run --definition packages/helicopter/relational-package.json \
   --algorithm 'UF_ab UL_af' --policy transactional --json
-build/native/helicopter_verify
 npm run check
 ```
 
-The C++ shape verifier projects corner sticker orientations away, while retaining all face locations and hidden phases. It reads the same compiled roles, guards, and transports as the core. Its breadth-first search is capped at 700,000 shapes and reproduces 654,117 oriented shapes, 28,055 classes under rotations, and 14,098 classes when mirror images are identified. Both complete published depth distributions agree, and maximum depth is 28. These are shape counts, not counts of labeled puzzle states. The verifier also checks placement exclusions for every reachable shape, that its projection is independent of corner labels, and that every symmetry preserves reachability and depth.
+The retired C++ shape verifier (available in Git history) projected corner sticker orientations away, while retaining all face locations and hidden phases. It read the historical compiled roles, guards, and transports. Its breadth-first search was capped at 700,000 shapes and reproduced 654,117 oriented shapes, 28,055 classes under rotations, and 14,098 classes when mirror images are identified. Both complete published depth distributions agree, and maximum depth is 28. These are shape counts, not counts of labeled puzzle states. The verifier also checked placement exclusions for every reachable shape, that its projection is independent of corner labels, and that every symmetry preserves reachability and depth.
 
 Native fixtures check participation, blocked source phases, face-piece blockers, inverses, undo/replay, and the center exchange `UF_ab DR_ab FR_ad DR_ba UF_ba`. That sequence returns to cube shape and moves exactly two centers between the four ordinary six-center orbits. Native/WASM parity checks cover its transitions, exact inverse, replay, and transactional rejection. Geometry checks cover all catalog transports at registration, solved port directions, intermediate frames, mesh continuity, canonical endpoints, stable hit bindings, and rejection of inconsistent axes or symmetries. Both realizations' mesh buffers and sampled transforms agree between native and WASM builds.
 
@@ -119,8 +118,10 @@ On 9 October 2026, the native/WASM production build and all three native checks,
 
 A subsequent performance pass replaced resource-name maps on the occupancy path with definition-local indices, cached snapshots by revision, and shared the session's immutable definition with both realizations. Already compiled definitions now validate once on session construction; the browser no longer precompiles valid sources separately. A local Node/WASM profile of six half-turn executions reduced average move processing from about 20.5 ms to 1.8 ms. Repeated snapshots dropped to about 0.05 ms; creating the two geometric interpreters took about 24 ms combined instead of 110 ms. These timings measure WASM work on the development machine, excluding browser rendering and configured animation duration. Regression checks preserve complete occupancy diagnostics, refreshed legality at new revisions, and geometric lifetimes after a session is disposed.
 
-The generator is deterministic. `python3 scripts/helicopter_model.py` checks the definition, review data, and both realization packages without changing them. After reviewing a model change, regenerate with `--write`; review the resulting digest and deliberately update affected fixture pins. The review data contains abstract shape permutations and external acceptance counts, independently of the runtime definition. A visual-only change leaves the abstract semantic digest unchanged.
+The generator is deterministic. `python3 scripts/helicopter_model.py` checks the current relational source, bindings, and all three realization packages without changing them. After reviewing a model change, regenerate with `--write`; review the resulting digest and deliberately update affected fixture pins. The archived review data contains abstract shape permutations and external acceptance counts from the completed historical audit; the current generator does not rewrite it. A visual-only change leaves the abstract semantic digest unchanged.
 
 ## Remaining review
 
 Independent human review should examine the polyhedra, clockwise convention, admitted stops, source-phase quotient, conflict construction, and fixtures before promoting this experimental example to a reviewed reference model. The C++ geometric realization and its port/endpoint checks are implemented. Further physical fidelity would require a separate mechanism model and evidence about actual clearances and admitted moves.
+
+The legacy shape verifier and migration comparison tools have been removed. The shape counts above record their completed validation. Current package, runtime, fixture, native/WASM, and SDK checks exercise the relational kernel directly.

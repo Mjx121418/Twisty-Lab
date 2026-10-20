@@ -12,51 +12,12 @@ args = parser.parse_args()
 if args.update_fixtures and not args.write:
     parser.error('--update-fixtures requires --write')
 root = Path(__file__).resolve().parent.parent
-digests = {}
-subprocess.run(['python3', str(root / 'scripts/cube-packages.py')] + (['--write'] if args.write else []), check=True)
-for name in ['cube3', 'bandaged']:
-    package = root / 'packages' / name
-    result = json.loads(subprocess.check_output([
-        str(root / 'build/native/twisty_legacy_reference'), 'compile', '--definition', str(package / 'source.json'), '--json'
-    ], text=True))
-    if result['status'] != 'Compiled':
-        raise SystemExit(result)
-    definition = result['definition']
-    digests[name] = definition['definitionDigest']
-    documents = {'definition.json': definition}
-    for kind in ['cube-euclidean', 'cube-port-diagram', 'cube-spherical']:
-        documents[f'{kind}.json'] = {
-            'schemaVersion': 1, 'id': f'{name}-{kind}-v1', 'kind': kind,
-            'compatibleDefinitionDigest': definition['definitionDigest'],
-            'requiredCapabilities': ['triangle-meshes', 'rigid-transforms']
-        }
-        if kind == 'cube-spherical':
-            documents[f'{kind}.json'].update({
-                'radius': 2.05, 'diskAngleDegrees': 70, 'angularSegments': 64,
-                'radialSegments': 5, 'portInset': 0.04, 'surfaceLift': 0.02,
-                'fidelity': 'spherical-surface-model'
-            })
-    for filename, document in documents.items():
-        path = package / filename
-        if args.write:
-            path.write_text(json.dumps(document, indent=2, sort_keys=True) + '\n')
-        elif json.loads(path.read_text()) != document:
-            raise SystemExit(f'{path.relative_to(root)} is stale; review the change and run this script with --write.')
-    print(f'{name}: {definition["definitionDigest"]}')
-subprocess.run(['python3', str(root / 'scripts/helicopter_model.py')], check=True)
-subprocess.run(['python3', str(root / 'scripts/helicopter_packages.py')] + (['--write'] if args.write else []), check=True)
-digests['helicopter'] = json.loads((root / 'packages/helicopter/definition.json').read_text())['definitionDigest']
-subprocess.run(['python3', str(root / 'scripts/bagua_model.py')], check=True)
-subprocess.run(['python3', str(root / 'scripts/bagua_packages.py')] + (['--write'] if args.write else []), check=True)
-subprocess.run(['python3', str(root / 'scripts/flat_surface_packages.py')] + (['--write'] if args.write else []), check=True)
-subprocess.run(['python3', str(root / 'scripts/hex_surface_packages.py')] + (['--write'] if args.write else []), check=True)
-subprocess.run(['python3', str(root / 'scripts/gear_model.py')], check=True)
-subprocess.run(['python3', str(root / 'scripts/gear_normal.py')], check=True)
-subprocess.run(['python3', str(root / 'scripts/gear_packages.py')] + (['--write'] if args.write else []), check=True)
-subprocess.run(['python3', str(root / 'scripts/gear_spherical.py')], check=True)
-for name in ['gear', 'gear-extreme', 'gear-plain']:
-    digests[name] = json.loads((root / 'packages' / name / 'definition.json').read_text())['definitionDigest']
-digests['bagua'] = json.loads((root / 'packages/bagua/definition.json').read_text())['definitionDigest']
+# Reproduce current packages and geometry without the retired compiler.
+# Historical JSON catalogs remain input data for some geometry generators.
+for script in ['cube-packages.py', 'helicopter_packages.py', 'bagua_packages.py',
+               'flat_surface_packages.py', 'hex_surface_packages.py',
+               'gear_model.py', 'gear_normal.py', 'gear_spherical.py', 'gear_packages.py']:
+    subprocess.run(['python3', str(root / 'scripts' / script)] + (['--write'] if args.write else []), check=True)
 fixture_path = root / 'tests/fixtures/core.json'
 fixtures = json.loads(fixture_path.read_text())
 current_pins = {}

@@ -13,15 +13,7 @@ try {
   const oracle = join(temporary, 'oracle.json');
   execFileSync('python3', [join(root, 'tests/language_oracle.py'), native,
     join(root, 'examples/language/coupled.pzl.json'), '--emit', oracle], { stdio: 'inherit' });
-  const migrationCases = join(temporary, 'cube-migration.json');
-  execFileSync(join(dirname(native), 'cube_language_tests'), ['--emit', migrationCases], { stdio: 'inherit' });
-  const helicopterCases = join(temporary, 'helicopter-migration.json');
-  execFileSync(join(dirname(native), 'helicopter_language_tests'), ['--emit', helicopterCases], { stdio: 'inherit' });
-  const gearCases = join(temporary, 'gear-migration.json');
-  execFileSync(join(dirname(native), 'gear_language_tests'), ['--emit', gearCases], { stdio: 'inherit' });
-  const baguaCases = join(temporary, 'bagua-migration.json');
-  execFileSync(join(dirname(native), 'bagua_language_tests'), ['--emit', baguaCases], { stdio: 'inherit' });
-  const { createKernel, KernelSession, Puzzle, createCubeSource, createGearSource } = await import(pathToFileURL(sdk).href);
+  const { createKernel, KernelSession, Puzzle } = await import(pathToFileURL(sdk).href);
   const module = await createKernel();
   const info = JSON.parse(module.kernelInfoJSON());
   assert.equal(info.languageAPIVersion, 1);
@@ -38,52 +30,6 @@ try {
       }
     } finally { puzzle.dispose(); }
   }
-  let migrationCount = 0;
-  for (const suite of JSON.parse(await readFile(migrationCases, 'utf8'))) {
-    const bandaged = suite.catalog.puzzleId === 'bandaged-uf-ufr';
-    assert.deepEqual(createCubeSource(module, bandaged), { source: JSON.parse(suite.source), catalog: suite.catalog });
-    const puzzle = new Puzzle(module, suite.source);
-    try {
-      assert.deepEqual(puzzle.preview, suite.preview);
-      for (let i = 0; i < suite.queries.length; ++i) {
-        assert.deepEqual(puzzle.query(suite.queries[i]), suite.expected[i], JSON.stringify(suite.queries[i]));
-        ++migrationCount;
-      }
-    } finally { puzzle.dispose(); }
-  }
-  const helicopter = JSON.parse(await readFile(helicopterCases, 'utf8'));
-  const helicopterPuzzle = new Puzzle(module, helicopter.source);
-  let helicopterCount = 0;
-  try {
-    assert.deepEqual(helicopterPuzzle.preview, helicopter.preview);
-    const foreignAxis = [...helicopter.preview.program.initialPlacements];
-    foreignAxis[helicopter.preview.bindings.pieces.indexOf('mechanism/UF')] =
-      helicopter.preview.bindings.placements.indexOf('mechanism/edge/UR/a');
-    assert.deepEqual(helicopterPuzzle.query({ op: 'validate', state: foreignAxis }), { status: 'Invalid' });
-    for (let i = 0; i < helicopter.queries.length; ++i) {
-      assert.deepEqual(helicopterPuzzle.query(helicopter.queries[i]), helicopter.expected[i], JSON.stringify(helicopter.queries[i]));
-      ++helicopterCount;
-    }
-  } finally { helicopterPuzzle.dispose(); }
-  let gearCount = 0;
-  for (const suite of JSON.parse(await readFile(gearCases, 'utf8'))) {
-    assert.deepEqual(createGearSource(module, JSON.parse(suite.wrapper)), { source: JSON.parse(suite.source), catalog: suite.catalog });
-    const puzzle = new Puzzle(module, suite.source);
-    try {
-      assert.deepEqual(puzzle.preview, suite.preview);
-      for (let i = 0; i < suite.queries.length; ++i) {
-        assert.deepEqual(puzzle.query(suite.queries[i]), suite.expected[i], JSON.stringify(suite.queries[i]));
-        ++gearCount;
-      }
-    } finally { puzzle.dispose(); }
-  }
-  const bagua = JSON.parse(await readFile(baguaCases, 'utf8'));
-  const baguaPuzzle = new Puzzle(module, bagua.source);
-  try {
-    assert.deepEqual(baguaPuzzle.preview, bagua.preview);
-    for (let i = 0; i < bagua.queries.length; ++i)
-      assert.deepEqual(baguaPuzzle.query(bagua.queries[i]), bagua.expected[i], JSON.stringify(bagua.queries[i]));
-  } finally { baguaPuzzle.dispose(); }
   const source = await readFile(join(root, 'examples/language/coupled.pzl.json'), 'utf8');
   const puzzle = new Puzzle(module, source);
   try {
@@ -141,10 +87,6 @@ try {
       assert.deepEqual(compiled.definition, session.definition);
     }
   }
-  console.log(`Gear migration: ${gearCount} WASM results preserve coupling, phases and per-domain event witnesses.`);
-  console.log(`Bagua migration: ${bagua.queries.length} WASM results preserve occupancy, blocking, movements and witnesses.`);
-  console.log('All production presets preserve full native/WASM witnesses and replay; retired source formats are rejected.');
+  console.log('Production sessions preserve full native/WASM witnesses and replay; retired source formats are rejected.');
   console.log(`Portable language API: ${count} WASM results match the independent source oracle and native consumer.`);
-  console.log(`Helicopter migration: ${helicopterCount} WASM results match the previous executor's phases, states, legality and full witnesses.`);
-  console.log(`Cube/bandage migration: ${migrationCount} WASM results match the current executor's states, legality and full event witnesses.`);
 } finally { await rm(temporary, { recursive: true, force: true }); }

@@ -1,8 +1,8 @@
 # Bagua verification record
 
-The current model passes independent geometric consistency checks and additional source-based behavior fixtures. It remains **experimental**. This record separates published expectations, model reproductions, and evidence that still needs a physical replay.
+The model passed independent geometric consistency checks during migration and retains source-based behavior fixtures. It remains **experimental**. This record separates published expectations, model reproductions, and evidence that still needs a physical replay.
 
-The reviewed semantic digest is `9e9c2c32a01e8aa431723e69df35e59f43e5778f3b377ce3e965d555b5c2a1e6`. These checks pin the unchanged puzzle definition and its 146 pieces. The spherical interpretation shares that same semantic identity and public native/WASM APIs.
+The historical geometric review pinned semantic digest `9e9c2c32a01e8aa431723e69df35e59f43e5778f3b377ce3e965d555b5c2a1e6`. The recorded audit covered the 146-piece construction before relational migration. Current relational packages have their own semantic pins, preserved by fixture and package checks. The old geometric-audit executable has been retired with the legacy evaluator; the findings below are a historical record, not an audit rerun by the current suite.
 
 ## Published behavior
 
@@ -17,13 +17,13 @@ The expected effects below are transcribed from solving guides. They are not inf
 
 ramon13 writes conjugation as `{A,B}`; the simulator spells it `[A:B]`. Both use `[A,B]` for commutators. Parkin uses `(1/2)U` for `U+`, `(1/2)Ui` for `U-`, and `2R` for `R2`; his seven repetitions become `(...)7`.
 
-Native tests identify Parkin's triangle by its home surface region, then examine its resulting port centroid. They also check the complete unshrunk bodies: inverse X produces exactly two sliver protrusions, both at RD through R, while all other bodies fit within the cube. The prefix is a model reproduction of the described setup, not a separately recorded physical scramble. The portable fixture checks that its first repair move, R2, remains legal. Native/WASM tests independently assert the kite-cycle effects and compare full transition records.
+The retired geometric audit identified Parkin's triangle by its home surface region, then examined its resulting port centroid. It also checked the complete unshrunk bodies: inverse X produces exactly two sliver protrusions, both at RD through R, while all other bodies fit within the cube. The prefix is a model reproduction of the described setup, not a separately recorded physical scramble. The portable fixture checks that its first repair move, R2, remains legal. Native/WASM tests independently assert the kite-cycle effects and compare full transition records.
 
 The existing additional legal algorithms, inverses, blocking rollback, occupancy rejection, undo/redo, saved-history replay, and geometric animation checks continue to apply. Legal execution alone is weaker evidence than a specified resulting permutation.
 
 ## Geometric consistency
 
-[`bagua_review_tests.cpp`](../tests/legacy/bagua_review_tests.cpp) reads the abstract definition and the separate Euclidean realization. It uses the unshrunk prototype vertices and placement frames, reconstructs supporting planes and boundary edge directions, and runs a separate separating-axis implementation. It does not import the Python authoring tool or use its precomputed overlap pairs as an oracle.
+The retired `bagua_review_tests.cpp` (available in Git history) read the abstract definition and the separate Euclidean realization. It used the unshrunk prototype vertices and placement frames, reconstructed supporting planes and boundary edge directions, and ran a separate separating-axis implementation. It did not import the Python authoring tool or use its precomputed overlap pairs as an oracle.
 
 | Check | Scope | Result |
 | --- | ---: | --- |
@@ -48,10 +48,10 @@ Before promoting Bagua to a reviewed reference model, the remaining work is:
 To capture the matching kernel session after recording a physical history, substitute that history for the first placeholder and the rejected move for the second:
 
 ```sh
-build/native/twisty run --definition packages/bagua/definition.json \
+build/native/twisty run --definition packages/bagua/relational-package.json \
   --algorithm '<recorded legal prefix>' --policy transactional \
   --save build/bagua-physical-replay.json --json
-build/native/twisty run --definition packages/bagua/definition.json \
+build/native/twisty run --definition packages/bagua/relational-package.json \
   --session build/bagua-physical-replay.json \
   --algorithm '<attempted move>' --policy transactional --json
 ```
@@ -63,9 +63,9 @@ The [spherical Bagua realization](spherical-bagua.md) now reuses the existing pi
 ## Run the checks
 
 ```sh
-cmake --build build/native --target bagua_review_tests --parallel 1
-ctest --test-dir build/native -R bagua --output-on-failure
+cmake --build build/native --target twisty runtime_api_tests --parallel 1
+ctest --test-dir build/native -R "runtime_all_presets|portable_fixtures" --output-on-failure
 npx vitest run tests/unit/parity.test.ts
 ```
 
-Run compilation and tests sequentially. This audit avoids authoring regeneration and browser processes. Build jobs and test workers remain bounded by the workspace's 4 GiB memory policy.
+Run compilation and tests sequentially. These checks exercise the current kernel; they do not rerun the retired exhaustive geometric audit. Build jobs and test workers remain bounded by the workspace's 4 GiB memory policy.
