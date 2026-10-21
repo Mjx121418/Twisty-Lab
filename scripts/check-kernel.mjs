@@ -78,8 +78,8 @@ try {
     console.log('Installed native and packaged WASM relational consumers agree.');
     for (const [name, bandaged] of [['cube3', false], ['bandaged', true]]) {
       const data = join(javascript, 'examples/canvas/data', name);
-      const source = JSON.parse(await readFile(join(data, 'relational.pzl.json'), 'utf8'));
-      const catalog = JSON.parse(await readFile(join(data, 'relational-bindings.json'), 'utf8'));
+      const source = JSON.parse(await readFile(join(data, 'puzzle.pzl.json'), 'utf8'));
+      const catalog = JSON.parse(await readFile(join(data, 'bindings.json'), 'utf8'));
       assert.deepEqual(createCubeSource(module, bandaged), { source, catalog });
       assert.deepEqual(JSON.parse(execFileSync(executable, [bandaged ? '--bandaged-module' : '--cube-module'], { encoding: 'utf8' })), { source, catalog });
       const cube = new Puzzle(module, JSON.stringify(source));
@@ -91,7 +91,7 @@ try {
         const expected = cube.query(turn);
         assert.equal(expected.status, 'Permitted');
         assert.equal(expected.transition.actions.length, bandaged ? 8 : 9);
-        const actual = JSON.parse(execFileSync(executable, [join(data, 'relational.pzl.json')], {
+        const actual = JSON.parse(execFileSync(executable, [join(data, 'puzzle.pzl.json')], {
           encoding: 'utf8', input: JSON.stringify(turn) + '\n' }));
         assert.deepEqual(actual, expected);
       } finally { cube.dispose(); }
@@ -99,11 +99,11 @@ try {
     console.log('Installed native and packaged WASM cube/bandage authoring libraries agree.');
     for (const name of ['gear', 'gear-extreme', 'gear-plain']) {
       const data = join(javascript, 'examples/canvas/data', name);
-      const wrapper = JSON.parse(await readFile(join(data, 'relational-source.json'), 'utf8'));
-      const expected = { source: JSON.parse(await readFile(join(data, 'relational.pzl.json'), 'utf8')),
-        catalog: JSON.parse(await readFile(join(data, 'relational-bindings.json'), 'utf8')) };
+      const wrapper = JSON.parse(await readFile(join(data, 'source.json'), 'utf8'));
+      const expected = { source: JSON.parse(await readFile(join(data, 'puzzle.pzl.json'), 'utf8')),
+        catalog: JSON.parse(await readFile(join(data, 'bindings.json'), 'utf8')) };
       assert.deepEqual(createGearSource(module, wrapper), expected);
-      assert.deepEqual(JSON.parse(execFileSync(executable, [join(data, 'relational-source.json'), '--gear-module'], { encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 })), expected);
+      assert.deepEqual(JSON.parse(execFileSync(executable, [join(data, 'source.json'), '--gear-module'], { encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 })), expected);
     }
 
   } finally { puzzle.dispose(); }
@@ -112,13 +112,13 @@ try {
   const custom = JSON.parse(module.compileExecutionJSON(JSON.stringify({ formatVersion: 1,
     kind: 'relational-gear-prototypes', puzzleId: 'gear-custom-experimental-v1', gearedEdges: ['UF', 'UR'] })));
   assert.equal(custom.status, 'Compiled');
-  const customRealization = JSON.parse(await readFile(join(javascript, 'examples/canvas/data/gear/relational-gear-supplied-euclidean.json'), 'utf8'));
+  const customRealization = JSON.parse(await readFile(join(javascript, 'examples/canvas/data/gear-extreme/gear-extreme-supplied-euclidean.json'), 'utf8'));
   customRealization.compatibleDefinitionDigest = custom.definition.definitionDigest;
-  await writeFile(join(customDirectory, 'relational-package.json'), JSON.stringify(custom.definition));
-  await writeFile(join(customDirectory, 'relational-gear-custom-euclidean.json'), JSON.stringify(customRealization));
-  const customSphere = JSON.parse(await readFile(join(javascript, 'examples/canvas/data/gear/relational-gear-spherical.json'), 'utf8'));
+  await writeFile(join(customDirectory, 'package.json'), JSON.stringify(custom.definition));
+  await writeFile(join(customDirectory, 'gear-custom-euclidean.json'), JSON.stringify(customRealization));
+  const customSphere = JSON.parse(await readFile(join(javascript, 'examples/canvas/data/gear/gear-spherical.json'), 'utf8'));
   customSphere.compatibleDefinitionDigest = custom.definition.definitionDigest;
-  await writeFile(join(customDirectory, 'relational-gear-custom-spherical.json'), JSON.stringify(customSphere));
+  await writeFile(join(customDirectory, 'gear-custom-spherical.json'), JSON.stringify(customSphere));
   for (const [puzzle, algorithm, firstMove, kind] of [
     ['cube3', "R U R' U'", 'U', 'cube-port-diagram'],
     ['bandaged', 'U R', 'U', 'cube-port-diagram'],
@@ -129,7 +129,6 @@ try {
     ['bagua', "U+ R' L' D2 R L U-", 'U+', 'bagua-port-diagram'],
     ['bagua', '[[U+ R2:U+],[R R+ L-:D2]]', 'U+', 'bagua-euclidean'],
     ['bagua', "U+ R F- (U+ R F-)'", 'U+', 'bagua-spherical'],
-    ['gear', "R U F (R U F)'", 'R', 'gear-euclidean'],
     ['gear', "R U F (R U F)'", 'R', 'gear-normal-euclidean'],
     ['gear', "F U R (F U R)'", 'F', 'gear-spherical'],
     ['gear-extreme', "Uq R Fq (Uq R Fq)'", 'Uq', 'gear-extreme-spherical'],
@@ -146,10 +145,10 @@ try {
   ]) {
     const directory = join(javascript, 'examples/canvas/data', puzzle);
     const shipped = await readdir(directory);
-    assert.ok(!shipped.includes('definition.json') && !shipped.includes('source.json'));
-    const sourcePath = join(directory, 'relational-package.json');
+    assert.ok(!shipped.includes('definition.json') && !shipped.some((name) => name.startsWith('relational')));
+    const sourcePath = join(directory, 'package.json');
     const source = await readFile(sourcePath, 'utf8');
-    const realizationPath = join(directory, kind === 'flat-quotient' ? 'flat-quotient.json' : `relational-${kind}.json`);
+    const realizationPath = join(directory, kind === 'flat-quotient' ? 'flat-quotient.json' : `${kind}.json`);
     const realization = await readFile(realizationPath, 'utf8');
     const session = new KernelSession(module, source);
     const geometry = module.createGeometry(session.native, realization);

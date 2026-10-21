@@ -8,25 +8,14 @@
     5.0522258898388115
   ],
   "bodyInset": 0.03,
-  "compatibleDefinitionDigest": "aeadf784d10d7b90ea6f8b71437a6e410f215b5f47327fa139b9dc797c1c895a",
+  "compatibleDefinitionDigest": "4ac6e4678e4301c9cba54bc1551f60230cc29e42c399e5b9f35d2f61a7e5bee6",
   "fidelity": "idealized-polyhedral",
   "id": "helicopter-euclidean-v1",
   "kind": "polyhedral-euclidean",
   "modelByDomain": {
     "center": "center",
     "corner": "corner",
-    "edge/BL": "edge",
-    "edge/BR": "edge",
-    "edge/DB": "edge",
-    "edge/DF": "edge",
-    "edge/DL": "edge",
-    "edge/DR": "edge",
-    "edge/FL": "edge",
-    "edge/FR": "edge",
-    "edge/UB": "edge",
-    "edge/UF": "edge",
-    "edge/UL": "edge",
-    "edge/UR": "edge"
+    "mechanism": "edge"
   },
   "models": {
     "center": {

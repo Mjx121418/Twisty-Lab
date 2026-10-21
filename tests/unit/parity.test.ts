@@ -17,10 +17,10 @@ afterEach(() => { for (const handle of handles) handle.delete(); handles.length 
 
 describe('native / WebAssembly parity', () => {
   it('spins every driven cog about its outward axis on every face, including F at UR', () => {
-    const value = session('packages/gear/relational-source.json');
-    const geometry = runtime.createGeometry(value, read('packages/gear/relational-gear-normal-euclidean.json'));
+    const value = session('packages/gear/source.json');
+    const geometry = runtime.createGeometry(value, read('packages/gear/gear-normal-euclidean.json'));
     expect(geometry).toBeTruthy();
-    const definition = JSON.parse(read('packages/gear/definition.json'));
+    const definition = JSON.parse(value.definitionJSON());
     const placements = new Map<string, any>(definition.placementDomains.find((d: any) => d.id === 'gear-edge').placements.map((q: any) => [q.key, q]));
     const normal: Record<string, number[]> = { R: [1, 0, 0], L: [-1, 0, 0], U: [0, 1, 0], D: [0, -1, 0], F: [0, 0, 1], B: [0, 0, -1] };
     const cross = (a: number[], b: number[]): number[] => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
@@ -64,10 +64,10 @@ describe('native / WebAssembly parity', () => {
     } finally { geometry?.delete(); }
   });
   it('matches complete R/L motion and inverses with only UF geared', () => {
-    const source = JSON.parse(read('packages/gear/relational-source.json')); source.gearedEdges = ['UF'];
+    const source = JSON.parse(read('packages/gear/source.json')); source.gearedEdges = ['UF'];
     const text = JSON.stringify(source);
     const a = new runtime.Session(text), b = new runtime.Session(text);
-    const realization = JSON.parse(read('packages/gear/relational-gear-supplied-euclidean.json'));
+    const realization = JSON.parse(read('packages/gear-extreme/gear-extreme-supplied-euclidean.json'));
     realization.compatibleDefinitionDigest = snapshot(a).definitionDigest;
     const ga = runtime.createGeometry(a, JSON.stringify(realization));
     const gb = runtime.createGeometry(b, JSON.stringify(realization));
@@ -92,14 +92,14 @@ describe('native / WebAssembly parity', () => {
     } finally { ga?.delete(); gb?.delete(); a.delete(); b.delete(); }
   });
   it('matches dynamic mixed-slice Gear Cube rules, animation and replay for UF/UR', () => {
-    const source = JSON.parse(read('packages/gear/relational-source.json'));
+    const source = JSON.parse(read('packages/gear/source.json'));
     source.puzzleId = 'gear-custom-experimental-v1'; source.gearedEdges = ['UF', 'UR'];
     const text = JSON.stringify(source);
     const directory = mkdtempSync(join(tmpdir(), 'gear-mask-'));
     const path = join(directory, 'source.json'); writeFileSync(path, text);
     const value = new runtime.Session(text), restored = new runtime.Session(text);
     const compiled = JSON.parse(runtime.compileExecutionJSON(text));
-    const realization = JSON.parse(read('packages/gear/relational-gear-supplied-euclidean.json'));
+    const realization = JSON.parse(read('packages/gear-extreme/gear-extreme-supplied-euclidean.json'));
     realization.compatibleDefinitionDigest = compiled.definition.definitionDigest;
     const geometry = runtime.createGeometry(value, JSON.stringify(realization));
     try {
@@ -148,7 +148,6 @@ describe('native / WebAssembly parity', () => {
     ['bagua', 'bagua-euclidean', '[[U+ R2:U+],[R R+ L-:D2]]'],
     ['bagua', 'bagua-port-diagram', "U+ R' L' D2 R L U-"],
     ['bagua', 'bagua-spherical', "U+ R F- (U+ R F-)'"],
-    ['gear', 'gear-euclidean', "R U F (R U F)' R12"],
     ['gear', 'gear-normal-euclidean', "R U F (R U F)' R12"],
     ['gear', 'gear-spherical', "F U R (F U R)' R12"],
     ['gear-extreme', 'gear-extreme-spherical', "Uq R Fq (Uq R Fq)'"],
@@ -156,13 +155,11 @@ describe('native / WebAssembly parity', () => {
     ['gear-extreme', 'gear-extreme-supplied-euclidean', "Uq R Fq (Uq R Fq)'"],
     ['gear-plain', 'gear-plain-supplied-euclidean', "Rq Uq Fq (Rq Uq Fq)'"],
     ['gear', 'gear-port-diagram', "R U F (R U F)'"],
-    ['gear', 'gear-six-teeth-euclidean', "R U F (R U F)' R12"],
-    ['gear', 'gear-six-teeth-port-diagram', "R U F (R U F)' R12"],
-    ['gear-extreme', 'gear-extreme-euclidean', "Uq R Fq (Uq R Fq)'"],
+    ['gear-extreme', 'gear-extreme-port-diagram', "Uq R Fq (Uq R Fq)'"],
     ['gear-plain', 'gear-plain-port-diagram', "Rq Uq Fq (Rq Uq Fq)'"],
   ])('matches native %s assets and sampled %s frames', (name, kind, algorithm) => {
-    const definition = `packages/${name}/relational-package.json`;
-    const realization = `packages/${name}/relational-${kind}.json`;
+    const definition = `packages/${name}/package.json`;
+    const realization = `packages/${name}/${kind}.json`;
     // Detailed authored meshes include expanded positions and normals in this probe.
     const reference = JSON.parse(execFileSync('build/native/geometry_probe', [definition, realization, algorithm], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 }));
     const value = new runtime.Session(read(definition));
@@ -195,9 +192,9 @@ describe('native / WebAssembly parity', () => {
     } finally { geometry.delete(); value.delete(); }
   });
   it('keeps a shared geometric definition alive after its session is disposed', () => {
-    const value = new runtime.Session(read('packages/helicopter/relational-package.json'));
+    const value = new runtime.Session(read('packages/helicopter/package.json'));
     const state = value.stateJSON();
-    const geometry = runtime.createGeometry(value, read('packages/helicopter/relational-helicopter-euclidean.json'));
+    const geometry = runtime.createGeometry(value, read('packages/helicopter/helicopter-euclidean.json'));
     if (!geometry) throw new Error('Geometry creation failed.');
     value.delete();
     try {
@@ -210,7 +207,7 @@ describe('native / WebAssembly parity', () => {
     } finally { geometry.delete(); }
   });
   it('matches Helicopter jumbling, blocking, inverse and replay records', () => {
-    const path = 'packages/helicopter/relational-package.json';
+    const path = 'packages/helicopter/package.json';
     const wasm = new runtime.Session(read(path));
     const restored = new runtime.Session(read(path));
     try {
@@ -229,7 +226,7 @@ describe('native / WebAssembly parity', () => {
     } finally { wasm.delete(); restored.delete(); }
   });
   it.each(['cube3', 'bandaged'])('matches compilation, state, scramble, and witnesses for %s', (name) => {
-    const path = `packages/${name}/relational-package.json`;
+    const path = `packages/${name}/package.json`;
     const wasm = session(path);
     const compiled = JSON.parse(runtime.compileExecutionJSON(read(path)));
     expect(compiled).toEqual(native(['compile', '--definition', path]));
@@ -245,7 +242,7 @@ describe('native / WebAssembly parity', () => {
   });
 
   it('matches Bagua published sequences, cut blocking and replay', () => {
-    const path = 'packages/bagua/relational-package.json';
+    const path = 'packages/bagua/package.json';
     const wasm = new runtime.Session(read(path));
     const restored = runtime.createSessionFromDefinition(wasm);
     if (!restored) throw new Error('Shared session factory returned no handle.');
@@ -268,9 +265,9 @@ describe('native / WebAssembly parity', () => {
     } finally { wasm.delete(); restored.delete(); }
   });
 
-  it.each(JSON.parse(read('packages/bagua/review.json')).pureKiteCycles)(
+  it.each(JSON.parse(read('tests/fixtures/bagua-algorithms.json')).pureKiteCycles)(
     'matches Bagua $name and its published pure three-cycle', ({ notation }: { notation: string }) => {
-      const path = 'packages/bagua/relational-package.json';
+      const path = 'packages/bagua/package.json';
       const wasm = session(path);
       const definition = JSON.parse(wasm.definitionJSON());
       const result = JSON.parse(wasm.runJSON(notation, 'transactional', '0'));
@@ -311,7 +308,7 @@ describe('native / WebAssembly parity', () => {
   });
 
   it('preserves exact presentation integers and completed animation records', () => {
-    const source = read('packages/cube3/relational-package.json');
+    const source = read('packages/cube3/package.json');
     const value = new runtime.Session(source); handles.push(value);
     const result = JSON.parse(value.runJSON('U', 'interactive', '0'));
     expect(result.transitionRecords[0]).toContain('\"choices\"');
@@ -320,7 +317,7 @@ describe('native / WebAssembly parity', () => {
     const restored = new runtime.Session(source); handles.push(restored);
     expect(JSON.parse(restored.loadJSON(text)).status).toBe('Loaded');
     expect(snapshot(restored).stateDigest).toBe(snapshot(value).stateDigest);
-    const realization = { ...JSON.parse(read('packages/cube3/relational-cube-euclidean.json')), compatibleDefinitionDigest: snapshot(value).definitionDigest };
+    const realization = { ...JSON.parse(read('packages/cube3/cube-euclidean.json')), compatibleDefinitionDigest: snapshot(value).definitionDigest };
     const view = new runtime.Geometry(value.definitionJSON(), JSON.stringify(realization));
     try {
       expect(JSON.parse(view.prepareAnimationJSON(result.transitionRecords[0])).status).toBe('Prepared');

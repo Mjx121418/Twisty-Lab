@@ -6,7 +6,7 @@ import { isDeepStrictEqual } from 'node:util';
 
 export const root = fileURLToPath(new URL('../', import.meta.url));
 export const manifestPath = 'packages/build-manifest.json';
-const commonFiles = ['relational.pzl.json', 'relational-bindings.json', 'relational-package.json'];
+const commonFiles = ['puzzle.pzl.json', 'bindings.json', 'package.json'];
 const repair = 'Run npm run build:puzzles and review the generated changes.';
 
 function fail(path, message) { throw new Error(`${path}: ${message}. ${repair}`); }
@@ -118,6 +118,16 @@ export async function checkFreshness(base = root, inventory) {
         fail(path, group === 'inputs' ? 'authoring input changed since puzzle generation' : 'prebuilt artifact changed since puzzle generation');
     }
   }
+  // Keep retired/unlisted data from accumulating beside the current packages.
+  const listed = new Set([manifestPath, ...Object.keys(actual.inputs), ...Object.keys(actual.artifacts)]);
+  async function checkDirectory(path) {
+    for (const entry of await readdir(join(base, path), { withFileTypes: true })) {
+      const file = `${path}/${entry.name}`;
+      if (entry.isDirectory()) await checkDirectory(file);
+      else if (entry.name.endsWith('.json') && !listed.has(file)) fail(file, 'unlisted puzzle data; add an authoring input or runtime artifact to the inventory, or remove the file');
+    }
+  }
+  await checkDirectory('packages');
   return actual;
 }
 
@@ -126,7 +136,7 @@ export async function checkFreshness(base = root, inventory) {
 export async function validatePuzzleData(base, inventory, openPuzzle) {
   const { default: Ajv } = await import('ajv');
   const ajv = new Ajv({ strict: false, allErrors: true });
-  for (const name of ['relational-puzzle', 'relational-package', 'relational-gear-source', 'realization', 'fixture']) {
+  for (const name of ['puzzle', 'package', 'gear-source', 'realization', 'fixture']) {
     const path = `schemas/${name}.schema.json`;
     try { ajv.addSchema(await readJSON(base, path)); }
     catch (error) { fail(path, `cannot load schema (${error.message})`); }
@@ -145,12 +155,12 @@ export async function validatePuzzleData(base, inventory, openPuzzle) {
       if (!document || typeof document !== 'object' || Array.isArray(document)) fail(directory + file, 'expected a JSON object');
       documents[file] = document;
     }
-    const bundle = documents['relational-package.json'];
-    validate('relational-package', bundle, directory + 'relational-package.json');
-    validate('relational-puzzle', documents['relational.pzl.json'], directory + 'relational.pzl.json');
-    for (const [field, file] of [['source', 'relational.pzl.json'], ['catalog', 'relational-bindings.json']])
+    const bundle = documents['package.json'];
+    validate('relational-package', bundle, directory + 'package.json');
+    validate('relational-puzzle', documents['puzzle.pzl.json'], directory + 'puzzle.pzl.json');
+    for (const [field, file] of [['source', 'puzzle.pzl.json'], ['catalog', 'bindings.json']])
       if (!isDeepStrictEqual(bundle[field], documents[file])) fail(directory + file, `does not match package ${field}`);
-    const packagePath = directory + 'relational-package.json';
+    const packagePath = directory + 'package.json';
     let loaded;
     try {
       loaded = await openPuzzle(packagePath, JSON.stringify(bundle));
@@ -167,7 +177,7 @@ export async function validatePuzzleData(base, inventory, openPuzzle) {
       for (const file of puzzle.files) {
         const path = directory + file, document = documents[file];
         if ('definitionDigest' in document && document.definitionDigest !== loaded.digest) fail(path, 'manifest semantic pin differs from the current kernel');
-        if (file === 'relational-source.json') {
+        if (file === 'source.json') {
           validate('relational-gear-source', document, path);
           let wrapper;
           try {

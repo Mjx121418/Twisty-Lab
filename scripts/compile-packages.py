@@ -13,7 +13,7 @@ if args.update_fixtures and not args.write:
     parser.error('--update-fixtures requires --write')
 root = Path(__file__).resolve().parent.parent
 # Reproduce current packages and geometry without the retired compiler.
-# Historical JSON catalogs remain input data for some geometry generators.
+# Geometry generators consume current authoring factories and bindings.
 inventory = json.loads((root / 'scripts/puzzle-inventory.json').read_text())
 for script in inventory['generators']:
     subprocess.run(['python3', str(root / 'scripts' / script)] + (['--write'] if args.write else []), check=True)

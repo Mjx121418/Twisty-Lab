@@ -48,10 +48,10 @@ Before promoting Bagua to a reviewed reference model, the remaining work is:
 To capture the matching kernel session after recording a physical history, substitute that history for the first placeholder and the rejected move for the second:
 
 ```sh
-build/native/twisty run --definition packages/bagua/relational-package.json \
+build/native/twisty run --definition packages/bagua/package.json \
   --algorithm '<recorded legal prefix>' --policy transactional \
   --save build/bagua-physical-replay.json --json
-build/native/twisty run --definition packages/bagua/relational-package.json \
+build/native/twisty run --definition packages/bagua/package.json \
   --session build/bagua-physical-replay.json \
   --algorithm '<attempted move>' --policy transactional --json
 ```

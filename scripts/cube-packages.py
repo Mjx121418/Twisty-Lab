@@ -16,8 +16,8 @@ session_executable = executable.parent / 'twisty'
 for package, flag in [('cube3', '--cube-module'), ('bandaged', '--bandaged-module')]:
     module = json.loads(subprocess.check_output([str(executable), flag], text=True))
     bundle = dict(kind='relational-package', formatVersion=1, source=module['source'], catalog=module['catalog'])
-    documents = {'relational.pzl.json': module['source'], 'relational-bindings.json': module['catalog'],
-                 'relational-package.json': bundle}
+    documents = {'puzzle.pzl.json': module['source'], 'bindings.json': module['catalog'],
+                 'package.json': bundle}
     with tempfile.TemporaryDirectory(prefix='twisty-language-') as directory:
         source_file = Path(directory) / 'package.json'
         source_file.write_text(json.dumps(bundle))
@@ -25,9 +25,14 @@ for package, flag in [('cube3', '--cube-module'), ('bandaged', '--bandaged-modul
         if result['status'] != 'Compiled':
             raise SystemExit(result)
     for kind in ['cube-euclidean', 'cube-port-diagram', 'cube-spherical']:
-        realization = json.loads((root / 'packages' / package / f'{kind}.json').read_text())
-        realization['compatibleDefinitionDigest'] = result['definition']['definitionDigest']
-        documents[f'relational-{kind}.json'] = realization
+        realization = dict(schemaVersion=1, id=f'{package}-{kind}-v1', kind=kind,
+                           requiredCapabilities=['triangle-meshes', 'rigid-transforms'],
+                           compatibleDefinitionDigest=result['definition']['definitionDigest'])
+        if kind == 'cube-spherical':
+            realization.update(angularSegments=64, diskAngleDegrees=70, radialSegments=5,
+                               radius=2.05, portInset=0.04, surfaceLift=0.02,
+                               fidelity='spherical-surface-model')
+        documents[f'{kind}.json'] = realization
     for filename, content in documents.items():
         path = root / 'packages' / package / filename
         if args.write:

@@ -11,7 +11,7 @@ import {
 
 let base: string;
 let runtime: MainModule;
-const model = 'relational-cube-spherical.json';
+const model = 'cube-spherical.json';
 const folder = 'packages/cube3/';
 const inventory = {
   formatVersion: 1, inputs: ['scripts/generate.py'], generators: ['generate.py'],
@@ -32,7 +32,7 @@ beforeEach(async () => {
   await writeFile(join(base, 'scripts/leaf.py'), 'value = 1\n');
   for (const file of puzzleFiles(inventory.puzzles[0]))
     await cp(join(root, folder, file), join(base, folder, file));
-  for (const name of ['relational-puzzle', 'relational-package', 'relational-gear-source', 'realization', 'fixture'])
+  for (const name of ['puzzle', 'package', 'gear-source', 'realization', 'fixture'])
     await cp(join(root, `schemas/${name}.schema.json`), join(base, `schemas/${name}.schema.json`));
   const fixtures = await readJSON(root, 'tests/fixtures/core.json');
   await save('tests/fixtures/core.json', { ...fixtures, cases: [fixtures.cases[0]] });
@@ -84,7 +84,16 @@ it('rejects missing artifacts and unlisted manifest entries', async () => {
   await save(manifestPath, manifest);
   await expect(checkFreshness(base, inventory)).rejects.toThrow(/packages\/unlisted.json: artifacts inventory differs/);
   await unlink(join(base, folder, model));
-  await expect(checkFreshness(base, inventory)).rejects.toThrow(/relational-cube-spherical.json: cannot hash file/);
+  await expect(checkFreshness(base, inventory)).rejects.toThrow(/cube-spherical.json: cannot hash file/);
+});
+
+it('rejects retired or unlisted JSON left beside the current packages', async () => {
+  await save(folder + 'definition.json', { kind: 'finite-definition' });
+  await expect(checkFreshness(base, inventory)).rejects.toThrow(/packages\/cube3\/definition.json: unlisted puzzle data/);
+  await unlink(join(base, folder, 'definition.json'));
+  await mkdir(join(base, folder, 'old'));
+  await save(folder + 'old/model.json', {});
+  await expect(checkFreshness(base, inventory)).rejects.toThrow(/old\/model.json: unlisted puzzle data/);
 });
 
 it('rejects unsupported manifest and puzzle schema versions', async () => {
@@ -95,22 +104,22 @@ it('rejects unsupported manifest and puzzle schema versions', async () => {
   await expect(checkFreshness(base, inventory)).rejects.toThrow(/packages\/build-manifest.json: unsupported manifest format/);
   const realization = await readJSON(base, folder + model);
   await save(folder + model, { ...realization, schemaVersion: 2 });
-  await expect(compatible()).rejects.toThrow(/relational-cube-spherical.json: schema validation failed/);
+  await expect(compatible()).rejects.toThrow(/cube-spherical.json: schema validation failed/);
 });
 
 it('identifies malformed JSON artifact files', async () => {
   await save(folder + model, null);
-  await expect(compatible()).rejects.toThrow(/relational-cube-spherical.json: expected a JSON object/);
+  await expect(compatible()).rejects.toThrow(/cube-spherical.json: expected a JSON object/);
 });
 
 it('rejects source and catalog files that disagree with their package', async () => {
-  const source = await readJSON(base, folder + 'relational.pzl.json');
-  await save(folder + 'relational.pzl.json', { ...source, id: 'different' });
-  await expect(compatible()).rejects.toThrow(/relational.pzl.json: does not match package source/);
-  await save(folder + 'relational.pzl.json', source);
-  const catalog = await readJSON(base, folder + 'relational-bindings.json');
-  await save(folder + 'relational-bindings.json', { ...catalog, puzzleId: 'different' });
-  await expect(compatible()).rejects.toThrow(/relational-bindings.json: does not match package catalog/);
+  const source = await readJSON(base, folder + 'puzzle.pzl.json');
+  await save(folder + 'puzzle.pzl.json', { ...source, id: 'different' });
+  await expect(compatible()).rejects.toThrow(/puzzle.pzl.json: does not match package source/);
+  await save(folder + 'puzzle.pzl.json', source);
+  const catalog = await readJSON(base, folder + 'bindings.json');
+  await save(folder + 'bindings.json', { ...catalog, puzzleId: 'different' });
+  await expect(compatible()).rejects.toThrow(/bindings.json: does not match package catalog/);
 });
 
 it('rejects incorrect realization and fixture semantic pins', async () => {
@@ -128,7 +137,7 @@ it('checks geometry with the kernel after schema validation', async () => {
   const realization = await readJSON(base, folder + model);
   // Schema-valid, but too large relative to the radius for the interpreter.
   await save(folder + model, { ...realization, surfaceLift: 1 });
-  await expect(compatible()).rejects.toThrow(/relational-cube-spherical.json: kernel rejected the realization/);
+  await expect(compatible()).rejects.toThrow(/cube-spherical.json: kernel rejected the realization/);
 });
 
 it('requires explicit fixture updates in the authoring driver', async () => {

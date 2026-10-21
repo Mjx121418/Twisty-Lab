@@ -1,17 +1,33 @@
 #!/usr/bin/env python3
-"""Author separate gear meshes and tracks; the native compiler owns exact rules."""
+"""Author Gear placement/rotation templates and the shared phase diagrams."""
 import argparse
 import json
+import subprocess
 from math import sin, cos, pi, sqrt, isclose
 from pathlib import Path
-import gear_meshes as shapes
-import gear_cubic_mesh
 
 ROOT = Path(__file__).resolve().parent.parent
 FACES = ['U', 'R', 'F', 'D', 'L', 'B']
 VECTORS = [(0,1,0),(1,0,0),(0,0,1),(0,-1,0),(-1,0,0),(0,0,-1)]
-EDGES = ['UF','UR','UB','UL','DF','DR','DB','DL','FR','FL','BR','BL']
 N = (0,1/sqrt(2),1/sqrt(2))
+
+def load_definition(name):
+    """Use the current authoring factory for frames and exact local transports."""
+    result = json.loads(subprocess.check_output([
+        str(ROOT/'build/native/twisty'), 'compile', '--definition',
+        str(ROOT/'packages'/name/'source.json'), '--json'], text=True))
+    if result['status'] != 'Compiled':
+        raise RuntimeError(result)
+    return result['definition']
+
+def store_realization(path, result, write):
+    # Preserve checked-in bytes when platform libm rounding is immaterial.
+    expected = json.loads(json.dumps(result))
+    if path.exists() and same_geometry(json.loads(path.read_text()), expected):
+        return
+    if not write:
+        raise RuntimeError(f'{path.relative_to(ROOT)} is stale; regenerate with --write')
+    path.write_text(json.dumps(result, separators=(',', ':'), sort_keys=True)+'\n')
 
 def same_geometry(actual, expected):
     """Only geometric floating values tolerate platform libm rounding."""
@@ -45,47 +61,27 @@ def frame(group,kind,q):
     for c,f in enumerate(['R','U','F']): out[c*4:c*4+3]=VECTORS[p[FACES.index(f)]]
     return out
 
-def mesh(vertices,triangles): return {'vertices':vertices,'triangles':triangles}
-def box(center,half):
-    vs=[add(center,(half[0]*x,half[1]*y,half[2]*z)) for x,y,z in [(-1,-1,-1),(1,-1,-1),(1,1,-1),(-1,1,-1),(-1,-1,1),(1,-1,1),(1,1,1),(-1,1,1)]]
-    return mesh(vs,[[0,2,1],[0,3,2],[4,5,6],[4,6,7],[0,1,5],[0,5,4],[3,7,6],[3,6,2],[0,4,7],[0,7,3],[1,2,6],[1,6,5]])
-def realization(definition,diagram,edge_teeth=12):
-    # Geometry maps exact phases to angles; tooth count never enters the core.
+def realization_templates(definition,diagram=False):
     # Six-tooth cog: (20 / 6) × (π / 2) = 5 × (π / 3), or 300 degrees.
-    angle_scale={12:1,6:5}[edge_teeth]
-    plain_meshes=None if diagram else json.loads((ROOT/'packages/gear-extreme/plain-edge-meshes.json').read_text())['assets']
-    if plain_meshes is not None:
-        plain_meshes=gear_cubic_mesh.remesh(plain_meshes)
+    # Solid templates acquire their supplied meshes in gear_normal.py.
     assets={};bindings={};group=definition['symmetry']['members']
+    moves = {d['id']: {m['id']: m for m in d['moves']} for d in definition['source']['domains']}
     for domain in definition['placementDomains']:
         kind=domain['id'];ports=len(domain['placements'][0]['portAttachment']);parts=[]
         if not diagram:
             if kind=='gear-edge':
-                cradle=shapes.join(box((0,.97,.97),(.30,.24,.24)),
-                                  box((0,1.20,.72),(.23,.15,.16)),box((0,.72,1.20),(.23,.16,.15)))
-                parts.extend([('carrier','body',None,cradle),('cog','body',None,shapes.gear_shell(teeth=edge_teeth)),
-                              ('bearing','body',None,shapes.bearing()),
-                              ('axle','body',None,shapes.cylinder(N,(0,1.26,1.26),.084,.35)),
-                              ('hub','body',None,shapes.cylinder(N,(0,1.505,1.505),.105,.028,6))])
-            elif kind=='corner': parts.append(('body','body',None,shapes.corner_body()))
-            elif kind=='center': parts.append(('body','body',None,shapes.center_body()))
-            else: parts.append(('body','body',None,plain_meshes['edge/body']))
+                parts.extend([('carrier','body',None),('cog','body',None)])
+            else: parts.append(('body','body',None))
         for port in range(ports):
-            if diagram:
-                asset=mesh([(-.16,-.12,0),(.20,0,0),(-.16,.12,0)],[[0,1,2]])
-            elif kind=='gear-edge': asset=shapes.gear_port(port,teeth=edge_teeth)
-            elif kind=='edge': asset=plain_meshes[f'edge/port-{port}']
-            elif kind=='corner': asset=shapes.corner_port(port)
-            elif kind=='center': asset=shapes.center_port()
-            else: raise ValueError(f'Unsupported gear-family domain: {kind}')
-            parts.append((f'port-{port}','port',str(port),asset))
+            parts.append((f'port-{port}','port',str(port)))
         configs=[]
-        for name,role,port,asset in parts:
-            aid=kind+'/'+name;assets[aid]=asset
+        for name,role,port in parts:
+            aid=kind+'/'+name
+            if diagram:
+                assets[aid]={'vertices':[(-.16,-.12,0),(.20,0,0),(-.16,.12,0)],'triangles':[[0,1,2]]}
             data={'id':name,'role':role,'meshAssetId':aid,'placementFrames':{},'operationTracks':{}}
             if port is not None: data['portId']=port
-            if name in ['bearing','axle','hub']: data['materialBindingId']='hardware'
-            spinning=kind=='gear-edge' and (name=='cog' or name=='hub' or role=='port')
+            spinning=kind=='gear-edge' and (name=='cog' or role=='port')
             for q in domain['placements']:
                 phase=int(q['key'][-1]) if kind=='gear-edge' else 0
                 m=frame(group,kind,q)
@@ -96,16 +92,16 @@ def realization(definition,diagram,edge_teeth=12):
                     n=VECTORS[FACES.index(face)]
                     right={'R':(0,0,-1),'L':(0,0,1),'B':(-1,0,0)}.get(face,(1,0,0));up=cross(n,right)
                     cx,cy={'U':(0,3),'R':(3,0),'F':(0,0),'D':(0,-3),'L':(-3,0),'B':(6,0)}[face]
-                    m=rotation((0,0,1),phase*pi/3*angle_scale if spinning else 0)
+                    m=rotation((0,0,1),phase*pi/3*5 if spinning else 0)
                     m[12:15]=[cx+dot(position,right),cy+dot(position,up),0]
-                elif spinning: m=compose(m,rotation(N,phase*pi/3*angle_scale))
+                elif spinning: m=compose(m,rotation(N,phase*pi/3*5))
                 data['placementFrames'][q['key']]=m
             if kind=='center' and not diagram:
                 data['symmetries']=[rotation((0,1,0),i*pi/2) for i in range(1,4)]
             for op in definition['operations']:
-                paths={};ordinary='q' in op['id'];face=op['family'];reversed=op['id'].endswith("'")
+                paths={};face=op['family'];reversed=op['id'].endswith("'")
                 for q in domain['placements']:
-                    target=op['placementRules'][kind]['transports'].get(q['key'])
+                    target=moves[kind][op['id']]['transport'].get(q['key'])
                     if target is None: continue
                     outer=face in q['footprint'][0]
                     opposite=FACES[(FACES.index(face)+3)%6] in q['footprint'][0];steps=[]
@@ -116,35 +112,23 @@ def realization(definition,diagram,edge_teeth=12):
                         delta=(int(target[-1])-int(q['key'][-1])+3)%6-3
                         if delta:
                             steps.append({'axis':[0,0,1] if diagram else N,'pivot':[0,0,0],
-                                          'angle':delta*pi/3*angle_scale,'space':'local'})
+                                          'angle':delta*pi/3*5,'space':'local'})
                     paths[q['key']]=steps
                 data['operationTracks'][op['id']]=paths
             configs.append(data)
         bindings[kind]=configs
-    variant='-six-teeth' if edge_teeth==6 else ''
-    return {'schemaVersion':1,'id':definition['puzzleId']+variant+('-diagram-v1' if diagram else '-euclidean-v1'),
+    return {'schemaVersion':1,'id':definition['puzzleId']+('-diagram-v1' if diagram else '-euclidean-v1'),
             'kind':'articulated-port-diagram' if diagram else 'articulated-euclidean',
             'compatibleDefinitionDigest':definition['definitionDigest'],
             'requiredCapabilities':['triangle-meshes','rigid-transforms'],
-            'assets':assets,'componentsByDomain':bindings,'fidelity':'schematic-port-diagram' if diagram else 'gear-contact-mesh-prototype'}
+            'assets':assets,'componentsByDomain':bindings,'fidelity':'schematic-port-diagram' if diagram else 'supplied-low-poly-gear-cube'}
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--write',action='store_true');args=parser.parse_args()
     for name in ['gear','gear-extreme','gear-plain']:
         directory=ROOT/'packages'/name
-        # Frozen catalogs supply geometric placement frames, not runtime rules.
-        # Current abstract rules are generated by gear_module in the kernel.
-        definition=json.loads((directory/'definition.json').read_text())
-        documents={name+'-euclidean.json':realization(definition,False),
-                   name+'-port-diagram.json':realization(definition,True),
-                   name+'-six-teeth-euclidean.json':realization(definition,False,6),
-                   name+'-six-teeth-port-diagram.json':realization(definition,True,6)}
-        for filename,data in documents.items():
-            path=directory/filename
-            if args.write: path.write_text(json.dumps(data,separators=(',',':'),sort_keys=True)+'\n')
-            else:
-                actual=json.loads(path.read_text());expected=json.loads(json.dumps(data))
-                same=same_geometry(actual,expected) if 'componentsByDomain' in data else actual==expected
-                if not same: raise RuntimeError(f'{path.relative_to(ROOT)} is stale')
-        print(name+': '+definition['definitionDigest'])
+        definition=load_definition(name)
+        path=directory/(name+'-port-diagram.json')
+        store_realization(path, realization_templates(definition,True), args.write)
+        print(f'{path.relative_to(ROOT)}: six-phase diagram with 300-degree cog tracks')
 if __name__=='__main__': main()

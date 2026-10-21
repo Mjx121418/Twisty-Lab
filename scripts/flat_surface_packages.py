@@ -339,8 +339,8 @@ def main():
         digest = result['definition']['definitionDigest']
         realization['compatibleDefinitionDigest'] = digest
         manifest.update(definitionDigest=digest,topology=topology)
-        documents = {'relational.pzl.json':source,'relational-bindings.json':catalog,
-                     'relational-package.json':package,'flat-quotient.json':realization,'manifest.json':manifest}
+        documents = {'puzzle.pzl.json':source,'bindings.json':catalog,
+                     'package.json':package,'flat-quotient.json':realization,'manifest.json':manifest}
         folder = ROOT/'packages'/('flat-'+topology)
         if args.write:
             folder.mkdir(parents=True,exist_ok=True)

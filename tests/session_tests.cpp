@@ -110,10 +110,8 @@ void model(bool bandaged) {
   const std::string name = bandaged ? "bandaged" : "cube3";
   const auto source = bundle(bandaged).dump();
   Session session(source), previous(source);
-  const auto historical = Json::parse(read("packages/" + name + "/definition.json"));
   const auto initial = session.snapshot();
   check(initial.at("state") == previous.snapshot().at("state"), "Initial identities changed");
-  check(Json(session.definition()->digest) != historical.at("definitionDigest"), "New semantics reused old pin");
   check(Json::parse(session.definition_json()).at("kind") == "relational-definition",
         "Definition format missing");
   Session restored(session.definition_json());
@@ -150,15 +148,16 @@ void model(bool bandaged) {
                     }),
         "Self-loop event lost");
   for (const auto *kind : {"cube-euclidean", "cube-port-diagram", "cube-spherical"}) {
-    auto realization = Json::parse(read("packages/" + name + "/" + kind + ".json"));
+    const auto realization = Json::parse(read("packages/" + name + "/" + kind + ".json"));
+    auto wrong_pin = realization;
+    wrong_pin["compatibleDefinitionDigest"] = std::string(64, '0');
     bool mismatch = false;
     try {
-      Geometry incompatible(session.execution(), realization.dump());
+      Geometry incompatible(session.execution(), wrong_pin.dump());
     } catch (const DiagnosticError &) {
       mismatch = true;
     }
-    check(mismatch, "Old realization pin was silently rebound");
-    realization["compatibleDefinitionDigest"] = session.definition()->digest;
+    check(mismatch, "Mismatched realization pin was silently rebound");
     Geometry geometry(session.execution(), realization.dump());
     if (bandaged && std::string(kind) == "cube-euclidean")
       elongated_bandage(session, geometry);
@@ -286,9 +285,8 @@ void alternative() {
 void retired_formats() {
   check(kernel_info().at("apiVersion") == 4 && kernel_info().at("sessionSchemaVersions") == Json::array({2}),
         "Runtime still advertises retired APIs");
-  for (const auto &path : {"packages/cube3/source.json", "packages/cube3/definition.json",
-                           "packages/helicopter/definition.json", "packages/gear/source.json"}) {
-    const auto result = compile_execution_json(read(path));
+  for (const auto *kind : {"cube-prototypes", "gear-cube-prototypes", "finite-definition"}) {
+    const auto result = compile_execution_json(Json{{"kind", kind}, {"schemaVersion", 1}}.dump());
     check(result.at("status") == "Invalid" &&
               result.at("diagnostics")[0].at("reasonCode") == "definition.unsupported",
           "Retired source silently entered a compatibility executor");

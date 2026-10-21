@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate portable Gear language modules and rebind unchanged realizations."""
+"""Generate portable Gear language modules from the current authoring factory."""
 import argparse
 import json
 from pathlib import Path
@@ -16,7 +16,7 @@ def main():
     native = ROOT / 'build/native'
     for name in ['gear', 'gear-extreme', 'gear-plain']:
         directory = ROOT / 'packages' / name
-        wrapper = json.loads((directory / 'relational-source.json').read_text())
+        wrapper = json.loads((directory / 'source.json').read_text())
         with tempfile.TemporaryDirectory(prefix='twisty-gear-') as temporary:
             path = Path(temporary) / 'source.json'
             path.write_text(json.dumps(wrapper))
@@ -25,23 +25,17 @@ def main():
             if compiled['status'] != 'Compiled':
                 raise SystemExit(compiled)
         digest = compiled['definition']['definitionDigest']
-        documents = {'relational-source.json': wrapper, 'relational.pzl.json': module['source'],
-                     'relational-bindings.json': module['catalog'],
-                     'relational-package.json': dict(kind='relational-package', formatVersion=1, **module),
-                     'relational-manifest.json': dict(puzzleId=wrapper['puzzleId'], definitionDigest=digest)}
-        for path in sorted(directory.glob(name + '-*.json')):
-            model = json.loads(path.read_text())
-            if not model.get('kind', '').startswith('articulated-'):
-                continue
-            model['compatibleDefinitionDigest'] = digest
-            documents['relational-' + path.name] = model
+        documents = {'source.json': wrapper, 'puzzle.pzl.json': module['source'],
+                     'bindings.json': module['catalog'],
+                     'package.json': dict(kind='relational-package', formatVersion=1, **module),
+                     'manifest.json': dict(puzzleId=wrapper['puzzleId'], definitionDigest=digest)}
         for filename, content in documents.items():
             path = directory / filename
             if args.write:
                 path.write_text(json.dumps(content, separators=(',', ':'), sort_keys=True) + '\n')
             elif not path.exists() or json.loads(path.read_text()) != content:
                 raise SystemExit(f'{path.relative_to(ROOT)} is stale; review before regenerating.')
-        print(f'{name}: relational factory, source, bindings and unchanged realization tracks agree')
+        print(f'{name}: current factory, source, bindings and semantic pin agree')
 
 
 if __name__ == '__main__':

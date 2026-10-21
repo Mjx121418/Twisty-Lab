@@ -1,50 +1,46 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { MainModule } from '../../kernel/index';
-import cubeSource from '../../packages/cube3/relational-package.json?raw';
-import bandageSource from '../../packages/bandaged/relational-package.json?raw';
-import cubeRealization from '../../packages/cube3/relational-cube-euclidean.json';
-import cubeDiagram from '../../packages/cube3/relational-cube-port-diagram.json';
-import cubeSphere from '../../packages/cube3/relational-cube-spherical.json';
-import bandageRealization from '../../packages/bandaged/relational-cube-euclidean.json';
-import bandageDiagram from '../../packages/bandaged/relational-cube-port-diagram.json';
-import bandageSphere from '../../packages/bandaged/relational-cube-spherical.json';
-import helicopterSource from '../../packages/helicopter/relational-package.json?raw';
-import helicopterRealization from '../../packages/helicopter/relational-helicopter-euclidean.json';
-import helicopterDiagram from '../../packages/helicopter/relational-helicopter-port-diagram.json';
-import helicopterSphere from '../../packages/helicopter/relational-helicopter-spherical.json';
-import baguaSource from '../../packages/bagua/relational-package.json?raw';
-import baguaRealization from '../../packages/bagua/relational-bagua-euclidean.json';
-import baguaDiagram from '../../packages/bagua/relational-bagua-port-diagram.json';
-import baguaSphere from '../../packages/bagua/relational-bagua-spherical.json';
-import gearSource from '../../packages/gear/relational-source.json?raw';
-import gearExtremeSource from '../../packages/gear-extreme/relational-source.json?raw';
-import gearPlainSource from '../../packages/gear-plain/relational-source.json?raw';
-import gearEuclideanText from '../../packages/gear/relational-gear-euclidean.json?raw';
-import gearDiagramText from '../../packages/gear/relational-gear-port-diagram.json?raw';
-import gearSixEuclideanText from '../../packages/gear/relational-gear-six-teeth-euclidean.json?raw';
-import gearSixDiagramText from '../../packages/gear/relational-gear-six-teeth-port-diagram.json?raw';
-import gearNormalText from '../../packages/gear/relational-gear-normal-euclidean.json?raw';
-import gearSuppliedText from '../../packages/gear/relational-gear-supplied-euclidean.json?raw';
-import gearSphericalText from '../../packages/gear/relational-gear-spherical.json?raw';
-import gearManifest from '../../packages/gear/relational-manifest.json';
-import gearExtremeManifest from '../../packages/gear-extreme/relational-manifest.json';
-import gearPlainManifest from '../../packages/gear-plain/relational-manifest.json';
+import cubeSource from '../../packages/cube3/package.json?raw';
+import bandageSource from '../../packages/bandaged/package.json?raw';
+import cubeRealization from '../../packages/cube3/cube-euclidean.json';
+import cubeDiagram from '../../packages/cube3/cube-port-diagram.json';
+import cubeSphere from '../../packages/cube3/cube-spherical.json';
+import bandageRealization from '../../packages/bandaged/cube-euclidean.json';
+import bandageDiagram from '../../packages/bandaged/cube-port-diagram.json';
+import bandageSphere from '../../packages/bandaged/cube-spherical.json';
+import helicopterSource from '../../packages/helicopter/package.json?raw';
+import helicopterRealization from '../../packages/helicopter/helicopter-euclidean.json';
+import helicopterDiagram from '../../packages/helicopter/helicopter-port-diagram.json';
+import helicopterSphere from '../../packages/helicopter/helicopter-spherical.json';
+import baguaSource from '../../packages/bagua/package.json?raw';
+import baguaRealization from '../../packages/bagua/bagua-euclidean.json';
+import baguaDiagram from '../../packages/bagua/bagua-port-diagram.json';
+import baguaSphere from '../../packages/bagua/bagua-spherical.json';
+import gearSource from '../../packages/gear/source.json?raw';
+import gearExtremeSource from '../../packages/gear-extreme/source.json?raw';
+import gearPlainSource from '../../packages/gear-plain/source.json?raw';
+import gearDiagramText from '../../packages/gear/gear-port-diagram.json?raw';
+import gearNormalText from '../../packages/gear/gear-normal-euclidean.json?raw';
+import gearSuppliedText from '../../packages/gear-extreme/gear-extreme-supplied-euclidean.json?raw';
+import gearSphericalText from '../../packages/gear/gear-spherical.json?raw';
+import gearManifest from '../../packages/gear/manifest.json';
+import gearExtremeManifest from '../../packages/gear-extreme/manifest.json';
+import gearPlainManifest from '../../packages/gear-plain/manifest.json';
 import { KernelSession, loadRuntime, type Realization, type Result, type Snapshot, type Transition } from './kernel';
 import { RenderView } from './renderer';
 import { SurfaceView } from './surfaceRenderer';
-import torusSource from '../../packages/flat-torus/relational-package.json?raw';
+import torusSource from '../../packages/flat-torus/package.json?raw';
 import torusRealization from '../../packages/flat-torus/flat-quotient.json';
-import kleinSource from '../../packages/flat-klein-bottle/relational-package.json?raw';
+import kleinSource from '../../packages/flat-klein-bottle/package.json?raw';
 import kleinRealization from '../../packages/flat-klein-bottle/flat-quotient.json';
-import hexTorusSource from '../../packages/flat-hex-torus/relational-package.json?raw';
+import hexTorusSource from '../../packages/flat-hex-torus/package.json?raw';
 import hexTorusRealization from '../../packages/flat-hex-torus/flat-quotient.json';
-import hexKleinSource from '../../packages/flat-hex-klein-bottle/relational-package.json?raw';
+import hexKleinSource from '../../packages/flat-hex-klein-bottle/package.json?raw';
 import hexKleinRealization from '../../packages/flat-hex-klein-bottle/flat-quotient.json';
 import { pieceDestinations, type PieceDestination } from './destinations';
 import { defaultViews, moveView, restoreViews, viewLabels, type ViewId, type ViewSelection } from './viewSelection';
 
-type GearModel = 'supplied' | '12' | '6';
-type Preset = { id: string; label: string; source: string; realizations: Realization[]; spherical?: Realization; surface?: boolean; gearModels?: Record<GearModel, Realization[]> };
+type Preset = { id: string; label: string; source: string; realizations: Realization[]; spherical?: Realization; surface?: boolean };
 type PuzzleView = RenderView | SurfaceView;
 type ViewDefinition = { id: ViewId; realization: Realization; surfaceMode?: 'square' | 'tiles' };
 type MountedView = { view: PuzzleView; realizationId: string; generation: number; cameras: Map<ViewId, unknown> };
@@ -52,20 +48,15 @@ function surfacePreset(id: string, label: string, source: string, realization: u
   const model = realization as Realization;
   return { id, label, source, surface: true, realizations: ['square', 'tiles'].map((mode) => ({ ...model, id: `${model.id}-${mode}` })) };
 }
-const gearEuclidean = JSON.parse(gearEuclideanText) as Realization;
 const gearDiagram = JSON.parse(gearDiagramText) as Realization;
-const gearSixEuclidean = JSON.parse(gearSixEuclideanText) as Realization;
-const gearSixDiagram = JSON.parse(gearSixDiagramText) as Realization;
 const gearNormal = JSON.parse(gearNormalText) as Realization;
 const gearSupplied = JSON.parse(gearSuppliedText) as Realization;
 const gearSpherical = JSON.parse(gearSphericalText) as Realization;
 function gearPreset(id: string, label: string, source: string, digest: string): Preset {
-  const models = (templates: Realization[], variant = '') => templates.map((template) =>
-    ({ ...template, id: `${id}${variant}-${template.kind}-v1`, compatibleDefinitionDigest: digest }));
-  const gearModels = { 'supplied': models([gearSupplied, gearSixDiagram], '-supplied'), '12': models([gearEuclidean, gearDiagram]), '6': models([gearSixEuclidean, gearSixDiagram], '-six-teeth') };
+  const cube = id === 'gear' ? gearNormal : { ...gearSupplied, id: `${id}-supplied-articulated-euclidean-v1`, compatibleDefinitionDigest: digest };
+  const diagram = { ...gearDiagram, id: `${id}-diagram-v1`, compatibleDefinitionDigest: digest };
   const spherical = { ...gearSpherical, id: `${id}-spherical-v1`, compatibleDefinitionDigest: digest };
-  if (id === 'gear') return { id, label, source, realizations: [gearNormal, gearModels['6'][1]], spherical };
-  return { id, label, source, realizations: gearModels['supplied'], gearModels, spherical };
+  return { id, label, source, realizations: [cube, diagram], spherical };
 }
 const gearEdges = ['UF', 'UR', 'UB', 'UL', 'DF', 'DR', 'DB', 'DL', 'FR', 'FL', 'BR', 'BL'];
 const presets = [
@@ -83,12 +74,12 @@ const presets = [
 ] as unknown as Preset[];
 type Inspector = 'pieces' | 'history' | 'definition';
 
-function availableViews(preset: Preset, gearModel: GearModel = 'supplied'): ViewDefinition[] {
+function availableViews(preset: Preset): ViewDefinition[] {
   if (preset.surface) return [
     { id: 'fundamental-domain', realization: preset.realizations[0], surfaceMode: 'square' },
     { id: 'tiled-plane', realization: preset.realizations[1], surfaceMode: 'tiles' },
   ];
-  const [cube, diagram] = preset.gearModels?.[gearModel] ?? preset.realizations;
+  const [cube, diagram] = preset.realizations;
   return [{ id: 'cube', realization: cube }, ...(preset.spherical ? [{ id: 'sphere' as const, realization: preset.spherical }] : []),
     { id: 'diagram', realization: diagram }];
 }
@@ -106,7 +97,6 @@ export function App() {
   const [sourceId, setSourceId] = useState('cube3');
   const [customGear, setCustomGear] = useState<Preset>();
   const [viewSelection, setViewSelection] = useState<ViewSelection>(() => defaultViews(['cube', 'sphere', 'diagram']));
-  const [gearModel, setGearModel] = useState<GearModel>('supplied');
   const [inspector, setInspector] = useState<Inspector>('pieces');
   const [algorithm, setAlgorithm] = useState("R U R' U'");
   const [policy, setPolicy] = useState('interactive');
@@ -140,7 +130,7 @@ export function App() {
   speedRef.current = duration;
   const availablePresets = customGear ? [...presets, customGear] : presets;
   const activePreset = availablePresets.find((item) => item.realizations[0].compatibleDefinitionDigest === snapshot?.definitionDigest);
-  const viewDefinitions = useMemo(() => activePreset ? availableViews(activePreset, gearModel) : [], [activePreset, gearModel]);
+  const viewDefinitions = useMemo(() => activePreset ? availableViews(activePreset) : [], [activePreset]);
   const orderedViews = viewSelection.order.flatMap(id => viewDefinitions.filter(view => view.id === id));
   const displayedViews = orderedViews.filter(view => viewSelection.visible.includes(view.id));
   const rhombus = activePreset?.realizations[0].flatSurface?.chart === 'rhombus-60';
@@ -359,9 +349,8 @@ export function App() {
     if (result.status !== 'Loaded') { setEvidence(result); return; }
     setSnapshot(kernel.current.snapshot()); setVisualDigest(kernel.current.snapshot().stateDigest); setEvidence(undefined);
     for (const view of views.current) view.setState(kernel.current.stateText());
-    const presentation = JSON.parse(text).presentation as { gearModel?: GearModel; cameras?: unknown[] } | undefined;
+    const presentation = JSON.parse(text).presentation as { cameras?: unknown[] } | undefined;
     if (!presentation) return;
-    const model = presentation?.gearModel === 'supplied' || presentation?.gearModel === '6' || presentation?.gearModel === '12' ? presentation.gearModel : gearModel;
     const restored = restoreViews(presentation, viewDefinitions.map(view => view.id));
     if (Array.isArray(presentation?.cameras)) {
       pendingCameras.current = new Map(restored.cameraOrder.flatMap((id, index) => {
@@ -369,7 +358,7 @@ export function App() {
         return id && camera != null ? [[id, camera] as const] : [];
       }));
     }
-    setViewSelection(restored.selection); setGearModel(model);
+    setViewSelection(restored.selection);
   }
 
   function saveSession(): void {
@@ -377,7 +366,6 @@ export function App() {
     const order = orderedViews.map(view => view.id);
     download(`${snapshot.puzzleId}-session.json`, kernel.current.save({
       viewOrder: order, visibleViews: order.filter(id => viewSelection.visible.includes(id)),
-      ...(activePreset?.gearModels ? { gearModel } : {}),
       cameras: order.map(id => mountedViews.current.get(id)?.view.cameraState() ?? cameraCache.current.get(id) ?? null),
     }));
   }
@@ -418,9 +406,6 @@ export function App() {
               {sourceId === 'imported' && <option value="imported">Imported definition</option>}
             </select></div>
             <div className="view-options">
-              {activePreset?.gearModels && <label className="realization-choice"><span className="eyebrow">EDGE MODEL</span><select aria-label="Gear edge model" value={gearModel} disabled={busy} onChange={(event) => {
-                setGearModel(event.target.value as GearModel);
-              }}><option value="supplied">Supplied model · 6 teeth · 300° spin</option><option value="12">12 teeth · 60° spin</option><option value="6">6 teeth · 300° spin</option></select></label>}
               {activePreset && <details ref={viewPicker} className="view-picker">
                 <summary>Views <span>{displayedViews.length} shown</span></summary>
                 <fieldset disabled={busy}>

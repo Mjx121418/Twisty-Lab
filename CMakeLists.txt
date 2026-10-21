@@ -139,8 +139,6 @@ else()
     add_test(NAME language_source_oracle
       COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/language_oracle.py
       $<TARGET_FILE:twisty_language> ${CMAKE_SOURCE_DIR}/examples/language/coupled.pzl.json)
-    add_test(NAME gear_spherical_candidate_audit
-      COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/gear_spherical_audit.py)
     add_executable(geometry_probe tests/geometry_probe.cpp)
     target_link_libraries(geometry_probe PRIVATE puzzle_session puzzle_geometry)
     add_test(NAME portable_fixtures COMMAND twisty verify-fixtures --json)

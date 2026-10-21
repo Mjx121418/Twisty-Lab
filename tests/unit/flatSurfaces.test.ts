@@ -8,7 +8,7 @@ import { cameraWindowPolygon, surfaceImageOrigin, surfaceImages, surfaceBounds, 
 it.each(['torus','klein-bottle','hex-torus','hex-klein-bottle'])('keeps %s geometry intrinsic and reverses only reflected displayed images', async(name)=>{
   const hex=name.startsWith('hex-'),topology=hex?name.slice(4):name;
   const module=await createKernel(),folder=`packages/flat-${name}/`;
-  const session=new KernelSession(module,readFileSync(folder+'relational-package.json','utf8'));
+  const session=new KernelSession(module,readFileSync(folder+'package.json','utf8'));
   const realization=JSON.parse(readFileSync(folder+'flat-quotient.json','utf8'));
   const ajv=new Ajv({strict:false});
   expect(ajv.compile(JSON.parse(readFileSync('schemas/realization.schema.json','utf8')))(realization)).toBe(true);

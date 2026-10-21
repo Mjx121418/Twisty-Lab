@@ -1,17 +1,4 @@
 {
-  "schemaVersion": 1,
-  "status": "experimental",
-  "definitionDigest": "9e9c2c32a01e8aa431723e69df35e59f43e5778f3b377ce3e965d555b5c2a1e6",
-  "pieceCounts": {
-    "corner": 8,
-    "center": 6,
-    "triangle-center": 24,
-    "triangle-edge": 24,
-    "sliver": 24,
-    "kite-left": 24,
-    "kite-right": 24,
-    "edge": 12
-  },
   "pairCycle": {
     "name": "Konrad LLL-B1",
     "notation": "[[U+ R2:U+],[R R+ L-:D2]]",
@@ -45,15 +32,6 @@
     "expectedEffect": "X sends the U-facing RU edge triangle to the U-facing RUB corner triangle region. Inverse X from solved creates two sliver protrusions at RD through R; X resolves that pair.",
     "basis": "Published directional transfer and sliver-pair configuration, checked by unshrunk surface regions rather than generated placement IDs. The inverse prefix is a model reproduction of the described setup."
   },
-  "geometryAudit": {
-    "layerDepth": 0.45,
-    "distinctLocations": 1946,
-    "guardComparisons": 66960,
-    "overlapPairs": 51876,
-    "basis": "Separate C++ supporting-plane and separating-axis implementation over unshrunk exported vertices; no imports from the Python authoring tool.",
-    "numericalTolerance": 1e-8,
-    "limits": "This floating-point audit cross-checks the exact authoring result; it does not certify physical tolerances or joint-state reachability."
-  },
   "legalAlgorithms": [
     {
       "name": "Konrad TP-B1 / Parkin W",
@@ -80,25 +58,5 @@
       "notation": "(F+ R F- R')9",
       "source": "https://dhushara.com/cubes/cubes.htm"
     }
-  ],
-  "blocking": {
-    "prefix": "U+ R F-",
-    "operation": "U+",
-    "reasonCode": "placement.blocked",
-    "implicatedPiece": "corner/07",
-    "basis": "Exact cut-crossing guard in the specified planar model; not a photographed manufactured-puzzle fixture."
-  },
-  "physicalBlockingEvidence": {
-    "source": "https://www.davidguo.idv.tw/Cube/BaGua.htm",
-    "sourceSection": "Step 1, circled blocked L-face photograph",
-    "image": "https://www.davidguo.idv.tw/Cube/images/Bagua/Step1_1.jpg",
-    "observation": "The author identifies L as blocked in the circled physical configuration.",
-    "status": "not-replayable",
-    "limits": "The source supplies neither a scramble history nor a complete labeled assignment. This photograph is evidence of physical blocking, not an exact state fixture or a verification of our existing blocking prefix."
-  },
-  "limits": [
-    "No independent whole-model human review yet.",
-    "Finite single-piece catalog closure does not enumerate the reachable joint-state graph.",
-    "Ideal planar solids omit springs, rounding, friction and hardware."
   ]
 }

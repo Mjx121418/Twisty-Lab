@@ -41,7 +41,7 @@ try {
     assert.equal(puzzle.query({ op: 'plan', state: [0, 2, 4], request: 'fixed', choices: [] }).status, 'Invalid');
   } finally { puzzle.dispose(); }
   for (const name of ['cube3', 'bandaged', 'helicopter', 'gear', 'gear-extreme', 'gear-plain', 'bagua']) {
-    const path = join(root, 'packages', name, 'relational-package.json');
+    const path = join(root, 'packages', name, 'package.json');
     const text = await readFile(path, 'utf8');
     const session = new KernelSession(module, text);
     const restored = new KernelSession(module, session);
@@ -70,8 +70,8 @@ try {
       assert.deepEqual(restored.snapshot(), before);
       restored.dispose();
       restoredDisposed = true;
-      for (const path of ['definition.json', ...(name.startsWith('gear') || name === 'cube3' || name === 'bandaged' ? ['source.json'] : [])]) {
-        const rejected = JSON.parse(module.compileExecutionJSON(await readFile(join(root, 'packages', name, path), 'utf8')));
+      for (const kind of ['finite-definition', 'cube-prototypes', 'gear-cube-prototypes']) {
+        const rejected = JSON.parse(module.compileExecutionJSON(JSON.stringify({ kind, schemaVersion: 1 })));
         assert.equal(rejected.status, 'Invalid');
         assert.equal(rejected.diagnostics[0].reasonCode, 'definition.unsupported');
       }

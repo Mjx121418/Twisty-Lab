@@ -45,7 +45,6 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) 324px; gap: 24px; pa
 .workspace-toolbar select { background: transparent; padding: 5px 26px 5px 0; font-size: 20px; font-weight: 600; border: 0; margin-top: 4px; letter-spacing: -.5px; }
 .workspace-toolbar select option { background: #1b252d; }
 .view-options { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 12px; }
-.workspace-toolbar .realization-choice select { font-size: 12px; letter-spacing: 0; font-weight: 500; padding: 5px 20px 5px 0; }
 .view-picker { position: relative; font-size: 12px; }
 .view-picker summary { cursor: pointer; padding: 9px 12px; border: 1px solid #577d77; border-radius: 7px; background: #1b2c31; color: #d2ebe3; }
 .view-picker summary span { margin-left: 12px; color: #9bb4b7; font-size: 11px; }

@@ -1,1 +1,1 @@
-{"gearedEdges":["UF","UR","UB","UL","DF","DR","DB","DL","FR","FL","BR","BL"],"kind":"gear-cube-prototypes","puzzleId":"gear-experimental-v1","schemaVersion":1,"semanticsVersion":"2.0.2"}
+{"formatVersion":1,"gearedEdges":["UF","UR","UB","UL","DF","DR","DB","DL","FR","FL","BR","BL"],"kind":"relational-gear-prototypes","puzzleId":"gear-experimental-v1"}

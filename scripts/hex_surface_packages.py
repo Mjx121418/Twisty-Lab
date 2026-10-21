@@ -259,8 +259,8 @@ def main():
         folder = ROOT/'packages'/('flat-hex-'+topology)
         if args.write:
             folder.mkdir(parents=True, exist_ok=True)
-        for name, document in {'relational.pzl.json':source, 'relational-bindings.json':catalog,
-                               'relational-package.json':package, 'flat-quotient.json':realization, 'manifest.json':manifest}.items():
+        for name, document in {'puzzle.pzl.json':source, 'bindings.json':catalog,
+                               'package.json':package, 'flat-quotient.json':realization, 'manifest.json':manifest}.items():
             path = folder/name
             if args.write:
                 path.write_text(json.dumps(document, indent=2, sort_keys=True)+'\n')

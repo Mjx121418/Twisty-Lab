@@ -124,27 +124,27 @@ def main():
     document = model.definition()
     source, catalog = module(document)
     package = dict(kind='relational-package', formatVersion=1, source=source, catalog=catalog)
-    documents = {'relational.pzl.json': source, 'relational-bindings.json': catalog,
-                 'relational-package.json': package}
+    documents = {'puzzle.pzl.json': source, 'bindings.json': catalog,
+                 'package.json': package}
     directory = ROOT / 'packages/helicopter'
     if not args.write_source:
         with tempfile.TemporaryDirectory(prefix='twisty-helicopter-') as temporary:
             for name, content in documents.items():
                 (Path(temporary) / name).write_text(json.dumps(content, sort_keys=True))
-            path = Path(temporary) / 'relational-package.json'
+            path = Path(temporary) / 'package.json'
             result = json.loads(subprocess.check_output([str(ROOT / 'build/native/twisty'), 'compile',
                                 '--definition', str(path), '--json'], text=True))
             assert result['status'] == 'Compiled', result
         geometry_catalog = {**document, 'definitionDigest': result['definition']['definitionDigest']}
         for filename, realization in model.realizations(geometry_catalog).items():
             realization['modelByDomain'] = {'center': 'center', 'corner': 'corner', 'mechanism': 'edge'}
-            documents['relational-' + filename] = realization
+            documents[filename] = realization
     for name, content in documents.items():
         path = directory / name
         if args.write or args.write_source:
             # Keep the runtime bundle below the existing 4 MiB import ceiling;
             # the separate AST and binding files remain readable for review.
-            options = dict(separators=(',', ':')) if name == 'relational-package.json' else dict(indent=2)
+            options = dict(separators=(',', ':')) if name == 'package.json' else dict(indent=2)
             path.write_text(json.dumps(content, sort_keys=True, **options) + '\n')
         elif not path.exists() or json.loads(path.read_text()) != content:
             raise SystemExit(f'Helicopter {name} is stale; review before regenerating.')

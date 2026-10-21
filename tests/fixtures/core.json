@@ -4,7 +4,7 @@
   "cases": [
     {
       "name": "cube U is legal",
-      "source": "packages/cube3/relational-package.json",
+      "source": "packages/cube3/package.json",
       "prefix": "",
       "operation": "U",
       "expectedStatus": "Committed",
@@ -12,7 +12,7 @@
     },
     {
       "name": "unchanged center participates",
-      "source": "packages/cube3/relational-package.json",
+      "source": "packages/cube3/package.json",
       "prefix": "",
       "operation": "U",
       "expectedStatus": "Committed",
@@ -21,7 +21,7 @@
     },
     {
       "name": "bandaged R is blocked",
-      "source": "packages/bandaged/relational-package.json",
+      "source": "packages/bandaged/package.json",
       "prefix": "",
       "operation": "R",
       "expectedStatus": "Blocked",
@@ -31,7 +31,7 @@
     },
     {
       "name": "bandaged U is legal",
-      "source": "packages/bandaged/relational-package.json",
+      "source": "packages/bandaged/package.json",
       "prefix": "",
       "operation": "U",
       "expectedStatus": "Committed",
@@ -39,7 +39,7 @@
     },
     {
       "name": "bandaged F is legal",
-      "source": "packages/bandaged/relational-package.json",
+      "source": "packages/bandaged/package.json",
       "prefix": "",
       "operation": "F",
       "expectedStatus": "Committed",
@@ -47,7 +47,7 @@
     },
     {
       "name": "R becomes legal after U",
-      "source": "packages/bandaged/relational-package.json",
+      "source": "packages/bandaged/package.json",
       "prefix": "U",
       "operation": "R",
       "expectedStatus": "Committed",
@@ -55,7 +55,7 @@
     },
     {
       "name": "inverse restores blocking",
-      "source": "packages/bandaged/relational-package.json",
+      "source": "packages/bandaged/package.json",
       "prefix": "U U'",
       "operation": "R",
       "expectedStatus": "Blocked",
@@ -63,7 +63,7 @@
       "definitionDigest": "a4bef1c5be7617a25acbadc635eb7c8fe60d4f417e424c4141f70777f59ac0d2"
     },
     {
-      "source": "packages/helicopter/relational-package.json",
+      "source": "packages/helicopter/package.json",
       "definitionDigest": "4ac6e4678e4301c9cba54bc1551f60230cc29e42c399e5b9f35d2f61a7e5bee6",
       "name": "Helicopter jumble stop is legal",
       "prefix": "",
@@ -71,7 +71,7 @@
       "expectedStatus": "Committed"
     },
     {
-      "source": "packages/helicopter/relational-package.json",
+      "source": "packages/helicopter/package.json",
       "definitionDigest": "4ac6e4678e4301c9cba54bc1551f60230cc29e42c399e5b9f35d2f61a7e5bee6",
       "name": "Helicopter stop guard rejects wrong source",
       "prefix": "UF_ab",
@@ -86,7 +86,7 @@
       ]
     },
     {
-      "source": "packages/helicopter/relational-package.json",
+      "source": "packages/helicopter/package.json",
       "definitionDigest": "4ac6e4678e4301c9cba54bc1551f60230cc29e42c399e5b9f35d2f61a7e5bee6",
       "name": "Helicopter face piece blocks a cut",
       "prefix": "UF_ab",
@@ -96,7 +96,7 @@
       "implicatedPiece": "center/Ufl"
     },
     {
-      "source": "packages/helicopter/relational-package.json",
+      "source": "packages/helicopter/package.json",
       "definitionDigest": "4ac6e4678e4301c9cba54bc1551f60230cc29e42c399e5b9f35d2f61a7e5bee6",
       "name": "Helicopter second jumble stop is legal",
       "prefix": "UF_ab",
@@ -108,7 +108,7 @@
       "prefix": "",
       "operation": "U+",
       "expectedStatus": "Committed",
-      "source": "packages/bagua/relational-package.json",
+      "source": "packages/bagua/package.json",
       "definitionDigest": "d0d13c3bef8512630ae95255d8a7338d8b8699f63e860af50b343c146c5c952a"
     },
     {
@@ -116,7 +116,7 @@
       "prefix": "U+",
       "operation": "R",
       "expectedStatus": "Committed",
-      "source": "packages/bagua/relational-package.json",
+      "source": "packages/bagua/package.json",
       "definitionDigest": "d0d13c3bef8512630ae95255d8a7338d8b8699f63e860af50b343c146c5c952a"
     },
     {
@@ -124,7 +124,7 @@
       "prefix": "((R2 U+ R2 U-)7)'",
       "operation": "R_half",
       "expectedStatus": "Committed",
-      "source": "packages/bagua/relational-package.json",
+      "source": "packages/bagua/package.json",
       "definitionDigest": "d0d13c3bef8512630ae95255d8a7338d8b8699f63e860af50b343c146c5c952a",
       "reference": "https://spencerparkin.github.io/twisty-puzzle-solutions/puzzle_bagua.html",
       "basis": "Inverse X is a model reproduction of the author's RD sliver-pair setup; X starts with R2."
@@ -136,12 +136,12 @@
       "expectedStatus": "Blocked",
       "reasonCode": "relation.rejected",
       "implicatedPiece": "corner/07",
-      "source": "packages/bagua/relational-package.json",
+      "source": "packages/bagua/package.json",
       "definitionDigest": "d0d13c3bef8512630ae95255d8a7338d8b8699f63e860af50b343c146c5c952a"
     },
     {
       "name": "gear R is committed",
-      "source": "packages/gear/relational-package.json",
+      "source": "packages/gear/package.json",
       "prefix": "",
       "operation": "R",
       "expectedStatus": "Committed",
@@ -149,7 +149,7 @@
     },
     {
       "name": "gear Rq is blocked",
-      "source": "packages/gear/relational-package.json",
+      "source": "packages/gear/package.json",
       "prefix": "",
       "operation": "Rq",
       "expectedStatus": "Blocked",
@@ -158,7 +158,7 @@
     },
     {
       "name": "gear-extreme Uq is committed",
-      "source": "packages/gear-extreme/relational-package.json",
+      "source": "packages/gear-extreme/package.json",
       "prefix": "",
       "operation": "Uq",
       "expectedStatus": "Committed",
@@ -166,7 +166,7 @@
     },
     {
       "name": "gear-extreme U is blocked",
-      "source": "packages/gear-extreme/relational-package.json",
+      "source": "packages/gear-extreme/package.json",
       "prefix": "",
       "operation": "U",
       "expectedStatus": "Blocked",

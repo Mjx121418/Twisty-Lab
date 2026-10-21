@@ -44,7 +44,7 @@ The C++ interpreter consumes separate realization documents. Polygonal stickers 
 
 ## Independent acceptance targets
 
-[`review.json`](../packages/bagua/review.json) records the historical semantic digest, piece counts, external sequences and their expected effects, an independent geometric audit, and a model-derived blocking fixture. It records experimental status and the remaining review scope. See the [verification record](bagua-verification.md) for the evidence and reproducible checks.
+Published algorithms and their expected effects are recorded in `tests/fixtures/bagua-algorithms.json`, including source references and notation mappings. See the [verification record](bagua-verification.md) for the historical geometric audit, model-derived blocking fixture and remaining review scope. The retired core definition and its review pin have been removed.
 
 The strongest external fixture is Konrad's [LLL-B1 pair cycle](https://sites.google.com/site/easytutorial3x3x3/bagua):
 

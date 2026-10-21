@@ -27,7 +27,7 @@ test('animates coupled gears in synchronized views with shared selection and his
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
   await page.getByRole('button', { name: 'Move R', exact: true }).click();
   await resting(page);
-  const native = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/gear/relational-source.json', '--algorithm', 'R', '--json'], { encoding: 'utf8' }));
+  const native = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/gear/source.json', '--algorithm', 'R', '--json'], { encoding: 'utf8' }));
   await expect(page.getByTestId('state-digest')).toHaveText(native.snapshot.stateDigest);
   for (const id of ['cube-view', 'diagram-view']) await expect(page.getByTestId(id)).toHaveAttribute('data-selected-piece', 'edge/UF');
   await page.getByRole('button', { name: '↶ Undo' }).click(); await resting(page);
@@ -77,14 +77,14 @@ test('configures arbitrary edge masks and enables ordinary turns on the plain sl
   await resting(page);
   await expect(page.getByTestId('state-digest')).not.toHaveText(initial!);
   await page.getByLabel('Puzzle', { exact: true }).selectOption('gear-extreme');
-  await expect(page.getByLabel('Gear edge model')).toHaveValue('supplied');
+  await expect(page.getByLabel('Gear edge model')).toHaveCount(0);
   await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', 'gear-extreme-supplied-articulated-euclidean-v1');
   await expect(page.getByLabel('Gear edge FR')).not.toBeChecked();
   await expect(page.getByLabel('Gear edge UF')).toBeChecked();
   await page.screenshot({ path: 'test-results/gear-extreme-supplied.png', fullPage: true });
   await page.getByTestId('cube-view').click({ position: { x: 4, y: 4 } });
   await page.keyboard.press('u'); await resting(page);
-  const native = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/gear-extreme/relational-source.json', '--algorithm', 'Uq', '--json'], { encoding: 'utf8' }));
+  const native = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/gear-extreme/source.json', '--algorithm', 'Uq', '--json'], { encoding: 'utf8' }));
   await expect(page.getByTestId('state-digest')).toHaveText(native.snapshot.stateDigest);
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
@@ -101,7 +101,7 @@ test('allows all axes with only UF and UR geared and chooses coupling from curre
   }
   await page.getByRole('button', { name: 'Select edge/UF', exact: true }).click();
   const initial = await page.getByTestId('state-digest').textContent();
-  const source = JSON.parse(readFileSync('packages/gear/relational-source.json', 'utf8'));
+  const source = JSON.parse(readFileSync('packages/gear/source.json', 'utf8'));
   source.puzzleId = 'gear-custom-experimental-v1'; source.gearedEdges = ['UF', 'UR'];
   const sourcePath = testInfo.outputPath('uf-ur-source.json');
   writeFileSync(sourcePath, JSON.stringify(source));
@@ -137,9 +137,9 @@ test('allows all axes with only UF and UR geared and chooses coupling from curre
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
 
-test('uses the supplied rigid edge in custom masks and restores the supplied presentation', async ({ page }) => {
+test('uses the supplied rigid edge in custom masks and restores saved views and history', async ({ page }) => {
   await page.getByLabel('Gear edge UF').uncheck();
-  await expect(page.getByLabel('Gear edge model')).toHaveValue('supplied');
+  await expect(page.getByLabel('Gear edge model')).toHaveCount(0);
   await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', 'gear-custom-supplied-articulated-euclidean-v1');
   const initial = await page.getByTestId('state-digest').textContent();
   await page.getByRole('button', { name: 'Select edge/UF', exact: true }).click();
@@ -147,79 +147,37 @@ test('uses the supplied rigid edge in custom masks and restores the supplied pre
   await expect(page.getByTestId('state-digest')).not.toHaveText(initial!);
   for (const id of ['cube-view', 'diagram-view'])
     await expect(page.getByTestId(id)).toHaveAttribute('data-selected-piece', 'edge/UF');
+  await setViews(page, 'sphere-diagram'); await resting(page);
   const downloading = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save session ↗' }).click();
   const saved = readFileSync((await (await downloading).path())!, 'utf8');
-  expect(JSON.parse(saved).presentation.gearModel).toBe('supplied');
-  await page.getByLabel('Gear edge model').selectOption('12'); await resting(page);
+  expect(JSON.parse(saved).presentation).not.toHaveProperty('gearModel');
+  await setViews(page, 'cube-diagram'); await resting(page);
   await page.getByLabel('Open session file').setInputFiles({ name: 'gear-supplied.json', mimeType: 'application/json', buffer: Buffer.from(saved) });
-  await expect(page.getByLabel('Gear edge model')).toHaveValue('supplied'); await resting(page);
+  await resting(page);
+  await expectViews(page, 'sphere-diagram');
+  await expect(page.getByLabel('Gear edge model')).toHaveCount(0);
   await page.getByRole('button', { name: '↶ Undo' }).click(); await resting(page);
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
 
-test('R and L spin the single UF gear identically in every edge model', async ({ page }) => {
+test('R and L spin the single UF gear identically', async ({ page }) => {
   await page.getByLabel('Puzzle', { exact: true }).selectOption('gear-plain');
   await page.getByLabel('Gear edge UF').check();
   await page.getByLabel('Animation speed').selectOption('0');
   await page.getByRole('button', { name: 'Select edge/UF', exact: true }).click();
   const initial = await page.getByTestId('state-digest').textContent();
-  for (const model of ['supplied', '12', '6']) {
-    await page.getByLabel('Gear edge model').selectOption(model); await resting(page);
-    await page.getByRole('button', { name: 'Move R', exact: true }).click(); await resting(page);
-    const expected = await page.getByTestId('state-digest').textContent();
-    await page.getByRole('button', { name: '↶ Undo' }).click(); await resting(page);
-    await expect(page.getByTestId('state-digest')).toHaveText(initial!);
-    await page.getByRole('button', { name: 'Move L', exact: true }).click(); await resting(page);
-    await expect(page.getByTestId('state-digest')).toHaveText(expected!);
-    for (const id of ['cube-view', 'diagram-view'])
-      await expect(page.getByTestId(id)).toHaveAttribute('data-selected-piece', 'edge/UF');
-    await page.getByRole('button', { name: '↶ Undo' }).click(); await resting(page);
-    await expect(page.getByTestId('state-digest')).toHaveText(initial!);
-  }
-  await expect(page.getByRole('alert')).toHaveCount(0);
-});
-
-test('switches edge models without resetting state and restores the saved model', async ({ page }) => {
-  // Normal Gear Cube uses the supplied model; legacy alternatives remain on Extreme.
-  await setViews(page, 'cube-diagram');
-  await page.getByLabel('Puzzle', { exact: true }).selectOption('gear-extreme');
-  const initial = await page.getByTestId('state-digest').textContent();
-  await page.getByRole('button', { name: 'Select edge/UF', exact: true }).click();
   await page.getByRole('button', { name: 'Move R', exact: true }).click(); await resting(page);
-  const turned = await page.getByTestId('state-digest').textContent();
-  await page.getByLabel('Gear edge model').selectOption('6');
-  for (const id of ['cube-view', 'diagram-view']) {
-    await expect(page.getByTestId(id)).toHaveAttribute('data-realization-id', /six-teeth/);
-    await expect(page.getByTestId(id)).toHaveAttribute('data-selected-piece', 'edge/UF');
-  }
-  await resting(page);
-  await expect(page.getByTestId('state-digest')).toHaveText(turned!);
-  await page.screenshot({ path: 'test-results/gear-six-teeth-R.png', fullPage: true });
-  const downloading = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Save session ↗' }).click();
-  const saved = readFileSync((await (await downloading).path())!, 'utf8');
-  expect(JSON.parse(saved).presentation.gearModel).toBe('6');
-  await page.getByLabel('Gear edge model').selectOption('12'); await resting(page);
-  const downloadingTwelve = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Save session ↗' }).click();
-  const twelve = JSON.parse(readFileSync((await (await downloadingTwelve).path())!, 'utf8'));
-  expect(twelve.presentation.cameras).toEqual(JSON.parse(saved).presentation.cameras);
-  await page.getByLabel('Open session file').setInputFiles({ name: 'gear-six.json', mimeType: 'application/json', buffer: Buffer.from(saved) });
-  await expect(page.getByLabel('Gear edge model')).toHaveValue('6');
-  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', /six-teeth/);
-  await resting(page);
-  await expect(page.getByTestId('state-digest')).toHaveText(turned!);
+  const expected = await page.getByTestId('state-digest').textContent();
   await page.getByRole('button', { name: '↶ Undo' }).click(); await resting(page);
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
-  await page.getByLabel('Gear edge model').selectOption('12'); await resting(page);
-  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', 'gear-extreme-articulated-euclidean-v1');
-  await page.getByLabel('Gear edge model').selectOption('6');
-  await page.getByLabel('Gear edge UF').uncheck();
-  await expect(page.getByLabel('Puzzle', { exact: true })).toHaveValue('gear-custom');
-  await expect(page.getByLabel('Gear edge model')).toHaveValue('6');
-  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', /six-teeth/);
+  await page.getByRole('button', { name: 'Move L', exact: true }).click(); await resting(page);
+  await expect(page.getByTestId('state-digest')).toHaveText(expected!);
+  for (const id of ['cube-view', 'diagram-view'])
+    await expect(page.getByTestId(id)).toHaveAttribute('data-selected-piece', 'edge/UF');
+  await page.getByRole('button', { name: '↶ Undo' }).click(); await resting(page);
+  await expect(page.getByTestId('state-digest')).toHaveText(initial!);
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
 

@@ -73,12 +73,9 @@ def main():
     meshes = json.loads((ROOT/'packages/gear/spherical-meshes.json').read_text())
     for name in ['gear', 'gear-extreme', 'gear-plain']:
         directory = ROOT/'packages'/name
-        result = realization(json.loads((directory/'definition.json').read_text()), meshes)
+        result = realization(gear.load_definition(name), meshes)
         path = directory/(name+'-spherical.json')
-        if args.write:
-            path.write_text(json.dumps(result, sort_keys=True, separators=(',', ':'))+'\n')
-        elif not gear.same_geometry(json.loads(path.read_text()), json.loads(json.dumps(result))):
-            raise RuntimeError(f'{path.relative_to(ROOT)} is stale; run scripts/gear_spherical.py --write')
+        gear.store_realization(path, result, args.write)
         count = result['modelProvenance']['symmetryMeshing']['prototypeTriangles']
         print(f'{path.relative_to(ROOT)}: {count} symmetry-meshed triangles and 300-degree cog tracks')
 

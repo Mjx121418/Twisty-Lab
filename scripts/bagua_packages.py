@@ -109,17 +109,17 @@ def main():
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(json.dumps(package, separators=(',', ':'), sort_keys=True) + '\n')
         return
-    documents = {'relational.pzl.json': source, 'relational-bindings.json': catalog, 'relational-package.json': package}
+    documents = {'puzzle.pzl.json': source, 'bindings.json': catalog, 'package.json': package}
     directory = ROOT / 'packages/bagua'
     if not args.write_source:
         with tempfile.TemporaryDirectory(prefix='twisty-bagua-') as temporary:
             for name, content in documents.items():
                 (Path(temporary) / name).write_text(json.dumps(content, separators=(',', ':'), sort_keys=True))
             result = json.loads(subprocess.check_output([str(ROOT / 'build/native/twisty'), 'validate', '--definition',
-                                str(Path(temporary) / 'relational-package.json'), '--json'], text=True))
+                                str(Path(temporary) / 'package.json'), '--json'], text=True))
             assert result['status'] == 'Valid', result
         for filename, realization in model.realizations(result['definitionDigest']).items():
-            documents['relational-' + filename] = realization
+            documents[filename] = realization
     for name, content in documents.items():
         path = directory / name
         if args.write or args.write_source:

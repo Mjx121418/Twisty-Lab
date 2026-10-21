@@ -21,8 +21,7 @@ PLAIN_MESHES = ROOT / 'packages/gear-extreme/plain-edge-meshes.json'
 def realization(definition, meshes, plain_meshes=None, *, symmetry_mesh=True):
     if meshes['schemaVersion'] != 1:
         raise ValueError('Unsupported normal Gear Cube mesh schema')
-    # Reuse exact placement/track authoring and replace the procedural assets.
-    result = gear.realization(definition, False, 6)
+    result = gear.realization_templates(definition)
     templates = {domain: {part['id']: part for part in parts}
                  for domain, parts in result['componentsByDomain'].items()}
     result['assets'] = copy.deepcopy(meshes['assets'])
@@ -87,16 +86,13 @@ def main():
     args = parser.parse_args()
     meshes = json.loads(MESHES.read_text())
     plain_meshes = json.loads(PLAIN_MESHES.read_text())
-    documents = [(DESTINATION, realization(json.loads((ROOT / 'packages/gear/definition.json').read_text()), meshes))]
-    for name in ['gear', 'gear-extreme', 'gear-plain']:
+    documents = [(DESTINATION, realization(gear.load_definition('gear'), meshes))]
+    for name in ['gear-extreme', 'gear-plain']:
         directory = ROOT / 'packages' / name
-        definition = json.loads((directory / 'definition.json').read_text())
+        definition = gear.load_definition(name)
         documents.append((directory / (name+'-supplied-euclidean.json'), realization(definition, meshes, plain_meshes)))
     for path, result in documents:
-        if args.write:
-            path.write_text(json.dumps(result, sort_keys=True, separators=(',', ':')) + '\n')
-        elif not gear.same_geometry(json.loads(path.read_text()), json.loads(json.dumps(result))):
-            raise RuntimeError(f'{path.relative_to(ROOT)} is stale; run scripts/gear_normal.py --write')
+        gear.store_realization(path, result, args.write)
         print(f'{path.relative_to(ROOT)}: supplied meshes and exact rotation tracks')
 
 

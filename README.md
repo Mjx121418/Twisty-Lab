@@ -20,7 +20,7 @@ An experimental Helicopter Cube preset adds exact jumbling stops, placement-depe
 
 The [Bagua Cube](docs/bagua-model.md) preset adds 146 pieces, exact 45° face turns, placement-dependent blocking, polygonal stickers and synchronized cube, [sphere](docs/spherical-bagua.md) and port-diagram views. It opens in **Cube + sphere**, retaining all existing pieces and ports. Its [verification record](docs/bagua-verification.md) covers published pair/kite cycles, sliver behavior and an independent audit of all cut guards and overlap pairs; whole-model human review and a reproducible physical blocked-state comparison remain open. Select **Bagua Cube**; `+` / `−` buttons turn 45°, while face keys turn 90°.
 
-The [Gear Cube family](docs/gear-model.md) uses the supplied low-poly meshes. Normal Gear Cube has 6 centers, 8 corners, 12 edge bases, 12 six-tooth pinions, and a fixed internal ball. Extreme and custom variants replace each unchecked edge with the supplied rigid [plain edge](packages/gear-extreme/plain-edge-meshes.json). Their default **Supplied model** shares the normal cube's remaining parts; the earlier model choices also use the new plain edge. A supplied spherical assembly provides corresponding geared and plain parts for every configuration, opening in **Cube + sphere** with trackball controls. The C++ interpreter animates carriers and the full 300° local pinion spin; Three.js draws its assets and frames. Euclidean, spherical, and diagram views share state, selection, and history. Continuous spherical gear contacts and coverage remain a [verification goal](docs/gear-spherical-feasibility.md).
+The [Gear Cube family](docs/gear-model.md) uses the supplied low-poly meshes. Normal Gear Cube has 6 centers, 8 corners, 12 edge bases, 12 six-tooth pinions, and a fixed internal ball. Extreme and custom variants replace each unchecked edge with the supplied rigid [plain edge](packages/gear-extreme/plain-edge-meshes.json) and share the normal cube's remaining parts. Each variant has one cubic model, one spherical model, and one phase diagram. A supplied spherical assembly provides corresponding geared and plain parts for every configuration, opening in **Cube + sphere** with trackball controls. The C++ interpreter animates carriers and the full 300° local pinion spin; Three.js draws its assets and frames. Euclidean, spherical, and diagram views share state, selection, and history. Continuous spherical gear contacts and coverage remain a [verification goal](docs/gear-spherical-feasibility.md).
 
 
 ## Run locally
@@ -72,13 +72,13 @@ The CLI links the core, compiler, and session without the geometry or renderer t
 
 ```sh
 npm run build:native
-build/native/twisty inspect --definition packages/cube3/relational-package.json --json
+build/native/twisty inspect --definition packages/cube3/package.json --json
 build/native/twisty run --algorithm "[R,U]" --policy transactional --json
 build/native/twisty scramble --seed 42 --length 25 --save build/session.json --json
 build/native/twisty replay --session build/session.json --json
 build/native/twisty verify-fixtures --json
-build/native/twisty compile --definition packages/cube3/relational-package.json --output build/definition.json
-build/native/twisty validate --definition packages/bandaged/relational-package.json
+build/native/twisty compile --definition packages/cube3/package.json --output build/definition.json
+build/native/twisty validate --definition packages/bandaged/package.json
 ```
 
 Commands are `compile`, `validate`, `inspect`, `run`, `scramble`, `replay`, and `verify-fixtures`. Use `--json` for compact machine-readable results and `--output FILE` to save an output document. `run` and `scramble` accept `--session FILE` to continue an existing session and `--save FILE` to persist the result. Commands return nonzero for blocked execution or invalid input.
@@ -100,14 +100,14 @@ The [puzzle language](docs/core-language.md) provides a domain-free C++ executor
 
 ## Authoring and data packages
 
-Every preset has a `relational.pzl.json` language AST, `relational-bindings.json` interpreter catalog, and `relational-package.json` containing both. Realization files pin that package's exact meaning; flat surfaces use `flat-quotient.json`. Gear also has a compact `relational-source.json` wrapper for its portable authoring factory and custom geared-edge masks.
+Every preset has a `puzzle.pzl.json` language AST, `bindings.json` interpreter catalog, and `package.json` containing both. Realization files pin that package's exact meaning; flat surfaces use `flat-quotient.json`. Gear also has a compact `source.json` wrapper for its portable authoring factory and custom geared-edge masks.
 
 The compiler expands authoring domains to one disjoint placement catalog. It compiles general permission relations and state/goal invariants into shared membership and count nodes. Completion profiles choose local movement tuples outside the abstract executor. The C++ authoring libraries provide cube, bandaged-cube, and Gear families; offline exact authoring generates Helicopter, Bagua and flat-surface tables. No geometry enters the abstract program. See [the relational language](docs/core-language.md) for the language and compact core data structures.
 
-Historical `source.json`, `definition.json`, and original realization pins remain as static authoring catalogs and archived review data. No legacy compiler or evaluator is built. These formats are excluded from the portable package and rejected by the production CLI. Gear's current coupling uses generic occupancy counts and relations to select ordinary versus coupled movement tuples; see [the Gear model](docs/gear-model.md) for geometry and winding.
+Retired schema-1 source/definition documents, duplicate realization copies, and their obsolete schemas have been removed. Geometry regeneration uses the current authoring factories and bindings directly. Every JSON file under `packages/` is declared in the build inventory; freshness checks reject unlisted files. Published Bagua algorithm fixtures live under `tests/fixtures/`. The old Gear mesh prototypes and historical spherical candidate audit have also been removed. Unsupported legacy kinds remain rejected by the production CLI. Gear's current coupling uses generic occupancy counts and relations to select ordinary versus coupled movement tuples; see [the Gear model](docs/gear-model.md) for geometry and winding.
 
 ```sh
-build/native/twisty run --definition packages/helicopter/relational-package.json \
+build/native/twisty run --definition packages/helicopter/package.json \
   --algorithm 'UF_ab UL_af' --policy transactional --json
 ```
 

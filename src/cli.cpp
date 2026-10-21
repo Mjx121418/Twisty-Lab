@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
       result = {{"status", all ? "Passed" : "Failed"}, {"cases", results}};
     } else {
       const auto source =
-          read(option("--definition", "packages/cube3/relational-package.json"), 16 * 1024 * 1024);
+          read(option("--definition", "packages/cube3/package.json"), 16 * 1024 * 1024);
       if (command == "compile")
         result = compile_execution_json(source);
       else {

@@ -104,8 +104,8 @@ The additional `helicopter-spherical.json` package uses `polyhedral-spherical`: 
 ```sh
 npm run build:native
 npm run check:packages
-build/native/twisty validate --definition packages/helicopter/relational-package.json --json
-build/native/twisty run --definition packages/helicopter/relational-package.json \
+build/native/twisty validate --definition packages/helicopter/package.json --json
+build/native/twisty run --definition packages/helicopter/package.json \
   --algorithm 'UF_ab UL_af' --policy transactional --json
 npm run check
 ```

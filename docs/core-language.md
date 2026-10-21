@@ -23,7 +23,7 @@ Distinct choices remain distinct even when their targets coincide. Every permitt
 
 ## JSON AST version 1
 
-The [complete example](../examples/language/coupled.pzl.json) covers synchronization, cyclic implications, alternatives, obstruction, fixed profiles, and different winding events. The [JSON schema](../schemas/relational-puzzle.schema.json) describes the structural contract; the C++ compiler additionally checks names, types, supports, recursion, and bounds.
+The [complete example](../examples/language/coupled.pzl.json) covers synchronization, cyclic implications, alternatives, obstruction, fixed profiles, and different winding events. The [JSON schema](../schemas/puzzle.schema.json) describes the structural contract; the C++ compiler additionally checks names, types, supports, recursion, and bounds.
 
 ```json
 {
@@ -97,8 +97,8 @@ Bandage blocking is an interaction clause: selecting a local face movement impli
 
 The generated artifacts are:
 
-- [Cube AST](../packages/cube3/relational.pzl.json) and [catalog bindings](../packages/cube3/relational-bindings.json).
-- [Bandage AST](../packages/bandaged/relational.pzl.json) and [catalog bindings](../packages/bandaged/relational-bindings.json).
+- [Cube AST](../packages/cube3/puzzle.pzl.json) and [catalog bindings](../packages/cube3/bindings.json).
+- [Bandage AST](../packages/bandaged/puzzle.pzl.json) and [catalog bindings](../packages/bandaged/bindings.json).
 
 The separate catalogs preserve piece names, local ports, port labels, abstract resource incidence, qualified placement names, inverse requests, and event names. They contain no coordinates, meshes, or rotation angles. These are the bindings needed for the later interpreter migration, rather than extra fields in the executing core.
 
@@ -202,13 +202,13 @@ The adapter accepts the parity-gated cube catalog and the uniform port catalog u
 
 ## Helicopter migration
 
-[The Helicopter AST](../packages/helicopter/relational.pzl.json) is authored offline by `scripts/helicopter_packages.py` from the same exact rational catalog as the original model. No legacy compiler or planner is called to generate its movement tables. The separate [port catalog](../packages/helicopter/relational-bindings.json) and compact `relational-package.json` load through the portable API without Python.
+[The Helicopter AST](../packages/helicopter/puzzle.pzl.json) is authored offline by `scripts/helicopter_packages.py` from the same exact rational catalog as the original model. No legacy compiler or planner is called to generate its movement tables. The separate [port catalog](../packages/helicopter/bindings.json) and compact `package.json` load through the portable API without Python.
 
 Its three authoring domains have 144 center, 240 corner, and 36 mechanism placements. All 44 identities survive, including twelve distinct mechanism pieces. Ordinary membership invariants restrict each mechanism to its own three axis phases. The compiler flattens the disjoint catalogs to 420 placements; domain names never enter the core. Shared lowering produces 8,847 predicate nodes, 53,061 child references, 276 sparse maps, and 7,920 action records. Occupancy and exclusion use shared location predicates and capacity counts. Each of 180 directed stop requests relates its three local choices and prohibits occupied unavailable locations. A mechanism move's source-phase requirement also applies to explicitly supplied tuples.
 
 The declared default profile is available only in its source phase. `snapshot.candidateRequests` lists the 60 bound defaults before checking permission; `legalRequests` keeps only permitted candidates. This lets controls show five destinations per current grip while retaining blocked requests for explanations. Neither list is exhaustive discovery of arbitrary completions. Request selection remains outside the core.
 
-`relational-port-bindings` version 1 preserves ports, frames, inverse names, and uniform stop events. `unavailablePlacements` certifies the interpreter's cut sections; it is frame metadata, never a runtime guard. Existing polyhedral, spherical, and port-diagram meshes and sampled tracks are unchanged. New `relational-helicopter-*.json` files carry the new semantic pin and the merged mechanism authoring-domain binding. Saves use schema 2; old saves require conversion with a previous release.
+`relational-port-bindings` version 1 preserves ports, frames, inverse names, and uniform stop events. `unavailablePlacements` certifies the interpreter's cut sections; it is frame metadata, never a runtime guard. Existing polyhedral, spherical, and port-diagram meshes and sampled tracks are unchanged. New `helicopter-*.json` files carry the new semantic pin and the merged mechanism authoring-domain binding. Saves use schema 2; old saves require conversion with a previous release.
 
 The completed migration was checked against the previous executor before that evaluator was retired. Current checks exercise the production kernel directly: package reproducibility, mechanism-axis restrictions, blocking, inverse/replay behavior, full native/WASM witnesses, and all three interpreters. The historical migration comparisons and exhaustive legacy shape-graph verifier are no longer built.
 
@@ -227,9 +227,9 @@ Runtime authoring uses `{kind: "relational-gear-prototypes", formatVersion: 1, p
 
 The interpreter verifies each certificate against the existing per-domain/per-placement tracks, then selects a track separately for every participant's recorded event. Different domains can execute different local movements in one permitted tuple; explicit idle choices leave their pieces stationary. Inverses and replay use recorded local choices. A separate synthetic gate exercises an alternative tuple whose corners follow R while other domains follow F, including animation, inverse restoration, and saved replay. This prevents the adapter from silently using one global request track for every piece.
 
-All procedural, supplied, six/twelve-tooth, diagram, and spherical meshes and authored rotations are unchanged. New `relational-*` realization files carry new pins. The 300°/60° winding distinction remains in interpreter data; events and exact source placements choose the whole authored path, including self-loops. Current saved histories preserve the completed choices and full event witnesses; legacy save conversion has been retired.
+The current supplied cubic and spherical meshes and their six-phase diagrams use full 300° cog tracks. Events and exact source placements choose the whole authored path, including self-loops. Current saved histories preserve the completed choices and full event witnesses; legacy save conversion has been retired. The earlier procedural models and their frontend selector have been removed.
 
-Regenerate with `python3 scripts/gear_packages.py --write`. The current authoring library generates and compiles the sources, catalogs, manifests, and realization pins. Historical migration comparisons have been retired; current unit and SDK checks cover custom masks, mixed coupling, phase/event witnesses, geometric motion, and native/WASM parity.
+Regenerate the Gear sources, catalogs and manifests with `python3 scripts/gear_packages.py --write`; the geometry generators derive their pins from the same current authoring factory. Finish changes with `npm run build:puzzles` to refresh the inventory and manifest. Historical migration comparisons have been retired; current unit and SDK checks cover custom masks, mixed coupling, phase/event witnesses, geometric motion, and native/WASM parity.
 
 
 ## Bagua migration

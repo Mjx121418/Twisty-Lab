@@ -21,7 +21,7 @@ std::string read(const std::filesystem::path &path) {
 }
 void puzzle(const std::string &name) {
   const auto directory = std::filesystem::path(PROJECT_ROOT) / "packages" / name;
-  Session session(read(directory / "relational-package.json"));
+  Session session(read(directory / "package.json"));
   Session restored(session.execution());
   const auto before = session.snapshot();
   const auto request = before.at("legalRequests").at(0).at("operation").get<std::string>();
@@ -37,7 +37,7 @@ void puzzle(const std::string &name) {
   std::size_t views = 0;
   for (const auto &entry : std::filesystem::directory_iterator(directory)) {
     const auto file = entry.path().filename().string();
-    if (!file.starts_with("relational-") || !file.ends_with(".json"))
+    if (!file.ends_with(".json"))
       continue;
     const auto realization = Json::parse(read(entry.path()));
     if (!realization.contains("compatibleDefinitionDigest"))

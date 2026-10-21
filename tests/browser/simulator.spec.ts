@@ -29,7 +29,7 @@ test('realizes Bagua turns, published pair cycles, blocking and saved sessions',
   const initial = await page.getByTestId('state-digest').textContent();
   await page.getByRole('button', { name: 'Move U+', exact: true }).click();
   await resting(page);
-  const quarter = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/bagua/relational-package.json', '--algorithm', 'U+ R', '--json'], { encoding: 'utf8' }));
+  const quarter = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/bagua/package.json', '--algorithm', 'U+ R', '--json'], { encoding: 'utf8' }));
   // Face keys retain quarter turns; Shift resolves the declared inverse ID.
   await page.locator('h1').click();
   await page.keyboard.press('r');
@@ -43,7 +43,7 @@ test('realizes Bagua turns, published pair cycles, blocking and saved sessions',
   await page.getByLabel('Algorithm', { exact: true }).fill(algorithm);
   await page.getByRole('button', { name: 'Play algorithm →' }).click();
   await resting(page);
-  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/bagua/relational-package.json', '--algorithm', algorithm, '--json'], { encoding: 'utf8' }));
+  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/bagua/package.json', '--algorithm', algorithm, '--json'], { encoding: 'utf8' }));
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
   await page.getByRole('button', { name: 'Select kite-left/00', exact: true }).click();
   await expect(page.getByTestId('cube-view')).toHaveAttribute('data-selected-piece', 'kite-left/00');
@@ -88,7 +88,7 @@ test('realizes spherical Bagua jumbling, picking, inherited blockers and saved v
   await page.getByLabel('Algorithm', { exact: true }).fill(algorithm);
   await page.getByRole('button', { name: 'Play algorithm →' }).click();
   await resting(page);
-  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/bagua/relational-package.json', '--algorithm', algorithm, '--json'], { encoding: 'utf8' }));
+  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/bagua/package.json', '--algorithm', algorithm, '--json'], { encoding: 'utf8' }));
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
   await page.getByRole('button', { name: 'Move U+', exact: true }).click();
   await expect(page.getByTestId('blocking-evidence')).toContainText('relation.rejected');
@@ -246,7 +246,7 @@ test('keeps bandage blocking and identity on the spherical surface', async ({ pa
   await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-selected-piece', 'bandage/UF-UFR');
   await page.getByRole('button', { name: 'Move U', exact: true }).click(); await resting(page);
   await page.getByRole('button', { name: 'Move R', exact: true }).click(); await resting(page);
-  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/bandaged/relational-package.json', '--algorithm', 'U R', '--json'], { encoding: 'utf8' }));
+  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/bandaged/package.json', '--algorithm', 'U R', '--json'], { encoding: 'utf8' }));
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
   await page.getByRole('button', { name: '↶ Undo' }).click(); await resting(page);
   await page.getByRole('button', { name: '↷ Redo' }).click(); await resting(page);
@@ -343,7 +343,7 @@ test('imports independent type/domain IDs and named operations without visual su
   const downloading = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save session ↗' }).click();
   const originalSession = readFileSync((await (await downloading).path())!, 'utf8');
-  const original = JSON.parse(readFileSync('packages/cube3/relational-package.json', 'utf8'));
+  const original = JSON.parse(readFileSync('packages/cube3/package.json', 'utf8'));
   // Rename an authoring domain independently of persistent piece IDs/local keys.
   const rename = (value: any): any => {
     if (typeof value === 'string') return value === 'corner' ? 'vertex' : value.replace(/^corner\/corner:/, 'vertex/corner:');
@@ -390,7 +390,7 @@ test('imports independent type/domain IDs and named operations without visual su
 });
 
 test('imports the Helicopter model, animates both views, and explains jumbling blockers', async ({ page }) => {
-  await page.getByLabel('Import definition file').setInputFiles('packages/helicopter/relational-package.json');
+  await page.getByLabel('Import definition file').setInputFiles('packages/helicopter/package.json');
   await expect(page.getByRole('button', { name: 'Move UF_ab', exact: true })).toBeVisible();
   await expect(page.getByRole('alert')).toHaveCount(0);
   await expect(page.locator('canvas')).toHaveCount(2);
@@ -421,7 +421,7 @@ test('renders the Helicopter preset through jumbling, inverse, picking, and save
   await page.getByLabel('Algorithm', { exact: true }).fill('UF_ab UL_af');
   await page.getByRole('button', { name: 'Play algorithm →' }).click();
   await resting(page);
-  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/helicopter/relational-package.json', '--algorithm', 'UF_ab UL_af', '--json'], { encoding: 'utf8' }));
+  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/helicopter/package.json', '--algorithm', 'UF_ab UL_af', '--json'], { encoding: 'utf8' }));
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
   await page.screenshot({ path: 'test-results/helicopter-jumbled.png', fullPage: true });
   const canvas = page.getByTestId('cube-view').locator('canvas');
@@ -471,7 +471,7 @@ test('realizes Helicopter jumbling on a sphere with shared blocking, picking and
   await page.getByLabel('Algorithm', { exact: true }).fill(algorithm);
   await page.getByRole('button', { name: 'Play algorithm →' }).click();
   await resting(page);
-  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/helicopter/relational-package.json', '--algorithm', algorithm, '--json'], { encoding: 'utf8' }));
+  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/helicopter/package.json', '--algorithm', algorithm, '--json'], { encoding: 'utf8' }));
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
   await setViews(page, 'sphere-diagram');
   await resting(page);

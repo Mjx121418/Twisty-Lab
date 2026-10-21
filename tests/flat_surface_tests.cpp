@@ -24,7 +24,7 @@ void reject(const std::shared_ptr<const Execution> &execution, const Json &reali
 }
 void puzzle(const std::string &topology, bool hex = false) {
   const auto directory = std::string("packages/flat-") + (hex ? "hex-" : "") + topology + "/";
-  Session session(read(directory + "relational-package.json"));
+  Session session(read(directory + "package.json"));
   const auto document = Json::parse(read(directory + "flat-quotient.json"));
   Geometry geometry(session.execution(), document.dump());
   const auto scene = Json::parse(geometry.scene_json());
