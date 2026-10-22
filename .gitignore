@@ -5,6 +5,8 @@
 /kernel/generated/
 /test-results/
 /playwright-report/
+# Local mathematical investigations; excluded from source and SDK packages.
+/math/
 *.log
 *.local
 .DS_Store

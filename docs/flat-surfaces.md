@@ -190,5 +190,5 @@ The scene requires `quotient-orbifold` and adds the three deck generators,
 outside the kernel. Reproduce the two committed packages with
 `python3 scripts/pillowcase_packages.py`; `--write` deliberately updates them.
 Use `npm run build:puzzles` afterward to validate all packages and record
-their manifest. The [investigation](pillowcase-investigation.md) records
-the radius analysis and finite enumeration.
+their manifest. Native and WASM tests check the move orders, quotient geometry,
+coloring, and the four-disk preset's 384-state graph.

@@ -30,7 +30,7 @@ Every placement frame and operation track is a proper rotation about the origin.
 
 In the solved state, the retained cut regions partition S². A legal move rotates all its participating regions inside one disk while its stationary regions stay outside. Rotation about that disk's axis preserves the disk, so coverage and separation persist during accepted turns. The native check independently tests this using prototype inequalities rather than exported hulls or mesh vertices.
 
-Legality remains inherited from the [experimental Bagua abstract model](bagua-model.md). Volume-derived cut blockers, exact catalog restrictions and overlap resources remain authoritative. This realization does not establish that spherical outlines alone explain every blocked request or exhaust every possible motion of a physical spherical mechanism. The outstanding whole-model human review and physical blocked-state replay requirements in [the verification record](bagua-verification.md) still apply.
+Legality remains inherited from the [experimental Bagua abstract model](bagua-model.md). Volume-derived cut blockers, exact catalog restrictions and overlap resources remain authoritative. This realization does not establish that spherical outlines alone explain every blocked request or exhaust every possible motion of a physical spherical mechanism. The outstanding whole-model human review and physical blocked-state replay requirements in [the model's acceptance criteria](bagua-model.md#independent-acceptance-targets) still apply.
 
 ## Verification
 

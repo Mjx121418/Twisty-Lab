@@ -1,6 +1,6 @@
 # Puzzle language and core executor
 
-This implements the initial milestones of the [migration plan](abstract-language-core-plan.md): an expanded JSON AST, a portable C++ compiler, a domain-free executor, a separate completion helper, and cube/bandage/Helicopter/Bagua/Gear definitions. All production presets use relational sessions and interpreters in the reference application and independent clients. The legacy evaluator and migration comparison tests have been removed. Historical JSON catalogs remain offline geometry inputs and archived review data.
+The language provides an expanded JSON AST, a portable C++ compiler, a domain-free executor, and separate completion helpers. All production presets use relational sessions and interpreters in the reference application and independent clients. The legacy evaluator and migration comparison tests have been removed. The [language roadmap](abstract-language-core-plan.md) lists remaining authoring and tooling work.
 
 The implementation is available through `Twisty::core` (standard C++ library only), `Twisty::language` (compiler, completion helpers, and JSON facade), and the WASM/TypeScript `Puzzle` class. It is advertised as `languageAPIVersion = 1`. Public API 4 uses the current core/language names; see [the naming migration](kernel-api.md#api-4-naming). Persisted definitions, complete-tuple session replay, and frame-buffer version 1 are unchanged. The program preview remains a separate inspection format without its own semantic digest or replay codec.
 

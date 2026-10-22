@@ -124,7 +124,7 @@ Each piece uses fewer triangles after remeshing:
 
 The generator audits every triangle under these symmetries, checking connectivity, winding, and transported port labels. It also rejects triangle-budget increases relative to the supplied source. The supplied source remains unchanged for reproducibility. Selecting a common sector regularizes its slightly asymmetric approximations, and the authored edge caps are projected onto their spherical shells, so the resulting facets and sticker borders can differ slightly from the original conversion; the source-conservation comparison above applies to the original converted assets. Motion tracks and smooth-normal handling are preserved. The assembled normal preset contains **29,408 triangles**, down from **70,740**, including the ball.
 
-The supplied mesh is available for browser review. Its catalog transports and radial motion are checked; continuous surface coverage, tooth contact, and clearance remain unverified. See the [spherical verification goals](gear-spherical-feasibility.md).
+The supplied mesh is available for browser review. Its catalog transports and radial motion are checked; continuous surface coverage, tooth contact, and clearance remain unverified. Certifying the surface mechanism requires continuous bounds over complete primitive paths, including blocking and mixed geared/plain configurations; sampled frames alone do not certify those properties.
 
 ## Verification
 
