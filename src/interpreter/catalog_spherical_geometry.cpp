@@ -1,4 +1,4 @@
-#include "twisty/geometry.hpp"
+#include "geometry_compiler.hpp"
 #include <algorithm>
 #include <cmath>
 #include <numbers>
@@ -186,7 +186,7 @@ Patch tessellate(const Bounds &bounds, int segments, int rings, double inset) {
 }
 } // namespace
 
-void Geometry::build_catalog_spherical(const Json &realization) {
+void GeometryCompiler::build_catalog_spherical(const Json &realization) {
   const double radius = realization.at("radius"), angle = realization.at("diskAngleDegrees");
   const double inset = realization.at("portInset"), lift = realization.at("surfaceLift");
   const int segments = realization.at("angularSegments"), rings = realization.at("radialSegments");

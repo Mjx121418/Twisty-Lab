@@ -1,4 +1,4 @@
-#include "twisty/geometry.hpp"
+#include "geometry_compiler.hpp"
 #include <algorithm>
 #include <cmath>
 #include <numbers>
@@ -93,7 +93,7 @@ bool close(Frame a, Frame b) {
 }
 } // namespace
 
-void Geometry::build_catalog(const Json &realization) {
+void GeometryCompiler::build_catalog(const Json &realization) {
   ensure(definition_->port_catalog, "/catalog/kind", "Polyhedral models require a port binding catalog.");
   scale_ = realization.at("scale").get<double>();
   const auto body_inset = realization.at("bodyInset").get<double>();
@@ -347,7 +347,7 @@ void Geometry::build_catalog(const Json &realization) {
   scene_["catalogTransportVerified"] = true;
 }
 
-Geometry::Frame Geometry::catalog_resting(const Part &part, const State &state) const {
+GeometryCompiler::Frame GeometryCompiler::catalog_resting(const Part &part, const State &state) const {
   const auto &piece = definition_->pieces[part.piece];
   auto frame = placement_frames_[piece.domain][state.placement_of[part.piece]];
   if (!diagram_) {
@@ -372,7 +372,7 @@ Geometry::Frame Geometry::catalog_resting(const Part &part, const State &state) 
   return result;
 }
 
-void Geometry::validate_catalog_transport(Index operation_index) const {
+void GeometryCompiler::validate_catalog_transport(Index operation_index) const {
   const auto &operation = definition_->operations[operation_index];
   const auto &track = tracks_[operation_index];
   for (Index domain = 0; domain < definition_->domains.size(); ++domain) {

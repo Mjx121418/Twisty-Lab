@@ -40,11 +40,12 @@ try {
     schemaIDs.push(schema.$id);
   }
   for (const id of schemaIDs) assert.ok(schemas.getSchema(id), `Packaged schema cannot resolve: ${id}`);
-  const { createKernel, KernelSession, Puzzle, createCubeSource, createGearSource } = await import(pathToFileURL(join(javascript, 'index.js')).href);
+  const { createKernel, KernelSession, GeometryInstance, Puzzle, createCubeSource, createGearSource } = await import(pathToFileURL(join(javascript, 'index.js')).href);
   const module = await createKernel();
   const info = JSON.parse(module.kernelInfoJSON());
   const manifest = JSON.parse(await readFile(join(javascript, 'package.json'), 'utf8'));
   assert.equal(info.apiVersion, 4); assert.equal(info.frameBufferVersion, 1);
+  assert.equal(info.geometryAPIVersion, 1); assert.equal(info.poseBufferVersion, 1);
   assert.equal(info.version, manifest.version);
   assert.deepEqual(info.ruleModules, ['relational@1']);
   assert.deepEqual(info.sessionSchemaVersions, [2]);
@@ -153,11 +154,11 @@ try {
     const realizationPath = join(directory, kind === 'flat-quotient' ? 'flat-quotient.json' : `${kind}.json`);
     const realization = await readFile(realizationPath, 'utf8');
     const session = new KernelSession(module, source);
-    const geometry = module.createGeometry(session.native, realization);
+    const geometry = new GeometryInstance(module, session.native, realization);
     assert.ok(geometry);
     try {
       if (kind === 'flat-quotient') {
-        const scene = JSON.parse(geometry.sceneJSON());
+        const scene = geometry.scene;
         const pillowcase=puzzle.startsWith('flat-pillowcase');
         assert.equal(scene.flatSurface.deckGenerators.length, pillowcase ? 3 : 2);
         const parts=pillowcase ? puzzle.endsWith('-6') ? 122 : 64 : puzzle.startsWith('flat-hex-') ? 100 : 116;
@@ -165,9 +166,9 @@ try {
         assert.ok(!('images' in scene.flatSurface), 'Renderer owns displayed copies.');
       }
       if (puzzle.startsWith('gear')) {
-        const scene = JSON.parse(geometry.sceneJSON());
-        const positions = Array.from(geometry.positions());
-        const normals = Array.from(geometry.normals());
+        const scene = geometry.scene;
+        const positions = Array.from(geometry.definition.positions());
+        const normals = Array.from(geometry.definition.normals());
         for (const asset of scene.meshAssets.filter((asset) => asset.id === 'core-ball'
           || (kind.endsWith('-spherical') && asset.id.includes('port-')))) {
           const end = asset.positionOffset + asset.vertexCount * 3;
@@ -202,14 +203,14 @@ try {
       const result = session.run(algorithm, 'transactional', origin.revision);
       assert.equal(result.status, 'Committed');
       for (const record of result.transitionRecords) {
-        assert.equal(JSON.parse(geometry.prepareAnimationJSON(record)).status, 'Prepared');
-        geometry.sample(0.5); geometry.sample(1);
+        assert.ok(geometry.prepare(record) >= 0);
+        geometry.evaluate(0.5); geometry.evaluate(1);
       }
       const reference = JSON.parse(execFileSync(join(consumer, 'build/custom_kernel_consumer'), [sourcePath, realizationPath, algorithm], { encoding: 'utf8' }));
       assert.deepEqual(session.snapshot(), reference.snapshot);
-      assert.deepEqual(JSON.parse(geometry.sceneJSON()), reference.scene);
+      assert.deepEqual(geometry.scene, reference.scene);
       assert.deepEqual(info, reference.kernel);
-      const matrices = Array.from(geometry.transforms());
+      const matrices = Array.from(geometry.matrices);
       assert.equal(matrices.length, reference.transforms.length);
       matrices.forEach((value, i) => assert.ok(Math.abs(value - reference.transforms[i]) < 1e-6));
       assert.equal(session.move(firstMove, origin.revision).status, 'StaleRevision');
@@ -220,8 +221,8 @@ try {
         assert.equal(restored.snapshot().stateDigest, session.snapshot().stateDigest);
       } finally { restored.dispose(); }
       const part = reference.scene.visualParts[0];
-      assert.equal(JSON.parse(geometry.bindHitJSON(part.visualPartId)).pieceId, part.pieceId);
+      assert.equal(geometry.resolvePart(part.visualPartId).pieceId, part.pieceId);
       console.log(`Portable native/WASM consumers agree: ${puzzle} / ${kind}`);
-    } finally { geometry.delete(); session.dispose(); }
+    } finally { geometry.dispose(); session.dispose(); }
   }
 } finally { await rm(temporary, { recursive: true, force: true }); }

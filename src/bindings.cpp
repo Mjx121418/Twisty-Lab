@@ -1,21 +1,24 @@
-#include "twisty/kernel.hpp"
 #include "twisty/authoring/compiler.hpp"
+#include "twisty/kernel.hpp"
 #include <emscripten/bind.h>
 
 using namespace emscripten;
 using namespace twisty;
 namespace {
-val positions(const Geometry &geometry) {
+template <class T> val positions(const T &geometry) {
   return val(typed_memory_view(geometry.positions().size(), geometry.positions().data()));
 }
-val normals(const Geometry &geometry) {
+template <class T> val normals(const T &geometry) {
   return val(typed_memory_view(geometry.normals().size(), geometry.normals().data()));
 }
-val indices(const Geometry &geometry) {
+template <class T> val indices(const T &geometry) {
   return val(typed_memory_view(geometry.indices().size(), geometry.indices().data()));
 }
-val transforms(const Geometry &geometry) {
+template <class T> val transforms(const T &geometry) {
   return val(typed_memory_view(geometry.transforms().size(), geometry.transforms().data()));
+}
+val isometries(const GeometryFrame &frame) {
+  return val(typed_memory_view(frame.isometries().size(), frame.isometries().data()));
 }
 std::string compile_execution(const std::string &source) {
   return compile_execution_json(source).dump();
@@ -25,6 +28,12 @@ std::string kernel_info_json() {
 }
 Geometry *create_geometry(const Session &session, const std::string &realization) {
   return new Geometry(session.execution(), realization);
+}
+GeometryDefinition *create_geometry_definition(const Session &session, const std::string &realization) {
+  return new GeometryDefinition(session.execution(), realization);
+}
+Geometry *create_geometry_instance(const GeometryDefinition &definition) {
+  return new Geometry(std::make_shared<GeometryDefinition>(definition));
 }
 Session *create_session_from_definition(const Session &session) {
   return new Session(session.execution());
@@ -37,6 +46,8 @@ EMSCRIPTEN_BINDINGS(twisty) {
   function("gearModuleJSON", &twisty::language::gear_module_json);
   function("kernelInfoJSON", &kernel_info_json);
   function("createGeometry", &create_geometry, return_value_policy::take_ownership());
+  function("createGeometryDefinition", &create_geometry_definition, return_value_policy::take_ownership());
+  function("createGeometryInstance", &create_geometry_instance, return_value_policy::take_ownership());
   function("createSessionFromDefinition", &create_session_from_definition,
            return_value_policy::take_ownership());
   class_<twisty::language::Puzzle>("Puzzle")
@@ -66,8 +77,31 @@ EMSCRIPTEN_BINDINGS(twisty) {
       .function("prepareAnimationJSON", &Geometry::prepare_animation_json)
       .function("sample", &Geometry::sample)
       .function("bindHitJSON", &Geometry::bind_hit_json)
-      .function("positions", &positions)
-      .function("normals", &normals)
-      .function("indices", &indices)
-      .function("transforms", &transforms);
+      .function("positions", &positions<Geometry>)
+      .function("normals", &normals<Geometry>)
+      .function("indices", &indices<Geometry>)
+      .function("transforms", &transforms<Geometry>);
+  class_<GeometryDefinition>("GeometryDefinition")
+      .constructor<std::string, std::string>()
+      .function("sceneJSON", &GeometryDefinition::scene_json)
+      .function("spaceJSON", &GeometryDefinition::space_json)
+      .function("frame", &GeometryDefinition::frame)
+      .function("animate", &GeometryDefinition::animate)
+      .function("project", &GeometryDefinition::project)
+      .function("resolvePartJSON", &GeometryDefinition::resolve_part_json)
+      .function("positions", &positions<GeometryDefinition>)
+      .function("normals", &normals<GeometryDefinition>)
+      .function("indices", &indices<GeometryDefinition>);
+  class_<GeometryFrame>("GeometryFrame")
+      .function("spaceJSON", &GeometryFrame::space_json)
+      .function("isometries", &isometries);
+  class_<GeometryAnimation>("GeometryAnimation")
+      .function("evaluate", &GeometryAnimation::evaluate)
+      .function("durationHint", &GeometryAnimation::duration_hint);
+  class_<GeometryDrawing>("GeometryDrawing")
+      .function("sceneJSON", &GeometryDrawing::scene_json)
+      .function("positions", &positions<GeometryDrawing>)
+      .function("normals", &normals<GeometryDrawing>)
+      .function("indices", &indices<GeometryDrawing>)
+      .function("transforms", &transforms<GeometryDrawing>);
 }

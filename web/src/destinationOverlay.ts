@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { copyFloatView, type MainModule, type Realization, type SceneDescriptor } from './kernel';
+import { type GeometryInstance, type SceneDescriptor } from './kernel';
 import type { PieceDestination } from './destinations';
 
 type Ghost = THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
@@ -7,7 +7,6 @@ type DestinationGroup = { options: PieceDestination[]; meshes: Ghost[] };
 
 // This renderer-owned layer never commits a move or samples the live view.
 export class DestinationOverlay {
-  private preview?: InstanceType<MainModule['Geometry']>;
   private readonly root = document.createElement('div');
   private readonly controls = document.createElement('div');
   private readonly hint = document.createElement('div');
@@ -16,9 +15,7 @@ export class DestinationOverlay {
   private readonly ghosts: Ghost[] = [];
 
   constructor(
-    private readonly module: MainModule,
-    private readonly session: InstanceType<MainModule['Session']>,
-    private readonly realization: Realization,
+    private readonly geometry: GeometryInstance,
     private readonly host: HTMLElement,
     private readonly scene: THREE.Scene,
     private readonly descriptor: SceneDescriptor,
@@ -58,17 +55,10 @@ export class DestinationOverlay {
     const parts = this.descriptor.visualParts.map((part, index) => ({ part, index })).filter(({ part }) => part.pieceId === pieceId);
     if (!parts.length) return;
     const byPose = new Map<string, DestinationGroup>();
-    if (destinations.length && !this.preview) {
-      this.preview = this.module.createGeometry(this.session, JSON.stringify(this.realization)) ?? undefined;
-      if (!this.preview) throw new Error('Cannot create destination preview.');
-    }
     try {
       for (const option of destinations) {
         if (option.pieceId !== pieceId) continue;
-        const prepared = JSON.parse(this.preview!.prepareAnimationJSON(option.transitionRecord));
-        if (prepared.status !== 'Prepared') throw new Error(prepared.diagnostics?.[0]?.message ?? 'Unsupported destination.');
-        this.preview!.sample(1);
-        const transforms = copyFloatView(this.preview!.transforms() as Float32Array);
+        const transforms = this.geometry.destination(option.transitionRecord);
         const matrices = parts.map(({ index }) => transforms.slice(index * 16, index * 16 + 16));
         const poseKey = matrices.map((matrix) => Array.from(matrix, (value) => Math.round(value * 100000)).join(',')).join(';');
         const existing = byPose.get(poseKey);
@@ -206,5 +196,5 @@ export class DestinationOverlay {
     if (this.chooser.hidden) this.emphasize([]);
   }
 
-  dispose(): void { this.clear(); this.preview?.delete(); this.root.remove(); }
+  dispose(): void { this.clear(); this.root.remove(); }
 }

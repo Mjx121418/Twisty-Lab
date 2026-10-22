@@ -1,4 +1,4 @@
-#include "twisty/geometry.hpp"
+#include "geometry_compiler.hpp"
 #include <algorithm>
 #include <cmath>
 #include <numbers>
@@ -246,7 +246,7 @@ std::array<Patch, 2> split_joined(const Patch &patch, double threshold, double s
 }
 } // namespace
 
-void Geometry::build_spherical(const Json &realization) {
+void GeometryCompiler::build_spherical(const Json &realization) {
   const double radius = realization.at("radius").get<double>();
   const double angle = realization.at("diskAngleDegrees").get<double>();
   const double inset = realization.at("portInset").get<double>();

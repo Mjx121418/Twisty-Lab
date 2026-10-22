@@ -1,4 +1,4 @@
-#include "twisty/geometry.hpp"
+#include "geometry_compiler.hpp"
 #include <algorithm>
 #include <cmath>
 
@@ -10,7 +10,7 @@ void require(bool condition, const std::string &message) {
 }
 } // namespace
 
-bool Geometry::flat_chart_contains(double x, double y) const {
+bool GeometryCompiler::flat_chart_contains(double x, double y) const {
   if (flat_pillowcase_)
     return std::isfinite(x) && std::isfinite(y) &&
            std::abs(x - flat_side_ / 2) + std::abs(y - flat_side_ / 2) <= flat_side_ / 2 + 1e-9;
@@ -22,7 +22,7 @@ bool Geometry::flat_chart_contains(double x, double y) const {
 
 // Canonicalization is for validating geometric endpoints. Sampling retains a
 // continuous lift; renderers choose images and apply the deck transformations.
-Geometry::Frame Geometry::canonical_flat_frame(Frame m) const {
+GeometryCompiler::Frame GeometryCompiler::canonical_flat_frame(Frame m) const {
   if (flat_pillowcase_) {
     require(std::isfinite(m[12]) && std::isfinite(m[13]) &&
                 std::abs(m[12]) < flat_side_ * 1000 && std::abs(m[13]) < flat_side_ * 1000,
@@ -103,7 +103,7 @@ Geometry::Frame Geometry::canonical_flat_frame(Frame m) const {
   return m;
 }
 
-void Geometry::build_flat_surface(const Json &realization) {
+void GeometryCompiler::build_flat_surface(const Json &realization) {
   const auto &surface = realization.at("flatSurface");
   const auto topology = surface.at("topology").get<std::string>();
   require(topology == "torus" || topology == "klein-bottle" || topology == "pillowcase",

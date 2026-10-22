@@ -2,7 +2,7 @@
 
 The C++ abstract core, compiler, session, and geometric interpreter form the reusable kernel. Native C++ applications and JavaScript/TypeScript applications using WebAssembly consume the same implementation. Renderers and controllers are clients: Three.js, React, Vite, Canvas, camera controls, input gestures, and animation clocks stay outside the kernel.
 
-The current kernel version is `0.4.0`, public API version `4`, and frame-buffer version `1`. The runtime accepts relational package/definition format 1, the Gear wrapper, and session schema 2. API 4 normalizes the core, compiler, and authoring API names after removal of the legacy runtime in API 3. Semantic digests, saved sessions, and geometry buffer layouts are unchanged. `twisty::kernel_info()` and WASM `kernelInfoJSON()` report supported `documentKinds`, `sessionSchemaVersions`, and rule modules independently. Native consumers compile against the installed C++ headers and compatible toolchain; a cross-compiler binary ABI is not promised.
+The current kernel version is `0.4.0`, public API version `4`, and frame-buffer version `1`. The additive geometric API reports `geometryAPIVersion = 1` and `poseBufferVersion = 1`; existing API 4 and drawing buffer 1 remain supported. The runtime accepts relational package/definition format 1, the Gear wrapper, and session schema 2. API 4 normalizes the core, compiler, and authoring API names after removal of the legacy runtime in API 3. Semantic digests, saved sessions, and geometry buffer layouts are unchanged. `twisty::kernel_info()` and WASM `kernelInfoJSON()` report supported `documentKinds`, `sessionSchemaVersions`, and rule modules independently. Native consumers compile against the installed C++ headers and compatible toolchain; a cross-compiler binary ABI is not promised.
 
 The [puzzle language API](core-language.md), advertised as `languageAPIVersion = 1`, exposes the JSON language and domain-free executor through `Twisty::core`, `Twisty::language`, WASM `Puzzle`, and the TypeScript `Puzzle` adapter. Completion selection and bounded discovery are separate from permission checking. The cube/bandage authoring library is exposed as C++ `language::cube_module()`, WASM `cubeModuleJSON()`, and TypeScript `createCubeSource()`; `authoringLibraries` lists the supported models. `Twisty::symmetry` provides the shared standard-C++ finite-group utilities. Every shipped preset, including Bagua and custom Gear masks, uses the same core through an explicit package adapter. The pure program preview remains separate from the persisted definition format. Current session schemas refer to the standalone state schema; the retired finite-definition schema is not shipped.
 
@@ -49,24 +49,24 @@ Configure that consumer with `-DCMAKE_PREFIX_PATH=/your/kernel/install`. The pac
 #include <twisty/kernel.hpp>
 
 twisty::Session session(definition_json);
-twisty::Geometry view(session.execution(), realization_json);
+twisty::GeometryDefinition geometry(session.execution(), realization_json);
 auto result = session.execute("U", session.revision());
 for (const auto &transition : result.at("transitions")) {
-  view.prepare_animation_json(transition.dump());
-  view.sample(0.5);
-  // Copy/use view.transforms() and the reusable scene assets in your renderer.
+  const auto animation = geometry.animate(transition.dump());
+  const auto poses = animation.evaluate(0.5);
+  const auto drawing = geometry.project(poses);
+  // Draw drawing.positions(), normals(), indices(), and transforms().
 }
 ```
 
 JavaScript clients import the package's public entry point:
 
 ```js
-import { createKernel, KernelSession, copyFloatView } from '@twisty/kernel';
+import { createKernel, KernelSession, GeometryInstance } from '@twisty/kernel';
 
 const kernel = await createKernel({ wasmURL: '/assets/twisty.wasm' });
 const session = new KernelSession(kernel, definitionText);
-const view = kernel.createGeometry(session.native, realizationText);
-if (!view) throw new Error('Cannot create interpreter');
+const view = new GeometryInstance(kernel, session.native, realizationText);
 
 const source = session.snapshot();
 const request = { operation: 'U', parameters: {} };
@@ -74,14 +74,13 @@ const preview = session.plan(request); // Pure; does not change session/history.
 if (preview.status === 'Legal') {
   const result = session.execute(request, source.revision);
   for (const record of result.transitionRecords ?? []) {
-    const prepared = JSON.parse(view.prepareAnimationJSON(record));
-    if (prepared.status !== 'Prepared') throw new Error('Unsupported visual transition');
-    view.sample(0.5);
-    const matrices = copyFloatView(view.transforms());
-    // Draw using your renderer, then continue sampling until progress reaches 1.
+    view.prepare(record);
+    view.evaluate(0.5); // Linear progress; the controller may apply easing.
+    const matrices = view.matrices; // Owned JS copy; no borrowed WASM view.
+    // Draw using your renderer, then evaluate until progress reaches 1.
   }
 }
-view.delete();
+view.dispose();
 session.dispose();
 ```
 
@@ -144,21 +143,53 @@ Articulated catalogs supply `events[event] = {domain, request}` and reciprocal `
 
 ## Geometric and renderer APIs
 
-Create a C++ `Geometry` from the immutable definition pointer and a compatible realization document, or use WASM `createGeometry(session, realizationText)`. The geometry owns its definition reference and can outlive the session. Each realization independently validates its geometric transports and ports. The existing string-based geometry constructor remains available for standalone documents.
+The primary API compiles a realization once into an immutable `GeometryDefinition`. All existing realization formats compile into shared pose tables, per-part bindings, rotation paths, and optional linear translation paths. Backend selection and cube-specific construction live in the private realization compiler, rather than the evaluator. No domain or puzzle logic is added to the abstract core.
 
 | Task | C++ | WASM |
 | --- | --- | --- |
-| Read stable scene/part bindings | `scene_json()` | `sceneJSON()` |
-| Read reusable assets | `positions()`, `normals()`, `indices()` | same names |
-| Realize a resting state | `set_state_json(stateText)` | `setStateJSON(stateText)` |
-| Prepare a recorded transition | `prepare_animation_json(record)` | `prepareAnimationJSON(record)` |
-| Sample motion | `sample(progress)` | `sample(progress)` |
-| Read current object matrices | `transforms()` | `transforms()` |
-| Resolve a picked visual part | `bind_hit_json(visualPartId)` | `bindHitJSON(visualPartId)` |
+| Compile a realization | `GeometryDefinition(execution, realizationText)` | `createGeometryDefinition(session, realizationText)` |
+| Inspect assets and bindings | `scene_json()`, `positions()`, `normals()`, `indices()` | `sceneJSON()`, same buffer names |
+| Inspect the space model | `space_json()` | `spaceJSON()` |
+| Evaluate a resting state | `definition.frame(stateText)` → `GeometryFrame` | same |
+| Validate and prepare an exact witness | `definition.animate(record)` → `GeometryAnimation` | same |
+| Evaluate motion at explicit progress | `animation.evaluate(progress)` → `GeometryFrame` | same |
+| Inspect timing guidance | `animation.duration_hint()` | `animation.durationHint()` |
+| Read intrinsic poses | `frame.isometries()` | same |
+| Project a frame for drawing | `definition.project(frame, "embedding")` → `GeometryDrawing` | same; projection argument required |
+| Read projected buffers | `drawing.positions()`, `normals()`, `indices()`, `transforms()` | same |
+| Resolve static part identity | `definition.resolve_part_json(id)` | `definition.resolvePartJSON(id)` |
 
-`setStateJSON` changes only that interpreter's displayed state. It cannot modify the session. A preparation result is `Prepared` with a duration hint or `UnsupportedTransition` with diagnostics. A visual limitation does not change abstract legality. The controller supplies normalized progress and chooses an animation clock; the kernel schedules no frames.
+`animate` verifies the full exact abstract witness, including completed choices, participant events and source/target states. It resolves each participant's event to a certified path, including participants whose placements do not change. Angles retain sign and full winding, so a Gear edge's 300° travel is preserved. It never commits logical state. Missing choices or a forged witness fail with `realization.witness`; definition mismatches use `realization.digest_mismatch`. The primary native/WASM operations throw on failure, as the existing constructors and state import do; native `diagnostic_result(exception)` provides structured diagnostics. The compatibility preparation method below still returns a diagnostic JSON result.
 
-The public `SceneDescriptor`, `MeshAsset`, `VisualPart`, and `HitBinding` TypeScript types describe the wire data. Check `requiredCapabilities` against your renderer before constructing drawing resources. Current capabilities are `triangle-meshes`, `rigid-transforms`, `quotient-surface`, and `quotient-orbifold`. The last capability requires support for the pillowcase's cone points and its half-turn identifications. The `diagram` flag identifies flat port diagrams. Material bindings are symbolic labels; the renderer chooses colors, lighting, fonts, and selection/blocking styles.
+`animation.evaluate(t)` returns a new owned pose frame and changes neither the definition nor any previous frame or animation. Progress is linear and clamps to `[0,1]`; nonfinite values fail with `animation.progress`. Exact endpoint frames come from the placement catalog. Intermediate quotient motions use continuous covering-space lifts, with exact endpoint representatives as before. Ordered local/world rotation compositions remain ordered and share the supplied progress. Callers choose the clock and easing, for example `t*t*(3-2*t)`. There is no hidden `sample()`/`transforms()` dependency in this API. Multiple animations can be evaluated or sought independently.
+
+The scene's `space` descriptor (also returned by `spaceJSON`) declares intrinsic and embedding dimensions, coordinate model, metric/signature, curvature/radius, mesh coordinates, use of homogeneous coordinates, matrix shape/order and scalar type. Pose buffer version 1 packs one column-major 4×4 **Float64 isometry** per visual part, in scene order. Current models are Euclidean homogeneous R³, planar E² with proper three-dimensional lifts, and S² rotations in R³. Sphere mesh coordinates include radial display shells for stickers and internal parts; those shells are not additional intrinsic dimensions. Local mesh scale is published as `visualParts[i].meshScale` (default `1`), applied before the pose, and never included in an intrinsic isometry. Clients implementing their own projection therefore have the same local scale information as the built-in adapter.
+
+The available `projections` currently contain only `"embedding"`. The scene declares `drawingSpace: "R3"` and `drawingBufferVersion: 1`. Its `GeometryDrawing` uses the existing Float32 positions/normals, Uint32 local triangle indices, and Float32 column-major affine model matrices (drawing buffer version 1). Projection applies local mesh scale to the intrinsic poses; drawing matrices already include that scale, so renderers must not apply it a second time. The output includes its own scene and asset accessors so a later projection can supply new vertex/normal data rather than pretending that every projection is an object matrix. It owns matrices and shares today's immutable assets. A frame from another independently compiled definition fails with `geometry.frame_mismatch`; copies of the same native definition share identity. Unknown projections fail with `geometry.projection`.
+
+This boundary leaves room for S³ points in R⁴ and H³ hyperboloid points with a Lorentz metric: their matrices must be interpreted using their declared model, not assumed to be affine Three.js transforms. Their loaders, isometry paths, projections and rendering are **not implemented** by this change. Euclidean affine/orthonormal checks remain specific to the existing authoring formats. Cameras, visible quotient copies, clipping, gestures and move selection belong to clients. Part resolution returns only persistent `pieceId` and optional `portId`, or `NoTarget`.
+
+Native definitions, animations, frames and drawings share immutable compiled storage through reference counting. Any can outlive the session or the source definition handle. Native buffer references remain valid for the lifetime of their owning object. Each WASM result is a separately owned handle: call `.delete()` on animations, frames, drawings and definitions when finished. Typed arrays returned by WASM are borrowed read-only views and must be copied before another WASM call or deleting their owner; use `new Float64Array(frame.isometries())` for poses and `copyFloatView`/`copyIndexView` for drawing buffers. Never keep a borrowed view across possible WASM memory growth.
+
+```js
+const definition = kernel.createGeometryDefinition(session.native, realizationText);
+if (!definition) throw new Error('Cannot compile realization');
+const animation = definition.animate(exactRecord);
+try {
+  const frame = animation.evaluate(0.25);
+  try {
+    const drawing = definition.project(frame, 'embedding');
+    try { const matrices = copyFloatView(drawing.transforms()); /* draw */ }
+    finally { drawing.delete(); }
+  } finally { frame.delete(); }
+} finally { animation.delete(); definition.delete(); }
+```
+
+The optional TypeScript `GeometryInstance` helper manages these temporary handles and maintains an owned JS `matrices` array. It exposes `scene`, `definition`, `setState(stateText)`, `prepare(record)`, `evaluate(t)`, `destination(record)`, `resolvePart(id)`, and `dispose()`. `destination` evaluates an independent animation using the same assets/tables and leaves the live frame unchanged. Invalid state imports or preparations preserve its current frame and animation. The reference Three.js views and standalone Canvas example use this API.
+
+Existing C++ `Geometry` (now an alias of `GeometryInstance`) and WASM `Geometry` remain compatibility facades. The string constructors and `createGeometry(session, realizationText)` still work. Native `GeometryInstance(sharedDefinition)` and WASM `createGeometryInstance(definition)` create independent compatibility instances sharing compiled storage. Their `setStateJSON`, `prepareAnimationJSON`, `sample`, `transforms`, and `bindHitJSON` behavior is preserved: `sample` applies the original smoothstep easing, and legacy hit bindings include candidate requests. Preparation returns `Prepared` with `durationHint`, or `UnsupportedTransition` with diagnostics, and leaves the previous presentation unchanged on rejection. Scene and buffer access retain their existing names. The new space/projection fields and API capability markers are additive; puzzle documents, semantic digests, and sessions are unchanged.
+
+The public `SceneDescriptor`, `MeshAsset`, `VisualPart`, and `HitBinding` TypeScript types describe the wire data. Check `requiredCapabilities` against your renderer before constructing drawing resources. Current required drawing capabilities are `triangle-meshes`, `rigid-transforms`, `quotient-surface`, and `quotient-orbifold`. The kernel also advertises its shared-definition, pose and animation API features. The last capability requires support for the pillowcase's cone points and its half-turn identifications. The `diagram` flag identifies flat port diagrams. Material bindings are symbolic labels; the renderer chooses colors, lighting, fonts, and selection/blocking styles.
 
 The additive `flat-quotient` realization exposes `ambientSpace: "E2"` and a `FlatSurface` scene descriptor with `topology`, `fundamentalBounds`, two column-major `deckGenerators`, and `twoSided: true`; optional `cutRadius` and `diskCenters` describe the cuts. It retains API 4, realization schema 1 and buffer version 1. The interpreter emits intrinsic physical parts and continuous lifted rotation frames; displayed copies, reflections, clipping and picking belong to the renderer. Renderers advertising `quotient-surface` must support those operations and two-sided planar assets. Native and WASM constructors and borrowed-view lifetimes are unchanged. See [flat surfaces](flat-surfaces.md) for the exact matrix conventions, square/tiled presentation, preset construction and reproduction.
 
@@ -209,7 +240,7 @@ are unchanged; no ownership or constructor changes are introduced.
 
 `kernelInfoJSON()` also advertises the `cube-spherical` realization. Its optional scene metadata identifies `ambientSpace: "S2"`, the six `diskCenters`, `sphereRadius`, `diskAngleDegrees`, `fidelity`, and `surfaceTransportVerified`. Mesh assets may declare `rotationSymmetryOrder`; featureless spherical centers use order four. These additive descriptors use the same buffer format and rendering capabilities as other realizations. Custom clients pass a compatible `cube-spherical.json` into the existing geometry constructor; the packaged example data includes both reference cube realizations. See [the spherical construction](spherical-cube.md) for its geometric verification and surface-model scope.
 
-`polyhedral-spherical` intersects catalog prototypes with the unit sphere and uses the existing catalog frames and rotation tracks. The Helicopter package provides twelve 45° disks, seven shared assets, 44 existing pieces, and 48 ports. Local mesh vertices lie on unit shells; the frame includes the uniform display scale, equal to `sphereRadius`. It retains the abstract model's volume, phase, catalog, and exclusion guards; a spherical outline can therefore show tangency for a request blocked by a volume-derived rule. See [the spherical Helicopter construction](spherical-helicopter.md). The copied example data includes `helicopter/helicopter-spherical.json`.
+`polyhedral-spherical` intersects catalog prototypes with the unit sphere and uses the existing catalog frames and rotation tracks. The Helicopter package provides twelve 45° disks, seven shared assets, 44 existing pieces, and 48 ports. Local mesh vertices lie on unit shells; the embedding drawing matrix includes the uniform display scale, equal to `sphereRadius`, while the intrinsic pose remains an isometry. It retains the abstract model's volume, phase, catalog, and exclusion guards; a spherical outline can therefore show tangency for a request blocked by a volume-derived rule. See [the spherical Helicopter construction](spherical-helicopter.md). The copied example data includes `helicopter/helicopter-spherical.json`.
 
 Polyhedral model `ports` map each local port ID to 3–32 distinct model vertex indices. The indices may be unordered; they must describe a coplanar, strictly convex polygon on an exterior supporting plane. The interpreter orders its boundary, triangulates one shared mesh asset, and uses the arithmetic mean of its vertices as the port anchor. Malformed polygons produce `realization.catalog` diagnostics. The experimental [Bagua model](bagua-model.md) demonstrates 146 pieces and 198 polygonal ports using the existing session/planning APIs and Euclidean, diagram and spherical documents.
 
@@ -217,7 +248,7 @@ Polyhedral model `ports` map each local port ID to 3–32 distinct model vertex 
 
 The [spherical Bagua package](spherical-bagua.md) uses this extension to supply six approximately 66.11° disks and twenty shared assets while retaining all 146 pieces and 198 ports. Its copied document is `examples/canvas/data/bagua/bagua-spherical.json`. These additive schema/type fields originally shipped in API 1 and retain **buffer version 1**, with unchanged ownership, constructor signatures, capability names, indexed triangles and frame layouts. No Bagua-specific renderer API is required.
 
-Buffer version 1:
+Drawing buffer version 1 (`GeometryDrawing` and the compatibility facade):
 
 - Positions and normals are packed `Float32` triples. `positionOffset` is an offset in scalar elements, and `vertexCount` counts vertices. Position and normal slices have the same offsets and lengths.
 - Indices are packed `Uint32`. `indexOffset` and `indexCount` count index elements. Indices are local to the corresponding asset's vertex slice.
@@ -226,7 +257,7 @@ Buffer version 1:
 
 Native buffer references and WASM typed views are borrowed. Copy exported WASM views immediately before another kernel call can invalidate their backing memory. Use `copyFloatView()` / `copyIndexView()` for assets and reusable destination arrays for sampled transforms. Do not serialize frames as JSON or keep heap views as application-owned storage. Explicitly call `delete()` on geometry handles and `dispose()` on adapter sessions; dispose front-end resources separately.
 
-The renderer performs hit testing. Send the hit visual-part ID back to the interpreter to obtain a piece, optional port, and candidate requests. Candidates still need core planning. In the current interaction contract, bind puzzle picks at resting frames and disable state-dependent picking during animation. The controller owns displayed-frame tags, selections, queues, and any synchronized views; camera movement is independent of logical state.
+The renderer performs hit testing. Use `resolvePartJSON` to obtain a persistent piece and optional port. Only the compatibility `bindHitJSON` also returns candidate requests; those candidates still need abstract planning. In the current interaction contract, bind puzzle picks at resting frames and disable state-dependent picking during animation. The controller owns displayed-frame tags, selections, queues, and any synchronized views; camera movement is independent of logical state.
 
 ## Independent consumers and acceptance
 
@@ -244,7 +275,7 @@ Further portability work is deferred in favor of the original puzzle and realiza
 
 ## Articulated realizations and gear authoring
 
-`kernelInfoJSON().realizationKinds` advertises `articulated-euclidean`, `articulated-port-diagram`, and `articulated-spherical`. These additive realization capabilities originally shipped in API 1; their document schema and frame-buffer version remain 1. Clients discover supported kinds before loading documents. Existing kinds and semantic digests are unchanged. The compiler accepts `GearCubeSource` (`kind: "gear-cube-prototypes"`, `schemaVersion: 1`, `semanticsVersion`, `puzzleId`, and a distinct `gearedEdges` subset of the twelve conventional edge IDs). It emits the existing geometry-free placement-relations definition. See [the experimental gear specification](gear-model.md) for its coupling policy.
+`kernelInfoJSON().realizationKinds` advertises `articulated-euclidean`, `articulated-port-diagram`, and `articulated-spherical`. These additive realization capabilities originally shipped in API 1; their document schema and frame-buffer version remain 1. Clients discover supported kinds before loading documents. Existing kinds and semantic digests are unchanged. The authoring/compiler path accepts the `relational-gear-prototypes` wrapper described above and emits a geometry-free package. See [the Gear specification](gear-model.md) for its coupling policy.
 
 An articulated document is pinned by `compatibleDefinitionDigest` and has:
 

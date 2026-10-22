@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { copyFloatView, copyIndexView, type FlatSurface, type MainModule, type Realization, type SceneDescriptor } from '../../kernel/index';
+import { GeometryInstance, copyFloatView, copyIndexView, type FlatSurface, type MainModule, type Realization, type SceneDescriptor } from '../../kernel/index';
 import type { PieceDestination } from './destinations';
 import { cameraWindowPolygon, insidePolygon, surfaceBounds, surfaceImageOrigin, surfaceImages, surfacePolygon, type Polygon, type Bounds, type SurfaceImage, type SurfaceMode } from './flatSurface';
 
@@ -13,7 +13,7 @@ type GhostBatch = { mesh: SurfaceMesh; groups: DestinationGroup[]; instances: { 
 
 /** A chart renderer: the kernel has no knowledge of these displayed copies. */
 export class SurfaceView {
-  readonly geometry: InstanceType<MainModule['Geometry']>;
+  readonly geometry: GeometryInstance;
   private readonly descriptor: SceneDescriptor;
   private readonly surface: FlatSurface;
   private readonly bounds: Bounds;
@@ -47,7 +47,6 @@ export class SurfaceView {
   private readonly local = new THREE.Matrix4();
   private readonly vector = new THREE.Vector3();
   private readonly color = new THREE.Color();
-  private preview?: InstanceType<MainModule['Geometry']>;
   private groups: DestinationGroup[] = [];
   private readonly root = document.createElement('div');
   private readonly destinationControls = document.createElement('div');
@@ -58,17 +57,16 @@ export class SurfaceView {
   private frameId = 0;
   private disposed = false;
 
-  constructor(private readonly module: MainModule, private readonly host: HTMLElement,
-    private readonly session: InstanceType<MainModule['Session']>, private readonly realization: Realization,
+  constructor(module: MainModule, private readonly host: HTMLElement,
+    session: InstanceType<MainModule['Session']>, realization: Realization,
     private readonly onPick: (piece:string|undefined)=>void, private readonly canPick: ()=>boolean,
     private readonly onDestination: (destination:PieceDestination)=>void, private readonly mode: SurfaceMode) {
-    const geometry = module.createGeometry(session,JSON.stringify(realization));
-    if (!geometry) throw new Error('Cannot create flat-surface geometry.');
+    const geometry = new GeometryInstance(module, session, JSON.stringify(realization));
     this.geometry = geometry;
-    this.descriptor = JSON.parse(geometry.sceneJSON()) as SceneDescriptor;
-    if (!this.descriptor.flatSurface) { geometry.delete(); throw new Error('Missing quotient surface metadata.'); }
+    this.descriptor = geometry.scene;
+    if (!this.descriptor.flatSurface) { geometry.dispose(); throw new Error('Missing quotient surface metadata.'); }
     if (this.descriptor.requiredCapabilities.some(c=>!['triangle-meshes','rigid-transforms','quotient-surface','quotient-orbifold'].includes(c))) {
-      geometry.delete(); throw new Error('Unsupported surface-rendering capability.');
+      geometry.dispose(); throw new Error('Unsupported surface-rendering capability.');
     }
     this.surface = this.descriptor.flatSurface;
     this.bounds = surfaceBounds(this.surface,mode);
@@ -79,9 +77,9 @@ export class SurfaceView {
     // padding. Recycle their deck addresses as the camera crosses chart cells.
     this.imageRadius=mode==='square'?2:this.surface.latticeBasis?[6,4]:4;
     this.images = surfaceImages(this.surface,mode,this.imageOrigin,this.imageRadius);
-    this.frameData = copyFloatView(geometry.transforms() as Float32Array);
+    this.frameData = copyFloatView(geometry.matrices);
     try { this.renderer = new THREE.WebGLRenderer({antialias:true,alpha:true}); }
-    catch (error) { geometry.delete(); throw error; }
+    catch (error) { geometry.dispose(); throw error; }
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.5));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     const [left,bottom,right,top] = this.bounds;
@@ -113,7 +111,7 @@ export class SurfaceView {
     this.controls.minZoom = mode==='square'?1:.7;
     this.controls.maxZoom = mode==='square'?1:5;
     this.controls.update();
-    const positions=copyFloatView(geometry.positions() as Float32Array), indices=copyIndexView(geometry.indices() as Uint32Array);
+    const positions=copyFloatView(geometry.definition.positions() as Float32Array), indices=copyIndexView(geometry.definition.indices() as Uint32Array);
     for (const asset of this.descriptor.meshAssets) {
       const g=new THREE.BufferGeometry();
       g.setAttribute('position',new THREE.BufferAttribute(positions.slice(asset.positionOffset,asset.positionOffset+asset.vertexCount*3),3));
@@ -210,7 +208,7 @@ export class SurfaceView {
   }
 
   private updateTransforms(): void {
-    this.frameData.set(this.geometry.transforms() as Float32Array);
+    this.frameData.set(this.geometry.matrices);
     for (const batch of this.batches) {
       batch.instances.forEach(({part,image},i)=>{
         this.local.fromArray(this.frameData,part*16);
@@ -277,7 +275,7 @@ export class SurfaceView {
     if(!hit||hit.instanceId===undefined){this.onPick(undefined);return;}
     const batch=this.batches.find(b=>b.mesh===hit.object)!;
     const part=this.descriptor.visualParts[batch.instances[hit.instanceId].part];
-    const target=JSON.parse(this.geometry.bindHitJSON(part.visualPartId));
+    const target=this.geometry.resolvePart(part.visualPartId);
     this.onPick(target.status==='Target'?target.pieceId:undefined);
   };
   private pointerCancel=():void=>{this.pointer=undefined;this.dismiss();};
@@ -314,16 +312,13 @@ export class SurfaceView {
   }
   setDestinations(piece:string|undefined,options:PieceDestination[]):void{
     this.clearDestinations();if(!piece)return;
-    if(options.length&&!this.preview){this.preview=this.module.createGeometry(this.session,JSON.stringify(this.realization))??undefined;if(!this.preview)throw new Error('Cannot create surface preview.');}
     const byPose=new Map<string,DestinationGroup>();
     const batches=new Map<string,{image:number;frame:THREE.Matrix4;group:DestinationGroup;part:number}[]>();
     for(const option of options){
       const transition=JSON.parse(option.transitionRecord),key=transition.afterState.placementOf[piece] as string;
       const existing=byPose.get(key);if(existing){existing.options.push(option);continue;}
       const group={options:[option]};byPose.set(key,group);this.groups.push(group);
-      const prepared=JSON.parse(this.preview!.prepareAnimationJSON(option.transitionRecord));
-      if(prepared.status!=='Prepared')throw new Error('Unsupported surface destination.');
-      this.preview!.sample(1);const transforms=copyFloatView(this.preview!.transforms() as Float32Array);
+      const transforms=this.geometry.destination(option.transitionRecord);
       this.descriptor.visualParts.forEach((part,index)=>{
         if(part.pieceId!==piece||part.materialBindingId==='ink')return;
         const list=batches.get(part.meshAssetId)??[];
@@ -374,9 +369,9 @@ export class SurfaceView {
     });this.updateOutlines();
     this.host.dataset.selectedPiece=selected??'';this.host.dataset.blockedPieces=blocked.join(',');
   }
-  setState(state:string):void{this.clearDestinations();this.geometry.setStateJSON(state);this.updateTransforms();}
-  prepare(record:string):void{this.clearDestinations();const r=JSON.parse(this.geometry.prepareAnimationJSON(record));if(r.status!=='Prepared')throw new Error(r.diagnostics?.[0]?.message??'Unsupported surface animation.');}
-  sample(progress:number):void{this.geometry.sample(progress);this.updateTransforms();}
+  setState(state:string):void{this.clearDestinations();this.geometry.setState(state);this.updateTransforms();}
+  prepare(record:string):void{this.clearDestinations();this.geometry.prepare(record);}
+  sample(progress:number):void{this.geometry.evaluate(progress);this.updateTransforms();}
   cameraState():unknown{return{position:this.camera.position.toArray(),target:this.controls.target.toArray(),zoom:this.camera.zoom};}
   restoreCamera(value:unknown):void{
     const d=value as {position?:number[];target?:number[];zoom?:number}|undefined;
@@ -390,11 +385,11 @@ export class SurfaceView {
     const c=this.renderer.domElement;c.removeEventListener('pointerdown',this.pointerDown);c.removeEventListener('pointermove',this.pointerMove);
     c.removeEventListener('pointerup',this.pointerUp);c.removeEventListener('pointercancel',this.pointerCancel);c.removeEventListener('pointerleave',this.pointerLeave);
     c.removeEventListener('webglcontextlost',this.contextLost);c.removeEventListener('webglcontextrestored',this.contextRestored);
-    this.clearDestinations();this.preview?.delete();this.root.remove();
+    this.clearDestinations();this.root.remove();
     for(const {mesh} of this.batches){mesh.dispose();mesh.material.dispose();}
     for(const asset of this.assets.values())asset.dispose();for(const asset of this.edgeAssets.values())asset.dispose();this.outlineMaterial.dispose();
     for(const label of this.decorationLabels)label.mesh.dispose();
     for(const geometry of this.decorationGeometries)geometry.dispose();for(const material of this.decorationMaterials)material.dispose();
-    for(const texture of this.textures)texture.dispose();this.border.remove();this.renderer.dispose();this.renderer.forceContextLoss();c.remove();this.geometry.delete();
+    for(const texture of this.textures)texture.dispose();this.border.remove();this.renderer.dispose();this.renderer.forceContextLoss();c.remove();this.geometry.dispose();
   }
 }

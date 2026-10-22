@@ -1,4 +1,4 @@
-#include "twisty/geometry.hpp"
+#include "geometry_compiler.hpp"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -92,27 +92,7 @@ Frame rotation(Point n, Point pivot, double angle) {
 }
 } // namespace
 
-Geometry::Frame Geometry::articulated_resting(const Part &part, const State &state) const {
-  return components_[part.frame_index].frames[state.placement_of[part.piece]];
-}
-Geometry::Frame Geometry::articulated_sample(const Part &part, double t) const {
-  const auto &component = components_[part.frame_index];
-  auto result = articulated_resting(part, before_);
-  const auto &path = component.paths[active_piece_operations_[part.piece]][before_.placement_of[part.piece]];
-  for (const auto &step : path) {
-    const auto r = rotation(step.axis, step.pivot, step.angle * t);
-    result = step.local ? multiply(result, r) : multiply(r, result);
-  }
-  if (diagram_) {
-    const auto target = articulated_resting(part, after_);
-    const auto start = articulated_resting(part, before_);
-    for (int i = 12; i < 15; ++i)
-      result[i] = start[i] + (target[i] - start[i]) * t;
-  }
-  return result;
-}
-
-void Geometry::build_articulated(const Json &realization) {
+void GeometryCompiler::build_articulated(const Json &realization) {
   ensure(definition_->port_catalog, "/catalog/kind", "Articulated models require a port binding catalog.");
   const bool spherical = realization.at("kind") == "articulated-spherical";
   const double radius = spherical ? realization.at("radius").get<double>() : 0;

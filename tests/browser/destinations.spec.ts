@@ -196,20 +196,29 @@ test('shows Helicopter candidates, executes a clicked destination, and clears pr
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
 
-test('executes a selected Bagua corner destination on the sphere', async ({ page }) => {
-  test.setTimeout(60_000);
-  await page.getByLabel('Puzzle', { exact: true }).selectOption('bagua');
-  await page.getByLabel('Animation speed').selectOption('0');
-  await page.getByRole('button', { name: 'Select corner/07', exact: true }).click();
-  for (const id of ['cube-view', 'diagram-view']) {
-    await expect(page.getByTestId(id)).toHaveAttribute('data-destination-piece', 'corner/07');
-    await expect(page.getByTestId(id)).toHaveAttribute('data-destination-count', '15');
-  }
-  await clickDestination(page, 'diagram-view', 'bagua', 'bagua-spherical', 'corner/07', 'U+');
-  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/bagua/package.json', '--algorithm', 'U+', '--json'], { encoding: 'utf8' }));
-  await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
-  await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-selected-piece', 'corner/07');
-  await expect(page.getByRole('alert')).toHaveCount(0);
+test.describe('Bagua destination', () => {
+  let referenceDigest: string;
+  test.beforeAll(() => {
+    // Compile the native oracle before page/browser fixtures are started. Keeping
+    // it out of the live two-view check avoids overlapping their memory peaks.
+    const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/bagua/package.json', '--algorithm', 'U+', '--json'], { encoding: 'utf8' }));
+    referenceDigest = reference.snapshot.stateDigest;
+  });
+
+  test('executes a selected Bagua corner destination on the sphere', async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.getByLabel('Puzzle', { exact: true }).selectOption('bagua');
+    await page.getByLabel('Animation speed').selectOption('0');
+    await page.getByRole('button', { name: 'Select corner/07', exact: true }).click();
+    for (const id of ['cube-view', 'diagram-view']) {
+      await expect(page.getByTestId(id)).toHaveAttribute('data-destination-piece', 'corner/07');
+      await expect(page.getByTestId(id)).toHaveAttribute('data-destination-count', '15');
+    }
+    await clickDestination(page, 'diagram-view', 'bagua', 'bagua-spherical', 'corner/07', 'U+');
+    await expect(page.getByTestId('state-digest')).toHaveText(referenceDigest);
+    await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-selected-piece', 'corner/07');
+    await expect(page.getByRole('alert')).toHaveCount(0);
+  });
 });
 
 test.describe('touch destinations', () => {

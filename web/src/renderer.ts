@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
-import { copyFloatView, copyIndexView, type MainModule, type Realization, type SceneDescriptor } from '../../kernel/index';
+import { GeometryInstance, copyFloatView, copyIndexView, type MainModule, type Realization, type SceneDescriptor } from '../../kernel/index';
 import { DestinationOverlay } from './destinationOverlay';
 import type { PieceDestination } from './destinations';
 const colors: Record<string, number> = {
@@ -9,7 +9,7 @@ const colors: Record<string, number> = {
 };
 
 export class RenderView {
-  readonly geometry: InstanceType<MainModule['Geometry']>;
+  readonly geometry: GeometryInstance;
   readonly scene = new THREE.Scene();
   readonly camera: THREE.PerspectiveCamera | THREE.OrthographicCamera;
   readonly controls: OrbitControls | TrackballControls;
@@ -40,15 +40,14 @@ export class RenderView {
     private readonly canPick: () => boolean,
     onDestination: (destination: PieceDestination) => void,
   ) {
-    const geometry = module.createGeometry(session, JSON.stringify(realization));
-    if (!geometry) throw new Error('The geometric interpreter could not be created.');
+    const geometry = new GeometryInstance(module, session, JSON.stringify(realization));
     this.geometry = geometry;
-    this.descriptor = JSON.parse(this.geometry.sceneJSON()) as SceneDescriptor;
-    this.frameData = copyFloatView(this.geometry.transforms() as Float32Array);
+    this.descriptor = this.geometry.scene;
+    this.frameData = copyFloatView(this.geometry.matrices);
     try {
       this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     } catch (error) {
-      this.geometry.delete();
+      this.geometry.dispose();
       throw error;
     }
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
@@ -92,9 +91,9 @@ export class RenderView {
     fill.position.set(-4, -1, -3);
     this.scene.add(fill);
 
-    const positions = copyFloatView(this.geometry.positions() as Float32Array);
-    const normals = copyFloatView(this.geometry.normals() as Float32Array);
-    const indices = copyIndexView(this.geometry.indices() as Uint32Array);
+    const positions = copyFloatView(this.geometry.definition.positions() as Float32Array);
+    const normals = copyFloatView(this.geometry.definition.normals() as Float32Array);
+    const indices = copyIndexView(this.geometry.definition.indices() as Uint32Array);
     for (const asset of this.descriptor.meshAssets) {
       const geometry = new THREE.BufferGeometry();
       const end = asset.positionOffset + asset.vertexCount * 3;
@@ -140,7 +139,7 @@ export class RenderView {
         this.scene.add(sprite);
       }
     }
-    this.destinations = new DestinationOverlay(module, session, realization, host, this.scene, this.descriptor, this.assets, colors, onDestination, canPick);
+    this.destinations = new DestinationOverlay(this.geometry, host, this.scene, this.descriptor, this.assets, colors, onDestination, canPick);
     this.updateTransforms();
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(host);
@@ -180,8 +179,8 @@ export class RenderView {
     if (this.destinations.pick(this.raycaster, event.clientX, event.clientY)) return;
     const hit = this.raycaster.intersectObjects(this.meshes)[0];
     if (!hit) { this.onPick(undefined); return; }
-    // The hit is resolved against this view's sampled frame, never the session's newer state.
-    const target = JSON.parse(this.geometry.bindHitJSON(hit.object.userData.visualPartId)) as { status: string; pieceId?: string };
+    // Resolve the renderer's picked visual part to its persistent identity.
+    const target = this.geometry.resolvePart(hit.object.userData.visualPartId) as { status: string; pieceId?: string };
     if (target.status === 'Target' && target.pieceId) this.onPick(target.pieceId);
   };
   private contextLost = (event: Event): void => { event.preventDefault(); };
@@ -213,8 +212,8 @@ export class RenderView {
     this.camera.up.normalize();
   }
   private updateTransforms(): void {
-    // Copy before any other WASM call. Destination storage is reused every frame.
-    this.frameData.set(this.geometry.transforms() as Float32Array);
+    // The presentation helper owns this JS snapshot; GPU storage is reused.
+    this.frameData.set(this.geometry.matrices);
     for (let i = 0; i < this.meshes.length; i++) this.meshes[i].matrix.fromArray(this.frameData, i * 16);
     for (const [index, outline] of this.selectionOutlines) outline.matrix.copy(this.meshes[index].matrix);
     for (const sprite of this.labelSprites) {
@@ -231,13 +230,12 @@ export class RenderView {
     this.frame = requestAnimationFrame(this.draw);
   };
 
-  setState(state: string): void { this.destinations.clear(); this.geometry.setStateJSON(state); this.updateTransforms(); }
+  setState(state: string): void { this.destinations.clear(); this.geometry.setState(state); this.updateTransforms(); }
   prepare(transition: string): void {
     this.destinations.clear();
-    const result = JSON.parse(this.geometry.prepareAnimationJSON(transition));
-    if (result.status !== 'Prepared') throw new Error(result.diagnostics?.[0]?.message ?? 'Unsupported visual transition.');
+    this.geometry.prepare(transition);
   }
-  sample(progress: number): void { this.geometry.sample(progress); this.updateTransforms(); }
+  sample(progress: number): void { this.geometry.evaluate(progress); this.updateTransforms(); }
   setDestinations(piece: string | undefined, destinations: PieceDestination[]): void { this.destinations.setDestinations(piece, destinations); }
   highlight(selected: string | undefined, blocked: string[]): void {
     for (let index = 0; index < this.meshes.length; index++) {
@@ -309,6 +307,6 @@ export class RenderView {
     for (const texture of this.textures) texture.dispose();
     for (const geometry of this.assets.values()) geometry.dispose();
     this.renderer.dispose(); this.renderer.forceContextLoss(); this.renderer.domElement.remove();
-    this.geometry.delete();
+    this.geometry.dispose();
   }
 }

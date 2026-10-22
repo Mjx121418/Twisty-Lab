@@ -4,6 +4,7 @@ export type { MainModule } from './generated/twisty.mjs';
 export type KernelInfo = {
   apiVersion: number; version: string; documentKinds: string[]; frameBufferVersion: number;
   languageAPIVersion: number;
+  geometryAPIVersion: number; poseBufferVersion: number;
   authoringLibraries?: string[];
   catalogKinds?: string[];
   definitionFormatVersion?: number; sessionSchemaVersions?: number[]; sessionFeatures?: string[];
@@ -48,13 +49,24 @@ export type MeshAsset = {
 export type VisualPart = {
   visualPartId: string; pieceId: string; portId?: string; meshAssetId: string;
   materialBindingId: string; role: string; label?: string; labelScale?: number;
+  /** Local display scale, applied before the intrinsic isometry; defaults to 1. */
+  meshScale?: number;
 };
 export type SceneDescriptor = {
   sceneId: string; realizationId: string; definitionDigest: string; requiredCapabilities: string[];
   meshAssets: MeshAsset[]; visualParts: VisualPart[]; diagram: boolean;
+  space: GeometrySpace; projections: string[]; drawingSpace: string; drawingBufferVersion: number;
   ambientSpace?: 'R3' | 'S2' | 'E2'; sphereRadius?: number; diskAngleDegrees?: number; fidelity?: string;
   flatSurface?: FlatSurface;
   diskCenters?: Record<string, [number, number, number]>; surfaceTransportVerified?: boolean; catalogTransportVerified?: boolean;
+};
+/** Model-qualified layout, not a promise that poses are affine model matrices. */
+export type GeometrySpace = {
+  id: string; intrinsicDimension: number; coordinateModel: string; metric: string;
+  curvature: number; radius?: number; pointCoordinates: number;
+  embeddingDimension: number; metricSignature: number[]; homogeneous: boolean;
+  isometryRows: number; isometryColumns: number; isometryScalar: 'float64';
+  matrixOrder: 'column-major'; meshCoordinates: string;
 };
 /** Intrinsic quotient data. Displayed images, clipping and cameras belong to the renderer. */
 export type FlatSurface = {
@@ -289,3 +301,61 @@ export class KernelSession {
 // Native memory views are borrowed. Every view is copied before the next WASM call.
 export function copyFloatView(view: Float32Array): Float32Array { return new Float32Array(view); }
 export function copyIndexView(view: Uint32Array): Uint32Array { return new Uint32Array(view); }
+
+/** Optional presentation helper. Uses the explicit frame/animation/projection API;
+ * no camera, clock, easing, abstract mutation, or renderer dependency. */
+export class GeometryInstance {
+  readonly definition: NonNullable<ReturnType<MainModule['createGeometryDefinition']>>;
+  readonly scene: SceneDescriptor;
+  readonly matrices: Float32Array;
+  private animation?: ReturnType<InstanceType<MainModule['GeometryDefinition']>['animate']>;
+
+  constructor(module: MainModule, session: InstanceType<MainModule['Session']>, realization: string) {
+    const info = JSON.parse(module.kernelInfoJSON()) as KernelInfo;
+    if (info.geometryAPIVersion !== 1 || info.poseBufferVersion !== 1) throw new Error('Unsupported geometry API.');
+    const definition = module.createGeometryDefinition(session, realization);
+    if (!definition) throw new Error('Cannot create geometry definition.');
+    this.definition = definition;
+    try {
+      this.scene = JSON.parse(definition.sceneJSON()) as SceneDescriptor;
+      this.matrices = new Float32Array(this.scene.visualParts.length * 16);
+      this.setState(session.stateJSON());
+    } catch (error) { definition.delete(); throw error; }
+  }
+
+  private project(frame: ReturnType<InstanceType<MainModule['GeometryDefinition']>['frame']>): Float32Array {
+    try {
+      const drawing = this.definition.project(frame, 'embedding');
+      try { return copyFloatView(drawing.transforms() as Float32Array); }
+      finally { drawing.delete(); }
+    } finally { frame.delete(); }
+  }
+  setState(stateText: string): void {
+    const matrices = this.project(this.definition.frame(stateText));
+    this.matrices.set(matrices);
+    this.animation?.delete(); this.animation = undefined;
+  }
+  prepare(record: string): number {
+    const next = this.definition.animate(record);
+    try {
+      const matrices = this.project(next.evaluate(0));
+      this.matrices.set(matrices);
+      const hint = next.durationHint();
+      this.animation?.delete(); this.animation = next;
+      return hint;
+    } catch (error) { next.delete(); throw error; }
+  }
+  /** Linear progress; apply easing in the controller before calling. */
+  evaluate(progress: number): void {
+    if (!Number.isFinite(progress)) throw new Error('Animation progress must be finite.');
+    if (this.animation) this.matrices.set(this.project(this.animation.evaluate(progress)));
+  }
+  /** Shares all assets and tables; does not disturb the prepared live motion. */
+  destination(record: string): Float32Array {
+    const animation = this.definition.animate(record);
+    try { return this.project(animation.evaluate(1)); }
+    finally { animation.delete(); }
+  }
+  resolvePart(id: string): HitBinding { return JSON.parse(this.definition.resolvePartJSON(id)) as HitBinding; }
+  dispose(): void { this.animation?.delete(); this.animation = undefined; this.definition.delete(); }
+}

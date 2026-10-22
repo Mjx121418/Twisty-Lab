@@ -1,4 +1,4 @@
-import { createKernel, KernelSession, copyFloatView, copyIndexView } from '../../index.js';
+import { createKernel, KernelSession, GeometryInstance, copyFloatView, copyIndexView } from '../../index.js';
 
 const module = await createKernel();
 const canvas = document.querySelector('#view');
@@ -72,8 +72,8 @@ function draw() {
   if(clipPolygon){context.strokeStyle='#758ca5';context.lineWidth=2;context.beginPath();clipPolygon.forEach(([x,y],i)=>i?context.lineTo(x,y):context.moveTo(x,y));context.closePath();context.stroke();}
 }
 function sample(progress) {
-  geometry.sample(progress);
-  transforms.set(geometry.transforms()); // Copy the borrowed view before another kernel call.
+  geometry.evaluate(progress);
+  transforms.set(geometry.matrices); // Copy the owned presentation snapshot.
   draw();
 }
 function refresh() {
@@ -110,16 +110,15 @@ async function install(puzzle) {
   const next = new KernelSession(module, source);
   let view;
   try {
-    view = module.createGeometry(next.native, realization);
-    if (!view) throw new Error('Cannot create geometric interpreter.');
-    const scene = JSON.parse(view.sceneJSON());
+    view = new GeometryInstance(module, next.native, realization);
+    const scene = view.scene;
     if ((!scene.diagram&&!scene.flatSurface) || scene.requiredCapabilities.some((capability) => !supported.has(capability))) throw new Error('This renderer supports flat triangle-mesh diagrams and polygonal quotients.');
-    geometry?.delete(); session?.dispose();
+    geometry?.dispose(); session?.dispose();
     session = next; geometry = view; descriptor = scene;
-  } catch (error) { view?.delete(); next.dispose(); throw error; }
-  positions = copyFloatView(geometry.positions());
-  indices = copyIndexView(geometry.indices());
-  transforms = copyFloatView(geometry.transforms());
+  } catch (error) { view?.dispose(); next.dispose(); throw error; }
+  positions = copyFloatView(geometry.definition.positions());
+  indices = copyIndexView(geometry.definition.indices());
+  transforms = copyFloatView(geometry.matrices);
   images=[identity()];
   if(descriptor.flatSurface){
     const surface=descriptor.flatSurface,[a,b]=surface.deckGenerators;images=[];
@@ -151,13 +150,12 @@ async function play(command) {
     blocked = result.implicatedPieces ?? [];
     document.querySelector('#status').textContent = result.reasonCode ?? result.diagnostics?.[0]?.message ?? result.status;
     for (const record of result.transitionRecords ?? []) {
-      const prepared = JSON.parse(geometry.prepareAnimationJSON(record));
-      if (prepared.status !== 'Prepared') throw new Error('Unsupported visual transition.');
+      geometry.prepare(record);
       await new Promise((resolve) => {
         const start = performance.now();
         function tick(now) {
           const progress = Math.min(1, (now - start) / 180);
-          sample(progress);
+          sample(progress * progress * (3 - 2 * progress));
           if (progress === 1) resolve(); else requestAnimationFrame(tick);
         }
         requestAnimationFrame(tick);
@@ -165,7 +163,7 @@ async function play(command) {
     }
   } catch (error) { document.querySelector('#status').textContent = String(error); }
   finally {
-    geometry.setStateJSON(session.stateText()); transforms.set(geometry.transforms()); draw();
+    geometry.setState(session.stateText()); transforms.set(geometry.matrices); draw();
     busy = false; refresh();
   }
 }
@@ -181,7 +179,7 @@ canvas.addEventListener('click', (event) => {
     return signs.every((value) => value >= 0) || signs.every((value) => value <= 0);
   });
   if (!hit) return;
-  const binding = JSON.parse(geometry.bindHitJSON(hit.part.visualPartId));
+  const binding = geometry.resolvePart(hit.part.visualPartId);
   selected = binding.pieceId;
   document.querySelector('#selection').textContent = `Selected ${selected}${binding.portId ? ` · port ${binding.portId}` : ''}`;
   draw();
@@ -200,5 +198,5 @@ document.querySelector('#puzzle').addEventListener('change', (event) => {
     if (session) refresh();
   });
 });
-window.addEventListener('pagehide', () => { geometry?.delete(); session?.dispose(); });
+window.addEventListener('pagehide', () => { geometry?.dispose(); session?.dispose(); });
 await install('cube3');

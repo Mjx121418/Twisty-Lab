@@ -18,6 +18,8 @@ inline Json kernel_info() {
       {"sessionSchemaVersions", {2}},
       {"sessionFeatures", {"completed-choices", "shared-definitions"}},
       {"frameBufferVersion", 1},
+      {"geometryAPIVersion", 1},
+      {"poseBufferVersion", 1},
       {"languageAPIVersion", 1},
       {"authoringLibraries", {"cube3", "bandaged-uf-ufr", "gear-family"}},
       {"catalogKinds", {"relational-cube-bindings", "relational-port-bindings", "relational-articulated-bindings"}},
@@ -26,6 +28,7 @@ inline Json kernel_info() {
        {"cube-euclidean", "cube-port-diagram", "cube-spherical", "polyhedral-euclidean",
         "polyhedral-port-diagram", "polyhedral-spherical", "articulated-euclidean",
         "articulated-port-diagram", "articulated-spherical", "flat-quotient"}},
-      {"geometryCapabilities", {"triangle-meshes", "rigid-transforms", "quotient-surface", "quotient-orbifold"}}};
+      {"geometryCapabilities", {"triangle-meshes", "rigid-transforms", "quotient-surface", "quotient-orbifold",
+                                "shared-geometry-definitions", "space-qualified-poses", "seekable-animations"}}};
 }
 } // namespace twisty

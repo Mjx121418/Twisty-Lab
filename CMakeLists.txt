@@ -58,6 +58,7 @@ target_link_libraries(puzzle_session PUBLIC puzzle_execution)
 
 add_library(puzzle_geometry
   src/interpreter/geometry.cpp
+  src/interpreter/geometry_compiler.cpp
   src/interpreter/catalog_geometry.cpp
   src/interpreter/spherical_geometry.cpp
   src/interpreter/catalog_spherical_geometry.cpp
@@ -109,6 +110,10 @@ else()
   add_executable(twisty_language examples/language/main.cpp)
   target_link_libraries(twisty_language PRIVATE puzzle_language)
   if(BUILD_TESTING)
+    add_executable(geometry_api_tests tests/geometry_api_tests.cpp)
+    target_link_libraries(geometry_api_tests PRIVATE puzzle_kernel)
+    target_compile_definitions(geometry_api_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+    add_test(NAME geometry_api COMMAND geometry_api_tests)
     add_executable(runtime_api_tests tests/runtime_api_tests.cpp)
     target_link_libraries(runtime_api_tests PRIVATE puzzle_kernel)
     target_compile_definitions(runtime_api_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")

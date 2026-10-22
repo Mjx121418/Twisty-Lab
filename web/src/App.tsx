@@ -252,7 +252,7 @@ export function App() {
             const tick = (now: number): void => {
               if (epoch.current !== token) { resolve(); return; }
               const progress = Math.min(1, (now - start) / milliseconds);
-              for (const view of views.current) view.sample(progress);
+              for (const view of views.current) view.sample(progress * progress * (3 - 2 * progress));
               if (progressBar.current) progressBar.current.style.width = `${progress * 100}%`;
               if (progress === 1) resolve(); else animationFrame.current = requestAnimationFrame(tick);
             };
