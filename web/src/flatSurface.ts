@@ -7,9 +7,11 @@ export type SurfaceImage = { matrix: Matrix4; x: number; y: number; reflected: b
 export type Polygon = [number, number][];
 
 export function surfacePolygon(surface: FlatSurface, mode: SurfaceMode): Polygon {
+  if(mode==='square' && surface.fundamentalPolygon)return surface.fundamentalPolygon;
   if (surface.latticeBasis) {
     const [a,b]=surface.latticeBasis,lo=mode==='square'?0:-1,hi=mode==='square'?1:2;
-    return [[lo,lo],[hi,lo],[hi,hi],[lo,hi]].map(([i,j])=>[i*a[0]+j*b[0],i*a[1]+j*b[1]]);
+    const [x,y]=surface.chartOrigin??[0,0];
+    return [[lo,lo],[hi,lo],[hi,hi],[lo,hi]].map(([i,j])=>[x+i*a[0]+j*b[0],y+i*a[1]+j*b[1]]);
   }
   const [x,y,r,t]=surface.fundamentalBounds,dx=mode==='square'?0:r-x,dy=mode==='square'?0:t-y;
   return [[x-dx,y-dy],[r+dx,y-dy],[r+dx,t+dy],[x-dx,t+dy]];
@@ -32,6 +34,7 @@ function power(generator: Matrix4, n: number): Matrix4 {
 
 export function surfaceImageOrigin(surface: FlatSurface, x: number, y: number): [number, number] {
   if(surface.latticeBasis){
+    x-=surface.chartOrigin?.[0]??0;y-=surface.chartOrigin?.[1]??0;
     const [a,b]=surface.latticeBasis,det=a[0]*b[1]-a[1]*b[0];
     return [Math.floor((x*b[1]-y*b[0])/det),Math.floor((a[0]*y-a[1]*x)/det)];
   }
@@ -51,7 +54,8 @@ export function surfaceImages(surface: FlatSurface, mode: SurfaceMode, origin: [
     const matrix = surface.latticeBasis ? new Matrix4().makeTranslation(
       x*surface.latticeBasis[0][0]+y*surface.latticeBasis[1][0],
       x*surface.latticeBasis[0][1]+y*surface.latticeBasis[1][1],0) : power(a,x).multiply(power(b,y));
-    if(surface.tileReflection && (x+y)%2!==0) matrix.multiply(new Matrix4().fromArray(surface.tileReflection));
+    const holonomy=surface.tileHolonomy??surface.tileReflection;
+    if(holonomy && (x+y)%2!==0) matrix.multiply(new Matrix4().fromArray(holonomy));
     const e = matrix.elements;
     images.push({matrix,x,y,reflected:e[0]*e[5]-e[1]*e[4]<0});
   }

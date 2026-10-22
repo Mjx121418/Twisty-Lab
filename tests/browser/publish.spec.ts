@@ -13,6 +13,8 @@ const presets = [
   ['flat-klein-bottle', 'A'],
   ['flat-hex-torus', 'A'],
   ['flat-hex-klein-bottle', 'A'],
+  ['flat-pillowcase', 'A'],
+  ['flat-pillowcase-6', 'E'],
 ] as const;
 
 function collectErrors(page: Page): string[] {

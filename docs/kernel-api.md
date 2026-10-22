@@ -158,7 +158,7 @@ Create a C++ `Geometry` from the immutable definition pointer and a compatible r
 
 `setStateJSON` changes only that interpreter's displayed state. It cannot modify the session. A preparation result is `Prepared` with a duration hint or `UnsupportedTransition` with diagnostics. A visual limitation does not change abstract legality. The controller supplies normalized progress and chooses an animation clock; the kernel schedules no frames.
 
-The public `SceneDescriptor`, `MeshAsset`, `VisualPart`, and `HitBinding` TypeScript types describe the wire data. Check `requiredCapabilities` against your renderer before constructing drawing resources. Current capabilities are `triangle-meshes`, `rigid-transforms`, and `quotient-surface`. The `diagram` flag identifies flat port diagrams. Material bindings are symbolic labels; the renderer chooses colors, lighting, fonts, and selection/blocking styles.
+The public `SceneDescriptor`, `MeshAsset`, `VisualPart`, and `HitBinding` TypeScript types describe the wire data. Check `requiredCapabilities` against your renderer before constructing drawing resources. Current capabilities are `triangle-meshes`, `rigid-transforms`, `quotient-surface`, and `quotient-orbifold`. The last capability requires support for the pillowcase's cone points and its half-turn identifications. The `diagram` flag identifies flat port diagrams. Material bindings are symbolic labels; the renderer chooses colors, lighting, fonts, and selection/blocking styles.
 
 The additive `flat-quotient` realization exposes `ambientSpace: "E2"` and a `FlatSurface` scene descriptor with `topology`, `fundamentalBounds`, two column-major `deckGenerators`, and `twoSided: true`; optional `cutRadius` and `diskCenters` describe the cuts. It retains API 4, realization schema 1 and buffer version 1. The interpreter emits intrinsic physical parts and continuous lifted rotation frames; displayed copies, reflections, clipping and picking belong to the renderer. Renderers advertising `quotient-surface` must support those operations and two-sided planar assets. Native and WASM constructors and borrowed-view lifetimes are unchanged. See [flat surfaces](flat-surfaces.md) for the exact matrix conventions, square/tiled presentation, preset construction and reproduction.
 
@@ -175,6 +175,37 @@ from lattice tile coordinates. Invalid chart names, nonplanar/out-of-chart
 frames and nonembedded cut radii produce `realization.flat_surface` or
 `realization.articulated` diagnostics. This additive metadata retains API 4,
 schema 1 and buffer 1, with unchanged ownership and borrowed-view lifetimes.
+
+The additive `topology: "pillowcase"`, `chart: "pillowcase-square"` requires
+`quotient-orbifold` in addition to `quotient-surface`. Here `sideLength=L` is
+the covering torus translation period. The scene's fundamental polygon is
+`[(L/2,0),(L,L/2),(L/2,L),(0,L/2)]`, of area `L²/2`. Its three
+`deckGenerators` are translations `(L,0)` and `(0,L)`, followed by the
+half-turn `I(p)=(L/2,L/2)-p`. These matrices and their compositions act on
+positions and orientations. The four `conePoints` are `(L/4,L/4)`,
+`(3L/4,L/4)`, `(L/4,3L/4)`, and `(3L/4,3L/4)`; each has angle π.
+
+The pillowcase scene also supplies `latticeBasis=[(L/2,L/2),(-L/2,L/2)]`,
+`chartOrigin=(L/2,0)`, and `tileHolonomy`, the column-major proper lift of
+`p -> (L,L)-p`. A tile image is `Translation(i*a+j*b)` composed with
+`tileHolonomy` for odd `i+j`, or just the translation for even `i+j`.
+`chartOrigin` locates the first polygon vertex; it is used for tile address
+and polygon calculations, not as an extra matrix translation. The odd-tile
+composition belongs to the deck group; `tileHolonomy` alone need not.
+All images preserve handedness. Prefer `fundamentalPolygon` to its bounds
+for clipping and picking. When present, `tileHolonomy` takes precedence over
+`tileReflection`.
+
+The interpreter emits each physical part once, including a half-domain mesh
+for a piece containing a cone point. Applying all image matrices fills its
+complete planar lift without coincident full meshes. Frames use the closed
+diamond, resolving boundary and stabilizer ambiguity by lexicographically
+comparing `(x,y,m[0],m[1],m[4],m[5])` rounded at `1e-9`. Sampling retains a
+continuous lift until the exact canonical endpoint. Cone disks require
+`cutRadius < L/2`; a declared ordinary-center disk tightens the bound to its
+distance to the nearest cone, equal to `L/√8` at E and F. Invalid radii or incompatible chart names fail construction with
+`realization.flat_surface`. API 4, realization schema 1, and buffer version 1
+are unchanged; no ownership or constructor changes are introduced.
 
 `kernelInfoJSON()` also advertises the `cube-spherical` realization. Its optional scene metadata identifies `ambientSpace: "S2"`, the six `diskCenters`, `sphereRadius`, `diskAngleDegrees`, `fidelity`, and `surfaceTransportVerified`. Mesh assets may declare `rotationSymmetryOrder`; featureless spherical centers use order four. These additive descriptors use the same buffer format and rendering capabilities as other realizations. Custom clients pass a compatible `cube-spherical.json` into the existing geometry constructor; the packaged example data includes both reference cube realizations. See [the spherical construction](spherical-cube.md) for its geometric verification and surface-model scope.
 

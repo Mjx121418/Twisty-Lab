@@ -47,6 +47,7 @@ private:
   bool flat_surface_ = false;
   bool flat_twisted_ = false;
   bool flat_rhombus_ = false;
+  bool flat_pillowcase_ = false;
   double flat_side_ = 2;
   using Frame = std::array<double, 16>;
   using Point = std::array<double, 3>;

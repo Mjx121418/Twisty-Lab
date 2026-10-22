@@ -16,6 +16,14 @@ have 4 faces, 12 edges and 8 vertices, with 60° face turns. The synchronized
 **Fundamental domain + tiled plane** views show the hexagonal color cells across repeated
 copies; the Klein bottle pairs adjacent sides by glide reflections.
 
+Two [pillowcase orbifold](docs/pillowcase-investigation.md) presets use the
+square `2222` quotient. **Pillowcase · 4 disks · radius 0.846** has 18 pieces;
+**Pillowcase · 6 disks · radius 0.6** has 34 pieces, adding disks at the domain
+center and its identified vertices. Both offer fundamental-domain and tiled-plane
+views. Keys `A B C D` turn around cone points with order 2; the six-disk preset
+adds ordinary turns `E F` of order 4. All turns rotate 90° in the covering plane,
+with Shift for inverse animation. Adjacent displayed squares differ by 180°.
+
 An experimental Helicopter Cube preset adds exact jumbling stops, placement-dependent blocking, a complete shape-graph verifier, and synchronized polyhedral, spherical, and port-diagram realizations. Its [spherical interpretation](docs/spherical-helicopter.md) has twelve 45° disks and reuses all 44 pieces, with the existing mechanism pieces visible as uncolored regions. It retains the core's volume-derived legality rules. Its [model specification](docs/helicopter-model.md) records the finite catalogs, geometric interpretation, external acceptance targets, and remaining independent review.
 
 The [Bagua Cube](docs/bagua-model.md) preset adds 146 pieces, exact 45° face turns, placement-dependent blocking, polygonal stickers and synchronized cube, [sphere](docs/spherical-bagua.md) and port-diagram views. It opens in **Cube + sphere**, retaining all existing pieces and ports. Its [verification record](docs/bagua-verification.md) covers published pair/kite cycles, sliver behavior and an independent audit of all cut guards and overlap pairs; whole-model human review and a reproducible physical blocked-state comparison remain open. Select **Bagua Cube**; `+` / `−` buttons turn 45°, while face keys turn 90°.
@@ -120,7 +128,7 @@ Regression fixtures pin a definition digest and specify a replay prefix, request
 Puzzle authoring is separate from app builds:
 
 ```sh
-npm run build:puzzles                # Build native authoring tools and regenerate all 11 packages
+npm run build:puzzles                # Build native authoring tools and regenerate all 13 packages
 npm run check:puzzles -- --files-only # Check recorded input and artifact hashes; no compiler needed
 npm run check:puzzles                # Also validate schemas, semantic pins, and all WASM realizations
 npm run check:packages               # Expensive regeneration-based reproducibility audit

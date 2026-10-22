@@ -37,6 +37,10 @@ import hexTorusSource from '../../packages/flat-hex-torus/package.json?raw';
 import hexTorusRealization from '../../packages/flat-hex-torus/flat-quotient.json';
 import hexKleinSource from '../../packages/flat-hex-klein-bottle/package.json?raw';
 import hexKleinRealization from '../../packages/flat-hex-klein-bottle/flat-quotient.json';
+import pillowcaseSource from '../../packages/flat-pillowcase/package.json?raw';
+import pillowcaseRealization from '../../packages/flat-pillowcase/flat-quotient.json';
+import pillowcaseSixSource from '../../packages/flat-pillowcase-6/package.json?raw';
+import pillowcaseSixRealization from '../../packages/flat-pillowcase-6/flat-quotient.json';
 import { pieceDestinations, type PieceDestination } from './destinations';
 import { defaultViews, moveView, restoreViews, viewLabels, type ViewId, type ViewSelection } from './viewSelection';
 
@@ -71,6 +75,8 @@ const presets = [
   surfacePreset('flat-klein-bottle', 'Klein bottle · face turning', kleinSource, kleinRealization),
   surfacePreset('flat-hex-torus', 'Hexagonal torus · face turning', hexTorusSource, hexTorusRealization),
   surfacePreset('flat-hex-klein-bottle', 'Hexagonal Klein bottle · face turning', hexKleinSource, hexKleinRealization),
+  surfacePreset('flat-pillowcase', 'Pillowcase · 4 disks · radius 0.846', pillowcaseSource, pillowcaseRealization),
+  surfacePreset('flat-pillowcase-6', 'Pillowcase · 6 disks · radius 0.6', pillowcaseSixSource, pillowcaseSixRealization),
 ] as unknown as Preset[];
 type Inspector = 'pieces' | 'history' | 'definition';
 
@@ -313,7 +319,7 @@ export function App() {
         setSelected(undefined);
       } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
         event.preventDefault(); enqueue(() => event.shiftKey ? kernel.current!.redo() : kernel.current!.undo());
-      } else if (!event.ctrlKey && !event.metaKey && !event.altKey && /^[urfdlabc]$/i.test(event.key)) {
+      } else if (!event.ctrlKey && !event.metaKey && !event.altKey && /^[urfdlabce]$/i.test(event.key)) {
         event.preventDefault();
         const face = event.key.toUpperCase(), inverse = event.shiftKey;
         if (kernel.current?.definition.operations.some((move) => move.id === face)) enqueue(() => {
@@ -461,7 +467,7 @@ export function App() {
           </div>
 
           <section className="commands">
-            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{activePreset?.surface ? `Face keys A B C D · ${rhombus ? 60 : 90}° turns · Shift for inverse` : snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : snapshot?.puzzleId === 'bagua-experimental-v1' ? '+ / −: 45° · face keys: 90° · Shift for inverse' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
+            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{activePreset?.surface ? `Face keys ${Object.keys(activePreset.realizations[0].flatSurface?.diskCenters??{}).join(' ')} · ${rhombus ? 60 : 90}° turns · Shift for inverse` : snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : snapshot?.puzzleId === 'bagua-experimental-v1' ? '+ / −: 45° · face keys: 90° · Shift for inverse' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
             <div className="moves">{families.map((family) => <div className={`move-pair ${(phaseRequests?.filter((op) => op.family === family).length ?? 0) > 2 ? 'many-moves' : ''}`} key={family}>{phaseRequests?.filter((operation) => operation.family === family).map((operation) => {
               const inverse = operation.id === `${family}'` || operation.id === `${family}_inv`;
               const half = operation.id === `${family}_half`;

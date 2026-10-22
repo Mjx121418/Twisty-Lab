@@ -4,7 +4,7 @@ import { copyFloatView, copyIndexView, type FlatSurface, type MainModule, type R
 import type { PieceDestination } from './destinations';
 import { cameraWindowPolygon, insidePolygon, surfaceBounds, surfaceImageOrigin, surfaceImages, surfacePolygon, type Polygon, type Bounds, type SurfaceImage, type SurfaceMode } from './flatSurface';
 
-const palette: Record<string, number> = { A:0xe76561, B:0x66c7a0, C:0xf1cf67, D:0x7fa5ed, body:0x24313b, ink:0x16252d };
+const palette: Record<string, number> = { A:0xe76561, B:0x66c7a0, C:0xf1cf67, D:0x7fa5ed, E:0xb798e4, F:0xf0a35f, body:0x24313b, ink:0x16252d };
 type SurfaceMesh = THREE.InstancedMesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
 type Instance = { part: number; image: number };
 type Batch = { mesh: SurfaceMesh; instances: Instance[] };
@@ -67,7 +67,7 @@ export class SurfaceView {
     this.geometry = geometry;
     this.descriptor = JSON.parse(geometry.sceneJSON()) as SceneDescriptor;
     if (!this.descriptor.flatSurface) { geometry.delete(); throw new Error('Missing quotient surface metadata.'); }
-    if (this.descriptor.requiredCapabilities.some(c=>!['triangle-meshes','rigid-transforms','quotient-surface'].includes(c))) {
+    if (this.descriptor.requiredCapabilities.some(c=>!['triangle-meshes','rigid-transforms','quotient-surface','quotient-orbifold'].includes(c))) {
       geometry.delete(); throw new Error('Unsupported surface-rendering capability.');
     }
     this.surface = this.descriptor.flatSurface;
@@ -158,17 +158,28 @@ export class SurfaceView {
       const texture=new THREE.CanvasTexture(canvas);this.textures.push(texture);
       const material=new THREE.MeshBasicMaterial({map:texture,transparent:true,depthTest:false,depthWrite:false});this.decorationMaterials.add(material);
       const mesh=new THREE.InstancedMesh(labelGeometry,material,this.images.length);mesh.renderOrder=5;mesh.frustumCulled=false;
-      this.decorationLabels.push({mesh,point:new THREE.Vector3(center[0],center[1]+.125,0)});this.scene.add(mesh);
+      this.decorationLabels.push({mesh,point:new THREE.Vector3(center[0],center[1],0)});this.scene.add(mesh);
     }
     this.updateDecorations();
   }
 
   private updateDecorations(): void {
     for(const label of this.decorationLabels){
+      const seen=new Set<string>();
       this.images.forEach((image,i)=>{
         this.vector.copy(label.point).applyMatrix4(image.matrix);
-        // Keep the text upright in every reflected image, like a billboard.
-        label.mesh.setMatrixAt(i,this.matrix.makeTranslation(this.vector.x,this.vector.y,0));
+        const key=`${Math.round(this.vector.x*1e7)},${Math.round(this.vector.y*1e7)}`;
+        // A cone has two coincident images. Label it once; move seam labels
+        // inward so the clipped fundamental window retains all four names.
+        if(seen.has(key))label.mesh.setMatrixAt(i,this.matrix.makeScale(0,0,0));
+        else{
+          seen.add(key);let dx=0,dy=.125;
+          if(this.mode==='square'&&this.surface.topology==='pillowcase'){
+            const x=this.camera.position.x-this.vector.x,y=this.camera.position.y-this.vector.y,length=Math.hypot(x,y);
+            if(length>1e-8){dx=x*.125/length;dy=y*.125/length;}
+          }
+          label.mesh.setMatrixAt(i,this.matrix.makeTranslation(this.vector.x+dx,this.vector.y+dy,0));
+        }
       });label.mesh.instanceMatrix.needsUpdate=true;
     }
   }
@@ -182,7 +193,10 @@ export class SurfaceView {
     this.renderer.clippingPlanes.forEach((plane,i)=>{const p=this.worldPolygon[i];plane.constant=-plane.normal.x*p[0]-plane.normal.y*p[1];});
     this.camera.updateMatrixWorld();
     const origin=surfaceImageOrigin(this.surface,x,y);
-    if(origin[0]===this.imageOrigin[0]&&origin[1]===this.imageOrigin[1])return;
+    if(origin[0]===this.imageOrigin[0]&&origin[1]===this.imageOrigin[1]){
+      if(this.mode==='square'&&this.surface.topology==='pillowcase')this.updateDecorations();
+      return;
+    }
     this.imageOrigin=origin;
     const next=surfaceImages(this.surface,this.mode,origin,this.imageRadius);
     next.forEach((image,i)=>{this.images[i].matrix.copy(image.matrix);Object.assign(this.images[i],{x:image.x,y:image.y,reflected:image.reflected});});

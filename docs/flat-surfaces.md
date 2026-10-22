@@ -149,3 +149,46 @@ The presets fix radius 0.8 and four cutting centers. Changing radius
 across a tangency changes the piece layout and requires new authoring. Embedded
 donut/Klein-bottle views and arbitrary fundamental polygons are deferred; the
 supported charts are the square and the 60° rhombus.
+
+## Pillowcase presets
+
+`flat-pillowcase` and `flat-pillowcase-6` realize the `2222` orbifold, the
+quotient of the side-2 square torus by `I(x,y)=(1-x,1-y)`. Its fundamental
+domain is `|x-1|+|y-1|≤1`, a square of side √2. Pair the halves of each
+boundary edge by a half-turn about its midpoint. The four midpoints A–D
+become order-2 cone points; the four vertices identify to one regular point.
+
+The four-disk preset uses radius **0.846** and has 4 cone-center pieces,
+4 edges, 8 lobes, and 2 cores: **18 pieces**. Its completely marked state
+space has 384 states. The six-disk preset uses radius **0.6** throughout,
+adding E at `(1,1)` and F at the identified vertices, represented by `(1,0)`.
+It has 4 cone centers, 2 ordinary faces, 8 edges, 16 lobes, and 4 cores:
+**34 pieces**. Its lifted cuts form a square grid rotated 45° and scaled by
+`1/√2`. All six cuts are compatible with 90° lifted rotations.
+
+The solved coloring follows the nearest cutting center. For four disks, the
+lines `x=1` and `y=1` divide the fundamental square into four equal isosceles
+right triangles, colored A–D. For six disks, write
+`(x,y)=(1+u-v,u+v)` with `0≤u,v≤1`. Four lines at `u,v=1/4,3/4`
+give one large central square colored E, four rectangles colored A–D, and
+four small corner squares colored F. All four corners have the same color
+because they meet the same identified center. The color patches belong to
+the pieces and travel with them during turns; they are not fixed chart overlays.
+
+The A–D turns have order 2; E and F have order 4. Prime reverses the
+animation path even when the endpoint agrees with the forward turn. A full
+180° cone turn has an identity endpoint and still animates. Both presets
+use the same fundamental-domain and tiled-plane controls as the smooth
+surfaces. Adjacent square images carry a 180° rotation. Picking all copies
+of a cone or the shared vertex selects the same physical piece. Cone
+center assets cover half their planar lift, with matching markings in
+the other half, so copies introduce no doubled surfaces or false cut gap.
+
+The scene requires `quotient-orbifold` and adds the three deck generators,
+`chartOrigin`, `tileHolonomy`, and `conePoints` described in the
+[public contracts](kernel-api.md). Viewport state and image pools remain
+outside the kernel. Reproduce the two committed packages with
+`python3 scripts/pillowcase_packages.py`; `--write` deliberately updates them.
+Use `npm run build:puzzles` afterward to validate all packages and record
+their manifest. The [investigation](pillowcase-investigation.md) records
+the radius analysis and finite enumeration.

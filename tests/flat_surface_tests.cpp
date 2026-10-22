@@ -105,8 +105,72 @@ void puzzle(const std::string &topology, bool hex = false) {
   }
   std::cout << (hex ? "hexagonal " : "") << topology << ": exact transports, quotient holonomy, frames and rejection checks passed\n";
 }
+
+void pillowcase(bool six) {
+  const std::string folder = std::string("packages/flat-pillowcase") + (six ? "-6/" : "/");
+  Session session(read(folder + "package.json"));
+  const auto document = Json::parse(read(folder + "flat-quotient.json"));
+  Geometry geometry(session.execution(), document.dump());
+  const auto scene = Json::parse(geometry.scene_json());
+  const auto &surface = scene.at("flatSurface");
+  check(surface.at("topology") == "pillowcase", "Wrong orbifold topology");
+  check(surface.at("deckGenerators").size() == 3, "Pillowcase requires its involution");
+  check(surface.at("conePoints").size() == 4, "Missing singularities");
+  check(surface.at("fundamentalPolygon").size() == 4 && surface.contains("tileHolonomy"),
+        "Missing square orbifold chart");
+  check(session.definition()->pieces.size() == (six ? 34 : 18), "Wrong pillowcase piece count");
+  check(scene.at("visualParts").size() == (six ? 122 : 64), "Duplicate physical parts");
+  const auto origin = session.snapshot().at("stateDigest");
+  const std::string names = six ? "ABCDEF" : "ABCD";
+  for (char name : names) {
+    const std::string face(1, name);
+    for (const auto &word : {face + " " + face + "'", "(" + face + ")" + (name <= 'D' ? "2" : "4"),
+                             face + "2 " + face + "2"}) {
+      const auto result = session.run(word, "transactional", session.revision());
+      check(result.at("status") == "Committed", "Orbifold turn failed");
+      for (const auto &record : result.at("transitions")) {
+        check(Json::parse(geometry.prepare_animation_json(record.dump())).at("status") == "Prepared",
+              "Orbifold track rejected");
+        for (double t : {0., .001, .25, .5, .999, 1.}) {
+          geometry.sample(t);
+          for (float v : geometry.transforms()) check(std::isfinite(v), "Nonfinite orbifold frame");
+        }
+      }
+      check(session.snapshot().at("stateDigest") == origin, "Incorrect orbifold move order");
+    }
+  }
+  const std::string word = six ? "A B E F C D E2 F'" : "A B C D A' C B";
+  const auto mixed = session.run(word + " (" + word + ")'", "transactional", session.revision());
+  check(mixed.at("status") == "Committed", "Mixed orbifold word failed");
+  for (const auto &record : mixed.at("transitions")) {
+    check(Json::parse(geometry.prepare_animation_json(record.dump())).at("status") == "Prepared",
+          "Mixed orbifold track failed");
+    geometry.sample(.37);
+    geometry.sample(1);
+  }
+  check(session.snapshot().at("stateDigest") == origin, "Mixed word did not restore the orbifold");
+  const auto exact = geometry.transforms();
+  geometry.set_state_json(session.state_json());
+  check(geometry.transforms() == exact, "Orbifold endpoint differs from exact resting state");
+  auto malformed = document;
+  malformed["flatSurface"]["cutRadius"] = six ? .71 : 1.;
+  reject(session.execution(), malformed);
+  malformed = document;
+  malformed["flatSurface"]["chart"] = "square";
+  reject(session.execution(), malformed);
+  malformed = document;
+  malformed["flatSurface"]["diskCenters"]["near-cone"] = {.51,.5};
+  reject(session.execution(), malformed);
+  malformed = document;
+  malformed["requiredCapabilities"].erase(malformed["requiredCapabilities"].end() - 1);
+  reject(session.execution(), malformed);
+  std::cout << (six ? "six" : "four") << "-disk pillowcase: orders, quotient tracks and singularity bounds passed\n";
+}
 } // namespace
 int main() {
-  try { puzzle("torus"); puzzle("klein-bottle"); puzzle("torus", true); puzzle("klein-bottle", true); }
+  try {
+    puzzle("torus"); puzzle("klein-bottle"); puzzle("torus", true); puzzle("klein-bottle", true);
+    pillowcase(false); pillowcase(true);
+  }
   catch (const std::exception &e) { std::cerr << e.what() << '\n'; return 1; }
 }

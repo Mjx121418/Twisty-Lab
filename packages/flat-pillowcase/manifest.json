@@ -1,0 +1,13 @@
+{
+  "cutRadius": 0.846,
+  "definitionDigest": "50bd737335b3d9df4615364639ed156c1dd72d04de2880b81f287d60e3a02c14",
+  "diskCount": 4,
+  "pieceCounts": {
+    "cone": 4,
+    "edge": 4,
+    "vertex": 8,
+    "vertex-core": 2
+  },
+  "topology": "pillowcase",
+  "uniqueTriangles": 176
+}

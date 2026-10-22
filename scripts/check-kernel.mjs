@@ -142,6 +142,8 @@ try {
     ['flat-klein-bottle', "A B C D (A B C D)'", 'A', 'flat-quotient'],
     ['flat-hex-torus', "A B C2 D3 (A B C2 D3)'", 'A', 'flat-quotient'],
     ['flat-hex-klein-bottle', "A B C2 D3 (A B C2 D3)'", 'A', 'flat-quotient'],
+    ['flat-pillowcase', "A B C D (A B C D)'", 'A', 'flat-quotient'],
+    ['flat-pillowcase-6', "A B E F C D (A B E F C D)'", 'E', 'flat-quotient'],
   ]) {
     const directory = join(javascript, 'examples/canvas/data', puzzle);
     const shipped = await readdir(directory);
@@ -156,8 +158,10 @@ try {
     try {
       if (kind === 'flat-quotient') {
         const scene = JSON.parse(geometry.sceneJSON());
-        assert.equal(scene.flatSurface.deckGenerators.length, 2);
-        assert.equal(scene.visualParts.length, puzzle.startsWith('flat-hex-') ? 100 : 116, 'Interpreter emits each physical part once.');
+        const pillowcase=puzzle.startsWith('flat-pillowcase');
+        assert.equal(scene.flatSurface.deckGenerators.length, pillowcase ? 3 : 2);
+        const parts=pillowcase ? puzzle.endsWith('-6') ? 122 : 64 : puzzle.startsWith('flat-hex-') ? 100 : 116;
+        assert.equal(scene.visualParts.length, parts, 'Interpreter emits each physical part once.');
         assert.ok(!('images' in scene.flatSurface), 'Renderer owns displayed copies.');
       }
       if (puzzle.startsWith('gear')) {

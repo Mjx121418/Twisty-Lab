@@ -42,7 +42,8 @@
         "enum": [
           "triangle-meshes",
           "rigid-transforms",
-          "quotient-surface"
+          "quotient-surface",
+          "quotient-orbifold"
         ]
       }
     },
@@ -219,11 +220,12 @@
         "topology": {
           "enum": [
             "torus",
-            "klein-bottle"
+            "klein-bottle",
+            "pillowcase"
           ]
         },
         "chart": {
-          "enum": ["square", "rhombus-60"]
+          "enum": ["square", "rhombus-60", "pillowcase-square"]
         },
         "sideLength": {
           "type": "number",

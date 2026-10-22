@@ -172,6 +172,22 @@
       "expectedStatus": "Blocked",
       "definitionDigest": "d42b5e36f088800eff957c2ff194063b95607051f6fd15ea997d2c45b0f83b49",
       "reasonCode": "relation.rejected"
+    },
+    {
+      "name": "Pillowcase cone turn after mixed turns",
+      "source": "packages/flat-pillowcase/package.json",
+      "prefix": "B C D",
+      "operation": "A",
+      "expectedStatus": "Committed",
+      "definitionDigest": "50bd737335b3d9df4615364639ed156c1dd72d04de2880b81f287d60e3a02c14"
+    },
+    {
+      "name": "Six-disk pillowcase ordinary turn",
+      "source": "packages/flat-pillowcase-6/package.json",
+      "prefix": "A F B",
+      "operation": "E",
+      "expectedStatus": "Committed",
+      "definitionDigest": "b57ac65dcedf0679966a0af7169287e7b8ef21f62d865d29da8aba5332530f16"
     }
   ]
 }

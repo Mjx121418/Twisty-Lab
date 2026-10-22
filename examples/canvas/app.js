@@ -3,12 +3,12 @@ import { createKernel, KernelSession, copyFloatView, copyIndexView } from '../..
 const module = await createKernel();
 const canvas = document.querySelector('#view');
 const context = canvas.getContext('2d');
-const palette = { U: '#e4e1d8', R: '#e76561', F: '#66c7a0', D: '#e8c451', L: '#eea76d', B: '#7fa5ed', A: '#e76561', C: '#f1cf67', body: '#202a35', ink: '#16252d' };
+const palette = { U: '#e4e1d8', R: '#e76561', F: '#66c7a0', D: '#e8c451', L: '#eea76d', B: '#7fa5ed', A: '#e76561', C: '#f1cf67', E: '#b798e4', body: '#202a35', ink: '#16252d' };
 let session, geometry, descriptor, positions, indices, transforms;
 let busy = false, selected, blocked = [], hits = [];
 let installEpoch = 0;
 const assets = new Map();
-const supported = new Set(['triangle-meshes', 'rigid-transforms', 'quotient-surface']);
+const supported = new Set(['triangle-meshes', 'rigid-transforms', 'quotient-surface', 'quotient-orbifold']);
 const identity = () => [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 function multiply(a,b) {
   const out=Array(16).fill(0);
@@ -57,7 +57,7 @@ function draw() {
       if(!bounds)context.beginPath();
       triangle.forEach(([x, y], vertex) => vertex ? context.lineTo(x, y) : context.moveTo(x, y));
       context.closePath();
-      context.fillStyle = bounds && part.materialBindingId==='B' ? '#66c7a0' : bounds && part.materialBindingId==='D' ? '#7fa5ed' : palette[part.materialBindingId] ?? '#999';
+      context.fillStyle = bounds && part.materialBindingId==='B' ? '#66c7a0' : bounds && part.materialBindingId==='D' ? '#7fa5ed' : bounds && part.materialBindingId==='F' ? '#f0a35f' : palette[part.materialBindingId] ?? '#999';
       if(!bounds)context.fill();
       context.strokeStyle = blocked.includes(part.pieceId) ? '#ce3724' : selected === part.pieceId ? '#176b88' : '#60746f';
       context.lineWidth = blocked.includes(part.pieceId) || selected === part.pieceId ? 3 : 1;
@@ -123,11 +123,13 @@ async function install(puzzle) {
   images=[identity()];
   if(descriptor.flatSurface){
     const surface=descriptor.flatSurface,[a,b]=surface.deckGenerators;images=[];
-    for(let y=-1;y<=1;y++)for(let x=-1;x<=1;x++){
+    const padding=surface.topology==='pillowcase'?2:1;
+    for(let y=-padding;y<=padding;y++)for(let x=-padding;x<=padding;x++){
       let matrix;
       if(surface.latticeBasis){
         const [u,v]=surface.latticeBasis;matrix=identity();matrix[12]=x*u[0]+y*v[0];matrix[13]=x*u[1]+y*v[1];
-        if(surface.tileReflection&&(x+y)%2!==0)matrix=multiply(matrix,surface.tileReflection);
+        const holonomy=surface.tileHolonomy??surface.tileReflection;
+        if(holonomy&&(x+y)%2!==0)matrix=multiply(matrix,holonomy);
       }else matrix=multiply(power(a,x),power(b,y));
       images.push(matrix);
     }

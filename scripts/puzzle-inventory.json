@@ -6,6 +6,7 @@
     "bagua_packages.py",
     "flat_surface_packages.py",
     "hex_surface_packages.py",
+    "pillowcase_packages.py",
     "gear_model.py",
     "gear_normal.py",
     "gear_spherical.py",
@@ -155,6 +156,16 @@
       "files": [
         "manifest.json"
       ]
+    },
+    {
+      "id": "flat-pillowcase",
+      "realizations": ["flat-quotient.json"],
+      "files": ["manifest.json"]
+    },
+    {
+      "id": "flat-pillowcase-6",
+      "realizations": ["flat-quotient.json"],
+      "files": ["manifest.json"]
     }
   ]
 }

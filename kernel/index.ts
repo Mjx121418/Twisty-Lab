@@ -58,17 +58,23 @@ export type SceneDescriptor = {
 };
 /** Intrinsic quotient data. Displayed images, clipping and cameras belong to the renderer. */
 export type FlatSurface = {
-  topology: 'torus' | 'klein-bottle';
+  topology: 'torus' | 'klein-bottle' | 'pillowcase';
   fundamentalBounds: [number, number, number, number];
-  chart?: 'rhombus-60';
+  chart?: 'rhombus-60' | 'pillowcase-square';
   /** Counterclockwise Cartesian boundary; absent for the original square chart. */
   fundamentalPolygon?: [number, number][];
   /** Chart side vectors. A displayed tile (i,j) is translated by i*a+j*b. */
   latticeBasis?: [[number, number], [number, number]];
   /** Optional proper lift applied on tiles with odd i+j, before translation. */
   tileReflection?: number[];
-  /** Column-major proper 4x4 lifts of the two planar identification isometries. */
-  deckGenerators: [number[], number[]];
+  /** Offset of the tile's first vertex from the lattice origin. */
+  chartOrigin?: [number, number];
+  /** Affine lift applied on odd i+j before translation, preserving handedness. */
+  tileHolonomy?: number[];
+  /** Locations of the four order-2 cone points for the pillowcase. */
+  conePoints?: [number, number][];
+  /** Column-major proper 4x4 lifts: two surface generators, or two translations and the pillowcase involution. */
+  deckGenerators: [number[], number[]] | [number[], number[], number[]];
   twoSided: true;
   cutRadius?: number;
   diskCenters?: Record<string, [number, number]>;
@@ -91,7 +97,7 @@ export type PolyhedralModel = {
 };
 export type Realization = {
   schemaVersion: number; id: string; kind: 'cube-euclidean' | 'cube-port-diagram' | 'cube-spherical' | 'polyhedral-euclidean' | 'polyhedral-port-diagram' | 'polyhedral-spherical' | 'articulated-euclidean' | 'articulated-port-diagram' | 'articulated-spherical' | 'flat-quotient';
-  flatSurface?: { topology: 'torus' | 'klein-bottle'; sideLength: number; chart?: 'square' | 'rhombus-60'; cutRadius?: number; diskCenters?: Record<string, [number, number]> };
+  flatSurface?: { topology: 'torus' | 'klein-bottle' | 'pillowcase'; sideLength: number; chart?: 'square' | 'rhombus-60' | 'pillowcase-square'; cutRadius?: number; diskCenters?: Record<string, [number, number]> };
   radius?: number;
   compatibleDefinitionDigest: string; requiredCapabilities: string[];
   models?: Record<string, PolyhedralModel>;
