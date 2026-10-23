@@ -189,7 +189,7 @@ The optional TypeScript `GeometryInstance` helper manages these temporary handle
 
 Existing C++ `Geometry` (now an alias of `GeometryInstance`) and WASM `Geometry` remain compatibility facades. The string constructors and `createGeometry(session, realizationText)` still work. Native `GeometryInstance(sharedDefinition)` and WASM `createGeometryInstance(definition)` create independent compatibility instances sharing compiled storage. Their `setStateJSON`, `prepareAnimationJSON`, `sample`, `transforms`, and `bindHitJSON` behavior is preserved: `sample` applies the original smoothstep easing, and legacy hit bindings include candidate requests. Preparation returns `Prepared` with `durationHint`, or `UnsupportedTransition` with diagnostics, and leaves the previous presentation unchanged on rejection. Scene and buffer access retain their existing names. The new space/projection fields and API capability markers are additive; puzzle documents, semantic digests, and sessions are unchanged.
 
-The public `SceneDescriptor`, `MeshAsset`, `VisualPart`, and `HitBinding` TypeScript types describe the wire data. Check `requiredCapabilities` against your renderer before constructing drawing resources. Current required drawing capabilities are `triangle-meshes`, `rigid-transforms`, `quotient-surface`, and `quotient-orbifold`. The kernel also advertises its shared-definition, pose and animation API features. The last capability requires support for the pillowcase's cone points and its half-turn identifications. The `diagram` flag identifies flat port diagrams. Material bindings are symbolic labels; the renderer chooses colors, lighting, fonts, and selection/blocking styles.
+The public `SceneDescriptor`, `MeshAsset`, `VisualPart`, and `HitBinding` TypeScript types describe the wire data. Check `requiredCapabilities` against your renderer before constructing drawing resources. Current required drawing capabilities are `triangle-meshes`, `rigid-transforms`, `quotient-surface`, and `quotient-orbifold`. The kernel also advertises its shared-definition, pose and animation API features. The last capability requires support for cone stabilizers and their deck rotations, including the 2222 half-turn and 333 third-turn. The `diagram` flag identifies flat port diagrams. Material bindings are symbolic labels; the renderer chooses colors, lighting, fonts, and selection/blocking styles.
 
 The additive `flat-quotient` realization exposes `ambientSpace: "E2"` and a `FlatSurface` scene descriptor with `topology`, `fundamentalBounds`, two column-major `deckGenerators`, and `twoSided: true`; optional `cutRadius` and `diskCenters` describe the cuts. It retains API 4, realization schema 1 and buffer version 1. The interpreter emits intrinsic physical parts and continuous lifted rotation frames; displayed copies, reflections, clipping and picking belong to the renderer. Renderers advertising `quotient-surface` must support those operations and two-sided planar assets. Native and WASM constructors and borrowed-view lifetimes are unchanged. See [flat surfaces](flat-surfaces.md) for the exact matrix conventions, square/tiled presentation, preset construction and reproduction.
 
@@ -237,6 +237,42 @@ continuous lift until the exact canonical endpoint. Cone disks require
 distance to the nearest cone, equal to `L/√8` at E and F. Invalid radii or incompatible chart names fail construction with
 `realization.flat_surface`. API 4, realization schema 1, and buffer version 1
 are unchanged; no ownership or constructor changes are introduced.
+
+The additive `topology: "orbifold-333"`, `chart: "orbifold-333-rhombus"` also
+requires `quotient-orbifold`. Here `sideLength=L` is the distance between
+nearest cone points. Set `a=(L,0)` and `b=(L/2,sqrt(3)*L/2)`. The fundamental
+polygon is `[0,a,a+b,b]`, with bounds `[0,0,3L/2,sqrt(3)*L/2]` and
+`latticeBasis=[a,b]`. The three `conePoints` are `[0,a,b]`; `a+b` is another
+representative of the first cone. Each cone angle is `2*pi/3`.
+
+Its three `deckGenerators` are the translations `T1=2a-b`, `T2=a+b`, followed
+by the positive 120° rotation R about the origin. The matrices are proper,
+column-major 4×4 lifts with z unchanged. A displayed image is
+`T1^i * T2^j * R^k`, for every integer i,j and k=0,1,2. In this topology,
+`latticeBasis` describes the fundamental rhombus, **not** the translation
+subgroup: image addresses use T1,T2. There is no `tileHolonomy` or reflection.
+Renderers must enumerate all three rotation cosets, including when panning.
+The interpreter emits each physical part once; a cone-center asset occupies
+one 120° sector, so the three stabilizer images complete a full planar lift
+without overlapping interiors.
+
+Frames use the closed rhombus. Resolve equivalent deck images by comparing
+`(x,y,m[0],m[1],m[4],m[5])` rounded at `1e-9`, as for the pillowcase.
+Continuous sampling retains its lift until the exact canonical endpoint.
+Cone disks require `cutRadius < sqrt(3)*L/2`. Ordinary disks additionally
+avoid all cone lifts and have radius less than half the nearest distinct
+same-center deck-image distance; for the three edge midpoints this gives
+`cutRadius < sqrt(3)*L/4`. Invalid centers, radii, chart names, or missing
+orbifold capability fail construction. This extends scene metadata under
+API 4, realization schema 1, and buffer version 1; ownership, constructors,
+and buffer layouts are unchanged.
+
+The three-disk 333 package uses plain nearest-center material labels `A`, `B`,
+and `C`. The six-disk package splits its hue patches along the two triangular
+faces, with labels `A-light`, `A-dark`, through `F-light`, `F-dark`. Renderers
+choose the two shades of each hue. These are ordinary fixed local port patches
+that move with their pieces, including centers; no position-dependent
+recoloring or additional rendering capability is required.
 
 `kernelInfoJSON()` also advertises the `cube-spherical` realization. Its optional scene metadata identifies `ambientSpace: "S2"`, the six `diskCenters`, `sphereRadius`, `diskAngleDegrees`, `fidelity`, and `surfaceTransportVerified`. Mesh assets may declare `rotationSymmetryOrder`; featureless spherical centers use order four. These additive descriptors use the same buffer format and rendering capabilities as other realizations. Custom clients pass a compatible `cube-spherical.json` into the existing geometry constructor; the packaged example data includes both reference cube realizations. See [the spherical construction](spherical-cube.md) for its geometric verification and surface-model scope.
 

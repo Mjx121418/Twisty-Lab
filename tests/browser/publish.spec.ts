@@ -15,6 +15,8 @@ const presets = [
   ['flat-hex-klein-bottle', 'A'],
   ['flat-pillowcase', 'A'],
   ['flat-pillowcase-6', 'E'],
+  ['flat-333', 'A'],
+  ['flat-333-6', 'D'],
 ] as const;
 
 function collectErrors(page: Page): string[] {

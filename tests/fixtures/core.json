@@ -188,6 +188,22 @@
       "operation": "E",
       "expectedStatus": "Committed",
       "definitionDigest": "b57ac65dcedf0679966a0af7169287e7b8ef21f62d865d29da8aba5332530f16"
+    },
+    {
+      "name": "333 cone turn after mixed turns",
+      "source": "packages/flat-333/package.json",
+      "prefix": "B C",
+      "operation": "A",
+      "expectedStatus": "Committed",
+      "definitionDigest": "a324f93f9a6b9f5ab18081a76cd65d0c8058a3fbf8ed3d7762af13c21ed3364b"
+    },
+    {
+      "name": "Six-disk 333 ordinary turn",
+      "source": "packages/flat-333-6/package.json",
+      "prefix": "A E B F",
+      "operation": "D",
+      "expectedStatus": "Committed",
+      "definitionDigest": "3c493255848dd62a7a0a0693e3532bfb241db2c2f1bdc408d7e6505e3ce5f9e0"
     }
   ]
 }

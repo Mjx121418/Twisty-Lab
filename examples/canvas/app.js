@@ -4,6 +4,11 @@ const module = await createKernel();
 const canvas = document.querySelector('#view');
 const context = canvas.getContext('2d');
 const palette = { U: '#e4e1d8', R: '#e76561', F: '#66c7a0', D: '#e8c451', L: '#eea76d', B: '#7fa5ed', A: '#e76561', C: '#f1cf67', E: '#b798e4', body: '#202a35', ink: '#16252d' };
+Object.assign(palette, {
+  'A-light':'#eb817d', 'A-dark':'#9d4542', 'B-light':'#82d1b1', 'B-dark':'#45876d',
+  'C-light':'#f4d882', 'C-dark':'#a48d46', 'D-light':'#96b5f0', 'D-dark':'#5670a1',
+  'E-light':'#c4abe9', 'E-dark':'#7c679b', 'F-light':'#f3b47c', 'F-dark':'#a36f41',
+});
 let session, geometry, descriptor, positions, indices, transforms;
 let busy = false, selected, blocked = [], hits = [];
 let installEpoch = 0;
@@ -125,7 +130,11 @@ async function install(puzzle) {
     const padding=surface.topology==='pillowcase'?2:1;
     for(let y=-padding;y<=padding;y++)for(let x=-padding;x<=padding;x++){
       let matrix;
-      if(surface.latticeBasis){
+      if(surface.topology==='orbifold-333'){
+        const translation=multiply(power(a,x),power(b,y));
+        for(let k=0;k<3;k++)images.push(multiply(translation,power(surface.deckGenerators[2],k)));
+        continue;
+      }else if(surface.latticeBasis){
         const [u,v]=surface.latticeBasis;matrix=identity();matrix[12]=x*u[0]+y*v[0];matrix[13]=x*u[1]+y*v[1];
         const holonomy=surface.tileHolonomy??surface.tileReflection;
         if(holonomy&&(x+y)%2!==0)matrix=multiply(matrix,holonomy);
@@ -136,7 +145,7 @@ async function install(puzzle) {
   assets.clear(); descriptor.meshAssets.forEach((asset) => assets.set(asset.id, asset));
   selected = undefined; blocked = [];
   document.querySelector('#selection').textContent = 'No piece selected';
-  document.querySelector('#notation').value = puzzle.startsWith('flat-') ? "A B A' B'" : puzzle === 'helicopter' ? 'UF_ab UL_af' :
+  document.querySelector('#notation').value = puzzle === 'flat-333-6' ? "A D A' D'" : puzzle.startsWith('flat-') ? "A B A' B'" : puzzle === 'helicopter' ? 'UF_ab UL_af' :
     puzzle === 'bagua' ? "U+ R' L' D2 R L U-" : puzzle === 'gear-plain' ? "Rq Uq Rq' Uq'" : puzzle.startsWith('gear') ? "R R'" : "R U R' U'";
   document.querySelector('#status').textContent = 'Ready';
   busy = false;

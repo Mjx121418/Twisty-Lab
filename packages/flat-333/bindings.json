@@ -1,0 +1,478 @@
+{
+  "domains": [
+    {
+      "id": "cone",
+      "localPorts": [
+        "0"
+      ],
+      "pieces": [
+        "cone-00",
+        "cone-01",
+        "cone-02"
+      ],
+      "placements": [
+        "cone/0,0/-1,0,0,-1",
+        "cone/0,0/0,1,-1,-1",
+        "cone/0,6/-1,0,0,-1",
+        "cone/0,6/0,1,-1,-1",
+        "cone/6,0/-1,0,0,-1",
+        "cone/6,0/0,1,-1,-1"
+      ]
+    },
+    {
+      "id": "edge",
+      "localPorts": [
+        "0",
+        "1"
+      ],
+      "pieces": [
+        "edge-00",
+        "edge-01",
+        "edge-02"
+      ],
+      "placements": [
+        "edge/0,3/0,-1,1,1",
+        "edge/0,3/0,1,-1,-1",
+        "edge/3,0/-1,0,0,-1",
+        "edge/3,0/1,0,0,1",
+        "edge/3,3/-1,-1,1,0",
+        "edge/3,3/1,1,-1,0"
+      ]
+    },
+    {
+      "id": "vertex",
+      "localPorts": [
+        "0",
+        "1",
+        "2"
+      ],
+      "pieces": [
+        "vertex-00",
+        "vertex-01"
+      ],
+      "placements": [
+        "vertex/2,2/-1,-1,1,0",
+        "vertex/2,2/0,1,-1,-1",
+        "vertex/2,2/1,0,0,1",
+        "vertex/4,4/-1,0,0,-1",
+        "vertex/4,4/0,-1,1,1",
+        "vertex/4,4/1,1,-1,0"
+      ]
+    }
+  ],
+  "kind": "relational-port-bindings",
+  "pieces": {
+    "cone-00": {
+      "domain": "cone",
+      "home": "cone/0,0/-1,0,0,-1",
+      "portLabels": {
+        "0": "A"
+      }
+    },
+    "cone-01": {
+      "domain": "cone",
+      "home": "cone/0,6/-1,0,0,-1",
+      "portLabels": {
+        "0": "C"
+      }
+    },
+    "cone-02": {
+      "domain": "cone",
+      "home": "cone/6,0/-1,0,0,-1",
+      "portLabels": {
+        "0": "B"
+      }
+    },
+    "edge-00": {
+      "domain": "edge",
+      "home": "edge/0,3/0,-1,1,1",
+      "portLabels": {
+        "0": "A",
+        "1": "C"
+      }
+    },
+    "edge-01": {
+      "domain": "edge",
+      "home": "edge/3,0/-1,0,0,-1",
+      "portLabels": {
+        "0": "B",
+        "1": "A"
+      }
+    },
+    "edge-02": {
+      "domain": "edge",
+      "home": "edge/3,3/-1,-1,1,0",
+      "portLabels": {
+        "0": "B",
+        "1": "C"
+      }
+    },
+    "vertex-00": {
+      "domain": "vertex",
+      "home": "vertex/2,2/-1,-1,1,0",
+      "portLabels": {
+        "0": "B",
+        "1": "C",
+        "2": "A"
+      }
+    },
+    "vertex-01": {
+      "domain": "vertex",
+      "home": "vertex/4,4/-1,0,0,-1",
+      "portLabels": {
+        "0": "A",
+        "1": "C",
+        "2": "B"
+      }
+    }
+  },
+  "placements": {
+    "cone/0,0/-1,0,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/cone/00"
+        }
+      },
+      "resources": [
+        "location/cone/00"
+      ]
+    },
+    "cone/0,0/0,1,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/cone/00"
+        }
+      },
+      "resources": [
+        "location/cone/00"
+      ]
+    },
+    "cone/0,6/-1,0,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/cone/01"
+        }
+      },
+      "resources": [
+        "location/cone/01"
+      ]
+    },
+    "cone/0,6/0,1,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/cone/01"
+        }
+      },
+      "resources": [
+        "location/cone/01"
+      ]
+    },
+    "cone/6,0/-1,0,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/cone/02"
+        }
+      },
+      "resources": [
+        "location/cone/02"
+      ]
+    },
+    "cone/6,0/0,1,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/cone/02"
+        }
+      },
+      "resources": [
+        "location/cone/02"
+      ]
+    },
+    "edge/0,3/0,-1,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/edge/00"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/edge/00"
+        }
+      },
+      "resources": [
+        "location/edge/00"
+      ]
+    },
+    "edge/0,3/0,1,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/edge/00"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/edge/00"
+        }
+      },
+      "resources": [
+        "location/edge/00"
+      ]
+    },
+    "edge/3,0/-1,0,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/edge/01"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/edge/01"
+        }
+      },
+      "resources": [
+        "location/edge/01"
+      ]
+    },
+    "edge/3,0/1,0,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/edge/01"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/edge/01"
+        }
+      },
+      "resources": [
+        "location/edge/01"
+      ]
+    },
+    "edge/3,3/-1,-1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/edge/02"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/edge/02"
+        }
+      },
+      "resources": [
+        "location/edge/02"
+      ]
+    },
+    "edge/3,3/1,1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/edge/02"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/edge/02"
+        }
+      },
+      "resources": [
+        "location/edge/02"
+      ]
+    },
+    "vertex/2,2/-1,-1,1,0": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/vertex/00"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/vertex/00"
+        },
+        "2": {
+          "attachment": "A",
+          "cell": "location/vertex/00"
+        }
+      },
+      "resources": [
+        "location/vertex/00"
+      ]
+    },
+    "vertex/2,2/0,1,-1,-1": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/vertex/00"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/vertex/00"
+        },
+        "2": {
+          "attachment": "B",
+          "cell": "location/vertex/00"
+        }
+      },
+      "resources": [
+        "location/vertex/00"
+      ]
+    },
+    "vertex/2,2/1,0,0,1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/vertex/00"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/vertex/00"
+        },
+        "2": {
+          "attachment": "C",
+          "cell": "location/vertex/00"
+        }
+      },
+      "resources": [
+        "location/vertex/00"
+      ]
+    },
+    "vertex/4,4/-1,0,0,-1": {
+      "ports": {
+        "0": {
+          "attachment": "A",
+          "cell": "location/vertex/01"
+        },
+        "1": {
+          "attachment": "C",
+          "cell": "location/vertex/01"
+        },
+        "2": {
+          "attachment": "B",
+          "cell": "location/vertex/01"
+        }
+      },
+      "resources": [
+        "location/vertex/01"
+      ]
+    },
+    "vertex/4,4/0,-1,1,1": {
+      "ports": {
+        "0": {
+          "attachment": "B",
+          "cell": "location/vertex/01"
+        },
+        "1": {
+          "attachment": "A",
+          "cell": "location/vertex/01"
+        },
+        "2": {
+          "attachment": "C",
+          "cell": "location/vertex/01"
+        }
+      },
+      "resources": [
+        "location/vertex/01"
+      ]
+    },
+    "vertex/4,4/1,1,-1,0": {
+      "ports": {
+        "0": {
+          "attachment": "C",
+          "cell": "location/vertex/01"
+        },
+        "1": {
+          "attachment": "B",
+          "cell": "location/vertex/01"
+        },
+        "2": {
+          "attachment": "A",
+          "cell": "location/vertex/01"
+        }
+      },
+      "resources": [
+        "location/vertex/01"
+      ]
+    }
+  },
+  "puzzleId": "flat-333-v1",
+  "requests": {
+    "A": {
+      "event": "A.motion",
+      "family": "A",
+      "inverse": "A'",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "A'": {
+      "event": "A'.motion",
+      "family": "A",
+      "inverse": "A",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "A2": {
+      "event": "A2.motion",
+      "family": "A",
+      "inverse": "A2",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "B": {
+      "event": "B.motion",
+      "family": "B",
+      "inverse": "B'",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "B'": {
+      "event": "B'.motion",
+      "family": "B",
+      "inverse": "B",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "B2": {
+      "event": "B2.motion",
+      "family": "B",
+      "inverse": "B2",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "C": {
+      "event": "C.motion",
+      "family": "C",
+      "inverse": "C'",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "C'": {
+      "event": "C'.motion",
+      "family": "C",
+      "inverse": "C",
+      "profile": "default",
+      "unavailablePlacements": []
+    },
+    "C2": {
+      "event": "C2.motion",
+      "family": "C",
+      "inverse": "C2",
+      "profile": "default",
+      "unavailablePlacements": []
+    }
+  },
+  "resources": [
+    "location/cone/00",
+    "location/cone/01",
+    "location/cone/02",
+    "location/edge/00",
+    "location/edge/01",
+    "location/edge/02",
+    "location/vertex/00",
+    "location/vertex/01"
+  ],
+  "version": 1
+}

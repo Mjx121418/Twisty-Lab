@@ -41,6 +41,10 @@ import pillowcaseSource from '../../packages/flat-pillowcase/package.json?raw';
 import pillowcaseRealization from '../../packages/flat-pillowcase/flat-quotient.json';
 import pillowcaseSixSource from '../../packages/flat-pillowcase-6/package.json?raw';
 import pillowcaseSixRealization from '../../packages/flat-pillowcase-6/flat-quotient.json';
+import orbifold333Source from '../../packages/flat-333/package.json?raw';
+import orbifold333Realization from '../../packages/flat-333/flat-quotient.json';
+import orbifold333SixSource from '../../packages/flat-333-6/package.json?raw';
+import orbifold333SixRealization from '../../packages/flat-333-6/flat-quotient.json';
 import { pieceDestinations, type PieceDestination } from './destinations';
 import { defaultViews, moveView, restoreViews, viewLabels, type ViewId, type ViewSelection } from './viewSelection';
 
@@ -77,6 +81,8 @@ const presets = [
   surfacePreset('flat-hex-klein-bottle', 'Hexagonal Klein bottle · face turning', hexKleinSource, hexKleinRealization),
   surfacePreset('flat-pillowcase', 'Pillowcase · 4 disks · radius 0.846', pillowcaseSource, pillowcaseRealization),
   surfacePreset('flat-pillowcase-6', 'Pillowcase · 6 disks · radius 0.6', pillowcaseSixSource, pillowcaseSixRealization),
+  surfacePreset('flat-333', '333 orbifold · 3 disks · radius 0.72', orbifold333Source, orbifold333Realization),
+  surfacePreset('flat-333-6', '333 orbifold · 6 disks · radius 0.36', orbifold333SixSource, orbifold333SixRealization),
 ] as unknown as Preset[];
 type Inspector = 'pieces' | 'history' | 'definition';
 
@@ -139,7 +145,7 @@ export function App() {
   const viewDefinitions = useMemo(() => activePreset ? availableViews(activePreset) : [], [activePreset]);
   const orderedViews = viewSelection.order.flatMap(id => viewDefinitions.filter(view => view.id === id));
   const displayedViews = orderedViews.filter(view => viewSelection.visible.includes(view.id));
-  const rhombus = activePreset?.realizations[0].flatSurface?.chart === 'rhombus-60';
+  const rhombus = ['rhombus-60','orbifold-333-rhombus'].includes(activePreset?.realizations[0].flatSurface?.chart??'');
 
   function install(runtime: MainModule, source: string, id: string): void {
     const next = new KernelSession(runtime, source);
@@ -157,7 +163,7 @@ export function App() {
     setViewSelection(current => current.order.length === available.length && current.order.every(id => available.includes(id)) ? current : defaultViews(available));
     setSourceId(id); setSnapshot(initial); setVisualDigest(initial.stateDigest);
     setSelected(undefined); setEvidence(undefined); setLastScramble(''); setVisualError('');
-    setAlgorithm(initial.puzzleId.startsWith('flat-') ? "A B A' B'" : initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' :
+    setAlgorithm(initial.puzzleId === 'flat-333-6-v1' ? "A D A' D'" : initial.puzzleId.startsWith('flat-') ? "A B A' B'" : initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' :
       initial.puzzleId === 'bagua-experimental-v1' ? "U+ R' L' D2 R L U-" :
       parsedSource.kind === 'relational-gear-prototypes' ? (parsedSource.gearedEdges.length === 0 ? "Rq Uq Rq' Uq'" :
         initial.legalRequests.some((request) => request.operation === 'R') ? "R R'" : "Rq Rq'") : "R U R' U'");

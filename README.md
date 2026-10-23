@@ -24,6 +24,16 @@ views. Keys `A B C D` turn around cone points with order 2; the six-disk preset
 adds ordinary turns `E F` of order 4. All turns rotate 90° in the covering plane,
 with Shift for inverse animation. Adjacent displayed squares differ by 180°.
 
+Two [333 orbifold](docs/flat-surfaces.md#333-orbifold-presets) presets use an
+equilateral triangular pillow. The three-disk radius-0.72 puzzle has 8 pieces;
+the six-disk radius-0.36 puzzle adds disks at the three edge midpoints and has
+26 pieces. Solved hues follow the nearest disk center on the quotient. The
+six-disk preset adds light and dark shades for the two triangular faces of the
+pillow; the three-disk preset uses plain colors.
+Keys `A B C` turn around cone points with order 2; the six-disk preset adds
+ordinary turns `D E F` of order 6. Both show a rhombus fundamental domain and
+the repeated plane, with 60° covering-plane turns and Shift for inverse.
+
 An experimental Helicopter Cube preset adds exact jumbling stops, placement-dependent blocking, a complete shape-graph verifier, and synchronized polyhedral, spherical, and port-diagram realizations. Its [spherical interpretation](docs/spherical-helicopter.md) has twelve 45° disks and reuses all 44 pieces, with the existing mechanism pieces visible as uncolored regions. It retains the core's volume-derived legality rules. Its [model specification](docs/helicopter-model.md) records the finite catalogs, geometric interpretation, external acceptance targets, and remaining independent review.
 
 The [Bagua Cube](docs/bagua-model.md) preset adds 146 pieces, exact 45° face turns, placement-dependent blocking, polygonal stickers and synchronized cube, [sphere](docs/spherical-bagua.md) and port-diagram views. It opens in **Cube + sphere**, retaining all existing pieces and ports. Its [acceptance checks](docs/bagua-model.md#independent-acceptance-targets) cover published pair/kite cycles, blocking and replay fixtures; whole-model human review and a reproducible physical blocked-state comparison remain open. Select **Bagua Cube**; `+` / `−` buttons turn 45°, while face keys turn 90°.
@@ -128,7 +138,7 @@ Regression fixtures pin a definition digest and specify a replay prefix, request
 Puzzle authoring is separate from app builds:
 
 ```sh
-npm run build:puzzles                # Build native authoring tools and regenerate all 13 packages
+npm run build:puzzles                # Build native authoring tools and regenerate all 15 packages
 npm run check:puzzles -- --files-only # Check recorded input and artifact hashes; no compiler needed
 npm run check:puzzles                # Also validate schemas, semantic pins, and all WASM realizations
 npm run check:packages               # Expensive regeneration-based reproducibility audit

@@ -35,7 +35,9 @@ function power(generator: Matrix4, n: number): Matrix4 {
 export function surfaceImageOrigin(surface: FlatSurface, x: number, y: number): [number, number] {
   if(surface.latticeBasis){
     x-=surface.chartOrigin?.[0]??0;y-=surface.chartOrigin?.[1]??0;
-    const [a,b]=surface.latticeBasis,det=a[0]*b[1]-a[1]*b[0];
+    const [a,b]=surface.topology==='orbifold-333'
+      ?surface.deckGenerators.slice(0,2).map(m=>[m[12],m[13]]) :surface.latticeBasis;
+    const det=a[0]*b[1]-a[1]*b[0];
     return [Math.floor((x*b[1]-y*b[0])/det),Math.floor((a[0]*y-a[1]*x)/det)];
   }
   const [left,bottom,right,top]=surface.fundamentalBounds;
@@ -51,6 +53,12 @@ export function surfaceImages(surface: FlatSurface, mode: SurfaceMode, origin: [
   const images: SurfaceImage[] = [];
   for (let dy=-ry; dy<=ry; dy++) for (let dx=-rx; dx<=rx; dx++) {
     const x=origin[0]+dx,y=origin[1]+dy;
+    if(surface.topology==='orbifold-333'){
+      const translation=power(a,x).multiply(power(b,y));
+      const rotation=new Matrix4().fromArray(surface.deckGenerators[2]!);
+      for(let turn=0;turn<3;turn++)images.push({matrix:translation.clone().multiply(power(rotation,turn)),x,y,reflected:false});
+      continue;
+    }
     const matrix = surface.latticeBasis ? new Matrix4().makeTranslation(
       x*surface.latticeBasis[0][0]+y*surface.latticeBasis[1][0],
       x*surface.latticeBasis[0][1]+y*surface.latticeBasis[1][1],0) : power(a,x).multiply(power(b,y));

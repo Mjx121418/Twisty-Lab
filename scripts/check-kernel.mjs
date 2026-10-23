@@ -145,6 +145,8 @@ try {
     ['flat-hex-klein-bottle', "A B C2 D3 (A B C2 D3)'", 'A', 'flat-quotient'],
     ['flat-pillowcase', "A B C D (A B C D)'", 'A', 'flat-quotient'],
     ['flat-pillowcase-6', "A B E F C D (A B E F C D)'", 'E', 'flat-quotient'],
+    ['flat-333', "A B C (A B C)'", 'A', 'flat-quotient'],
+    ['flat-333-6', "A D E2 F3 B C (A D E2 F3 B C)'", 'D', 'flat-quotient'],
   ]) {
     const directory = join(javascript, 'examples/canvas/data', puzzle);
     const shipped = await readdir(directory);
@@ -160,8 +162,9 @@ try {
       if (kind === 'flat-quotient') {
         const scene = geometry.scene;
         const pillowcase=puzzle.startsWith('flat-pillowcase');
-        assert.equal(scene.flatSurface.deckGenerators.length, pillowcase ? 3 : 2);
-        const parts=pillowcase ? puzzle.endsWith('-6') ? 122 : 64 : puzzle.startsWith('flat-hex-') ? 100 : 116;
+        const orbifold333=puzzle.startsWith('flat-333');
+        assert.equal(scene.flatSurface.deckGenerators.length, pillowcase||orbifold333 ? 3 : 2);
+        const parts=orbifold333 ? puzzle.endsWith('-6') ? 122 : 23 : pillowcase ? puzzle.endsWith('-6') ? 122 : 64 : puzzle.startsWith('flat-hex-') ? 100 : 116;
         assert.equal(scene.visualParts.length, parts, 'Interpreter emits each physical part once.');
         assert.ok(!('images' in scene.flatSurface), 'Renderer owns displayed copies.');
       }

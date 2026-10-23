@@ -1,0 +1,12 @@
+{
+  "cutRadius": 0.72,
+  "definitionDigest": "a324f93f9a6b9f5ab18081a76cd65d0c8058a3fbf8ed3d7762af13c21ed3364b",
+  "diskCount": 3,
+  "pieceCounts": {
+    "cone": 3,
+    "edge": 3,
+    "vertex": 2
+  },
+  "topology": "orbifold-333",
+  "uniqueTriangles": 176
+}

@@ -5,6 +5,11 @@ import type { PieceDestination } from './destinations';
 import { cameraWindowPolygon, insidePolygon, surfaceBounds, surfaceImageOrigin, surfaceImages, surfacePolygon, type Polygon, type Bounds, type SurfaceImage, type SurfaceMode } from './flatSurface';
 
 const palette: Record<string, number> = { A:0xe76561, B:0x66c7a0, C:0xf1cf67, D:0x7fa5ed, E:0xb798e4, F:0xf0a35f, body:0x24313b, ink:0x16252d };
+Object.assign(palette, {
+  'A-light':0xeb817d, 'A-dark':0x9d4542, 'B-light':0x82d1b1, 'B-dark':0x45876d,
+  'C-light':0xf4d882, 'C-dark':0xa48d46, 'D-light':0x96b5f0, 'D-dark':0x5670a1,
+  'E-light':0xc4abe9, 'E-dark':0x7c679b, 'F-light':0xf3b47c, 'F-dark':0xa36f41,
+});
 type SurfaceMesh = THREE.InstancedMesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
 type Instance = { part: number; image: number };
 type Batch = { mesh: SurfaceMesh; instances: Instance[] };
@@ -75,7 +80,7 @@ export class SurfaceView {
     this.worldPolygon=this.polygon;
     // Fixed pools cover the full window even at minimum zoom, with animation
     // padding. Recycle their deck addresses as the camera crosses chart cells.
-    this.imageRadius=mode==='square'?2:this.surface.latticeBasis?[6,4]:4;
+    this.imageRadius=mode==='square'?2:this.surface.topology==='orbifold-333'?[4,4]:this.surface.latticeBasis?[6,4]:4;
     this.images = surfaceImages(this.surface,mode,this.imageOrigin,this.imageRadius);
     this.frameData = copyFloatView(geometry.matrices);
     try { this.renderer = new THREE.WebGLRenderer({antialias:true,alpha:true}); }
@@ -167,12 +172,12 @@ export class SurfaceView {
       this.images.forEach((image,i)=>{
         this.vector.copy(label.point).applyMatrix4(image.matrix);
         const key=`${Math.round(this.vector.x*1e7)},${Math.round(this.vector.y*1e7)}`;
-        // A cone has two coincident images. Label it once; move seam labels
-        // inward so the clipped fundamental window retains all four names.
+        // Stabilizer images of a cone coincide. Label each center once and
+        // move seam labels inward in an orbifold's clipped fundamental window.
         if(seen.has(key))label.mesh.setMatrixAt(i,this.matrix.makeScale(0,0,0));
         else{
           seen.add(key);let dx=0,dy=.125;
-          if(this.mode==='square'&&this.surface.topology==='pillowcase'){
+          if(this.mode==='square'&&this.surface.conePoints){
             const x=this.camera.position.x-this.vector.x,y=this.camera.position.y-this.vector.y,length=Math.hypot(x,y);
             if(length>1e-8){dx=x*.125/length;dy=y*.125/length;}
           }
@@ -192,7 +197,7 @@ export class SurfaceView {
     this.camera.updateMatrixWorld();
     const origin=surfaceImageOrigin(this.surface,x,y);
     if(origin[0]===this.imageOrigin[0]&&origin[1]===this.imageOrigin[1]){
-      if(this.mode==='square'&&this.surface.topology==='pillowcase')this.updateDecorations();
+      if(this.mode==='square'&&this.surface.conePoints)this.updateDecorations();
       return;
     }
     this.imageOrigin=origin;

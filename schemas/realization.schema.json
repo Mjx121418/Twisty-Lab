@@ -221,11 +221,12 @@
           "enum": [
             "torus",
             "klein-bottle",
-            "pillowcase"
+            "pillowcase",
+            "orbifold-333"
           ]
         },
         "chart": {
-          "enum": ["square", "rhombus-60", "pillowcase-square"]
+          "enum": ["square", "rhombus-60", "pillowcase-square", "orbifold-333-rhombus"]
         },
         "sideLength": {
           "type": "number",

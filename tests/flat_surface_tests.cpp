@@ -166,11 +166,66 @@ void pillowcase(bool six) {
   reject(session.execution(), malformed);
   std::cout << (six ? "six" : "four") << "-disk pillowcase: orders, quotient tracks and singularity bounds passed\n";
 }
+
+void orbifold333(bool six) {
+  const auto folder = std::string("packages/flat-333") + (six ? "-6/" : "/");
+  Session session(read(folder + "package.json"));
+  const auto document = Json::parse(read(folder + "flat-quotient.json"));
+  Geometry geometry(session.execution(), document.dump());
+  const auto scene = Json::parse(geometry.scene_json());
+  const auto &surface = scene.at("flatSurface");
+  check(surface.at("topology") == "orbifold-333", "Wrong 333 topology");
+  check(surface.at("deckGenerators").size() == 3 && surface.at("conePoints").size() == 3,
+        "Missing 333 deck rotations or singularities");
+  check(session.definition()->pieces.size() == (six ? 26 : 8), "Wrong 333 piece count");
+  check(scene.at("visualParts").size() == (six ? 122 : 23), "Duplicate 333 physical parts");
+  const auto origin = session.snapshot().at("stateDigest");
+  const std::string names = six ? "ABCDEF" : "ABC";
+  for (char name : names) {
+    const std::string face(1, name);
+    for (const auto &word : {face + " " + face + "'", "(" + face + ")" + (name <= 'C' ? "2" : "6"),
+                             name <= 'C' ? face + "2" : face + "2 " + face + "2'"}) {
+      const auto result = session.run(word, "transactional", session.revision());
+      check(result.at("status") == "Committed", "333 turn failed");
+      for (const auto &record : result.at("transitions")) {
+        check(Json::parse(geometry.prepare_animation_json(record.dump())).at("status") == "Prepared", "333 track rejected");
+        for (double t : {0., .001, .37, .999, 1.}) {
+          geometry.sample(t);
+          for (float value : geometry.transforms()) check(std::isfinite(value), "Nonfinite 333 frame");
+        }
+      }
+      check(session.snapshot().at("stateDigest") == origin, "Incorrect 333 move order");
+    }
+  }
+  const auto word = six ? "A D E2 F3 B C D' F2'" : "A B C A' C B";
+  const auto result = session.run(std::string(word) + " (" + word + ")'", "transactional", session.revision());
+  check(result.at("status") == "Committed", "Mixed 333 word failed");
+  for (const auto &record : result.at("transitions")) {
+    check(Json::parse(geometry.prepare_animation_json(record.dump())).at("status") == "Prepared", "Mixed 333 track failed");
+    geometry.sample(.37); geometry.sample(1);
+  }
+  check(session.snapshot().at("stateDigest") == origin, "333 mixed inverse failed");
+  const auto endpoint = geometry.transforms();
+  geometry.set_state_json(session.state_json());
+  check(geometry.transforms() == endpoint, "333 endpoint differs from resting state");
+  auto malformed = document;
+  malformed["flatSurface"]["cutRadius"] = six ? .44 : .87; reject(session.execution(), malformed);
+  malformed = document;
+  malformed["flatSurface"]["diskCenters"]["near-cone"] = {.02,.01}; reject(session.execution(), malformed);
+  malformed = document;
+  malformed["flatSurface"]["chart"] = "rhombus-60"; reject(session.execution(), malformed);
+  malformed = document;
+  malformed["flatSurface"].erase("diskCenters"); reject(session.execution(), malformed);
+  malformed = document;
+  malformed["requiredCapabilities"].erase(malformed["requiredCapabilities"].end()-1); reject(session.execution(), malformed);
+  std::cout << (six ? "six" : "three") << "-disk 333: orders, quotient tracks and embedded disk bounds passed\n";
+}
 } // namespace
 int main() {
   try {
     puzzle("torus"); puzzle("klein-bottle"); puzzle("torus", true); puzzle("klein-bottle", true);
     pillowcase(false); pillowcase(true);
+    orbifold333(false); orbifold333(true);
   }
   catch (const std::exception &e) { std::cerr << e.what() << '\n'; return 1; }
 }

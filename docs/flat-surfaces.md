@@ -192,3 +192,52 @@ outside the kernel. Reproduce the two committed packages with
 Use `npm run build:puzzles` afterward to validate all packages and record
 their manifest. Native and WASM tests check the move orders, quotient geometry,
 coloring, and the four-disk preset's 384-state graph.
+
+## 333 orbifold presets
+
+`flat-333` and `flat-333-6` use the orientation-preserving p3 quotient, an
+equilateral triangular pillow with three cone points of angle 120°. Let
+`a=(1,0)` and `b=(1/2,sqrt(3)/2)`. The rhombus `0,a,a+b,b` is the fundamental
+domain; `0` and `a+b` represent the same cone A, with B at a and C at b.
+
+| Preset | Radius | Physical pieces | Disk centers |
+| --- | ---: | --- | --- |
+| Three disks | 0.72 | 3 cone centers, 3 edges, 2 triple pieces | A, B, C |
+| Six disks | 0.36 | 3 cone centers, 3 ordinary centers, 12 edges, 8 triple pieces | A, B, C, D=(A+B)/2, E=(B+C)/2, F=(C+A)/2 |
+
+The six-disk centers lift to the triangular lattice at half the original
+spacing. Both presets use 60° covering-plane turns. A, B, C have order 2;
+D, E, F have order 6. Primed requests reverse the animation path. Cone `A2`
+is a full 120° identity path; ordinary `D2`, `D2'`, and `D3` turn 120°, -120°,
+and 180° clockwise respectively. Controls, repeated-image picking, destinations,
+undo/redo and saved views share the same intrinsic session.
+
+Solving colors use distance to the nearest named center among **all deck
+images**, rather than distance to representatives in the displayed rhombus.
+The three-disk solved colors are three hexagonal Voronoi classes in the cover;
+the six-disk colors use six classes on the refined lattice. The three-disk
+preset uses plain colors, which already distinguish all its pieces and all
+noncenter orientations; center orientations remain invisible without marks.
+The six-disk preset gives each hue light and dark shades: the coarse triangle
+ABC is light, and the other triangular face is dark. The shade changes across
+BC in the fundamental rhombus. Both
+triangle types are preserved by the deck translations and third-turn, so the
+pattern agrees at every identification. Pieces carry their clipped shaded
+patches during moves; shading is fixed to the piece, never recomputed from its
+current position. The patch geometry uses existing local port bindings with
+material labels `A-light`, `A-dark`, and similarly for the other hues.
+
+The global shade division distinguishes all twelve six-disk edges, all eight
+triple pieces, and their orientations without L marks. Center patches also
+follow this division, making their orientations visible. Neither preset uses
+L marks. Repeated copies preserve handedness.
+
+The authoring generator uses integer sixth-units of the cutting lattice,
+reduces exact transports by the translation lattice and third-turn, and emits
+one-third meshes at cones. Native/WASM checks verify move orders, endpoint
+transports, radius rejection, nearest-center stickers, and complete body
+coverage at intermediate angles. The three-disk marked model has 96 states;
+the state graph is checked exhaustively. Browser and independent SDK checks
+exercise both packages. Reproduce them with
+`python3 scripts/orbifold333_packages.py`; use `npm run build:puzzles` for
+deliberate generation and manifest recording.
