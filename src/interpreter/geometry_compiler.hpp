@@ -49,7 +49,7 @@ private:
   struct Component {
     Index domain;
     std::vector<Frame> frames;
-    std::vector<std::vector<std::vector<Rotation>>> paths;
+    std::vector<GeometryTrack> tracks;
   };
   std::vector<Component> components_;
   std::vector<Model> models_;

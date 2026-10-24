@@ -1,6 +1,9 @@
 #include "twisty/core.hpp"
 #include <algorithm>
 #include <limits>
+#include <map>
+#include <set>
+#include <tuple>
 #include <utility>
 
 namespace twisty::core {
@@ -34,6 +37,14 @@ public:
   bool get(Ref root) {
     if (values[root] != -1)
       return values[root];
+    const auto &root_node = data.predicates[root - 2];
+    if (root_node.opcode == Opcode::in) {
+      const auto inputs = root_node.bank == Bank::state ? state : choices;
+      require(root_node.input < inputs.size(), "core.input", "Predicate input is unavailable");
+      const auto &set = data.finite_sets[root_node.set];
+      values[root] = std::binary_search(set.begin(), set.end(), inputs[root_node.input]);
+      return values[root];
+    }
     std::vector<Frame> stack{{root}};
     while (!stack.empty()) {
       auto &frame = stack.back();
@@ -135,6 +146,12 @@ Program::Program(ProgramData data) : data_(std::move(data)) {
     require(action.piece < d.piece_count && action.map < d.maps.size() && ref_ok(action.selection),
             "core.program", "Invalid action record");
   std::vector<Index> stamps(d.predicates.size() + 2, 0);
+  // Dependency validity depends on the finite choice dimensions, not the
+  // request ID. Large catalogs share both these dimensions and action slices.
+  // Check each predicate once per dimension tuple without changing the program
+  // representation or relaxing the finite validation budget.
+  std::map<std::vector<Index>, Index> choice_shapes;
+  std::set<std::tuple<Index, Index, Index>> checked_actions;
   std::size_t visits = 0;
   for (std::size_t i = 0; i < d.requests.size(); ++i) {
     const auto &request = d.requests[i];
@@ -143,15 +160,19 @@ Program::Program(ProgramData data) : data_(std::move(data)) {
             "core.program", "Invalid request program");
     for (auto size : request.choice_sizes)
       require(size > 0 && size <= 1000000, "core.program", "Invalid finite choice size");
+    const auto [shape, inserted] =
+        choice_shapes.emplace(request.choice_sizes, static_cast<Index>(choice_shapes.size() + 1));
+    (void)inserted;
     std::vector<Ref> pending{request.relation};
-    for (Index a = 0; a < request.action_count; ++a)
-      pending.push_back(d.actions[request.first_action + a].selection);
+    if (checked_actions.emplace(shape->second, request.first_action, request.action_count).second)
+      for (Index a = 0; a < request.action_count; ++a)
+        pending.push_back(d.actions[request.first_action + a].selection);
     while (!pending.empty()) {
       const auto ref = pending.back();
       pending.pop_back();
-      if (ref < 2 || stamps[ref] == i + 1)
+      if (ref < 2 || stamps[ref] == shape->second)
         continue;
-      stamps[ref] = static_cast<Index>(i + 1);
+      stamps[ref] = shape->second;
       require(++visits <= 4000000, "core.limit", "Request dependency validation exceeds limit");
       const auto &node = d.predicates[ref - 2];
       if (node.opcode == Opcode::in && node.bank == Bank::choice) {
@@ -166,6 +187,41 @@ Program::Program(ProgramData data) : data_(std::move(data)) {
     }
   }
   require(valid(d.initial), "core.initial", "Initial state violates the invariant");
+  // Direct choice memberships select almost all authored actions. Index these
+  // once instead of evaluating every inactive local movement on each plan.
+  // General predicates retain the ordinary evaluator. Bound derived storage
+  // without imposing any new limits on accepted programs.
+  if (d.actions.size() >= 128) {
+    std::size_t rows = 0, indexed = 0;
+    for (const auto &action : d.actions)
+      if (action.selection >= 2) {
+        const auto &node = d.predicates[action.selection - 2];
+        if (node.opcode == Opcode::in && node.bank == Bank::choice) {
+          if (rows <= 1000000)
+            rows += std::min<std::size_t>(d.finite_sets[node.set].size(), 1000001 - rows);
+          ++indexed;
+        }
+      }
+    if (rows <= 1000000 && indexed > d.actions.size() / 2) {
+      std::map<std::pair<Index, Index>, std::vector<Index>> lookup;
+      for (Index a = 0; a < d.actions.size(); ++a) {
+        const auto root = d.actions[a].selection;
+        if (root == false_ref)
+          continue;
+        if (root >= 2) {
+          const auto &node = d.predicates[root - 2];
+          if (node.opcode == Opcode::in && node.bank == Bank::choice) {
+            for (const auto value : d.finite_sets[node.set])
+              lookup[{node.input, value}].push_back(a);
+            continue;
+          }
+        }
+        general_actions_.push_back(a);
+      }
+      for (auto &[key, actions] : lookup)
+        choice_actions_.push_back({key.first, key.second, std::move(actions)});
+    }
+  }
 }
 
 void Program::check_state_shape(std::span<const Index> state) const {
@@ -211,8 +267,33 @@ Plan Program::plan(Index request_id, std::span<const Index> state, std::span<con
                         {state.begin(), state.end()},
                         {}};
   std::vector<bool> written(data_.piece_count, false);
-  for (Index i = 0; i < request.action_count; ++i) {
-    const auto &action = data_.actions[request.first_action + i];
+  std::vector<Index> candidates;
+  if (!choice_actions_.empty() && request.action_count >= 128) {
+    const auto append = [&](const std::vector<Index> &actions) {
+      auto first = std::lower_bound(actions.begin(), actions.end(), request.first_action);
+      const auto end = request.first_action + request.action_count;
+      for (; first != actions.end() && *first < end; ++first)
+        candidates.push_back(*first);
+    };
+    append(general_actions_);
+    for (Index input = 0; input < choices.size(); ++input) {
+      const auto key = std::pair{input, choices[input]};
+      const auto found = std::lower_bound(choice_actions_.begin(), choice_actions_.end(), key,
+                                          [](const ChoiceActions &entry, const auto &value) {
+                                            return std::pair{entry.input, entry.value} < value;
+                                          });
+      if (found != choice_actions_.end() && found->input == input && found->value == choices[input])
+        append(found->actions);
+    }
+    // Preserve action/witness order and conflicting-writer behavior exactly.
+    std::sort(candidates.begin(), candidates.end());
+  } else {
+    candidates.reserve(request.action_count);
+    for (Index i = 0; i < request.action_count; ++i)
+      candidates.push_back(request.first_action + i);
+  }
+  for (const auto index : candidates) {
+    const auto &action = data_.actions[index];
     if (!source.get(action.selection))
       continue;
     const auto from = state[action.piece];

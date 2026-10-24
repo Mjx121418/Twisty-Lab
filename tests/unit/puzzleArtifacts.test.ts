@@ -148,7 +148,7 @@ it('requires explicit fixture updates in the authoring driver', async () => {
   // Isolate the fixture-update policy from expensive model generation. The
   // stand-in compiler returns the real cube's current semantic identity.
   await writeFile(join(base, 'build/native/twisty'),
-    `#!/usr/bin/env node\nprocess.stdout.write(${JSON.stringify(JSON.stringify({ definition: { definitionDigest: digest } }))});\n`,
+    `#!/usr/bin/env node\nprocess.stdout.write(${JSON.stringify(JSON.stringify({ status: 'Valid', definitionDigest: digest }))});\n`,
     { mode: 0o755 });
   const fixtures = await readJSON(base, 'tests/fixtures/core.json');
   fixtures.cases[0].definitionDigest = '0'.repeat(64);

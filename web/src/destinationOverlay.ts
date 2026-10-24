@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { type GeometryInstance, type SceneDescriptor } from './kernel';
-import type { PieceDestination } from './destinations';
+import { destinationTransforms, type PieceDestination } from './destinations';
 
 type Ghost = THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
 type DestinationGroup = { options: PieceDestination[]; meshes: Ghost[] };
@@ -58,7 +58,7 @@ export class DestinationOverlay {
     try {
       for (const option of destinations) {
         if (option.pieceId !== pieceId) continue;
-        const transforms = this.geometry.destination(option.transitionRecord);
+        const transforms = destinationTransforms(this.geometry, option);
         const matrices = parts.map(({ index }) => transforms.slice(index * 16, index * 16 + 16));
         const poseKey = matrices.map((matrix) => Array.from(matrix, (value) => Math.round(value * 100000)).join(',')).join(';');
         const existing = byPose.get(poseKey);

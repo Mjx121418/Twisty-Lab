@@ -29,7 +29,11 @@ try {
   execFileSync('cmake', ['-S', consumer, '-B', join(consumer, 'build'), '-G', 'Ninja', `-DCMAKE_PREFIX_PATH=${installed}`], { stdio: 'inherit' });
   execFileSync('cmake', ['--build', join(consumer, 'build'), '--parallel', '1'], { stdio: 'inherit' });
   const javascript = join(temporary, 'javascript');
-  await cp(new URL('../build/kernel/', import.meta.url), javascript, { recursive: true });
+  const published = new URL('../build/kernel/', import.meta.url);
+  const publishedData = join(fileURLToPath(published), 'examples/canvas/data');
+  await cp(published, javascript, { recursive: true, filter: (path) => path !== publishedData });
+  const dataDirectory = join(javascript, 'examples/canvas/data');
+  const stagePuzzle = (name) => cp(join(publishedData, name), join(dataDirectory, name), { recursive: true });
   const schemaDirectory = join(javascript, 'schemas');
   const schemas = new Ajv({ strict: false, allErrors: true });
   const schemaIDs = [];
@@ -52,6 +56,7 @@ try {
   assert.equal(typeof module.compileJSON, 'undefined');
   assert.equal(typeof module.Session.prototype.convertLegacyJSON, 'undefined');
   assert.ok(info.realizationKinds.includes('articulated-spherical'));
+  assert.ok(info.geometryCapabilities.includes('shared-rotation-tracks'));
   assert.equal(info.languageAPIVersion, 1);
   assert.equal(typeof module.RelationalPuzzle, 'undefined');
   assert.equal(typeof module.compileRelationalJSON, 'undefined');
@@ -78,6 +83,7 @@ try {
     assert.deepEqual(queries.map((q) => puzzle.query(q)), native);
     console.log('Installed native and packaged WASM relational consumers agree.');
     for (const [name, bandaged] of [['cube3', false], ['bandaged', true]]) {
+      await stagePuzzle(name);
       const data = join(javascript, 'examples/canvas/data', name);
       const source = JSON.parse(await readFile(join(data, 'puzzle.pzl.json'), 'utf8'));
       const catalog = JSON.parse(await readFile(join(data, 'bindings.json'), 'utf8'));
@@ -99,6 +105,7 @@ try {
     }
     console.log('Installed native and packaged WASM cube/bandage authoring libraries agree.');
     for (const name of ['gear', 'gear-extreme', 'gear-plain']) {
+      await stagePuzzle(name);
       const data = join(javascript, 'examples/canvas/data', name);
       const wrapper = JSON.parse(await readFile(join(data, 'source.json'), 'utf8'));
       const expected = { source: JSON.parse(await readFile(join(data, 'puzzle.pzl.json'), 'utf8')),
@@ -120,6 +127,18 @@ try {
   const customSphere = JSON.parse(await readFile(join(javascript, 'examples/canvas/data/gear/gear-spherical.json'), 'utf8'));
   customSphere.compatibleDefinitionDigest = custom.definition.definitionDigest;
   await writeFile(join(customDirectory, 'gear-custom-spherical.json'), JSON.stringify(customSphere));
+  // Each consumer gets real copied artifacts outside the workspace, one
+  // puzzle at a time. Keep unused catalog copies out of the file cache.
+  for (const name of ['cube3', 'bandaged', 'gear', 'gear-extreme', 'gear-plain'])
+    await rm(join(dataDirectory, name), { recursive: true });
+  const fixtures = JSON.parse(await readFile(new URL('../tests/fixtures/core.json', import.meta.url), 'utf8'));
+  const meltyAlgorithm = (family) => {
+    const fixture = fixtures.cases.find(item => item.source === `packages/melty-${family}/package.json`
+      && item.name.endsWith('aligned opposite caps hand off together'));
+    assert.ok(fixture, `Missing Melty ${family} paired fixture`);
+    const path = `${fixture.prefix} ${fixture.operation}`;
+    return `${path} (${path})'`;
+  };
   for (const [puzzle, algorithm, firstMove, kind] of [
     ['cube3', "R U R' U'", 'U', 'cube-port-diagram'],
     ['bandaged', 'U R', 'U', 'cube-port-diagram'],
@@ -130,6 +149,14 @@ try {
     ['bagua', "U+ R' L' D2 R L U-", 'U+', 'bagua-port-diagram'],
     ['bagua', '[[U+ R2:U+],[R R+ L-:D2]]', 'U+', 'bagua-euclidean'],
     ['bagua', "U+ R F- (U+ R F-)'", 'U+', 'bagua-spherical'],
+    ['melty-a', "U_e_inv R_e U_e R_e_inv U_c+D_b_inv (U_e_inv R_e U_e R_e_inv U_c+D_b_inv)'", 'U', 'melty-a-euclidean'],
+    ['melty-a', "U U'", 'U', 'melty-a-port-diagram'],
+    ['melty-b', meltyAlgorithm('b'), 'U', 'melty-b-euclidean'],
+    ['melty-b', meltyAlgorithm('b'), 'U', 'melty-b-port-diagram'],
+    ['melty-c', meltyAlgorithm('c'), 'U', 'melty-c-euclidean'],
+    ['melty-c', meltyAlgorithm('c'), 'U', 'melty-c-port-diagram'],
+    ['melty-d', meltyAlgorithm('d'), 'U', 'melty-d-euclidean'],
+    ['melty-d', meltyAlgorithm('d'), 'U', 'melty-d-port-diagram'],
     ['gear', "R U F (R U F)'", 'R', 'gear-normal-euclidean'],
     ['gear', "F U R (F U R)'", 'F', 'gear-spherical'],
     ['gear-extreme', "Uq R Fq (Uq R Fq)'", 'Uq', 'gear-extreme-spherical'],
@@ -148,12 +175,16 @@ try {
     ['flat-333', "A B C (A B C)'", 'A', 'flat-quotient'],
     ['flat-333-6', "A D E2 F3 B C (A D E2 F3 B C)'", 'D', 'flat-quotient'],
   ]) {
+    if (puzzle !== 'gear-custom') await stagePuzzle(puzzle);
     const directory = join(javascript, 'examples/canvas/data', puzzle);
     const shipped = await readdir(directory);
     assert.ok(!shipped.includes('definition.json') && !shipped.some((name) => name.startsWith('relational')));
     const sourcePath = join(directory, 'package.json');
-    const source = await readFile(sourcePath, 'utf8');
     const realizationPath = join(directory, kind === 'flat-quotient' ? 'flat-quotient.json' : `${kind}.json`);
+    // Run the native oracle before allocating this case's WASM definition and
+    // view, so the two large compiler/geometry graphs do not overlap.
+    const reference = JSON.parse(execFileSync(join(consumer, 'build/custom_kernel_consumer'), [sourcePath, realizationPath, algorithm], { encoding: 'utf8' }));
+    const source = await readFile(sourcePath, 'utf8');
     const realization = await readFile(realizationPath, 'utf8');
     const session = new KernelSession(module, source);
     const geometry = new GeometryInstance(module, session.native, realization);
@@ -209,7 +240,6 @@ try {
         assert.ok(geometry.prepare(record) >= 0);
         geometry.evaluate(0.5); geometry.evaluate(1);
       }
-      const reference = JSON.parse(execFileSync(join(consumer, 'build/custom_kernel_consumer'), [sourcePath, realizationPath, algorithm], { encoding: 'utf8' }));
       assert.deepEqual(session.snapshot(), reference.snapshot);
       assert.deepEqual(geometry.scene, reference.scene);
       assert.deepEqual(info, reference.kernel);
@@ -226,6 +256,9 @@ try {
       const part = reference.scene.visualParts[0];
       assert.equal(geometry.resolvePart(part.visualPartId).pieceId, part.pieceId);
       console.log(`Portable native/WASM consumers agree: ${puzzle} / ${kind}`);
-    } finally { geometry.dispose(); session.dispose(); }
+    } finally {
+      geometry.dispose(); session.dispose();
+      if (puzzle !== 'gear-custom') await rm(directory, { recursive: true });
+    }
   }
 } finally { await rm(temporary, { recursive: true, force: true }); }

@@ -38,12 +38,14 @@ An experimental Helicopter Cube preset adds exact jumbling stops, placement-depe
 
 The [Bagua Cube](docs/bagua-model.md) preset adds 146 pieces, exact 45° face turns, placement-dependent blocking, polygonal stickers and synchronized cube, [sphere](docs/spherical-bagua.md) and port-diagram views. It opens in **Cube + sphere**, retaining all existing pieces and ports. Its [acceptance checks](docs/bagua-model.md#independent-acceptance-targets) cover published pair/kite cycles, blocking and replay fixtures; whole-model human review and a reproducible physical blocked-state comparison remain open. Select **Bagua Cube**; `+` / `−` buttons turn 45°, while face keys turn 90°.
 
+[Melty A, B, C, and D](docs/melty-family-plan.md) cut a cube with six planes orthogonal to four 85° ray configurations. Each has 26 colored pieces and a fixed internal core, with shape changes and whole-piece cut blocking. Face keys usually turn about 85.402°; C's D grip turns about 89.709°. Hover over a move for its signed angle. Buttons containing `+` turn opposite caps together, including handoffs unavailable to either cap alone. The catalogs contain 1,466 / 1,208 / 1,692 / 2,020 per-piece placements for A / B / C / D. All A, B, and D entries have replayed paths from solved; C has 1,682 witnessed entries and ten retained, unclassified memberships. Both the reference app and standalone Canvas SDK example consume prebuilt relational packages and rigid geometry, loaded when selected.
+
 The [Gear Cube family](docs/gear-model.md) uses the supplied low-poly meshes. Normal Gear Cube has 6 centers, 8 corners, 12 edge bases, 12 six-tooth pinions, and a fixed internal ball. Extreme and custom variants replace each unchecked edge with the supplied rigid [plain edge](packages/gear-extreme/plain-edge-meshes.json) and share the normal cube's remaining parts. Each variant has one cubic model, one spherical model, and one phase diagram. A supplied spherical assembly provides corresponding geared and plain parts for every configuration, opening in **Cube + sphere** with trackball controls. The C++ interpreter animates carriers and the full 300° local pinion spin; Three.js draws its assets and frames. Euclidean, spherical, and diagram views share state, selection, and history. Continuous spherical gear contacts and coverage remain a [verification goal](docs/gear-model.md#verification).
 
 
 ## Run locally
 
-Use the existing development container or a compatible environment with C++20, CMake 3.25+, Ninja, Emscripten 6.0.11, Node 24, and npm. Follow [AGENTS.md](AGENTS.md): the container has a 4 GB memory budget, heavy workloads run sequentially, builds now default to one job, and browser tests use one worker. Do not modify `Dockerfile` without an explicit user request. The Bagua authoring check uses bounded caches and a 384 MiB process ceiling; it adds a few minutes to the package check.
+Use the existing development container or a compatible environment with C++20, CMake 3.25+, Ninja, Emscripten 6.0.11, Node 24, and npm. Follow [AGENTS.md](AGENTS.md): the container has a 4 GB memory budget, heavy workloads run sequentially, native/WASM builds and the web bundler use one job or thread, and browser tests use one worker. Do not modify `Dockerfile` without an explicit user request. The Bagua authoring check uses bounded caches and a 384 MiB process ceiling; it adds a few minutes to the package check.
 
 ```sh
 npm ci
@@ -58,6 +60,8 @@ To serve the production bundle locally:
 ```sh
 npm run preview
 ```
+
+Open the URL printed by Vite, usually `http://localhost:4173/`. Preview detects the base path in the existing build, including `/Twisty-Lab/` for a Pages build. It serves `dist/` without rebuilding; run `npm run build` after source changes.
 
 ## Publish on GitHub Pages
 
@@ -138,7 +142,7 @@ Regression fixtures pin a definition digest and specify a replay prefix, request
 Puzzle authoring is separate from app builds:
 
 ```sh
-npm run build:puzzles                # Build native authoring tools and regenerate all 15 packages
+npm run build:puzzles                # Build native authoring tools and regenerate all 19 packages
 npm run check:puzzles -- --files-only # Check recorded input and artifact hashes; no compiler needed
 npm run check:puzzles                # Also validate schemas, semantic pins, and all WASM realizations
 npm run check:packages               # Expensive regeneration-based reproducibility audit
@@ -168,7 +172,7 @@ Definitions and transitions are read-only to realizations. A transition includes
 
 The Three.js adapter copies borrowed WASM asset views immediately, reuses destination transform arrays, and explicitly disposes WASM and GPU resources. Logical records stay in native serialization paths, preserving exact logical records and presentation values through saves and animation records. JavaScript consumes placement IDs and digests without becoming the state authority.
 
-Compiled definitions load once per session, and both browser realizations share that immutable C++ definition. Compiled membership/count predicates share interned placement sets; snapshots reuse their state and legal-request results within one revision. Every successful move, undo, redo, or load advances the revision. These optimizations preserve canonical definitions, diagnostics, and rule checks while reducing Helicopter loading and input delays. Simulation and rendering run in the browser; the development container serves the application and builds its artifacts.
+Compiled definitions load once per session, and both browser realizations share that immutable C++ definition. Shared move guards compile once; the executor derives a bounded lookup for actions selected by finite movement choices. Compiled membership/count predicates share interned placement sets, and articulated meshes share named rotation paths. Snapshots and selected-piece plans are reused within one revision. Endpoint ghosts project verified target frames without rebuilding animations, and selection feedback paints before optional previews. Every successful move, undo, redo, or load advances the revision. These optimizations preserve canonical definitions, diagnostics, and rule checks. Simulation and rendering run in the browser; the development container serves the application and builds its artifacts.
 
 ## Checks
 

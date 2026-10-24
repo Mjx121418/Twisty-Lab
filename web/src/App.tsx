@@ -16,6 +16,10 @@ import baguaSource from '../../packages/bagua/package.json?raw';
 import baguaRealization from '../../packages/bagua/bagua-euclidean.json';
 import baguaDiagram from '../../packages/bagua/bagua-port-diagram.json';
 import baguaSphere from '../../packages/bagua/bagua-spherical.json';
+import meltyAManifest from '../../packages/melty-a/manifest.json';
+import meltyBManifest from '../../packages/melty-b/manifest.json';
+import meltyCManifest from '../../packages/melty-c/manifest.json';
+import meltyDManifest from '../../packages/melty-d/manifest.json';
 import gearSource from '../../packages/gear/source.json?raw';
 import gearExtremeSource from '../../packages/gear-extreme/source.json?raw';
 import gearPlainSource from '../../packages/gear-plain/source.json?raw';
@@ -48,7 +52,7 @@ import orbifold333SixRealization from '../../packages/flat-333-6/flat-quotient.j
 import { pieceDestinations, type PieceDestination } from './destinations';
 import { defaultViews, moveView, restoreViews, viewLabels, type ViewId, type ViewSelection } from './viewSelection';
 
-type Preset = { id: string; label: string; source: string; realizations: Realization[]; spherical?: Realization; surface?: boolean };
+type Preset = { id: string; label: string; source: string; realizations: Realization[]; spherical?: Realization; surface?: boolean; turnAnglesDegrees?: Record<string, number> };
 type PuzzleView = RenderView | SurfaceView;
 type ViewDefinition = { id: ViewId; realization: Realization; surfaceMode?: 'square' | 'tiles' };
 type MountedView = { view: PuzzleView; realizationId: string; generation: number; cameras: Map<ViewId, unknown> };
@@ -67,11 +71,41 @@ function gearPreset(id: string, label: string, source: string, digest: string): 
   return { id, label, source, realizations: [cube, diagram], spherical };
 }
 const gearEdges = ['UF', 'UR', 'UB', 'UL', 'DF', 'DR', 'DB', 'DL', 'FR', 'FL', 'BR', 'BL'];
+const meltyPresets: Preset[] = Object.entries({
+  'melty-a': meltyAManifest, 'melty-b': meltyBManifest, 'melty-c': meltyCManifest, 'melty-d': meltyDManifest,
+}).map(([id, manifest]) => ({ id, label: `Melty ${id.at(-1)!.toUpperCase()} · 85° axes`,
+  source: '', realizations: [], turnAnglesDegrees: manifest.turnAnglesDegrees }));
+// Fetch prebuilt JSON on selection; URL imports keep large datasets out of
+// JavaScript parsing and minification while retaining Vite's subpath handling.
+const meltyFiles = import.meta.glob<string>([
+  '../../packages/melty-*/package.json',
+  '../../packages/melty-*/melty-*-euclidean.json',
+  '../../packages/melty-*/melty-*-port-diagram.json',
+], { query: '?url', import: 'default', eager: true });
+const meltyLoading = new Map<string, Promise<void>>();
+function loadPreset(preset: Preset): Promise<void> {
+  if (!preset.turnAnglesDegrees || preset.source) return Promise.resolve();
+  const previous = meltyLoading.get(preset.id);
+  if (previous) return previous;
+  const loading = Promise.all(['package', `${preset.id}-euclidean`, `${preset.id}-port-diagram`]
+    .map(async name => {
+      const response = await fetch(meltyFiles[`../../packages/${preset.id}/${name}.json`]);
+      if (!response.ok) throw new Error(`Could not load ${preset.label} (${response.status}).`);
+      return response.text();
+    }))
+    .then(([source, cube, diagram]) => {
+      preset.realizations = [JSON.parse(cube), JSON.parse(diagram)];
+      preset.source = source;
+    }).catch(error => { meltyLoading.delete(preset.id); throw error; });
+  meltyLoading.set(preset.id, loading);
+  return loading;
+}
 const presets = [
   { id: 'cube3', label: '3 × 3 cube', source: cubeSource, realizations: [cubeRealization, cubeDiagram], spherical: cubeSphere },
   { id: 'bandaged-uf-ufr', label: 'Bandaged cube · UF + UFR', source: bandageSource, realizations: [bandageRealization, bandageDiagram], spherical: bandageSphere },
   { id: 'helicopter', label: 'Helicopter Cube · jumbling', source: helicopterSource, realizations: [helicopterRealization, helicopterDiagram], spherical: helicopterSphere },
   { id: 'bagua', label: 'Bagua Cube', source: baguaSource, realizations: [baguaRealization, baguaDiagram], spherical: baguaSphere },
+  ...meltyPresets,
   gearPreset('gear', 'Gear Cube', gearSource, gearManifest.definitionDigest),
   gearPreset('gear-extreme', 'Gear Cube Extreme', gearExtremeSource, gearExtremeManifest.definitionDigest),
   gearPreset('gear-plain', 'Gear family · all plain', gearPlainSource, gearPlainManifest.definitionDigest),
@@ -141,13 +175,22 @@ export function App() {
   const epoch = useRef(0);
   speedRef.current = duration;
   const availablePresets = customGear ? [...presets, customGear] : presets;
-  const activePreset = availablePresets.find((item) => item.realizations[0].compatibleDefinitionDigest === snapshot?.definitionDigest);
+  const activePreset = snapshot && availablePresets.find((item) => item.realizations[0]?.compatibleDefinitionDigest === snapshot.definitionDigest);
   const viewDefinitions = useMemo(() => activePreset ? availableViews(activePreset) : [], [activePreset]);
   const orderedViews = viewSelection.order.flatMap(id => viewDefinitions.filter(view => view.id === id));
   const displayedViews = orderedViews.filter(view => viewSelection.visible.includes(view.id));
   const rhombus = ['rhombus-60','orbifold-333-rhombus'].includes(activePreset?.realizations[0].flatSurface?.chart??'');
 
   function install(runtime: MainModule, source: string, id: string): void {
+    // Shipped presets replace the current puzzle. Release every old owner
+    // before compiling, so large catalogs do not overlap in the bounded WASM
+    // heap. Unknown imports retain the previous session until compilation passes.
+    if (presets.some(preset => preset.source && preset.source === source)) {
+      for (const { view } of mountedViews.current.values()) view.dispose();
+      mountedViews.current.clear(); views.current = [];
+      kernel.current?.dispose(); kernel.current = undefined;
+      setSnapshot(undefined);
+    }
     const next = new KernelSession(runtime, source);
     const initial = next.snapshot();
     const parsedSource = JSON.parse(source);
@@ -158,16 +201,28 @@ export function App() {
     commands.current = [];
     cameraCache.current = new Map();
     pendingCameras.current = undefined;
-    const preset = presets.find(item => item.realizations[0].compatibleDefinitionDigest === initial.definitionDigest);
+    const preset = presets.find(item => item.realizations[0]?.compatibleDefinitionDigest === initial.definitionDigest);
     const available: ViewId[] = preset ? availableViews(preset).map(view => view.id) : ['cube', 'sphere', 'diagram'];
     setViewSelection(current => current.order.length === available.length && current.order.every(id => available.includes(id)) ? current : defaultViews(available));
     setSourceId(id); setSnapshot(initial); setVisualDigest(initial.stateDigest);
     setSelected(undefined); setEvidence(undefined); setLastScramble(''); setVisualError('');
     setAlgorithm(initial.puzzleId === 'flat-333-6-v1' ? "A D A' D'" : initial.puzzleId.startsWith('flat-') ? "A B A' B'" : initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' :
-      initial.puzzleId === 'bagua-experimental-v1' ? "U+ R' L' D2 R L U-" :
+      initial.puzzleId === 'bagua-experimental-v1' ? "U+ R' L' D2 R L U-" : initial.puzzleId.startsWith('melty-') ? "U U'" :
       parsedSource.kind === 'relational-gear-prototypes' ? (parsedSource.gearedEdges.length === 0 ? "Rq Uq Rq' Uq'" :
         initial.legalRequests.some((request) => request.operation === 'R') ? "R R'" : "Rq Rq'") : "R U R' U'");
     setGeneration((value) => value + 1);
+  }
+
+  async function selectPreset(preset: Preset): Promise<void> {
+    if (!module) return;
+    busyRef.current = true; setBusy(true);
+    try {
+      await loadPreset(preset);
+      install(module, preset.source, preset.id);
+    }
+    catch (error: unknown) {
+      setEvidence({ status: 'Invalid', diagnostics: [{ reasonCode: 'source.invalid', source: preset.id, message: String(error) }] });
+    } finally { busyRef.current = false; setBusy(false); }
   }
 
   useEffect(() => {
@@ -227,13 +282,24 @@ export function App() {
 
   useEffect(() => {
     if (!kernel.current || !snapshot || !views.current.length) return;
-    try {
-      const destinations = !busy && selected ? pieceDestinations(kernel.current, snapshot, selected) : [];
-      for (const view of views.current) view.setDestinations(busy ? undefined : selected, destinations);
-    } catch (error: unknown) {
-      for (const view of views.current) view.setDestinations(undefined, []);
-      setVisualError(`Destination preview unavailable: ${String(error)}`);
-    }
+    for (const view of views.current) view.setDestinations(undefined, []);
+    if (busy || !selected) return;
+    const session = kernel.current;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    // Paint selection feedback before preparing optional endpoint ghosts.
+    // Requests remain tied to their captured revision; cleanup cancels stale
+    // work when selection, state, views, or the installed puzzle changes.
+    const frame = requestAnimationFrame(() => { timer = setTimeout(() => {
+      if (kernel.current !== session || session.native.revision() !== snapshot.revision) return;
+      try {
+        const destinations = pieceDestinations(session, snapshot, selected);
+        for (const view of views.current) view.setDestinations(selected, destinations);
+      } catch (error: unknown) {
+        for (const view of views.current) view.setDestinations(undefined, []);
+        setVisualError(`Destination preview unavailable: ${String(error)}`);
+      }
+    }, 0); });
+    return () => { cancelAnimationFrame(frame); if (timer !== undefined) clearTimeout(timer); };
   }, [selected, snapshot, busy, generation, viewSelection, viewDefinitions]);
 
   function chooseDestination(destination: PieceDestination): void {
@@ -349,7 +415,11 @@ export function App() {
     if (!file || !module) return;
     try {
       if (file.size > 16 * 1024 * 1024) throw new Error('Definition import is limited to 16 MiB.');
-      install(module, await file.text(), 'imported');
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const meltyPreset = meltyPresets.find(preset => `${preset.id}-v1` === (parsed.source?.id ?? parsed.puzzleId));
+      if (meltyPreset) await loadPreset(meltyPreset);
+      install(module, text, 'imported');
     } catch (error: unknown) {
       setEvidence({ status: 'Invalid', diagnostics: [{ reasonCode: 'source.invalid', source: file.name, message: String(error) }] });
     }
@@ -388,7 +458,9 @@ export function App() {
   // Choose requests for the displayed source phase; core legalRequests remains
   // the authority for legality, including blockers on these same requests.
   const candidates = snapshot?.candidateRequests && new Set(snapshot.candidateRequests.map((request) => request.operation));
-  const phaseRequests = definition?.operations.filter((operation) => candidates?.has(operation.id));
+  const melty = activePreset?.turnAnglesDegrees;
+  const phaseRequests = definition?.operations.filter((operation) => candidates?.has(operation.id) &&
+    (!melty || !operation.id.includes('+') || legal.has(operation.id)));
   const families = Array.from(new Set(definition?.operations.map((operation) => operation.family) ?? []));
   const faceOrder = activePreset?.surface ? ['A', 'B', 'C', 'D'] : ['U', 'R', 'F', 'D', 'L', 'B'];
   families.sort((a, b) => (faceOrder.includes(a) ? faceOrder.indexOf(a) : 6) - (faceOrder.includes(b) ? faceOrder.indexOf(b) : 6) || a.localeCompare(b));
@@ -412,7 +484,7 @@ export function App() {
       <main>
         <section className="workspace">
           <div className="workspace-toolbar">
-            <div><span className="eyebrow">PUZZLE WORKSPACE</span><select aria-label="Puzzle" value={sourceId} disabled={!module || busy} onChange={(event) => { const preset = availablePresets.find((item) => item.id === event.target.value); if (preset && module) install(module, preset.source, preset.id); }}>
+            <div><span className="eyebrow">PUZZLE WORKSPACE</span><select aria-label="Puzzle" value={sourceId} disabled={!module || busy} onChange={(event) => { const preset = availablePresets.find((item) => item.id === event.target.value); if (preset) void selectPreset(preset); }}>
               {presets.map((preset) => <option key={preset.id} value={preset.id}>{preset.label}</option>)}
               {sourceId === 'gear-custom' && <option value="gear-custom">Gear family · custom</option>}
               {sourceId === 'imported' && <option value="imported">Imported definition</option>}
@@ -473,11 +545,12 @@ export function App() {
           </div>
 
           <section className="commands">
-            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{activePreset?.surface ? `Face keys ${Object.keys(activePreset.realizations[0].flatSurface?.diskCenters??{}).join(' ')} · ${rhombus ? 60 : 90}° turns · Shift for inverse` : snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : snapshot?.puzzleId === 'bagua-experimental-v1' ? '+ / −: 45° · face keys: 90° · Shift for inverse' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
+            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{activePreset?.surface ? `Face keys ${Object.keys(activePreset.realizations[0].flatSurface?.diskCenters??{}).join(' ')} · ${rhombus ? 60 : 90}° turns · Shift for inverse` : snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : snapshot?.puzzleId === 'bagua-experimental-v1' ? '+ / −: 45° · face keys: 90° · Shift for inverse' : melty ? 'Face keys U R F D L B · hover for angles · + joins opposite caps' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
             <div className="moves">{families.map((family) => <div className={`move-pair ${(phaseRequests?.filter((op) => op.family === family).length ?? 0) > 2 ? 'many-moves' : ''}`} key={family}>{phaseRequests?.filter((operation) => operation.family === family).map((operation) => {
               const inverse = operation.id === `${family}'` || operation.id === `${family}_inv`;
               const half = operation.id === `${family}_half`;
-              return <button key={operation.id} aria-label={`Move ${inverse ? `${family} inverse` : half ? `${family} half turn` : operation.id}`} className={!legal.has(operation.id) ? 'may-block' : ''} disabled={!snapshot} onClick={() => enqueue(() => kernel.current!.move(operation.id))}>{inverse ? '′' : half ? `${family}2` : operation.id}</button>;
+              const angle = melty ? operation.id.split('+').map(id => `${melty[id].toFixed(3)}°`).join(' / ') : undefined;
+              return <button key={operation.id} title={angle} aria-label={`Move ${inverse ? `${family} inverse` : half ? `${family} half turn` : operation.id}`} className={!legal.has(operation.id) ? 'may-block' : ''} disabled={!snapshot} onClick={() => enqueue(() => kernel.current!.move(operation.id))}>{inverse ? '′' : half ? `${family}2` : operation.id}</button>;
             })}</div>)}
               <div className="history-controls"><button disabled={!snapshot?.canUndo} onClick={() => enqueue(() => kernel.current!.undo())}>↶ Undo</button><button disabled={!snapshot?.canRedo} onClick={() => enqueue(() => kernel.current!.redo())}>↷ Redo</button><button disabled={!snapshot || busy} onClick={resetPuzzle}>Reset puzzle</button></div>
             </div>

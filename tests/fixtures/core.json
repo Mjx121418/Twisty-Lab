@@ -204,6 +204,142 @@
       "operation": "D",
       "expectedStatus": "Committed",
       "definitionDigest": "3c493255848dd62a7a0a0693e3532bfb241db2c2f1bdc408d7e6505e3ce5f9e0"
+    },
+    {
+      "name": "Melty A principal turn",
+      "source": "packages/melty-a/package.json",
+      "prefix": "",
+      "operation": "U",
+      "expectedStatus": "Committed",
+      "definitionDigest": "eefe2360d0e014be896625422da1d82a9eade30df712962cd1628ac7798055d1"
+    },
+    {
+      "name": "Melty A aligned opposite caps hand off together",
+      "source": "packages/melty-a/package.json",
+      "prefix": "U_e_inv R_e U_e R_e_inv",
+      "operation": "U_c+D_b_inv",
+      "expectedStatus": "Committed",
+      "definitionDigest": "eefe2360d0e014be896625422da1d82a9eade30df712962cd1628ac7798055d1"
+    },
+    {
+      "name": "Melty A first partial cap has no handoff",
+      "source": "packages/melty-a/package.json",
+      "prefix": "U_e_inv R_e U_e R_e_inv",
+      "operation": "U_c",
+      "expectedStatus": "Blocked",
+      "definitionDigest": "eefe2360d0e014be896625422da1d82a9eade30df712962cd1628ac7798055d1",
+      "reasonCode": "relation.rejected"
+    },
+    {
+      "name": "Melty A second partial cap has no handoff",
+      "source": "packages/melty-a/package.json",
+      "prefix": "U_e_inv R_e U_e R_e_inv",
+      "operation": "D_b_inv",
+      "expectedStatus": "Blocked",
+      "definitionDigest": "eefe2360d0e014be896625422da1d82a9eade30df712962cd1628ac7798055d1",
+      "reasonCode": "relation.rejected"
+    },
+    {
+      "name": "Melty B principal turn",
+      "prefix": "",
+      "operation": "U",
+      "expectedStatus": "Committed",
+      "source": "packages/melty-b/package.json",
+      "definitionDigest": "3b67f3185b5f609719a3a689416a0cd3cf32717dca2ab8099f374b605c771390"
+    },
+    {
+      "name": "Melty B aligned opposite caps hand off together",
+      "prefix": "U_e L F_inv L_inv U_c",
+      "operation": "F+B",
+      "expectedStatus": "Committed",
+      "source": "packages/melty-b/package.json",
+      "definitionDigest": "3b67f3185b5f609719a3a689416a0cd3cf32717dca2ab8099f374b605c771390"
+    },
+    {
+      "name": "Melty B partial cap F has no handoff",
+      "prefix": "U_e L F_inv L_inv U_c",
+      "operation": "F",
+      "expectedStatus": "Blocked",
+      "reasonCode": "relation.rejected",
+      "source": "packages/melty-b/package.json",
+      "definitionDigest": "3b67f3185b5f609719a3a689416a0cd3cf32717dca2ab8099f374b605c771390"
+    },
+    {
+      "name": "Melty B partial cap B has no handoff",
+      "prefix": "U_e L F_inv L_inv U_c",
+      "operation": "B",
+      "expectedStatus": "Blocked",
+      "reasonCode": "relation.rejected",
+      "source": "packages/melty-b/package.json",
+      "definitionDigest": "3b67f3185b5f609719a3a689416a0cd3cf32717dca2ab8099f374b605c771390"
+    },
+    {
+      "name": "Melty C principal turn",
+      "prefix": "",
+      "operation": "U",
+      "expectedStatus": "Committed",
+      "source": "packages/melty-c/package.json",
+      "definitionDigest": "49bb8d4e2e6caf7a091aa3f45fc7b632af5a0a544b614c7c2c907caf1255e432"
+    },
+    {
+      "name": "Melty C aligned opposite caps hand off together",
+      "prefix": "U_c B_g_inv U_e",
+      "operation": "F+B_d",
+      "expectedStatus": "Committed",
+      "source": "packages/melty-c/package.json",
+      "definitionDigest": "49bb8d4e2e6caf7a091aa3f45fc7b632af5a0a544b614c7c2c907caf1255e432"
+    },
+    {
+      "name": "Melty C partial cap F has no handoff",
+      "prefix": "U_c B_g_inv U_e",
+      "operation": "F",
+      "expectedStatus": "Blocked",
+      "reasonCode": "relation.rejected",
+      "source": "packages/melty-c/package.json",
+      "definitionDigest": "49bb8d4e2e6caf7a091aa3f45fc7b632af5a0a544b614c7c2c907caf1255e432"
+    },
+    {
+      "name": "Melty C partial cap B_d has no handoff",
+      "prefix": "U_c B_g_inv U_e",
+      "operation": "B_d",
+      "expectedStatus": "Blocked",
+      "reasonCode": "relation.rejected",
+      "source": "packages/melty-c/package.json",
+      "definitionDigest": "49bb8d4e2e6caf7a091aa3f45fc7b632af5a0a544b614c7c2c907caf1255e432"
+    },
+    {
+      "name": "Melty D principal turn",
+      "prefix": "",
+      "operation": "U",
+      "expectedStatus": "Committed",
+      "source": "packages/melty-d/package.json",
+      "definitionDigest": "9fa930d78bea6998b6c17e50781dc0cb46050a865f2c5b4594e705241acd3541"
+    },
+    {
+      "name": "Melty D aligned opposite caps hand off together",
+      "prefix": "U_g_inv L_g_inv U_g",
+      "operation": "R_e+L_c",
+      "expectedStatus": "Committed",
+      "source": "packages/melty-d/package.json",
+      "definitionDigest": "9fa930d78bea6998b6c17e50781dc0cb46050a865f2c5b4594e705241acd3541"
+    },
+    {
+      "name": "Melty D partial cap R_e has no handoff",
+      "prefix": "U_g_inv L_g_inv U_g",
+      "operation": "R_e",
+      "expectedStatus": "Blocked",
+      "reasonCode": "relation.rejected",
+      "source": "packages/melty-d/package.json",
+      "definitionDigest": "9fa930d78bea6998b6c17e50781dc0cb46050a865f2c5b4594e705241acd3541"
+    },
+    {
+      "name": "Melty D partial cap L_c has no handoff",
+      "prefix": "U_g_inv L_g_inv U_g",
+      "operation": "L_c",
+      "expectedStatus": "Blocked",
+      "reasonCode": "relation.rejected",
+      "source": "packages/melty-d/package.json",
+      "definitionDigest": "9fa930d78bea6998b6c17e50781dc0cb46050a865f2c5b4594e705241acd3541"
     }
   ]
 }

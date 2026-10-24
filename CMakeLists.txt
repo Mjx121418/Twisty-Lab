@@ -83,7 +83,7 @@ if(EMSCRIPTEN)
     --no-entry
     -sMODULARIZE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,node
     -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=33554432
-    -sMAXIMUM_MEMORY=268435456 -sSTACK_SIZE=1048576
+    -sMAXIMUM_MEMORY=402653184 -sSTACK_SIZE=1048576
     --emit-tsd "${CMAKE_SOURCE_DIR}/kernel/generated/twisty.d.mts")
 else()
   install(TARGETS puzzle_catalog puzzle_execution puzzle_session puzzle_geometry puzzle_symmetry puzzle_core puzzle_language puzzle_kernel
@@ -109,6 +109,9 @@ else()
   target_link_libraries(twisty PRIVATE puzzle_session)
   add_executable(twisty_language examples/language/main.cpp)
   target_link_libraries(twisty_language PRIVATE puzzle_language)
+  add_executable(melty_solids scripts/melty_solids.cpp)
+  target_link_libraries(melty_solids PRIVATE project_options)
+  target_compile_options(melty_solids PRIVATE -O2)
   if(BUILD_TESTING)
     add_executable(geometry_api_tests tests/geometry_api_tests.cpp)
     target_link_libraries(geometry_api_tests PRIVATE puzzle_kernel)
@@ -135,6 +138,12 @@ else()
     add_executable(core_tests tests/core_tests.cpp)
     target_link_libraries(core_tests PRIVATE puzzle_language)
     add_test(NAME core_relations COMMAND core_tests)
+    add_executable(melty_tests tests/melty_tests.cpp)
+    target_link_libraries(melty_tests PRIVATE puzzle_kernel)
+    target_compile_definitions(melty_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+    foreach(family a b c d)
+      add_test(NAME melty_${family} COMMAND melty_tests ${family})
+    endforeach()
     add_executable(session_tests tests/session_tests.cpp)
     target_link_libraries(session_tests PRIVATE puzzle_kernel)
     target_compile_definitions(session_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")

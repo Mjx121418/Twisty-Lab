@@ -13,7 +13,7 @@ let session, geometry, descriptor, positions, indices, transforms;
 let busy = false, selected, blocked = [], hits = [];
 let installEpoch = 0;
 const assets = new Map();
-const supported = new Set(['triangle-meshes', 'rigid-transforms', 'quotient-surface', 'quotient-orbifold']);
+const supported = new Set(['triangle-meshes', 'rigid-transforms', 'quotient-surface', 'quotient-orbifold', 'shared-rotation-tracks']);
 const identity = () => [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 function multiply(a,b) {
   const out=Array(16).fill(0);
@@ -109,16 +109,19 @@ async function install(puzzle) {
   document.querySelector('#status').textContent = 'Loading…';
   const [source, realization] = await Promise.all([
     fetch(`./data/${puzzle}/package.json`).then((response) => response.text()),
-    fetch(`./data/${puzzle}/${puzzle.startsWith('flat-') ? 'flat-quotient.json' : `${puzzle === 'helicopter' || puzzle === 'bagua' || puzzle.startsWith('gear') ? puzzle : 'cube'}-port-diagram.json`}`).then((response) => response.text()),
+    fetch(`./data/${puzzle}/${puzzle.startsWith('flat-') ? 'flat-quotient.json' : `${puzzle === 'helicopter' || puzzle === 'bagua' || puzzle.startsWith('melty-') || puzzle.startsWith('gear') ? puzzle : 'cube'}-port-diagram.json`}`).then((response) => response.text()),
   ]);
   if (epoch !== installEpoch) return;
+  // A preset selection replaces the old puzzle. Drop its geometry and session
+  // before compiling the next one, rather than retaining two large catalogs.
+  geometry?.dispose(); geometry = undefined;
+  session?.dispose(); session = undefined;
   const next = new KernelSession(module, source);
   let view;
   try {
     view = new GeometryInstance(module, next.native, realization);
     const scene = view.scene;
     if ((!scene.diagram&&!scene.flatSurface) || scene.requiredCapabilities.some((capability) => !supported.has(capability))) throw new Error('This renderer supports flat triangle-mesh diagrams and polygonal quotients.');
-    geometry?.dispose(); session?.dispose();
     session = next; geometry = view; descriptor = scene;
   } catch (error) { view?.dispose(); next.dispose(); throw error; }
   positions = copyFloatView(geometry.definition.positions());
@@ -146,7 +149,7 @@ async function install(puzzle) {
   selected = undefined; blocked = [];
   document.querySelector('#selection').textContent = 'No piece selected';
   document.querySelector('#notation').value = puzzle === 'flat-333-6' ? "A D A' D'" : puzzle.startsWith('flat-') ? "A B A' B'" : puzzle === 'helicopter' ? 'UF_ab UL_af' :
-    puzzle === 'bagua' ? "U+ R' L' D2 R L U-" : puzzle === 'gear-plain' ? "Rq Uq Rq' Uq'" : puzzle.startsWith('gear') ? "R R'" : "R U R' U'";
+    puzzle.startsWith('melty-') ? "U U'" : puzzle === 'bagua' ? "U+ R' L' D2 R L U-" : puzzle === 'gear-plain' ? "Rq Uq Rq' Uq'" : puzzle.startsWith('gear') ? "R R'" : "R U R' U'";
   document.querySelector('#status').textContent = 'Ready';
   busy = false;
   refresh(); draw();
@@ -205,6 +208,7 @@ document.querySelector('#puzzle').addEventListener('change', (event) => {
     busy = false;
     document.querySelector('#status').textContent = String(error);
     if (session) refresh();
+    else document.querySelector('#puzzle').disabled = false;
   });
 });
 window.addEventListener('pagehide', () => { geometry?.dispose(); session?.dispose(); });

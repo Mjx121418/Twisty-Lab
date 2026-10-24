@@ -1,13 +1,63 @@
 import { readFileSync } from 'node:fs';
-import { beforeAll, describe, expect, it } from 'vitest';
-import { createKernel, KernelSession, type MainModule } from '../../kernel/index';
-import { pieceDestinations } from '../../web/src/destinations';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { createKernel, GeometryInstance, KernelSession, type MainModule } from '../../kernel/index';
+import { destinationTransforms, pieceDestinations } from '../../web/src/destinations';
 
 const read = (path: string): string => readFileSync(path, 'utf8');
 let runtime: MainModule;
 beforeAll(async () => { runtime = await createKernel(); });
 
 describe('selected-piece destinations', () => {
+  it('shares verified plans across selections and refreshes them at each revision', () => {
+    const session = new KernelSession(runtime, read('packages/cube3/package.json'));
+    const planner = vi.spyOn(session, 'plan');
+    try {
+      const initial = session.snapshot();
+      const corner = pieceDestinations(session, initial, 'corner/UFR');
+      expect(corner).toHaveLength(6);
+      expect(planner).toHaveBeenCalledTimes(initial.legalRequests.length);
+      expect(pieceDestinations(session, initial, 'center/U').map(option => option.request.operation)).toEqual(['U', "U'"]);
+      corner.length = 0;
+      expect(pieceDestinations(session, initial, 'corner/UFR')).toHaveLength(6);
+      expect(planner).toHaveBeenCalledTimes(initial.legalRequests.length);
+      session.move('F');
+      expect(pieceDestinations(session, initial, 'corner/UFR')).toEqual([]);
+      const next = session.snapshot();
+      expect(pieceDestinations(session, next, 'corner/UFR').every(option => option.revision === next.revision)).toBe(true);
+      expect(planner).toHaveBeenCalledTimes(initial.legalRequests.length + next.legalRequests.length);
+      session.undo();
+      const restored = session.snapshot();
+      expect(pieceDestinations(session, restored, 'corner/UFR').map(option => option.request.operation)).toEqual(['F', "F'", 'R', "R'", 'U', "U'"]);
+      expect(planner).toHaveBeenCalledTimes(initial.legalRequests.length + next.legalRequests.length + restored.legalRequests.length);
+    } finally { session.dispose(); }
+  });
+
+  it('reuses verified endpoint frames while preserving buffer ownership and rejecting altered records', () => {
+    const session = new KernelSession(runtime, read('packages/cube3/package.json'));
+    const geometry = new GeometryInstance(runtime, session.native, read('packages/cube3/cube-euclidean.json'));
+    const animate = vi.spyOn(geometry.definition, 'animate');
+    try {
+      const option = pieceDestinations(session, session.snapshot(), 'corner/UFR')[0];
+      const live = Array.from(geometry.matrices);
+      const first = geometry.destination(option.transitionRecord);
+      const expected = Array.from(first);
+      first.fill(Number.NaN);
+      const second = geometry.destination(option.transitionRecord);
+      expect(Array.from(second)).toEqual(expected);
+      expect(second).not.toBe(first);
+      expect(animate).toHaveBeenCalledTimes(1);
+      expect(Array.from(destinationTransforms(geometry, option))).toEqual(expected);
+      expect(animate).toHaveBeenCalledTimes(1);
+      expect(() => destinationTransforms(geometry, { ...option, definitionDigest: 'wrong' })).toThrow();
+      expect(() => destinationTransforms(geometry, { ...option, targetStateText: '{}' })).toThrow();
+      expect(Array.from(geometry.matrices)).toEqual(live);
+      const corrupt = JSON.parse(option.transitionRecord);
+      corrupt.request.choices[0] = 'idle';
+      expect(() => geometry.destination(JSON.stringify(corrupt))).toThrow();
+      expect(animate).toHaveBeenCalledTimes(2);
+      expect(Array.from(geometry.destination(option.transitionRecord))).toEqual(expected);
+    } finally { geometry.dispose(); session.dispose(); }
+  });
   it.each([
     ['cube3', 'package.json', 'corner/UFR', ['F', "F'", 'R', "R'", 'U', "U'"]],
     ['bandaged', 'package.json', 'bandage/UF-UFR', ['F', "F'", 'U', "U'"]],

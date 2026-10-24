@@ -1,4 +1,5 @@
 #include "twisty/catalog.hpp"
+#include <algorithm>
 #include <array>
 #include <bit>
 #include <iomanip>
@@ -17,18 +18,11 @@ std::string sha256(const std::string &value) {
       0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2};
   std::array<std::uint32_t, 8> h{0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
                                  0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19};
-  std::vector<std::uint8_t> bytes(value.begin(), value.end());
-  const auto bits = static_cast<std::uint64_t>(bytes.size()) * 8;
-  bytes.push_back(0x80);
-  while (bytes.size() % 64 != 56)
-    bytes.push_back(0);
-  for (int i = 7; i >= 0; --i)
-    bytes.push_back(static_cast<std::uint8_t>(bits >> (i * 8)));
-  for (std::size_t block = 0; block < bytes.size(); block += 64) {
+  const auto compress = [&](const std::uint8_t *bytes) {
     std::array<std::uint32_t, 64> w{};
     for (int i = 0; i < 16; ++i)
       for (int j = 0; j < 4; ++j)
-        w[i] = (w[i] << 8) | bytes[block + i * 4 + j];
+        w[i] = (w[i] << 8) | bytes[i * 4 + j];
     for (int i = 16; i < 64; ++i) {
       const auto s0 = std::rotr(w[i - 15], 7) ^ std::rotr(w[i - 15], 18) ^ (w[i - 15] >> 3);
       const auto s1 = std::rotr(w[i - 2], 17) ^ std::rotr(w[i - 2], 19) ^ (w[i - 2] >> 10);
@@ -57,7 +51,24 @@ std::string sha256(const std::string &value) {
     h[5] += f;
     h[6] += g;
     h[7] += z;
-  }
+  };
+  // Hash the existing bytes directly. Copying a canonical definition into a
+  // growable padded vector needlessly triples its temporary memory footprint.
+  const auto *bytes = reinterpret_cast<const std::uint8_t *>(value.data());
+  const auto whole = value.size() / 64 * 64;
+  for (std::size_t block = 0; block < whole; block += 64)
+    compress(bytes + block);
+  std::array<std::uint8_t, 128> tail{};
+  const auto remainder = value.size() - whole;
+  std::copy_n(bytes + whole, remainder, tail.begin());
+  tail[remainder] = 0x80;
+  const auto length = remainder < 56 ? 64 : 128;
+  const auto bits = static_cast<std::uint64_t>(value.size()) * 8;
+  for (int i = 0; i < 8; ++i)
+    tail[length - 1 - i] = static_cast<std::uint8_t>(bits >> (i * 8));
+  compress(tail.data());
+  if (length == 128)
+    compress(tail.data() + 64);
   std::ostringstream output;
   for (const auto word : h)
     output << std::hex << std::setfill('0') << std::setw(8) << word;

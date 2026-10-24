@@ -68,9 +68,10 @@ std::shared_ptr<const Execution> Execution::from_source(const std::string &text)
     }
     return execution;
   }
-  throw DiagnosticError("definition.unsupported", "/kind",
-                        "Expected a relational-package, relational-definition, or relational-gear-prototypes. "
-                        "Legacy definitions and prototype sources are no longer supported.");
+  throw DiagnosticError(
+      "definition.unsupported", "/kind",
+      "Expected a relational-package, relational-definition, or relational-gear-prototypes. "
+      "Legacy definitions and prototype sources are no longer supported.");
 }
 
 Execution::Execution(Json source, Json catalog) : puzzle_(language::compile(source)) {
@@ -104,12 +105,15 @@ Execution::Execution(Json source, Json catalog) : puzzle_(language::compile(sour
   inverse_moves_.resize(bindings.choice_slots.size());
   Json types = Json::array(), domains = Json::array(), pieces = Json::array(), operations = Json::array();
   std::map<std::string, Index> domain_ids;
+  std::vector<std::map<std::string, const Json *>> domain_moves(source.at("domains").size());
   std::set<std::string> declared_placements, declared_pieces;
   for (Index d = 0; d < source.at("domains").size(); ++d) {
     const auto &s = source.at("domains").at(d), &c = catalog.at("domains").at(d);
     const auto id = s.at("id").get<std::string>();
     ensure(c.at("id").get<std::string>() == id, "Domain order differs.");
     domain_ids.emplace(id, d);
+    for (const auto &move : s.at("moves"))
+      domain_moves[d].emplace(move.at("id").get<std::string>(), &move);
     Domain domain;
     domain.id = id;
     Json wire = Json::array();
@@ -210,7 +214,7 @@ Execution::Execution(Json source, Json catalog) : puzzle_(language::compile(sour
     ensure(request.default_profile.has_value(),
            "A uniform rotation track requires a declared default profile.");
     const auto &profile = request.profiles.at(*request.default_profile);
-    ensure(port_catalog || profile.when == core::true_ref,
+    ensure(port_catalog || articulated_events_ || profile.when == core::true_ref,
            "The cube frame adapter requires a constant declared default profile.");
     const auto &choices = profile.choices;
     Operation operation;
@@ -231,12 +235,10 @@ Execution::Execution(Json source, Json catalog) : puzzle_(language::compile(sour
       const auto movement = bindings.choice_values[d].at(choices.at(d));
       ensure(articulated_events_ || movement == request.id,
              "Uniform track requires the same named move in every domain.");
-      const auto &moves = source.at("domains").at(d).at("moves");
-      const auto move = std::find_if(moves.begin(), moves.end(), [&](const auto &m) {
-        return m.at("id").template get<std::string>() == movement;
-      });
-      ensure(move != moves.end() && (articulated_events_ ||
-                                     move->at("event").template get<std::string>() == operation.transport),
+      const auto found = domain_moves[d].find(movement);
+      ensure(found != domain_moves[d].end(), "Unknown movement binding.");
+      const auto *move = found->second;
+      ensure(articulated_events_ || move->at("event").get<std::string>() == operation.transport,
              "Event binding differs from the movement.");
       if (!articulated_events_)
         event_operations_[{d, operation.transport}] = r;

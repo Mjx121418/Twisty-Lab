@@ -119,16 +119,20 @@ export type Realization = {
     radialNormalTriangles?: number[];
   }>;
   componentsByDomain?: Record<string, ArticulatedComponent[]>;
+  /** Named, reusable articulated paths and per-operation placement tables. */
+  rotationTracks?: Record<string, RotationTrackStep[]>;
+  operationTrackTables?: Record<string, OperationTrackTable>;
 };
 export type RotationTrackStep = {
   axis: [number, number, number]; pivot: [number, number, number]; angle: number; space: 'world' | 'local';
 };
+export type OperationTrackTable = Record<string, Record<string, RotationTrackStep[] | string>>;
 export type ArticulatedComponent = {
   /** Optional body-only filter; ports bind every piece, possibly in several patches. */
   pieceIds?: string[];
   id: string; meshAssetId: string; role: 'body' | 'port'; portId?: string; materialBindingId?: string;
   placementFrames: Record<string, number[]>; symmetries?: number[][];
-  operationTracks: Record<string, Record<string, RotationTrackStep[]>>;
+  operationTracks: OperationTrackTable | string;
 };
 
 // Experimental version 1. Numeric placements are resolved through preview.bindings.
@@ -309,6 +313,8 @@ export class GeometryInstance {
   readonly scene: SceneDescriptor;
   readonly matrices: Float32Array;
   private animation?: ReturnType<InstanceType<MainModule['GeometryDefinition']>['animate']>;
+  private readonly destinations = new Map<string, Float32Array>();
+  private destinationBytes = 0;
 
   constructor(module: MainModule, session: InstanceType<MainModule['Session']>, realization: string) {
     const info = JSON.parse(module.kernelInfoJSON()) as KernelInfo;
@@ -352,10 +358,37 @@ export class GeometryInstance {
   }
   /** Shares all assets and tables; does not disturb the prepared live motion. */
   destination(record: string): Float32Array {
+    const cached = this.destinations.get(record);
+    if (cached) {
+      this.destinations.delete(record); this.destinations.set(record, cached);
+      return copyFloatView(cached);
+    }
     const animation = this.definition.animate(record);
-    try { return this.project(animation.evaluate(1)); }
+    try {
+      const matrices = this.project(animation.evaluate(1));
+      // Only owned buffers are cached, never native handles or borrowed views.
+      // Bound memory even for large third-party realizations; callers still
+      // receive independent arrays and may freely modify their copy.
+      const limit = 2 * 1024 * 1024;
+      const bytes = matrices.byteLength + record.length * 2;
+      if (bytes <= limit) {
+        while (this.destinations.size >= 64 || this.destinationBytes + bytes > limit) {
+          const oldest = this.destinations.keys().next().value!;
+          this.destinationBytes -= this.destinations.get(oldest)!.byteLength + oldest.length * 2;
+          this.destinations.delete(oldest);
+        }
+        this.destinations.set(record, matrices);
+        this.destinationBytes += bytes;
+        return copyFloatView(matrices);
+      }
+      return matrices;
+    }
     finally { animation.delete(); }
   }
   resolvePart(id: string): HitBinding { return JSON.parse(this.definition.resolvePartJSON(id)) as HitBinding; }
-  dispose(): void { this.animation?.delete(); this.animation = undefined; this.definition.delete(); }
+  dispose(): void {
+    this.animation?.delete(); this.animation = undefined;
+    this.destinations.clear(); this.destinationBytes = 0;
+    this.definition.delete();
+  }
 }

@@ -43,7 +43,8 @@
           "triangle-meshes",
           "rigid-transforms",
           "quotient-surface",
-          "quotient-orbifold"
+          "quotient-orbifold",
+          "shared-rotation-tracks"
         ]
       }
     },
@@ -226,7 +227,12 @@
           ]
         },
         "chart": {
-          "enum": ["square", "rhombus-60", "pillowcase-square", "orbifold-333-rhombus"]
+          "enum": [
+            "square",
+            "rhombus-60",
+            "pillowcase-square",
+            "orbifold-333-rhombus"
+          ]
         },
         "sideLength": {
           "type": "number",
@@ -248,6 +254,24 @@
             }
           }
         }
+      }
+    },
+    "rotationTracks": {
+      "type": "object",
+      "maxProperties": 8192,
+      "additionalProperties": {
+        "type": "array",
+        "maxItems": 8,
+        "items": {
+          "$ref": "#/$defs/rotationStep"
+        }
+      }
+    },
+    "operationTrackTables": {
+      "type": "object",
+      "maxProperties": 4096,
+      "additionalProperties": {
+        "$ref": "#/$defs/operationTrackTable"
       }
     }
   },
@@ -392,17 +416,39 @@
           "maxItems": 32
         },
         "operationTracks": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "array",
-              "maxItems": 8,
-              "items": {
-                "$ref": "#/$defs/rotationStep"
-              }
+          "oneOf": [
+            {
+              "$ref": "#/$defs/operationTrackTable"
+            },
+            {
+              "type": "string",
+              "minLength": 1
             }
+          ]
+        }
+      }
+    },
+    "rotationPath": {
+      "oneOf": [
+        {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/rotationStep"
           }
+        },
+        {
+          "type": "string",
+          "minLength": 1
+        }
+      ]
+    },
+    "operationTrackTable": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "#/$defs/rotationPath"
         }
       }
     }

@@ -23,7 +23,12 @@ current_pins = {}
 for case in fixtures['cases']:
     name = Path(case['source']).parent.name
     if name not in current_pins:
-        current_pins[name] = json.loads(subprocess.check_output([str(root / 'build/native/twisty'), 'compile', '--definition', str(root / case['source']), '--json'], text=True))['definition']['definitionDigest']
+        # Validation returns the same semantic pin without exporting another
+        # full copy of a large compiled definition just to read its digest.
+        result = json.loads(subprocess.check_output([str(root / 'build/native/twisty'), 'validate', '--definition', str(root / case['source']), '--json'], text=True))
+        if result['status'] != 'Valid':
+            raise SystemExit(result)
+        current_pins[name] = result['definitionDigest']
     current = current_pins[name]
     if args.update_fixtures:
         case['definitionDigest'] = current

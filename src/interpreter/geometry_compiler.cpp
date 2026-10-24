@@ -327,11 +327,7 @@ std::shared_ptr<const GeometryProgram> GeometryCompiler::compile() {
       if (articulated_) {
         auto &component = components_[part.frame_index];
         table.frames = std::move(component.frames);
-        for (auto &paths : component.paths) {
-          GeometryTrack track;
-          track.placements = std::move(paths);
-          table.tracks.push_back(std::move(track));
-        }
+        table.tracks = std::move(component.tracks);
       } else {
         auto state = definition_->initial;
         for (Index q = 0; q < definition_->domains[domain].placements.size(); ++q) {

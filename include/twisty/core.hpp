@@ -88,6 +88,13 @@ public:
 
 private:
   ProgramData data_;
+  struct ChoiceActions {
+    Index input, value;
+    std::vector<Index> actions;
+  };
+  // Derived acceleration only; no serialized state or additional predicates.
+  std::vector<ChoiceActions> choice_actions_;
+  std::vector<Index> general_actions_;
   void check_state_shape(std::span<const Index> state) const;
 };
 } // namespace twisty::core

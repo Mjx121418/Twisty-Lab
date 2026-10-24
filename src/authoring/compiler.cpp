@@ -445,6 +445,7 @@ CompiledPuzzle compile_checked(const Json &source) {
     fields(relation, {"id", "predicate"});
     expect(relation_ids.insert(name(relation.at("id"))).second, "Duplicate relation ID");
   }
+  std::vector<Ref> requirement_clauses;
   for (Index r = 0; r < requests.size(); ++r) {
     const auto &source_request = requests[r];
     auto &binding = c.bindings.requests[r];
@@ -455,8 +456,17 @@ CompiledPuzzle compile_checked(const Json &source) {
     std::vector<Ref> clauses{c.expression(source_request.at("relation"), binding.id)};
     for (const auto &relation : relations)
       clauses.push_back(c.expression(relation.at("predicate"), binding.id));
-    for (const auto &requirement : requirements)
-      clauses.push_back(c.implies(requirement.selected, requirement.condition));
+    // Move requirements are state-only and shared by every request. Lower
+    // them once, at their original first-request position, so node ordering
+    // and canonical semantic pins stay unchanged. Constant truths disappear
+    // in RANGE lowering and need not be copied into every request's scratch.
+    if (r == 0)
+      for (const auto &requirement : requirements) {
+        const auto clause = c.implies(requirement.selected, requirement.condition);
+        if (clause != core::true_ref)
+          requirement_clauses.push_back(clause);
+      }
+    clauses.insert(clauses.end(), requirement_clauses.begin(), requirement_clauses.end());
     request.relation = c.all(std::move(clauses));
     c.data.requests.push_back(std::move(request));
     const auto profiles = source_request.value("profiles", Json::array());

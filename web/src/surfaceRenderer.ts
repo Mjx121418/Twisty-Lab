@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GeometryInstance, copyFloatView, copyIndexView, type FlatSurface, type MainModule, type Realization, type SceneDescriptor } from '../../kernel/index';
-import type { PieceDestination } from './destinations';
+import { destinationTransforms, type PieceDestination } from './destinations';
 import { cameraWindowPolygon, insidePolygon, surfaceBounds, surfaceImageOrigin, surfaceImages, surfacePolygon, type Polygon, type Bounds, type SurfaceImage, type SurfaceMode } from './flatSurface';
 
 const palette: Record<string, number> = { A:0xe76561, B:0x66c7a0, C:0xf1cf67, D:0x7fa5ed, E:0xb798e4, F:0xf0a35f, body:0x24313b, ink:0x16252d };
@@ -323,7 +323,7 @@ export class SurfaceView {
       const transition=JSON.parse(option.transitionRecord),key=transition.afterState.placementOf[piece] as string;
       const existing=byPose.get(key);if(existing){existing.options.push(option);continue;}
       const group={options:[option]};byPose.set(key,group);this.groups.push(group);
-      const transforms=this.geometry.destination(option.transitionRecord);
+      const transforms=destinationTransforms(this.geometry,option);
       this.descriptor.visualParts.forEach((part,index)=>{
         if(part.pieceId!==piece||part.materialBindingId==='ink')return;
         const list=batches.get(part.meshAssetId)??[];

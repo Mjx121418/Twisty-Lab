@@ -96,6 +96,19 @@ void GeometryCompiler::build_articulated(const Json &realization) {
   ensure(definition_->port_catalog, "/catalog/kind", "Articulated models require a port binding catalog.");
   const bool spherical = realization.at("kind") == "articulated-spherical";
   const double radius = spherical ? realization.at("radius").get<double>() : 0;
+  const auto &capabilities = realization.at("requiredCapabilities");
+  const bool shared_tracks =
+      std::find(capabilities.begin(), capabilities.end(), "shared-rotation-tracks") != capabilities.end();
+  const Json empty_library = Json::object();
+  const auto &track_tables =
+      realization.contains("operationTrackTables") ? realization.at("operationTrackTables") : empty_library;
+  const auto &rotation_tracks =
+      realization.contains("rotationTracks") ? realization.at("rotationTracks") : empty_library;
+  ensure(track_tables.is_object() && rotation_tracks.is_object() && track_tables.size() <= 4096 &&
+             rotation_tracks.size() <= 8192,
+         "/operationTrackTables", "Shared track libraries exceed the realization limits.");
+  ensure(shared_tracks || (track_tables.empty() && rotation_tracks.empty()), "/requiredCapabilities",
+         "Named track libraries require shared-rotation-tracks.");
   ensure(!spherical || (std::isfinite(radius) && radius > 0 && radius <= 100), "/radius",
          "A spherical model requires a finite radius in (0,100].");
   struct Asset {
@@ -112,6 +125,41 @@ void GeometryCompiler::build_articulated(const Json &realization) {
   };
   std::map<std::string, Asset> assets;
   std::size_t total_vertices = 0, total_triangles = 0, total_frames = 0, total_steps = 0;
+  auto path_library = std::make_shared<std::vector<std::vector<Rotation>>>(1);
+  struct PreparedPath {
+    Index index;
+    std::vector<Frame> matrices;
+  };
+  std::map<std::string, PreparedPath> named_paths;
+  const auto prepare_path = [&](const Json &steps, const std::string &id) {
+    ensure(steps.is_array() && steps.size() <= 8, id, "A track has at most eight simple rotations.");
+    std::vector<Rotation> path;
+    std::vector<Frame> matrices;
+    for (const auto &step : steps) {
+      auto axis = point(step.at("axis"));
+      const auto length = std::sqrt(dot(axis, axis));
+      ensure(length > 1e-12, id, "Rotation axis is degenerate.");
+      axis = scale(axis, 1 / length);
+      const auto pivot = point(step.at("pivot"));
+      ensure(!flat_surface_ || (std::abs(axis[0]) + std::abs(axis[1]) < 1e-9 && pivot[2] == 0 &&
+                                std::abs(pivot[0]) <= 2 * flat_side_ && std::abs(pivot[1]) <= 2 * flat_side_),
+             id, "Flat-surface tracks require bounded planar rotations.");
+      ensure(!spherical || (pivot[0] == 0 && pivot[1] == 0 && pivot[2] == 0), id,
+             "Spherical animation pivots must be the sphere origin.");
+      const auto angle = step.at("angle").get<double>();
+      const auto space = step.at("space").get<std::string>();
+      ensure(std::isfinite(angle) && std::abs(angle) <= 100 && (space == "local" || space == "world"), id,
+             "Invalid rotation angle or coordinate space.");
+      path.push_back({axis, pivot, angle, space == "local"});
+      matrices.push_back(rotation(axis, pivot, angle));
+    }
+    Index index = 0;
+    if (!path.empty()) {
+      index = static_cast<Index>(path_library->size());
+      path_library->push_back(std::move(path));
+    }
+    return PreparedPath{index, std::move(matrices)};
+  };
   for (const auto &[id, data] : realization.at("assets").items()) {
     total_vertices += data.at("vertices").size();
     total_triangles += data.at("triangles").size();
@@ -123,8 +171,7 @@ void GeometryCompiler::build_articulated(const Json &realization) {
     Asset asset;
     for (const auto &v : data.at("vertices")) {
       const auto p = point(v);
-      ensure(!flat_surface_ || p[2] == 0, id,
-             "Flat-surface assets must lie in their local z=0 plane.");
+      ensure(!flat_surface_ || p[2] == 0, id, "Flat-surface assets must lie in their local z=0 plane.");
       ensure(!spherical || dot(p, p) <= (radius + 1e-6) * (radius + 1e-6), id,
              "A spherical mesh must fit within its declared radius.");
       asset.vertices.push_back(p);
@@ -236,6 +283,25 @@ void GeometryCompiler::build_articulated(const Json &realization) {
         }
         ensure(port.empty(), id, "Port bindings must cover every piece in their domain.");
       }
+      const auto &track_binding = data.at("operationTracks");
+      ensure(track_binding.is_object() || (shared_tracks && track_binding.is_string()), id,
+             "Tracks require an explicit table or a declared shared track capability.");
+      for (const auto &q : domain.placements)
+        ensure(port.empty() || q.ports.contains(port), id, "Component refers to an undeclared local port.");
+      // Meshes and materials are independent of a rigid pose table. Components
+      // in one domain may share the same named tracks and identical frames;
+      // validate and store that pose table once, including all endpoint checks.
+      if (track_binding.is_string() && data.value("symmetries", Json::array()).empty()) {
+        const auto previous = std::find_if(bindings[d].begin(), bindings[d].end(), [&](const auto &entry) {
+          return entry.second.at("operationTracks") == track_binding &&
+                 entry.second.at("placementFrames") == data.at("placementFrames") &&
+                 entry.second.value("symmetries", Json::array()).empty();
+        });
+        if (previous != bindings[d].end()) {
+          bindings[d].push_back({previous->first, data});
+          continue;
+        }
+      }
       Component component;
       component.domain = d;
       const auto &frames = data.at("placementFrames");
@@ -247,11 +313,11 @@ void GeometryCompiler::build_articulated(const Json &realization) {
         ensure(port.empty() || q.ports.contains(port), id, "Component refers to an undeclared local port.");
         component.frames.push_back(frame(frames.at(q.key)));
         const auto &m = component.frames.back();
-        ensure(!flat_surface_ ||
-                   (std::abs(m[2]) + std::abs(m[6]) + std::abs(m[8]) + std::abs(m[9]) +
-                        std::abs(m[14]) < 1e-9 &&
-                    flat_chart_contains(m[12], m[13])),
-               id, "Flat-surface frames must be planar and anchored in the fundamental chart.");
+        ensure(
+            !flat_surface_ ||
+                (std::abs(m[2]) + std::abs(m[6]) + std::abs(m[8]) + std::abs(m[9]) + std::abs(m[14]) < 1e-9 &&
+                 flat_chart_contains(m[12], m[13])),
+            id, "Flat-surface frames must be planar and anchored in the fundamental chart.");
         ensure(!spherical || (m[12] == 0 && m[13] == 0 && m[14] == 0), id,
                "Spherical component frames must rotate about the sphere origin.");
       }
@@ -284,41 +350,47 @@ void GeometryCompiler::build_articulated(const Json &realization) {
         }
         symmetries.push_back(s);
       }
-      const auto &tracks = data.at("operationTracks");
+      ensure(!track_binding.is_string() || track_tables.contains(track_binding.get<std::string>()), id,
+             "Unknown shared operation track table.");
+      const auto &tracks =
+          track_binding.is_string() ? track_tables.at(track_binding.get<std::string>()) : track_binding;
+      ensure(tracks.is_object(), id, "A shared operation track table must be an object.");
       ensure(tracks.size() == definition_->operations.size(), id, "Tracks must cover every operation.");
       for (const auto &op : definition_->operations) {
         const auto &entries = tracks.at(op.id);
-        std::vector<std::vector<Rotation>> paths(domain.placements.size());
+        GeometryTrack track;
+        track.placement_paths.resize(domain.placements.size());
+        track.path_library = path_library;
         std::size_t count = 0;
         for (Index q = 0; q < domain.placements.size(); ++q) {
           if (op.roles[d][q] != 1)
             continue;
           ++count;
-          const auto &steps = entries.at(domain.placements[q].key);
-          ensure(steps.is_array() && steps.size() <= 8, id, "A track has at most eight simple rotations.");
-          auto endpoint = component.frames[q];
-          for (const auto &step : steps) {
-            ensure(++total_steps <= 524288, id, "Combined rotation tracks exceed the realization limit.");
-            auto axis = point(step.at("axis"));
-            const auto length = std::sqrt(dot(axis, axis));
-            ensure(length > 1e-12, id, "Rotation axis is degenerate.");
-            axis = scale(axis, 1 / length);
-            const auto pivot = point(step.at("pivot"));
-            ensure(!flat_surface_ ||
-                       (std::abs(axis[0]) + std::abs(axis[1]) < 1e-9 && pivot[2] == 0 &&
-                        std::abs(pivot[0]) <= 2 * flat_side_ &&
-                        std::abs(pivot[1]) <= 2 * flat_side_),
-                   id, "Flat-surface tracks require bounded planar rotations.");
-            ensure(!spherical || (pivot[0] == 0 && pivot[1] == 0 && pivot[2] == 0), id,
-                   "Spherical animation pivots must be the sphere origin.");
-            const auto angle = step.at("angle").get<double>();
-            const auto space = step.at("space").get<std::string>();
-            ensure(std::isfinite(angle) && std::abs(angle) <= 100 && (space == "local" || space == "world"),
-                   id, "Invalid rotation angle or coordinate space.");
-            const auto r = rotation(axis, pivot, angle);
-            paths[q].push_back({axis, pivot, angle, space == "local"});
-            endpoint = space == "local" ? multiply(endpoint, r) : multiply(r, endpoint);
+          const auto &path = entries.at(domain.placements[q].key);
+          ensure(path.is_array() || (shared_tracks && path.is_string()), id,
+                 "A rotation path requires steps or a declared shared track reference.");
+          ensure(!path.is_string() || rotation_tracks.contains(path.get<std::string>()), id,
+                 "Unknown shared rotation path.");
+          PreparedPath inline_path{};
+          const PreparedPath *prepared;
+          if (path.is_string()) {
+            const auto name = path.get<std::string>();
+            auto found = named_paths.find(name);
+            if (found == named_paths.end())
+              found = named_paths.emplace(name, prepare_path(rotation_tracks.at(name), id)).first;
+            prepared = &found->second;
+          } else {
+            inline_path = prepare_path(path, id);
+            prepared = &inline_path;
           }
+          const auto &steps = path_library->at(prepared->index);
+          total_steps += steps.size();
+          ensure(total_steps <= 524288, id, "Combined rotation tracks exceed the realization limit.");
+          track.placement_paths[q] = prepared->index;
+          auto endpoint = component.frames[q];
+          for (Index s = 0; s < steps.size(); ++s)
+            endpoint = steps[s].local ? multiply(endpoint, prepared->matrices[s])
+                                      : multiply(prepared->matrices[s], endpoint);
           const auto &target = component.frames[op.maps[d][q]];
           if (flat_surface_)
             endpoint = canonical_flat_frame(endpoint);
@@ -331,7 +403,7 @@ void GeometryCompiler::build_articulated(const Json &realization) {
                  "Track endpoint disagrees with the exact transport.");
         }
         ensure(entries.size() == count, id, "Tracks must name exactly the participating source placements.");
-        component.paths.push_back(std::move(paths));
+        component.tracks.push_back(std::move(track));
       }
       const auto index = static_cast<Index>(components_.size());
       components_.push_back(std::move(component));

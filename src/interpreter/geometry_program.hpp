@@ -11,12 +11,13 @@ struct GeometryRotation {
   bool local;
 };
 struct GeometryTrack {
-  // A uniform path or a sparse placement-indexed path, never both.
+  // A uniform path or placement-indexed shared paths, never both.
   double extent_hint = 0;
   std::vector<GeometryRotation> uniform;
-  std::vector<std::vector<GeometryRotation>> placements;
+  std::vector<Index> placement_paths;
+  std::shared_ptr<const std::vector<std::vector<GeometryRotation>>> path_library;
   const std::vector<GeometryRotation> &at(Index q) const {
-    return placements.empty() ? uniform : placements.at(q);
+    return placement_paths.empty() ? uniform : path_library->at(placement_paths.at(q));
   }
 };
 struct GeometryPoseTable {

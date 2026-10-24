@@ -1,5 +1,6 @@
 #include "twisty/completion.hpp"
 #include <iostream>
+#include <map>
 
 using namespace twisty::core;
 using twisty::language::Json;
@@ -111,6 +112,34 @@ void malformed_programs() {
   d.goal = true_ref;
   d.requests[0].relation = 2;
   rejects([&] { Program bad(d); }, "core.program");
+  // Shared graph validation must still check each distinct choice dimension.
+  d = toggle();
+  d.predicates[0].bank = Bank::choice;
+  d.finite_sets[0] = {1};
+  d.goal = true_ref;
+  d.requests[0].relation = 2;
+  d.requests.push_back({{1}, 0, 1, 2});
+  rejects([&] { Program bad(d); }, "core.program");
+  // Hundreds of requests may share a large action selection DAG. Its size is
+  // within the finite budget even when request-by-request traversal is not.
+  d = toggle();
+  d.goal = true_ref;
+  d.predicates.clear();
+  d.finite_sets = {{1}};
+  for (Index i = 0; i < 9000; ++i) {
+    Predicate node;
+    node.opcode = Opcode::range;
+    node.child_count = 1;
+    node.first_child = i;
+    node.lower = 1;
+    node.upper = 1;
+    d.child_references.push_back(i + 1);
+    d.predicates.push_back(node);
+  }
+  d.actions[0].selection = 9001;
+  d.requests.assign(500, {{2}, 0, 1, true_ref});
+  check(Program(d).plan(499, State{0}, Choices{1}).transition.has_value(),
+        "Repeated requests exhausted validation on a shared dependency graph");
   d = toggle();
   d.predicates[0].bank = Bank::choice;
   d.finite_sets[0] = {2};
@@ -135,6 +164,95 @@ void malformed_programs() {
   }
   d.goal = 12002;
   check(Program(d).solved(State{0}), "Deep predicate graph failed");
+}
+
+void indexed_actions() {
+  ProgramData d;
+  d.piece_count = 180;
+  d.placement_count = 3;
+  d.initial.assign(d.piece_count, 0);
+  d.maps = {{{0, 1}, {1, 2}, {2, 0}}, {{0, 0}, {2, 2}}};
+  const auto member = [&](Bank bank, Index input, std::vector<Index> values) {
+    Predicate node;
+    node.bank = bank;
+    node.input = input;
+    node.set = static_cast<Index>(d.finite_sets.size());
+    d.finite_sets.push_back(std::move(values));
+    d.predicates.push_back(node);
+    return static_cast<Ref>(d.predicates.size() + 1);
+  };
+  std::vector<Ref> selections;
+  for (Index value = 0; value < 7; ++value)
+    selections.push_back(member(Bank::choice, 0, {value}));
+  for (Index piece = 0; piece < d.piece_count; ++piece)
+    for (Index value = 0; value < 7; ++value)
+      d.actions.push_back({piece, (piece + value) % 2, selections[value], piece * 10 + value});
+  d.actions.push_back({0, 0, member(Bank::choice, 1, {1, 3}), 2000});
+  d.actions.push_back({1, 0, member(Bank::state, 3, {2}), 2001});
+  const auto phase = member(Bank::choice, 2, {0, 5, 10});
+  const auto state = member(Bank::state, 9, {1});
+  Predicate both;
+  both.opcode = Opcode::range;
+  both.lower = both.upper = both.child_count = 2;
+  both.first_child = static_cast<Index>(d.child_references.size());
+  d.child_references.insert(d.child_references.end(), {phase, state});
+  d.predicates.push_back(both);
+  d.actions.push_back({2, 1, static_cast<Ref>(d.predicates.size() + 1), 2002});
+  d.actions.push_back({3, 1, true_ref, 2003});
+  d.actions.push_back({4, 0, false_ref, 2004});
+  d.requests = {{{7, 5, 11}, 0, static_cast<Index>(d.actions.size()), true_ref},
+                {{7, 5, 11}, 20, 600, true_ref},
+                {{7, 5, 11}, 31, 41, true_ref},
+                {{}, static_cast<Index>(d.actions.size()), 0, true_ref}};
+  Program indexed(d);
+  // Equivalent RANGE wrappers force the general action evaluator. Compare
+  // event order, sparse/self-loop participation, slices, and duplicate writers.
+  std::map<Ref, Ref> wrapped;
+  for (auto &action : d.actions) {
+    if (action.selection < 2)
+      continue;
+    const auto node = d.predicates[action.selection - 2];
+    if (node.opcode != Opcode::in || node.bank != Bank::choice)
+      continue;
+    if (!wrapped.contains(action.selection)) {
+      Predicate wrapper;
+      wrapper.opcode = Opcode::range;
+      wrapper.lower = wrapper.upper = wrapper.child_count = 1;
+      wrapper.first_child = static_cast<Index>(d.child_references.size());
+      d.child_references.push_back(action.selection);
+      d.predicates.push_back(wrapper);
+      wrapped[action.selection] = static_cast<Ref>(d.predicates.size() + 1);
+    }
+    action.selection = wrapped.at(action.selection);
+  }
+  Program general(std::move(d));
+  unsigned accepted = 0, conflicts = 0;
+  for (Index sample = 0; sample < 5; ++sample) {
+    State source(180);
+    for (Index p = 0; p < source.size(); ++p)
+      source[p] = (sample + p) % 3;
+    for (Index request = 0; request < 4; ++request)
+      for (Index choice = 0; choice < (request == 3 ? 1 : 7 * 5 * 11); ++choice) {
+        const Choices tuple = request == 3 ? Choices{} : Choices{choice % 7, choice / 7 % 5, choice / 35};
+        const auto a = indexed.plan(request, source, tuple), b = general.plan(request, source, tuple);
+        check(a.rejection == b.rejection && a.transition.has_value() == b.transition.has_value(),
+              "Indexed action permission differs");
+        if (!a.transition) {
+          conflicts += a.rejection == Rejection::conflicting_writes;
+          continue;
+        }
+        ++accepted;
+        const auto &x = *a.transition, &y = *b.transition;
+        check(x.before == y.before && x.after == y.after && x.choices == y.choices &&
+                  x.actions.size() == y.actions.size(),
+              "Indexed action state or participation differs");
+        for (Index i = 0; i < x.actions.size(); ++i)
+          check(x.actions[i].piece == y.actions[i].piece && x.actions[i].from == y.actions[i].from &&
+                    x.actions[i].to == y.actions[i].to && x.actions[i].event == y.actions[i].event,
+                "Indexed action order or events differ");
+      }
+  }
+  check(accepted > 0 && conflicts > 0, "Indexed action cases missed acceptance or writer conflicts");
 }
 Json toy() {
   return Json::parse(R"({"kind":"relational-puzzle","languageVersion":1,"id":"toy",
@@ -324,6 +442,7 @@ int main() {
   try {
     execution();
     malformed_programs();
+    indexed_actions();
     language_and_completion();
     rejection_proofs();
     shared_named_predicates();

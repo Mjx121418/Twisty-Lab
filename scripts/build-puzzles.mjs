@@ -12,7 +12,7 @@ try {
   const before = await inputHashes(root, inventory);
   const run = (command, args) => execFileSync(command, args, { cwd: root, stdio: 'inherit' });
   run('cmake', ['--preset', 'native']);
-  run('cmake', ['--build', '--preset', 'native', '--target', 'twisty', 'twisty_language']);
+  run('cmake', ['--build', '--preset', 'native', '--target', 'twisty', 'twisty_language', 'melty_solids']);
   run('python3', ['scripts/compile-packages.py', '--write', ...args]);
   const result = await validatePuzzleData(root, inventory, (path) => {
     const compiled = JSON.parse(execFileSync(join(root, 'build/native/twisty'), ['validate', '--definition', path, '--json'], { cwd: root, encoding: 'utf8' }));
