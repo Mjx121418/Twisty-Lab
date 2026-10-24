@@ -101,9 +101,11 @@ def main():
     document = model.definition(exclusions=not args.probe)
     resource.setrlimit(resource.RLIMIT_AS, (current, hard))
     source, catalog = module(document)
+    from compact_transports import bagua_module
+    bagua_module(source,catalog,model)
     del document
     assert len(json.dumps(source, separators=(',', ':')).encode()) <= 8 * 1024**2, 'AST exceeds the public source limit'
-    package = dict(kind='relational-package', formatVersion=1, source=source, catalog=catalog)
+    package = dict(kind='relational-package', formatVersion=2, source=source, catalog=catalog)
     if args.probe:
         destination = ROOT / 'build/bagua-candidate.json'
         destination.parent.mkdir(parents=True, exist_ok=True)

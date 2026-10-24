@@ -1,3 +1,4 @@
+#include "authoring/compact.hpp"
 #include "json_input.hpp"
 #include "twisty/completion.hpp"
 #include <algorithm>
@@ -52,13 +53,24 @@ Json query(const CompiledPuzzle &p, const Json &q) {
   if (!q.is_object())
     throw core::Error("core.input", "Expected a query object");
   for (auto it = q.begin(); it != q.end(); ++it) {
-    const std::vector<std::string> allowed{"op",      "state",          "request",    "choices",
-                                           "profile", "candidateLimit", "resultLimit"};
+    const std::vector<std::string> allowed{"op",      "state",          "request",     "choices",
+                                           "profile", "candidateLimit", "resultLimit", "collection",
+                                           "element", "placement",      "map"};
     if (std::find(allowed.begin(), allowed.end(), it.key()) == allowed.end())
       throw core::Error("core.input", "Unknown query field: " + it.key());
   }
-  const auto state = numbers(q.at("state"));
   const auto op = q.at("op").get<std::string>();
+  if (op == "act" || op == "transport") {
+    const auto value = [&](const char *key) { return numbers(Json::array({q.at(key)})).at(0); };
+    if (op == "act")
+      return {{"status", "Evaluated"},
+              {"placement", p.program.act(value("collection"), value("element"), value("placement"))}};
+    const auto target = p.program.transport(value("map"), value("placement"));
+    return {{"status", "Evaluated"},
+            {"placement", target ? Json(*target) : Json(nullptr)},
+            {"participates", target.has_value()}};
+  }
+  const auto state = numbers(q.at("state"));
   if (op == "validate")
     return {{"status", p.program.valid(state) ? "Valid" : "Invalid"}};
   if (op == "goal")
@@ -160,22 +172,31 @@ Json inspect(const CompiledPuzzle &p) {
          {"defaultProfile", b.default_profile ? Json(b.profiles[*b.default_profile].id) : Json(nullptr)}});
   }
   bindings["requests"] = request_bindings;
-  return {{"kind", "relational-preview"},
-          {"experimentalVersion", 1},
-          {"predicateVersion", 1},
-          {"bindings", bindings},
-          {"program",
-           {{"pieceCount", d.piece_count},
-            {"placementCount", d.placement_count},
-            {"initialPlacements", d.initial},
-            {"finiteSets", d.finite_sets},
-            {"predicateNodes", predicates},
-            {"childReferences", d.child_references},
-            {"transportMaps", maps},
-            {"actionRecords", actions},
-            {"requestPrograms", requests},
-            {"invariantRoot", d.invariant},
-            {"goalRoot", d.goal}}}};
+  Json result = {{"kind", "relational-preview"},
+                 {"experimentalVersion", 1},
+                 {"predicateVersion", 1},
+                 {"bindings", bindings},
+                 {"program",
+                  {{"pieceCount", d.piece_count},
+                   {"placementCount", d.placement_count},
+                   {"initialPlacements", d.initial},
+                   {"finiteSets", d.finite_sets},
+                   {"predicateNodes", predicates},
+                   {"childReferences", d.child_references},
+                   {"transportMaps", maps},
+                   {"actionRecords", actions},
+                   {"requestPrograms", requests},
+                   {"invariantRoot", d.invariant},
+                   {"goalRoot", d.goal}}}};
+  if (p.source_version == 2) {
+    result["experimentalVersion"] = 2;
+    result["program"].erase("transportMaps");
+    result["program"]["compact"] = write_compact(d);
+    result["program"]["transportStorageBytes"] = p.program.transport_storage_bytes();
+    result["bindings"]["moveMaps"] = p.bindings.move_maps;
+    result["bindings"]["collections"] = p.bindings.collection_names;
+  }
+  return result;
 }
 Puzzle::Puzzle(const std::string &source) : puzzle_(compile_text(source)) {}
 std::string Puzzle::inspect_json() const {

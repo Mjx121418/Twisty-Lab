@@ -16,7 +16,7 @@ export async function createKernel(options: KernelOptions = {}): Promise<MainMod
     filename.endsWith('.wasm') && options.wasmURL ? String(options.wasmURL) : directory + filename);
   const module = await createModule({ locateFile });
   const info = JSON.parse(module.kernelInfoJSON()) as KernelInfo;
-  if (info.apiVersion !== 4 || info.frameBufferVersion !== 1) throw new Error('Unsupported kernel API or frame-buffer version.');
+  if (info.apiVersion !== 5 || info.frameBufferVersion !== 1) throw new Error('Unsupported kernel API or frame-buffer version.');
   return module;
 }
 
@@ -95,7 +95,7 @@ export type HitBinding = {
   status: string; pieceId?: string; portId?: string; operationCandidates?: Request[];
 };
 export type CompiledDefinition = {
-  kind: 'relational-definition'; formatVersion: 1; puzzleId: string; definitionDigest: string;
+  kind: 'relational-definition'; formatVersion: 1 | 2; puzzleId: string; definitionDigest: string;
   ruleModule: 'relational@1';
   pieceTypes: { id: string; placementDomainId: string; localPorts: string[] }[];
   placementDomains: { id: string; placements: { key: string; footprint: string[]; portAttachment: Record<string, { cell: string; attachment: string }> }[] }[];
@@ -145,11 +145,25 @@ export type Predicate = boolean
   | { implies: [Predicate, Predicate] } | { iff: [Predicate, Predicate] }
   | { count: { min: number; max: number; of: Predicate[] } }
   | { occupiedBy: { placement: string; pieces: string[] } };
+export type CompactProgram = {
+  groups?: { order: number; products: number[]; inverses: number[] }[];
+  actions?: { group: number; size: number; kind: 'regular' | 'tabulated' | 'trivial'; table?: number[] }[];
+  collections?: { id?: string; action: number; placements: number[] }[];
+  spaces?: { size: number }[];
+  permutations?: { space: number; rows?: [number, number][]; base?: number;
+    inputAction?: number; inputElement?: number; outputAction?: number; outputElement?: number }[];
+  bindings?: { space: number; placements?: number[]; base?: number; group?: number; element?: number }[];
+  families?: { space: number; positions: number[] }[];
+  maps?: ({ kind: 'explicit'; rows: [number, number][] }
+    | { kind: 'group'; collection: number; element: number; support: number[] }
+    | { kind: 'difference'; family: number; binding: number; source: number; target: number }
+    | { kind: 'union'; parts: number[] })[];
+};
 export type PuzzleSource = {
-  kind: 'relational-puzzle'; languageVersion: 1; id: string;
+  kind: 'relational-puzzle'; languageVersion: 1 | 2; id: string; compact?: CompactProgram;
   domains: {
     id: string; placements: string[]; pieces: { id: string; initial: string }[];
-    moves: { id: string; support: string[]; transport: Record<string, string>;
+    moves: { id: string; support?: string[]; transport?: Record<string, string>; map?: number;
       pieces?: string[]; requires?: Predicate; event?: string }[];
   }[];
   predicates?: Record<string, Predicate>;
@@ -186,11 +200,11 @@ export function createGearSource(module: MainModule, source: GearSource): {
   };
 }
 export type PuzzlePackage = {
-  kind: 'relational-package'; formatVersion: 1;
+  kind: 'relational-package'; formatVersion: 1 | 2;
   source: PuzzleSource; catalog: CubeCatalog | PortCatalog | ArticulatedCatalog;
 };
 export type PuzzleDefinition = CompiledDefinition & {
-  kind: 'relational-definition'; formatVersion: 1; predicateVersion: 1;
+  kind: 'relational-definition'; formatVersion: 1 | 2; predicateVersion: 1;
   source: PuzzleSource; catalog: CubeCatalog | PortCatalog | ArticulatedCatalog;
   program: ProgramPreview['program']; bindings: ProgramPreview['bindings'];
 };
@@ -200,27 +214,30 @@ export function createCubeSource(module: MainModule, bandaged = false): {
   return JSON.parse(module.cubeModuleJSON(bandaged)) as { source: PuzzleSource; catalog: CubeCatalog };
 }
 export type ProgramPreview = {
-  kind: 'relational-preview'; experimentalVersion: 1; predicateVersion: 1;
+  kind: 'relational-preview'; experimentalVersion: 1 | 2; predicateVersion: 1;
   bindings: {
     puzzleId: string; pieces: string[]; placements: string[]; events: string[];
-    choiceSlots: string[]; choiceValues: string[][];
+    choiceSlots: string[]; choiceValues: string[][]; moveMaps?: number[][]; collections?: string[];
     requests: { id: string; profiles: { id: string; choices: string[]; whenRoot: number }[]; defaultProfile: string | null }[];
   };
   program: { pieceCount: number; placementCount: number; initialPlacements: number[];
     finiteSets: number[][]; predicateNodes: Record<string, unknown>[]; childReferences: number[];
-    transportMaps: [number, number][][]; actionRecords: { piece: number; map: number; selectionRoot: number; event: number }[];
+    transportMaps?: [number, number][][]; compact?: CompactProgram; transportStorageBytes?: number; actionRecords: { piece: number; map: number; selectionRoot: number; event: number }[];
     requestPrograms: { choiceSizes: number[]; firstAction: number; actionCount: number; relationRoot: number }[];
     invariantRoot: number; goalRoot: number };
 };
-export type ProgramQuery = { state: number[] } & (
+export type ProgramQuery = { op: 'act'; collection: number; element: number; placement: number }
+  | { op: 'transport'; map: number; placement: number }
+  | ({ state: number[] } & (
   { op: 'validate' | 'goal' }
   | { op: 'plan'; request: string; choices: string[] }
   | { op: 'bind'; request: string; profile?: string }
-  | { op: 'discover'; request: string; candidateLimit: number; resultLimit: number });
+  | { op: 'discover'; request: string; candidateLimit: number; resultLimit: number }));
 export type ProgramResult =
   | { status: 'Invalid'; diagnostics?: { code: string; message: string }[] }
   | { status: 'Valid' | 'ChoiceRequired' }
   | { status: 'Evaluated'; solved: boolean }
+  | { status: 'Evaluated'; placement: number | null; participates?: boolean }
   | { status: 'Selected'; choices: string[] }
   | { status: 'Discovered'; choices: string[][]; examined: number; complete: boolean }
   | { status: 'Rejected'; reason: 'relation' | 'conflicting-writes' | 'target-invariant' }
@@ -232,7 +249,7 @@ export class Puzzle {
   readonly preview: ProgramPreview;
   constructor(module: MainModule, source: string) {
     const info = JSON.parse(module.kernelInfoJSON()) as KernelInfo;
-    if (info.languageAPIVersion !== 1) throw new Error('Unsupported language API version.');
+    if (info.languageAPIVersion !== 2) throw new Error('Unsupported language API version.');
     try { this.native = new module.Puzzle(source); }
     catch (error: unknown) {
       const result = JSON.parse(module.compilePuzzleJSON(source)) as { diagnostics?: { message: string }[] };

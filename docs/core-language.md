@@ -2,7 +2,7 @@
 
 The language provides an expanded JSON AST, a portable C++ compiler, a domain-free executor, and separate completion helpers. All production presets use relational sessions and interpreters in the reference application and independent clients. The legacy evaluator and migration comparison tests have been removed. The [language roadmap](abstract-language-core-plan.md) lists remaining authoring and tooling work.
 
-The implementation is available through `Twisty::core` (standard C++ library only), `Twisty::language` (compiler, completion helpers, and JSON facade), and the WASM/TypeScript `Puzzle` class. It is advertised as `languageAPIVersion = 1`. Public API 4 uses the current core/language names; see [the naming migration](kernel-api.md#api-4-naming). Persisted definitions, complete-tuple session replay, and frame-buffer version 1 are unchanged. The program preview remains a separate inspection format without its own semantic digest or replay codec.
+The implementation is available through `Twisty::core` (standard C++ library only), `Twisty::language` (compiler, completion helpers, and JSON facade), and the WASM/TypeScript `Puzzle` class. It is advertised as `languageAPIVersion = 2`. Public API 5 adds compact transports; API 4 established the current core/language names; see [the naming migration](kernel-api.md#api-4-naming). Format-1 definitions remain readable with their original pins. Migrated format-2 packages have new pins; complete-tuple session schema 2 and frame-buffer version 1 are unchanged. The program preview remains a separate inspection format without its own semantic digest or replay codec.
 
 ## Execution and completion
 
@@ -204,7 +204,7 @@ The adapter accepts the parity-gated cube catalog and the uniform port catalog u
 
 [The Helicopter AST](../packages/helicopter/puzzle.pzl.json) is authored offline by `scripts/helicopter_packages.py` from the same exact rational catalog as the original model. No legacy compiler or planner is called to generate its movement tables. The separate [port catalog](../packages/helicopter/bindings.json) and compact `package.json` load through the portable API without Python.
 
-Its three authoring domains have 144 center, 240 corner, and 36 mechanism placements. All 44 identities survive, including twelve distinct mechanism pieces. Ordinary membership invariants restrict each mechanism to its own three axis phases. The compiler flattens the disjoint catalogs to 420 placements; domain names never enter the core. Shared lowering produces 8,847 predicate nodes, 53,061 child references, 276 sparse maps, and 7,920 action records. Occupancy and exclusion use shared location predicates and capacity counts. Each of 180 directed stop requests relates its three local choices and prohibits occupied unavailable locations. A mechanism move's source-phase requirement also applies to explicitly supplied tuples.
+Its three authoring domains have 144 center, 240 corner, and 36 mechanism placements. All 44 identities survive, including twelve distinct mechanism pieces. Ordinary membership invariants restrict each mechanism to its own three axis phases. The compiler flattens the disjoint catalogs to 420 placements; domain names never enter the core. Predicate lowering produces 8,847 predicate nodes, 53,061 child references, and 7,920 action records. The earlier explicit representation used 276 sparse maps; format 2 shares group actions and reference families instead. Occupancy and exclusion use shared location predicates and capacity counts. Each of 180 directed stop requests relates its three local choices and prohibits occupied unavailable locations. A mechanism move's source-phase requirement also applies to explicitly supplied tuples.
 
 The declared default profile is available only in its source phase. `snapshot.candidateRequests` lists the 60 bound defaults before checking permission; `legalRequests` keeps only permitted candidates. This lets controls show five destinations per current grip while retaining blocked requests for explanations. Neither list is exhaustive discovery of arbitrary completions. Request selection remains outside the core.
 
@@ -236,7 +236,7 @@ Regenerate the Gear sources, catalogs and manifests with `python3 scripts/gear_p
 
 Bagua uses eight authoring domains, 146 identities, 2,232 disjoint placements, and 30 complete requests. Exact offline geometry authoring still constructs the finite catalog and exclusion resources. `scripts/bagua_packages.py` lowers those data to ordinary placement memberships, shared occupancy predicates, capacity counts, and cross-domain obstruction relations. Runtime permission, validity, and goals use the same core executor as every other preset. The port catalog retains unavailable-placement certificates for the interpreter, not executable guards.
 
-The module compiles to 54,618 predicate nodes, 129,997 child references, 240 sparse maps, and 4,380 action records. Named source predicates share lowering across state and relation contexts, with request-dependent aliases specialized as needed; sharing does not weaken cycle, depth, or state-only checks. Boolean evaluation stops when a count bound is decided. Diagnostic traces remain exhaustive over reachable nodes so rejection proofs retain all relevant inputs. No predicate opcodes or puzzle-specific executor rules were added.
+The module compiles to 54,618 predicate nodes, 129,997 child references, and 4,380 action records. The earlier explicit representation used 240 sparse maps; format 2 shares group actions and reference families instead. Named source predicates share lowering across state and relation contexts, with request-dependent aliases specialized as needed; sharing does not weaken cycle, depth, or state-only checks. Boolean evaluation stops when a count bound is decided. Diagnostic traces remain exhaustive over reachable nodes so rejection proofs retain all relevant inputs. No predicate opcodes or puzzle-specific executor rules were added.
 
 Generation compiles the fresh Bagua candidate through the current kernel before updating sources and realization pins. Build `twisty`, then use `python3 scripts/bagua_packages.py --write`; omit the flag for reproducibility checking. Current runtime, fixture, and native/WASM checks exercise blocking, published algorithms, witnesses, inverses, replay, and all three views. The historical migration comparison and legacy geometric-audit executables have been retired.
 
@@ -249,3 +249,65 @@ All production presets and the independent Canvas client load relational package
 ## Prebuilt package workflow
 
 Normal app builds consume committed puzzle packages. After using an individual exporter or changing its authoring inputs, finish with `npm run build:puzzles` to regenerate and validate all packages and update their deterministic input/artifact manifest. Fixture semantic identities change only with the explicit `-- --update-fixtures` option. `npm run check:puzzles -- --files-only` checks freshness without generators; `npm run check:puzzles` additionally validates schemas and compatibility with the built WASM kernel. The full regeneration-based audit remains `npm run check:packages`. These build commands do not change the language, runtime formats, or on-load compiler behavior.
+
+## Compact format version 2
+
+Version 1 remains supported with identical fingerprints. Version 2 keeps the
+existing domains, predicates, local choices, events and requests, and adds a
+`compact` object. A movement selects `map: numericId` instead of storing
+`support` and `transport`; these two forms are mutually exclusive. Explicit
+version-1 movement syntax is also accepted in a version-2 document. The source
+and its package/definition must have matching versions.
+
+The portable data declarations are:
+
+| Field | Meaning |
+| --- | --- |
+| `groups` | Group order, row-major products, inverse elements; identity is 0 |
+| `actions` | Group ID, set size, regular/tabulated/trivial action |
+| `collections` | Action ID and local-to-global placement IDs; optional compiler name `id` |
+| `spaces` | Standalone finite reference-set sizes |
+| `permutations` | Injective sorted reference rows, or an earlier base with input/output actions |
+| `bindings` | Injective reference-to-placement array, or an earlier binding transformed by a placement group element |
+| `families` | Reference space and position-permutation IDs |
+| `maps` | Explicit rows, restricted group action, bound difference, or finite union |
+
+Collections partition the actual placements. Regular actions use group
+multiplication directly. Tabulated actions use `table[g * size + q]`; trivial
+actions require no table. A group action is structural information, not proof
+that the final puzzle's guards or configured pieces preserve that symmetry.
+
+For a family, each position supplies an injective partial map `P_theta`. The
+transport is `B P_target inverse(P_source) inverse(B)`. The anchor is a
+coordinate convention, never a required legal intermediate state. References
+identify potential placements, not persistent pieces. A missing image is absent
+from the participating support; a self-image remains a participating row.
+Migration verifies the full support as well as every endpoint.
+
+A derived position map is `out * base * inverse(in)`. Both actions must act on
+the reference space; either may be omitted. A derived binding transforms all
+base placements by the specified group, which must agree with each affected
+placement collection. Data dependencies must precede their users and are limited
+to depth 64. Groups/actions are checked exhaustively within a 64-million-step
+validation budget. Additional group/reference payload is limited to four million
+indices; transport lookups are limited to 10,000 descriptor visits. Invalid or
+excessive input rejects before execution rather than triggering unbounded closure.
+
+A union is one partial injection. Overlapping source rows must agree and distinct
+sources must have distinct targets. It cannot resolve conflicting action records
+or change their event identities. The core retains descriptors and reverse
+indices; it does not retain expanded derived transports. Interpreter certificates
+read the same shared lookups. No new predicate instruction, rule-closure mechanism,
+continuous angle, or geometry is introduced.
+
+[The standalone reference example](../examples/language/reference.pzl.json) uses
+a C3 action to derive a position map. Load it with the existing native/WASM
+`Puzzle` API and query `act`, `transport`, or normal permission planning.
+
+Migration uses additional charts for some Helicopter and Melty piece/grip
+combinations. Bagua uses single charts. No explicit coverage fallback maps are
+needed for these presets. Small unions use exact explicit rows when this costs
+less than their exclusive descriptor/template graph, counting shared data and
+reverse indices once. These storage choices do not change permission or events.
+All maps are compared against the pre-extension
+transport oracle, including absent rows and participating self-loops.

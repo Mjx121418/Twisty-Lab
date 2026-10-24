@@ -142,6 +142,7 @@ Program::Program(ProgramData data) : data_(std::move(data)) {
     require(std::adjacent_find(targets.begin(), targets.end()) == targets.end(), "core.program",
             "Transport must be one-to-one on its support");
   }
+  validate_transports();
   for (const auto &action : d.actions)
     require(action.piece < d.piece_count && action.map < d.maps.size() && ref_ok(action.selection),
             "core.program", "Invalid action record");
@@ -297,17 +298,15 @@ Plan Program::plan(Index request_id, std::span<const Index> state, std::span<con
     if (!source.get(action.selection))
       continue;
     const auto from = state[action.piece];
-    const auto &map = data_.maps[action.map];
-    const auto row =
-        std::lower_bound(map.begin(), map.end(), from, [](const Row &r, Index q) { return r.from < q; });
-    if (row == map.end() || row->from != from)
+    const auto to = transport_unchecked(action.map, from);
+    if (!to)
       continue;
     // Defense for hand-constructed programs, even when compiler predicates exclude conflicts.
     if (written[action.piece])
       return {{}, Rejection::conflicting_writes};
     written[action.piece] = true;
-    transition.after[action.piece] = row->to;
-    transition.actions.push_back({action.piece, from, row->to, action.event});
+    transition.after[action.piece] = *to;
+    transition.actions.push_back({action.piece, from, *to, action.event});
   }
   if (!Evaluation(data_, transition.after, {}).get(data_.invariant))
     return {{}, Rejection::target_invariant};

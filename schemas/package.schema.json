@@ -14,10 +14,20 @@
       "const": "relational-package"
     },
     "formatVersion": {
-      "const": 1
+      "enum": [
+        1,
+        2
+      ]
     },
     "source": {
-      "$ref": "urn:twisty:schema:relational-puzzle:1"
+      "oneOf": [
+        {
+          "$ref": "urn:twisty:schema:relational-puzzle:1"
+        },
+        {
+          "$ref": "urn:twisty:schema:relational-puzzle:2"
+        }
+      ]
     },
     "catalog": {
       "type": "object",
@@ -76,5 +86,47 @@
         }
       ]
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "formatVersion": {
+            "const": 1
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "source": {
+            "properties": {
+              "languageVersion": {
+                "const": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "formatVersion": {
+            "const": 2
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "source": {
+            "properties": {
+              "languageVersion": {
+                "const": 2
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

@@ -65,7 +65,8 @@ def realization_templates(definition,diagram=False):
     # Six-tooth cog: (20 / 6) × (π / 2) = 5 × (π / 3), or 300 degrees.
     # Solid templates acquire their supplied meshes in gear_normal.py.
     assets={};bindings={};group=definition['symmetry']['members']
-    moves = {d['id']: {m['id']: m for m in d['moves']} for d in definition['source']['domains']}
+    from compact_transports import expanded_source
+    moves = {d['id']: {m['id']: m for m in d['moves']} for d in expanded_source(definition['source'])['domains']}
     for domain in definition['placementDomains']:
         kind=domain['id'];ports=len(domain['placements'][0]['portAttachment']);parts=[]
         if not diagram:

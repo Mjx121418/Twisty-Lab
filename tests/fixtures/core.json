@@ -8,7 +8,7 @@
       "prefix": "",
       "operation": "U",
       "expectedStatus": "Committed",
-      "definitionDigest": "68012817e59f85933e58718540520ed38ecd2d90d337063d416f200e3e07e1d2"
+      "definitionDigest": "22a1482eca067b6453ea9c068901ffc0e8d0e4aca5882dc185d14e6da404d4e5"
     },
     {
       "name": "unchanged center participates",
@@ -17,7 +17,7 @@
       "operation": "U",
       "expectedStatus": "Committed",
       "unchangedParticipant": "center/U",
-      "definitionDigest": "68012817e59f85933e58718540520ed38ecd2d90d337063d416f200e3e07e1d2"
+      "definitionDigest": "22a1482eca067b6453ea9c068901ffc0e8d0e4aca5882dc185d14e6da404d4e5"
     },
     {
       "name": "bandaged R is blocked",
@@ -27,7 +27,7 @@
       "expectedStatus": "Blocked",
       "reasonCode": "relation.rejected",
       "implicatedPiece": "bandage/UF-UFR",
-      "definitionDigest": "a4bef1c5be7617a25acbadc635eb7c8fe60d4f417e424c4141f70777f59ac0d2"
+      "definitionDigest": "5f789c7670db01a2a0cb1b62293de73d867a4efbbdaca54d3cc77df828e13c75"
     },
     {
       "name": "bandaged U is legal",
@@ -35,7 +35,7 @@
       "prefix": "",
       "operation": "U",
       "expectedStatus": "Committed",
-      "definitionDigest": "a4bef1c5be7617a25acbadc635eb7c8fe60d4f417e424c4141f70777f59ac0d2"
+      "definitionDigest": "5f789c7670db01a2a0cb1b62293de73d867a4efbbdaca54d3cc77df828e13c75"
     },
     {
       "name": "bandaged F is legal",
@@ -43,7 +43,7 @@
       "prefix": "",
       "operation": "F",
       "expectedStatus": "Committed",
-      "definitionDigest": "a4bef1c5be7617a25acbadc635eb7c8fe60d4f417e424c4141f70777f59ac0d2"
+      "definitionDigest": "5f789c7670db01a2a0cb1b62293de73d867a4efbbdaca54d3cc77df828e13c75"
     },
     {
       "name": "R becomes legal after U",
@@ -51,7 +51,7 @@
       "prefix": "U",
       "operation": "R",
       "expectedStatus": "Committed",
-      "definitionDigest": "a4bef1c5be7617a25acbadc635eb7c8fe60d4f417e424c4141f70777f59ac0d2"
+      "definitionDigest": "5f789c7670db01a2a0cb1b62293de73d867a4efbbdaca54d3cc77df828e13c75"
     },
     {
       "name": "inverse restores blocking",
@@ -60,11 +60,11 @@
       "operation": "R",
       "expectedStatus": "Blocked",
       "reasonCode": "relation.rejected",
-      "definitionDigest": "a4bef1c5be7617a25acbadc635eb7c8fe60d4f417e424c4141f70777f59ac0d2"
+      "definitionDigest": "5f789c7670db01a2a0cb1b62293de73d867a4efbbdaca54d3cc77df828e13c75"
     },
     {
       "source": "packages/helicopter/package.json",
-      "definitionDigest": "4ac6e4678e4301c9cba54bc1551f60230cc29e42c399e5b9f35d2f61a7e5bee6",
+      "definitionDigest": "b4d6235aa22b09b9b4c41286a7de1cfc871bd46cdf0969d6d02091f9f0e7e5db",
       "name": "Helicopter jumble stop is legal",
       "prefix": "",
       "operation": "UF_ab",
@@ -72,7 +72,7 @@
     },
     {
       "source": "packages/helicopter/package.json",
-      "definitionDigest": "4ac6e4678e4301c9cba54bc1551f60230cc29e42c399e5b9f35d2f61a7e5bee6",
+      "definitionDigest": "b4d6235aa22b09b9b4c41286a7de1cfc871bd46cdf0969d6d02091f9f0e7e5db",
       "name": "Helicopter stop guard rejects wrong source",
       "prefix": "UF_ab",
       "operation": "UF_ac",
@@ -87,7 +87,7 @@
     },
     {
       "source": "packages/helicopter/package.json",
-      "definitionDigest": "4ac6e4678e4301c9cba54bc1551f60230cc29e42c399e5b9f35d2f61a7e5bee6",
+      "definitionDigest": "b4d6235aa22b09b9b4c41286a7de1cfc871bd46cdf0969d6d02091f9f0e7e5db",
       "name": "Helicopter face piece blocks a cut",
       "prefix": "UF_ab",
       "operation": "UR_ad",
@@ -97,7 +97,7 @@
     },
     {
       "source": "packages/helicopter/package.json",
-      "definitionDigest": "4ac6e4678e4301c9cba54bc1551f60230cc29e42c399e5b9f35d2f61a7e5bee6",
+      "definitionDigest": "b4d6235aa22b09b9b4c41286a7de1cfc871bd46cdf0969d6d02091f9f0e7e5db",
       "name": "Helicopter second jumble stop is legal",
       "prefix": "UF_ab",
       "operation": "UL_af",
@@ -109,7 +109,7 @@
       "operation": "U+",
       "expectedStatus": "Committed",
       "source": "packages/bagua/package.json",
-      "definitionDigest": "d0d13c3bef8512630ae95255d8a7338d8b8699f63e860af50b343c146c5c952a"
+      "definitionDigest": "e4bf023e44f6c451026497810777d3e4ba2cb230e11e2210f72cc5b785454c71"
     },
     {
       "name": "Bagua quarter turn after 45 degrees is legal",
@@ -117,7 +117,7 @@
       "operation": "R",
       "expectedStatus": "Committed",
       "source": "packages/bagua/package.json",
-      "definitionDigest": "d0d13c3bef8512630ae95255d8a7338d8b8699f63e860af50b343c146c5c952a"
+      "definitionDigest": "e4bf023e44f6c451026497810777d3e4ba2cb230e11e2210f72cc5b785454c71"
     },
     {
       "name": "Bagua Parkin RD sliver pair allows its published R2 repair start",
@@ -125,7 +125,7 @@
       "operation": "R_half",
       "expectedStatus": "Committed",
       "source": "packages/bagua/package.json",
-      "definitionDigest": "d0d13c3bef8512630ae95255d8a7338d8b8699f63e860af50b343c146c5c952a",
+      "definitionDigest": "e4bf023e44f6c451026497810777d3e4ba2cb230e11e2210f72cc5b785454c71",
       "reference": "https://spencerparkin.github.io/twisty-puzzle-solutions/puzzle_bagua.html",
       "basis": "Inverse X is a model reproduction of the author's RD sliver-pair setup; X starts with R2."
     },
@@ -137,7 +137,7 @@
       "reasonCode": "relation.rejected",
       "implicatedPiece": "corner/07",
       "source": "packages/bagua/package.json",
-      "definitionDigest": "d0d13c3bef8512630ae95255d8a7338d8b8699f63e860af50b343c146c5c952a"
+      "definitionDigest": "e4bf023e44f6c451026497810777d3e4ba2cb230e11e2210f72cc5b785454c71"
     },
     {
       "name": "gear R is committed",
@@ -145,7 +145,7 @@
       "prefix": "",
       "operation": "R",
       "expectedStatus": "Committed",
-      "definitionDigest": "298d876c9d4c18481a60394b32a808270f7571be7402bf45862b35afb7a2cc62"
+      "definitionDigest": "2fdfae9ea1103d94f87a7ef436ff7577ae3e785ea5aaa18ad230a05a9a16528d"
     },
     {
       "name": "gear Rq is blocked",
@@ -153,7 +153,7 @@
       "prefix": "",
       "operation": "Rq",
       "expectedStatus": "Blocked",
-      "definitionDigest": "298d876c9d4c18481a60394b32a808270f7571be7402bf45862b35afb7a2cc62",
+      "definitionDigest": "2fdfae9ea1103d94f87a7ef436ff7577ae3e785ea5aaa18ad230a05a9a16528d",
       "reasonCode": "relation.rejected"
     },
     {
@@ -162,7 +162,7 @@
       "prefix": "",
       "operation": "Uq",
       "expectedStatus": "Committed",
-      "definitionDigest": "d42b5e36f088800eff957c2ff194063b95607051f6fd15ea997d2c45b0f83b49"
+      "definitionDigest": "1c49d1c6295018718d7892598b349588b0b8be3903c0f997a30b7fd3cc8ff14c"
     },
     {
       "name": "gear-extreme U is blocked",
@@ -170,7 +170,7 @@
       "prefix": "",
       "operation": "U",
       "expectedStatus": "Blocked",
-      "definitionDigest": "d42b5e36f088800eff957c2ff194063b95607051f6fd15ea997d2c45b0f83b49",
+      "definitionDigest": "1c49d1c6295018718d7892598b349588b0b8be3903c0f997a30b7fd3cc8ff14c",
       "reasonCode": "relation.rejected"
     },
     {
@@ -211,7 +211,7 @@
       "prefix": "",
       "operation": "U",
       "expectedStatus": "Committed",
-      "definitionDigest": "eefe2360d0e014be896625422da1d82a9eade30df712962cd1628ac7798055d1"
+      "definitionDigest": "848e5bd062acbc0a7849278e4baaaf9fc834f798228c57ad7a6660c7c2bfcadb"
     },
     {
       "name": "Melty A aligned opposite caps hand off together",
@@ -219,7 +219,7 @@
       "prefix": "U_e_inv R_e U_e R_e_inv",
       "operation": "U_c+D_b_inv",
       "expectedStatus": "Committed",
-      "definitionDigest": "eefe2360d0e014be896625422da1d82a9eade30df712962cd1628ac7798055d1"
+      "definitionDigest": "848e5bd062acbc0a7849278e4baaaf9fc834f798228c57ad7a6660c7c2bfcadb"
     },
     {
       "name": "Melty A first partial cap has no handoff",
@@ -227,7 +227,7 @@
       "prefix": "U_e_inv R_e U_e R_e_inv",
       "operation": "U_c",
       "expectedStatus": "Blocked",
-      "definitionDigest": "eefe2360d0e014be896625422da1d82a9eade30df712962cd1628ac7798055d1",
+      "definitionDigest": "848e5bd062acbc0a7849278e4baaaf9fc834f798228c57ad7a6660c7c2bfcadb",
       "reasonCode": "relation.rejected"
     },
     {
@@ -236,7 +236,7 @@
       "prefix": "U_e_inv R_e U_e R_e_inv",
       "operation": "D_b_inv",
       "expectedStatus": "Blocked",
-      "definitionDigest": "eefe2360d0e014be896625422da1d82a9eade30df712962cd1628ac7798055d1",
+      "definitionDigest": "848e5bd062acbc0a7849278e4baaaf9fc834f798228c57ad7a6660c7c2bfcadb",
       "reasonCode": "relation.rejected"
     },
     {
@@ -245,7 +245,7 @@
       "operation": "U",
       "expectedStatus": "Committed",
       "source": "packages/melty-b/package.json",
-      "definitionDigest": "3b67f3185b5f609719a3a689416a0cd3cf32717dca2ab8099f374b605c771390"
+      "definitionDigest": "686e4714ee0ff3cc5ecf4dfceb11a57a1e22dca23c3b19681aa0f42bb9c69760"
     },
     {
       "name": "Melty B aligned opposite caps hand off together",
@@ -253,7 +253,7 @@
       "operation": "F+B",
       "expectedStatus": "Committed",
       "source": "packages/melty-b/package.json",
-      "definitionDigest": "3b67f3185b5f609719a3a689416a0cd3cf32717dca2ab8099f374b605c771390"
+      "definitionDigest": "686e4714ee0ff3cc5ecf4dfceb11a57a1e22dca23c3b19681aa0f42bb9c69760"
     },
     {
       "name": "Melty B partial cap F has no handoff",
@@ -262,7 +262,7 @@
       "expectedStatus": "Blocked",
       "reasonCode": "relation.rejected",
       "source": "packages/melty-b/package.json",
-      "definitionDigest": "3b67f3185b5f609719a3a689416a0cd3cf32717dca2ab8099f374b605c771390"
+      "definitionDigest": "686e4714ee0ff3cc5ecf4dfceb11a57a1e22dca23c3b19681aa0f42bb9c69760"
     },
     {
       "name": "Melty B partial cap B has no handoff",
@@ -271,7 +271,7 @@
       "expectedStatus": "Blocked",
       "reasonCode": "relation.rejected",
       "source": "packages/melty-b/package.json",
-      "definitionDigest": "3b67f3185b5f609719a3a689416a0cd3cf32717dca2ab8099f374b605c771390"
+      "definitionDigest": "686e4714ee0ff3cc5ecf4dfceb11a57a1e22dca23c3b19681aa0f42bb9c69760"
     },
     {
       "name": "Melty C principal turn",
@@ -279,7 +279,7 @@
       "operation": "U",
       "expectedStatus": "Committed",
       "source": "packages/melty-c/package.json",
-      "definitionDigest": "49bb8d4e2e6caf7a091aa3f45fc7b632af5a0a544b614c7c2c907caf1255e432"
+      "definitionDigest": "e75770a0f9819f5fe3f79f5af174bea1f6d97b86366e938ec3f35d6a5d456dd2"
     },
     {
       "name": "Melty C aligned opposite caps hand off together",
@@ -287,7 +287,7 @@
       "operation": "F+B_d",
       "expectedStatus": "Committed",
       "source": "packages/melty-c/package.json",
-      "definitionDigest": "49bb8d4e2e6caf7a091aa3f45fc7b632af5a0a544b614c7c2c907caf1255e432"
+      "definitionDigest": "e75770a0f9819f5fe3f79f5af174bea1f6d97b86366e938ec3f35d6a5d456dd2"
     },
     {
       "name": "Melty C partial cap F has no handoff",
@@ -296,7 +296,7 @@
       "expectedStatus": "Blocked",
       "reasonCode": "relation.rejected",
       "source": "packages/melty-c/package.json",
-      "definitionDigest": "49bb8d4e2e6caf7a091aa3f45fc7b632af5a0a544b614c7c2c907caf1255e432"
+      "definitionDigest": "e75770a0f9819f5fe3f79f5af174bea1f6d97b86366e938ec3f35d6a5d456dd2"
     },
     {
       "name": "Melty C partial cap B_d has no handoff",
@@ -305,7 +305,7 @@
       "expectedStatus": "Blocked",
       "reasonCode": "relation.rejected",
       "source": "packages/melty-c/package.json",
-      "definitionDigest": "49bb8d4e2e6caf7a091aa3f45fc7b632af5a0a544b614c7c2c907caf1255e432"
+      "definitionDigest": "e75770a0f9819f5fe3f79f5af174bea1f6d97b86366e938ec3f35d6a5d456dd2"
     },
     {
       "name": "Melty D principal turn",
@@ -313,7 +313,7 @@
       "operation": "U",
       "expectedStatus": "Committed",
       "source": "packages/melty-d/package.json",
-      "definitionDigest": "9fa930d78bea6998b6c17e50781dc0cb46050a865f2c5b4594e705241acd3541"
+      "definitionDigest": "8bc795e8d35f3e7e72a83b3654518349a6b9db98b8709be8c866affdcd623e9e"
     },
     {
       "name": "Melty D aligned opposite caps hand off together",
@@ -321,7 +321,7 @@
       "operation": "R_e+L_c",
       "expectedStatus": "Committed",
       "source": "packages/melty-d/package.json",
-      "definitionDigest": "9fa930d78bea6998b6c17e50781dc0cb46050a865f2c5b4594e705241acd3541"
+      "definitionDigest": "8bc795e8d35f3e7e72a83b3654518349a6b9db98b8709be8c866affdcd623e9e"
     },
     {
       "name": "Melty D partial cap R_e has no handoff",
@@ -330,7 +330,7 @@
       "expectedStatus": "Blocked",
       "reasonCode": "relation.rejected",
       "source": "packages/melty-d/package.json",
-      "definitionDigest": "9fa930d78bea6998b6c17e50781dc0cb46050a865f2c5b4594e705241acd3541"
+      "definitionDigest": "8bc795e8d35f3e7e72a83b3654518349a6b9db98b8709be8c866affdcd623e9e"
     },
     {
       "name": "Melty D partial cap L_c has no handoff",
@@ -339,7 +339,7 @@
       "expectedStatus": "Blocked",
       "reasonCode": "relation.rejected",
       "source": "packages/melty-d/package.json",
-      "definitionDigest": "9fa930d78bea6998b6c17e50781dc0cb46050a865f2c5b4594e705241acd3541"
+      "definitionDigest": "8bc795e8d35f3e7e72a83b3654518349a6b9db98b8709be8c866affdcd623e9e"
     }
   ]
 }

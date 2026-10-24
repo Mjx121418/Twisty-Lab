@@ -2,6 +2,7 @@
 
 // This executor has no dependency on the authoring language, JSON, or geometry.
 #include <cstdint>
+#include <limits>
 #include <optional>
 #include <span>
 #include <stdexcept>
@@ -31,6 +32,48 @@ struct Predicate {
 };
 struct Row {
   Index from, to;
+  bool operator==(const Row &) const = default;
+};
+inline constexpr Index no_index = std::numeric_limits<Index>::max();
+struct Group {
+  Index order = 0; // identity is element zero; products[g * order + h] = g h
+  std::vector<Index> products, inverses;
+};
+enum class ActionKind : std::uint8_t { regular, tabulated, trivial };
+struct FiniteAction {
+  Index group = 0, size = 0;
+  ActionKind kind = ActionKind::trivial;
+  std::vector<Index> table;
+};
+struct PlacementCollection {
+  Index action = 0;
+  std::vector<Index> placements;
+};
+struct ReferenceSpace {
+  Index size = 0;
+};
+struct PartialPermutation {
+  Index space = 0;
+  std::vector<Row> rows;
+  // Derived: out * base * in^-1. Dependencies precede their users.
+  Index base = no_index, input_action = no_index, output_action = no_index;
+  Index input_element = 0, output_element = 0;
+};
+struct ReferenceBinding {
+  Index space = 0;
+  std::vector<Index> placements;
+  Index base = no_index, group = 0, element = 0;
+};
+struct TwistFamily {
+  Index space = 0;
+  std::vector<Index> positions;
+};
+enum class TransportKind : std::uint8_t { explicit_map, group, difference, join };
+struct Transport {
+  TransportKind kind = TransportKind::explicit_map;
+  Index collection = 0, element = 0, support = no_index;
+  Index family = 0, binding = 0, source = 0, target = 0;
+  std::vector<Index> parts;
 };
 struct Action {
   Index piece, map;
@@ -52,6 +95,15 @@ struct ProgramData {
   std::vector<Action> actions;
   std::vector<Request> requests;
   Ref invariant = true_ref, goal = true_ref;
+  // Empty extensions preserve the version-1 sparse program representation.
+  std::vector<Group> groups;
+  std::vector<FiniteAction> finite_actions;
+  std::vector<PlacementCollection> collections;
+  std::vector<ReferenceSpace> reference_spaces;
+  std::vector<PartialPermutation> permutations;
+  std::vector<ReferenceBinding> reference_bindings;
+  std::vector<TwistFamily> twist_families;
+  std::vector<Transport> transports; // if present, exactly one descriptor per maps entry
 };
 struct PieceEvent {
   Index piece, from, to, event;
@@ -78,6 +130,9 @@ public:
   }
   bool valid(std::span<const Index> state) const;
   bool solved(std::span<const Index> state) const;
+  Index act(Index collection, Index element, Index placement) const;
+  std::optional<Index> transport(Index map, Index placement) const;
+  std::size_t transport_storage_bytes() const;
   Plan plan(Index request, std::span<const Index> state, std::span<const Index> choices) const;
   bool state_predicate(Ref root, std::span<const Index> state) const;
   // Optional diagnostics use this same evaluator, without adding guard kinds.
@@ -95,6 +150,13 @@ private:
   // Derived acceleration only; no serialized state or additional predicates.
   std::vector<ChoiceActions> choice_actions_;
   std::vector<Index> general_actions_;
+  std::vector<Index> collection_of_, local_of_;
+  std::vector<std::vector<Row>> permutation_inverses_, binding_inverses_;
+  Index finite_action(Index action, Index element, Index point) const;
+  std::optional<Index> permutation(Index id, Index point, bool inverse) const;
+  Index bind(Index id, Index reference, bool inverse) const;
+  std::optional<Index> transport_unchecked(Index map, Index placement) const;
+  void validate_transports();
   void check_state_shape(std::span<const Index> state) const;
 };
 } // namespace twisty::core

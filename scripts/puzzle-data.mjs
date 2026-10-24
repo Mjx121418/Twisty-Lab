@@ -136,13 +136,13 @@ export async function checkFreshness(base = root, inventory) {
 export async function validatePuzzleData(base, inventory, openPuzzle) {
   const { default: Ajv } = await import('ajv');
   const ajv = new Ajv({ strict: false, allErrors: true });
-  for (const name of ['puzzle', 'package', 'gear-source', 'realization', 'fixture']) {
+  for (const name of ['compact', 'puzzle', 'puzzle-v2', 'package', 'gear-source', 'realization', 'fixture']) {
     const path = `schemas/${name}.schema.json`;
     try { ajv.addSchema(await readJSON(base, path)); }
     catch (error) { fail(path, `cannot load schema (${error.message})`); }
   }
   const validate = (schema, data, path) => {
-    const check = ajv.getSchema(`urn:twisty:schema:${schema}:1`);
+    const check = ajv.getSchema(`urn:twisty:schema:${schema}:${schema === 'relational-puzzle' && data.languageVersion === 2 ? 2 : 1}`);
     if (!check(data)) fail(path, `schema validation failed (${ajv.errorsText(check.errors?.slice(0, 3))})`);
   };
   const digests = new Map();

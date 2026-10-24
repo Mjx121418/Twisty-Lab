@@ -35,7 +35,7 @@ if (process.argv.includes('--stage-web')) {
   await cp(new URL('../examples/language/', import.meta.url), new URL('examples/language/', output), { recursive: true });
   await mkdir(new URL('schemas/', output));
   await cp(new URL('../schemas/puzzle.schema.json', import.meta.url), new URL('schemas/puzzle.schema.json', output));
-  for (const file of ['package.schema.json', 'gear-source.schema.json', 'session-v2.schema.json', 'state.schema.json', 'realization.schema.json'])
+  for (const file of ['puzzle-v2.schema.json', 'compact.schema.json', 'package.schema.json', 'gear-source.schema.json', 'session-v2.schema.json', 'state.schema.json', 'realization.schema.json'])
     await cp(new URL(`../schemas/${file}`, import.meta.url), new URL(`schemas/${file}`, output));
   for (const puzzle of inventory.puzzles) {
     const directory = new URL(`examples/canvas/data/${puzzle.id}/`, output);

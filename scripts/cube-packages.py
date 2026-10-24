@@ -15,7 +15,7 @@ executable = root / args.native
 session_executable = executable.parent / 'twisty'
 for package, flag in [('cube3', '--cube-module'), ('bandaged', '--bandaged-module')]:
     module = json.loads(subprocess.check_output([str(executable), flag], text=True))
-    bundle = dict(kind='relational-package', formatVersion=1, source=module['source'], catalog=module['catalog'])
+    bundle = dict(kind='relational-package', formatVersion=2, source=module['source'], catalog=module['catalog'])
     documents = {'puzzle.pzl.json': module['source'], 'bindings.json': module['catalog'],
                  'package.json': bundle}
     with tempfile.TemporaryDirectory(prefix='twisty-language-') as directory:

@@ -16,7 +16,7 @@ try {
   const { createKernel, KernelSession, Puzzle } = await import(pathToFileURL(sdk).href);
   const module = await createKernel();
   const info = JSON.parse(module.kernelInfoJSON());
-  assert.equal(info.languageAPIVersion, 1);
+  assert.equal(info.languageAPIVersion, 2);
   assert.deepEqual(info.authoringLibraries, ['cube3', 'bandaged-uf-ufr', 'gear-family']);
   assert.equal(JSON.parse(module.compilePuzzleJSON('{}')).status, 'Invalid');
   let count = 0;

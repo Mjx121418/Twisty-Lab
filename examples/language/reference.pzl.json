@@ -1,0 +1,19 @@
+{
+  "kind": "relational-puzzle", "languageVersion": 2, "id": "reference-example",
+  "domains": [{"id": "points", "placements": ["a", "b", "c"],
+    "pieces": [{"id": "p", "initial": "a"}],
+    "moves": [{"id": "step", "map": 0, "event": "path/step"}]}],
+  "compact": {
+    "groups": [{"order": 3, "products": [0,1,2,1,2,0,2,0,1], "inverses": [0,2,1]}],
+    "actions": [{"group": 0, "size": 3, "kind": "regular"}],
+    "collections": [{"action": 0, "placements": [0,1,2]}],
+    "spaces": [{"size": 3}],
+    "permutations": [{"space": 0, "rows": [[0,0],[1,1]]},
+      {"space": 0, "base": 0, "outputAction": 0, "outputElement": 1}],
+    "bindings": [{"space": 0, "placements": [0,1,2]}],
+    "families": [{"space": 0, "positions": [0,1]}],
+    "maps": [{"kind": "difference", "family": 0, "binding": 0, "source": 0, "target": 1}]
+  },
+  "requests": [{"id": "turn", "relation": {"chosen": {"domain": "points", "moves": ["step"]}},
+    "profiles": [{"id": "turn", "choices": {"points": "step"}}], "defaultProfile": "turn"}]
+}

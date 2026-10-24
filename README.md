@@ -2,6 +2,12 @@
 
 A portable twisty-puzzle kernel with exact C++ rules and interchangeable C++ geometric realizations. Custom native and browser renderers/controllers use its public APIs. The bundled Three.js application displays synchronized Euclidean, spherical, and labeled port views of the same session.
 
+The [abstract core](docs/core-language.md#compact-format-version-2) supports finite
+group actions on placement collections and shared reference-based twist families.
+Cube, Bandage, Helicopter, Bagua, Gear, and Melty use compact transports through
+the same native/WASM executor. Kernel API 5 reads formats 1 and 2; migrated
+packages have new semantic pins.
+
 The initial release includes a 3×3 cube and a reference bandaged cube with the UF edge and UFR corner fused into one rigid piece. It provides explainable blocking, synchronized views, file-based definition inspection, algorithms, reproducible legal scrambles, undo/redo, and portable saved sessions.
 
 The cube presets also support an [ideal spherical realization](docs/spherical-cube.md): six overlapping 70° face disks partition a sphere into the same center, edge, and corner regions. Their larger radius retains the existing pieces. **Cube + sphere** is the default view; open **Views** to choose which views appear and use the arrows to order them. C++ verifies the disk transports against the existing definition; changing views preserves state and history.

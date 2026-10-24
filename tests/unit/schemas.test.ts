@@ -22,13 +22,16 @@ it('shares immutable definitions while keeping histories and ownership independe
 
 it('validates the experimental relational AST and compiles the example', async () => {
   const ajv = new Ajv({ allErrors: true, strict: false });
-  const validate = ajv.compile(JSON.parse(readFileSync('schemas/puzzle.schema.json', 'utf8')));
+  ajv.addSchema(JSON.parse(readFileSync('schemas/compact.schema.json','utf8')));
+  ajv.addSchema(JSON.parse(readFileSync('schemas/puzzle-v2.schema.json','utf8')));
+  const validateV1 = ajv.compile(JSON.parse(readFileSync('schemas/puzzle.schema.json', 'utf8')));
+  const validate = (value: any) => value.languageVersion === 2 ? ajv.getSchema('urn:twisty:schema:relational-puzzle:2')!(value) : validateV1(value);
   // Current schemas must resolve without registering the retired definition schema.
   ajv.addSchema(JSON.parse(readFileSync('schemas/state.schema.json', 'utf8')));
   const validatePackage = ajv.compile(JSON.parse(readFileSync('schemas/package.schema.json', 'utf8')));
   const validateSession = ajv.compile(JSON.parse(readFileSync('schemas/session-v2.schema.json', 'utf8')));
   const text = readFileSync('examples/language/coupled.pzl.json', 'utf8');
-  expect(validate(JSON.parse(text)), JSON.stringify(validate.errors)).toBe(true);
+  expect(validate(JSON.parse(text)), JSON.stringify(ajv.errors)).toBe(true);
   const malformed = JSON.parse(text);
   malformed.requests[0].relation = { unregisteredGuard: true };
   expect(validate(malformed)).toBe(false);
@@ -37,7 +40,7 @@ it('validates the experimental relational AST and compiles the example', async (
   for (const [name, bandaged] of [['cube3', false], ['bandaged', true]] as const) {
     const source = JSON.parse(readFileSync(`packages/${name}/puzzle.pzl.json`, 'utf8'));
     const catalog = JSON.parse(readFileSync(`packages/${name}/bindings.json`, 'utf8'));
-    expect(validate(source), JSON.stringify(validate.errors)).toBe(true);
+    expect(validate(source), JSON.stringify(ajv.errors)).toBe(true);
     expect(JSON.parse(module.cubeModuleJSON(bandaged))).toEqual({ source, catalog });
     expect(JSON.parse(module.compilePuzzleJSON(JSON.stringify(source))).status).toBe('Compiled');
     const packageText = readFileSync(`packages/${name}/package.json`, 'utf8');
@@ -57,7 +60,7 @@ it('validates the experimental relational AST and compiles the example', async (
     expect(validateGear(wrapper), JSON.stringify(validateGear.errors)).toBe(true);
     const packageDocument = JSON.parse(readFileSync(`packages/${name}/package.json`, 'utf8'));
     expect(validatePackage(packageDocument), JSON.stringify(validatePackage.errors)).toBe(true);
-    expect(validate(packageDocument.source), JSON.stringify(validate.errors)).toBe(true);
+    expect(validate(packageDocument.source), JSON.stringify(ajv.errors)).toBe(true);
     expect(JSON.parse(module.gearModuleJSON(JSON.stringify(wrapper)))).toEqual({ source: packageDocument.source, catalog: packageDocument.catalog });
     const session = new module.Session(JSON.stringify(wrapper));
     try {
@@ -75,7 +78,7 @@ it('validates the experimental relational AST and compiles the example', async (
   const helicopter = readFileSync('packages/helicopter/package.json', 'utf8');
   const packageDocument = JSON.parse(helicopter);
   expect(validatePackage(packageDocument), JSON.stringify(validatePackage.errors)).toBe(true);
-  expect(validate(packageDocument.source), JSON.stringify(validate.errors)).toBe(true);
+  expect(validate(packageDocument.source), JSON.stringify(ajv.errors)).toBe(true);
   const session = new module.Session(helicopter);
   try {
     const origin = JSON.parse(session.snapshotJSON());
@@ -92,7 +95,7 @@ it('validates the experimental relational AST and compiles the example', async (
   } finally { session.delete(); }
   const baguaPackage = JSON.parse(readFileSync('packages/bagua/package.json', 'utf8'));
   expect(validatePackage(baguaPackage), JSON.stringify(validatePackage.errors)).toBe(true);
-  expect(validate(baguaPackage.source), JSON.stringify(validate.errors)).toBe(true);
+  expect(validate(baguaPackage.source), JSON.stringify(ajv.errors)).toBe(true);
 
 });
 

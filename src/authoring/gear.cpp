@@ -1,4 +1,5 @@
 #include "twisty/authoring/gear.hpp"
+#include "compact.hpp"
 #include "twisty/symmetry.hpp"
 #include <algorithm>
 #include <set>
@@ -33,6 +34,8 @@ CubeModule gear_module(const std::vector<std::string> &geared_edges, const std::
   for (const auto &edge : geared_edges)
     expect(available.contains(edge) && geared.insert(edge).second, "Name distinct cube edge IDs");
   auto source = base.source, catalog = base.catalog;
+  source.erase("compact");
+  source["languageVersion"] = 1;
   source["id"] = puzzle_id;
   source["relations"] = Json::array();
   source["requests"] = Json::array();
@@ -186,6 +189,7 @@ CubeModule gear_module(const std::vector<std::string> &geared_edges, const std::
     invariant.push_back({{"count", {{"min", 0}, {"max", 1}, {"of", terms}}}});
   }
   source["invariant"] = {{"all", invariant}};
+  compact_cube_source(source, catalog);
   return {std::move(source), std::move(catalog)};
 }
 CubeModule gear_module_source(const Json &source) {

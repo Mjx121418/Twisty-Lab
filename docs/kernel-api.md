@@ -2,9 +2,52 @@
 
 The C++ abstract core, compiler, session, and geometric interpreter form the reusable kernel. Native C++ applications and JavaScript/TypeScript applications using WebAssembly consume the same implementation. Renderers and controllers are clients: Three.js, React, Vite, Canvas, camera controls, input gestures, and animation clocks stay outside the kernel.
 
-The current kernel version is `0.4.0`, public API version `4`, and frame-buffer version `1`. The additive geometric API reports `geometryAPIVersion = 1` and `poseBufferVersion = 1`; existing API 4 and drawing buffer 1 remain supported. The runtime accepts relational package/definition format 1, the Gear wrapper, and session schema 2. API 4 normalizes the core, compiler, and authoring API names after removal of the legacy runtime in API 3. Semantic digests, saved sessions, and geometry buffer layouts are unchanged. `twisty::kernel_info()` and WASM `kernelInfoJSON()` report supported `documentKinds`, `sessionSchemaVersions`, and rule modules independently. Native consumers compile against the installed C++ headers and compatible toolchain; a cross-compiler binary ABI is not promised.
+The current kernel version is `0.5.0`, public API version `5`, and frame-buffer version `1`. Geometry API and pose-buffer versions remain `1`. The runtime accepts package/definition formats 1 and 2, the version-1 Gear factory wrapper, and session schema 2. Version-1 definitions retain their original fingerprints; migrated compact packages receive new pins, so old saves require their matching old definitions. Native consumers rebuild against the new headers; the SDK and WASM runtime must be updated together.
 
-The [puzzle language API](core-language.md), advertised as `languageAPIVersion = 1`, exposes the JSON language and domain-free executor through `Twisty::core`, `Twisty::language`, WASM `Puzzle`, and the TypeScript `Puzzle` adapter. Completion selection and bounded discovery are separate from permission checking. The cube/bandage authoring library is exposed as C++ `language::cube_module()`, WASM `cubeModuleJSON()`, and TypeScript `createCubeSource()`; `authoringLibraries` lists the supported models. `Twisty::symmetry` provides the shared standard-C++ finite-group utilities. Every shipped preset, including Bagua and custom Gear masks, uses the same core through an explicit package adapter. The pure program preview remains separate from the persisted definition format. Current session schemas refer to the standalone state schema; the retired finite-definition schema is not shipped.
+The [puzzle language API](core-language.md), advertised as `languageAPIVersion = 2`, exposes the JSON language and domain-free executor through `Twisty::core`, `Twisty::language`, WASM `Puzzle`, and the TypeScript `Puzzle` adapter. Completion selection and bounded discovery are separate from permission checking. The cube/bandage authoring library is exposed as C++ `language::cube_module()`, WASM `cubeModuleJSON()`, and TypeScript `createCubeSource()`; `authoringLibraries` lists the supported models. `Twisty::symmetry` provides the shared standard-C++ finite-group utilities. Every shipped preset, including Bagua and custom Gear masks, uses the same core through an explicit package adapter. The pure program preview remains separate from the persisted definition format. Current session schemas refer to the standalone state schema; the retired finite-definition schema is not shipped.
+
+## API 5 placement actions and compact transports
+
+`ProgramData` adds finite groups, finite actions, placement collections, reference
+spaces, partial permutations, bindings, twist families, and compact transport
+descriptors. Groups use identity element 0 and left multiplication. Actions are
+regular, tabulated, or trivial. Reference actions use the same representation;
+their group can be smaller than, or independent of, a placement group.
+
+`Program::act(collection, element, globalPlacement)` returns a global placement.
+`Program::transport(map, globalPlacement)` returns `optional<Index>`: an empty
+result means no participation, while a returned source index is a participating
+self-loop. Unknown indices throw `core.input`. These methods are pure and share
+immutable data. Actions operate on placements, without asserting puzzle symmetry
+or bypassing the permission relation.
+
+The same queries are available through `Puzzle.query()` / `queryJSON()`:
+
+```js
+puzzle.query({ op: 'act', collection: 0, element: 1, placement: 0 });
+// {status: 'Evaluated', placement: 1}
+puzzle.query({ op: 'transport', map: 0, placement: 0 });
+// {status: 'Evaluated', placement: 1, participates: true}
+```
+
+These two queries require no state. Their numeric IDs index the compact preview.
+Version-2 previews use `program.compact`, `bindings.moveMaps`, and
+`bindings.collections`; they omit expanded `transportMaps`. The reported
+`transportStorageBytes` counts retained 32-bit transport payloads and reverse
+indices, excluding allocator/container overhead, JSON metadata, and predicates.
+It is deterministic across native and WASM and does not expand derived maps.
+This inspection metric is omitted from canonical version-2 definitions and their fingerprints.
+`bindings.moveMaps` uses `4294967295` for the implicit idle choice; it has no
+transport and must not be passed to a transport query. Version-1 previews retain
+their original shape and canonical bytes.
+
+Source/package/definition version 2 introduces the compact data carrier described
+in [the language guide](core-language.md#compact-format-version-2). Predicate
+version 1 and session schema 2 remain unchanged. Stored completions and opaque
+events still determine the full motion path, including winding. `Operation.maps`
+and `Operation.roles` are now immutable shared lookup views with indexing and
+`size()`, replacing dense vectors. Their definition owns the compiled program,
+so they remain valid after the originating session is destroyed.
 
 ## API 4 naming
 
@@ -39,7 +82,7 @@ This builds the C++ libraries and WASM runtime, and assembles the independent ES
 The native package exports `Twisty::core`, `Twisty::language`, `Twisty::execution`, `Twisty::symmetry`, `Twisty::session`, `Twisty::geometry`, `Twisty::catalog`, and aggregate `Twisty::kernel` targets. A consumer can use:
 
 ```cmake
-find_package(TwistyKernel 0.4 CONFIG REQUIRED)
+find_package(TwistyKernel 0.5 CONFIG REQUIRED)
 target_link_libraries(my_frontend PRIVATE Twisty::kernel)
 ```
 

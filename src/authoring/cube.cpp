@@ -1,4 +1,5 @@
 #include "twisty/authoring/cube.hpp"
+#include "compact.hpp"
 #include "twisty/symmetry.hpp"
 #include <algorithm>
 #include <map>
@@ -204,6 +205,7 @@ CubeModule cube_module(bool bandaged) {
   }
   source["invariant"] = {{"all", invariants}};
   catalog["resources"] = cells;
+  compact_cube_source(source, catalog);
   return {std::move(source), std::move(catalog)};
 }
 std::string cube_module_json(bool bandaged) {

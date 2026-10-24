@@ -1,5 +1,6 @@
 #include "twisty/authoring/compiler.hpp"
 #include "../json_input.hpp"
+#include "compact.hpp"
 #include <algorithm>
 #include <map>
 #include <set>
@@ -293,10 +294,12 @@ public:
 
 CompiledPuzzle compile_checked(const Json &source) {
   fields(source, {"kind", "languageVersion", "id", "domains", "predicates", "relations", "requests",
-                  "invariant", "goal"});
+                  "invariant", "goal", "compact"});
   expect(source.at("kind") == "relational-puzzle" && source.at("languageVersion").is_number_integer() &&
-             source.at("languageVersion") == 1,
-         "Expected relational-puzzle languageVersion 1");
+             (source.at("languageVersion") == 1 || source.at("languageVersion") == 2),
+         "Expected relational-puzzle languageVersion 1 or 2");
+  expect(source.at("languageVersion") == 1 || source.contains("compact"),
+         "Version 2 requires compact declarations");
   Lowering c;
   c.bindings.puzzle_id = name(source.at("id"));
   const auto &domains = source.at("domains");
@@ -313,6 +316,7 @@ CompiledPuzzle compile_checked(const Json &source) {
     c.domain_ids.emplace(id, static_cast<Index>(catalogs.size()));
     c.bindings.choice_slots.push_back(id);
     c.bindings.choice_values.push_back({"idle"});
+    c.bindings.move_maps.push_back({core::no_index});
     DomainData catalog;
     for (const auto &q : names(domain.at("placements"))) {
       const auto index = static_cast<Index>(c.bindings.placements.size());
@@ -348,6 +352,19 @@ CompiledPuzzle compile_checked(const Json &source) {
   }
   c.data.piece_count = static_cast<Index>(c.bindings.pieces.size());
   c.data.placement_count = static_cast<Index>(c.bindings.placements.size());
+  if (source.contains("compact")) {
+    expect(source.at("languageVersion") == 2, "Compact declarations require languageVersion 2");
+    read_compact(source.at("compact"), c.data);
+    std::set<std::string> collection_names;
+    Index collection_index = 0;
+    for (const auto &collection : source.at("compact").value("collections", Json::array())) {
+      const auto id = name(collection.value("id", Json("collection-" + std::to_string(collection_index++))));
+      expect(collection_names.insert(id).second, "Duplicate collection name: " + id);
+      c.bindings.collection_names.push_back(id);
+    }
+    for (Index i = 0; i < c.data.finite_sets.size(); ++i)
+      c.sets.emplace(c.data.finite_sets[i], i);
+  }
   if (source.contains("predicates")) {
     expect(source.at("predicates").is_object(), "Expected named predicates");
     for (auto it = source.at("predicates").begin(); it != source.at("predicates").end(); ++it) {
@@ -388,33 +405,43 @@ CompiledPuzzle compile_checked(const Json &source) {
     const auto domain_name = c.bindings.choice_slots[d];
     Index choice = 1;
     for (const auto &move : domains[d].at("moves")) {
-      fields(move, {"id", "support", "transport", "pieces", "requires", "event"});
-      const auto support = names(move.at("support"));
-      const auto &table = move.at("transport");
-      expect(table.is_object() && table.size() == support.size(),
-             "Transport must be total on its declared support");
-      std::vector<std::pair<Index, Index>> key;
-      std::set<Index> targets;
-      for (const auto &q : support) {
-        expect(table.contains(q), "Missing transport row: " + q);
-        const auto from = c.symbol(c.placement_ids, domain_name + "/" + q);
-        const auto to = c.symbol(c.placement_ids, domain_name + "/" + name(table.at(q)));
-        expect(targets.insert(to).second, "Transport is not one-to-one");
-        key.emplace_back(from, to);
-      }
-      std::sort(key.begin(), key.end());
+      fields(move, {"id", "support", "transport", "map", "pieces", "requires", "event"});
       Index map;
-      if (const auto it = c.maps.find(key); it != c.maps.end())
-        map = it->second;
-      else {
-        expect((c.table_entries += key.size()) <= 2000000, "Finite tables exceed the compiler limit");
-        map = static_cast<Index>(c.data.maps.size());
-        c.maps.emplace(key, map);
-        std::vector<Row> rows;
-        for (auto [from, to] : key)
-          rows.push_back({from, to});
-        c.data.maps.push_back(std::move(rows));
+      if (move.contains("map")) {
+        expect(source.at("languageVersion") == 2 && !move.contains("support") && !move.contains("transport"),
+               "Compact movement cannot also store expanded rows");
+        map = natural(move.at("map"));
+        expect(map < c.data.maps.size(), "Unknown compact movement map");
+      } else {
+        const auto support = names(move.at("support"));
+        const auto &table = move.at("transport");
+        expect(table.is_object() && table.size() == support.size(),
+               "Transport must be total on its declared support");
+        std::vector<std::pair<Index, Index>> key;
+        std::set<Index> targets;
+        for (const auto &q : support) {
+          expect(table.contains(q), "Missing transport row: " + q);
+          const auto from = c.symbol(c.placement_ids, domain_name + "/" + q);
+          const auto to = c.symbol(c.placement_ids, domain_name + "/" + name(table.at(q)));
+          expect(targets.insert(to).second, "Transport is not one-to-one");
+          key.emplace_back(from, to);
+        }
+        std::sort(key.begin(), key.end());
+        if (const auto it = c.maps.find(key); it != c.maps.end())
+          map = it->second;
+        else {
+          expect((c.table_entries += key.size()) <= 2000000, "Finite tables exceed the compiler limit");
+          map = static_cast<Index>(c.data.maps.size());
+          c.maps.emplace(key, map);
+          std::vector<Row> rows;
+          for (auto [from, to] : key)
+            rows.push_back({from, to});
+          c.data.maps.push_back(std::move(rows));
+          if (source.contains("compact"))
+            c.data.transports.push_back({});
+        }
       }
+      c.bindings.move_maps[d].push_back(map);
       auto pieces = catalogs[d].pieces;
       if (move.contains("pieces")) {
         pieces.clear();
@@ -498,7 +525,7 @@ CompiledPuzzle compile_checked(const Json &source) {
     (void)expr;
     c.expression(Json{{"ref", id}}, c.bindings.requests.empty() ? "" : c.bindings.requests.front().id);
   }
-  return {Program(std::move(c.data)), std::move(c.bindings)};
+  return {Program(std::move(c.data)), std::move(c.bindings), source.at("languageVersion").get<int>()};
 }
 } // namespace
 

@@ -7,19 +7,21 @@
 
 namespace twisty {
 // API compatibility is independent of puzzle schema and semantic digests.
-inline constexpr int kernel_api_version = 4;
-inline constexpr const char *kernel_version = "0.4.0";
+inline constexpr int kernel_api_version = 5;
+inline constexpr const char *kernel_version = "0.5.0";
 inline Json kernel_info() {
   return {{"apiVersion", kernel_api_version},
           {"version", kernel_version},
           {"documentKinds", {"relational-package", "relational-definition", "relational-gear-prototypes"}},
-          {"definitionFormatVersion", 1},
+          {"definitionFormatVersion", 2},
+          {"supportedDefinitionFormatVersions", {1,2}},
           {"sessionSchemaVersions", {2}},
           {"sessionFeatures", {"completed-choices", "shared-definitions"}},
           {"frameBufferVersion", 1},
           {"geometryAPIVersion", 1},
           {"poseBufferVersion", 1},
-          {"languageAPIVersion", 1},
+          {"languageAPIVersion", 2},
+          {"abstractCapabilities", {"placement-actions", "reference-twist-families", "compact-transports"}},
           {"authoringLibraries", {"cube3", "bandaged-uf-ufr", "gear-family"}},
           {"catalogKinds",
            {"relational-cube-bindings", "relational-port-bindings", "relational-articulated-bindings"}},

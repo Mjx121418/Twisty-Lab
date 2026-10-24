@@ -32,7 +32,7 @@ beforeEach(async () => {
   await writeFile(join(base, 'scripts/leaf.py'), 'value = 1\n');
   for (const file of puzzleFiles(inventory.puzzles[0]))
     await cp(join(root, folder, file), join(base, folder, file));
-  for (const name of ['puzzle', 'package', 'gear-source', 'realization', 'fixture'])
+  for (const name of ['compact', 'puzzle-v2', 'puzzle', 'package', 'gear-source', 'realization', 'fixture'])
     await cp(join(root, `schemas/${name}.schema.json`), join(base, `schemas/${name}.schema.json`));
   const fixtures = await readJSON(root, 'tests/fixtures/core.json');
   await save('tests/fixtures/core.json', { ...fixtures, cases: [fixtures.cases[0]] });

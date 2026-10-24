@@ -27,7 +27,7 @@ def main():
         digest = compiled['definition']['definitionDigest']
         documents = {'source.json': wrapper, 'puzzle.pzl.json': module['source'],
                      'bindings.json': module['catalog'],
-                     'package.json': dict(kind='relational-package', formatVersion=1, **module),
+                     'package.json': dict(kind='relational-package', formatVersion=2, **module),
                      'manifest.json': dict(puzzleId=wrapper['puzzleId'], definitionDigest=digest)}
         for filename, content in documents.items():
             path = directory / filename

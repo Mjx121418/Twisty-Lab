@@ -48,7 +48,7 @@ try {
   const module = await createKernel();
   const info = JSON.parse(module.kernelInfoJSON());
   const manifest = JSON.parse(await readFile(join(javascript, 'package.json'), 'utf8'));
-  assert.equal(info.apiVersion, 4); assert.equal(info.frameBufferVersion, 1);
+  assert.equal(info.apiVersion, 5); assert.equal(info.frameBufferVersion, 1);
   assert.equal(info.geometryAPIVersion, 1); assert.equal(info.poseBufferVersion, 1);
   assert.equal(info.version, manifest.version);
   assert.deepEqual(info.ruleModules, ['relational@1']);
@@ -57,7 +57,7 @@ try {
   assert.equal(typeof module.Session.prototype.convertLegacyJSON, 'undefined');
   assert.ok(info.realizationKinds.includes('articulated-spherical'));
   assert.ok(info.geometryCapabilities.includes('shared-rotation-tracks'));
-  assert.equal(info.languageAPIVersion, 1);
+  assert.equal(info.languageAPIVersion, 2);
   assert.equal(typeof module.RelationalPuzzle, 'undefined');
   assert.equal(typeof module.compileRelationalJSON, 'undefined');
   assert.deepEqual(info.authoringLibraries, ['cube3', 'bandaged-uf-ufr', 'gear-family']);
@@ -103,6 +103,17 @@ try {
         assert.deepEqual(actual, expected);
       } finally { cube.dispose(); }
     }
+    const referenceSource=await readFile(join(languageConsumer,'reference.pzl.json'),'utf8');
+    const referencePuzzle=new Puzzle(module,referenceSource);
+    try {
+      const path=join(languageConsumer,'reference.pzl.json');
+      assert.deepEqual(JSON.parse(execFileSync(executable,[path,'--inspect'],{encoding:'utf8'})),referencePuzzle.preview);
+      for(const query of [{op:'act',collection:0,element:2,placement:2},
+        {op:'transport',map:0,placement:0},{op:'transport',map:0,placement:2}]) {
+        const expected=JSON.parse(execFileSync(executable,[path],{encoding:'utf8',input:JSON.stringify(query)+'\n'}));
+        assert.deepEqual(referencePuzzle.query(query),expected);
+      }
+    } finally {referencePuzzle.dispose();}
     console.log('Installed native and packaged WASM cube/bandage authoring libraries agree.');
     for (const name of ['gear', 'gear-extreme', 'gear-plain']) {
       await stagePuzzle(name);

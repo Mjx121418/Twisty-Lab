@@ -297,11 +297,13 @@ def generate(family, directory):
     witnesses = model.verify_witnesses()
     conflicts = model.conflicts()
     source, catalog = module(model, conflicts)
+    from compact_transports import melty_module
+    compression=melty_module(source,catalog,model,names(model))
     del conflicts
     emit('puzzle.pzl.json', source)
     emit('bindings.json', catalog)
-    emit('package.json', dict(kind='relational-package', formatVersion=1, source=source, catalog=catalog))
-    manifest = dict(puzzleId=source['id'], definitionDigest=UNPINNED,
+    emit('package.json', dict(kind='relational-package', formatVersion=2, source=source, catalog=catalog))
+    manifest = dict(puzzleId=source['id'], definitionDigest=UNPINNED, transportCompression=compression,
         angleDegrees=85, cutDepth='1/3', placementCount=sum(len(p['placements']) for p in model.pieces), domainCount=27,
         requestCount=len(source['requests']), witnessCheck=witnesses,
         phaseAnglesDegrees={LABELS[i]: [math.degrees(a) for a in angles] for i, angles in enumerate(model.phases)},

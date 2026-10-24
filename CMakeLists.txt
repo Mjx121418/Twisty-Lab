@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(twisty_lab VERSION 0.4.0 LANGUAGES CXX)
+project(twisty_lab VERSION 0.5.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -25,7 +25,7 @@ target_include_directories(puzzle_catalog PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_compile_features(puzzle_catalog PUBLIC cxx_std_20)
-target_link_libraries(puzzle_catalog PUBLIC json_headers project_options)
+target_link_libraries(puzzle_catalog PUBLIC json_headers project_options puzzle_core)
 
 add_library(puzzle_symmetry src/authoring/symmetry.cpp)
 target_include_directories(puzzle_symmetry PUBLIC
@@ -36,7 +36,7 @@ target_link_libraries(puzzle_symmetry PUBLIC project_options)
 
 # The executor is independently linkable and needs only the STL.
 # Authoring, JSON, completion policy, and discovery stay in a separate library.
-add_library(puzzle_core src/core.cpp)
+add_library(puzzle_core src/core.cpp src/transports.cpp)
 target_include_directories(puzzle_core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
@@ -44,6 +44,8 @@ target_compile_features(puzzle_core PUBLIC cxx_std_20)
 target_link_libraries(puzzle_core PUBLIC project_options)
 add_library(puzzle_language
   src/authoring/compiler.cpp
+  src/authoring/compact.cpp
+  src/authoring/compact_cube.cpp
   src/authoring/cube.cpp
   src/authoring/gear.cpp
   src/completion.cpp
@@ -113,6 +115,14 @@ else()
   target_link_libraries(melty_solids PRIVATE project_options)
   target_compile_options(melty_solids PRIVATE -O2)
   if(BUILD_TESTING)
+    add_executable(transport_bench tests/transport_bench.cpp)
+    target_link_libraries(transport_bench PRIVATE puzzle_session)
+    add_executable(compact_parity tests/compact_parity.cpp)
+    target_link_libraries(compact_parity PRIVATE puzzle_session)
+    target_compile_definitions(compact_parity PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+    add_executable(actions_tests tests/actions_tests.cpp)
+    target_link_libraries(actions_tests PRIVATE puzzle_core)
+    add_test(NAME finite_actions COMMAND actions_tests)
     add_executable(geometry_api_tests tests/geometry_api_tests.cpp)
     target_link_libraries(geometry_api_tests PRIVATE puzzle_kernel)
     target_compile_definitions(geometry_api_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
@@ -126,6 +136,8 @@ else()
     target_compile_definitions(flat_surface_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
     add_test(NAME flat_surfaces COMMAND flat_surface_tests)
     find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    add_test(NAME compact_transport_parity COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/compact_parity.py
+      $<TARGET_FILE:compact_parity> ${CMAKE_SOURCE_DIR}/tests/fixtures/transport-baseline.json.gz)
     add_test(NAME flat_surface_packages COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/flat_surface_packages.py)
     add_test(NAME hex_surface_packages COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/hex_surface_packages.py)
     add_test(NAME pillowcase_packages COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/pillowcase_packages.py)

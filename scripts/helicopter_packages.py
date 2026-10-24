@@ -123,7 +123,9 @@ def main():
     model = AuthoringModel()
     document = model.definition()
     source, catalog = module(document)
-    package = dict(kind='relational-package', formatVersion=1, source=source, catalog=catalog)
+    from compact_transports import helicopter_module
+    helicopter_module(source,catalog,model)
+    package = dict(kind='relational-package', formatVersion=2, source=source, catalog=catalog)
     documents = {'puzzle.pzl.json': source, 'bindings.json': catalog,
                  'package.json': package}
     directory = ROOT / 'packages/helicopter'
