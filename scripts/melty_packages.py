@@ -11,7 +11,7 @@ import subprocess
 from string import ascii_lowercase
 import tempfile
 
-from melty_model import Model, ROOT, LABELS, OPPOSITE, frame, add, sub, scale, dot, unit, cross
+from melty_model import Model, ROOT, LABELS, OPPOSITE, frame, add, sub, scale, dot, unit, cross, cube_orientation
 
 
 def piece_id(piece):
@@ -326,7 +326,8 @@ def generate(family, directory):
     emit('bindings.json', catalog)
     emit('package.json', dict(kind='relational-package', formatVersion=source['languageVersion'], source=source, catalog=catalog))
     manifest = dict(puzzleId=source['id'], definitionDigest=UNPINNED, transportCompression=compression,
-        angleDegrees=85, cutDepth='1/3', placementCount=sum(len(p['placements']) for p in model.pieces), domainCount=27,
+        angleDegrees=85, cutDepth='1/3', cubeOrientation=cube_orientation(model.axes, model.family),
+        placementCount=sum(len(p['placements']) for p in model.pieces), domainCount=27,
         requestCount=len(source['requests']), witnessCheck=witnesses,
         phaseAnglesDegrees={LABELS[i]: [math.degrees(a) for a in angles] for i, angles in enumerate(model.phases)},
         turnAnglesDegrees={name: math.degrees(model.deltas[i][d]) for (i,d), name in names(model).items()})

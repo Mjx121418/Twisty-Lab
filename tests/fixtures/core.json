@@ -211,7 +211,7 @@
       "prefix": "",
       "operation": "U",
       "expectedStatus": "Committed",
-      "definitionDigest": "7791381a7cd6c553dfb953c232a81da34efb80027ba179f2229ec7a332fd16a6"
+      "definitionDigest": "7a66f48e17172fe192e501d470612bf58b497dc65be2d8121c3b6c7812cd9d15"
     },
     {
       "name": "Melty A opposite caps execute separately",
@@ -219,7 +219,7 @@
       "prefix": "U_e_inv R_e U_e R_e_inv U_c",
       "operation": "D_b_inv",
       "expectedStatus": "Committed",
-      "definitionDigest": "7791381a7cd6c553dfb953c232a81da34efb80027ba179f2229ec7a332fd16a6"
+      "definitionDigest": "7a66f48e17172fe192e501d470612bf58b497dc65be2d8121c3b6c7812cd9d15"
     },
     {
       "name": "Melty A first partial cap aligns with the middle",
@@ -227,7 +227,7 @@
       "prefix": "U_e_inv R_e U_e R_e_inv",
       "operation": "U_c",
       "expectedStatus": "Committed",
-      "definitionDigest": "7791381a7cd6c553dfb953c232a81da34efb80027ba179f2229ec7a332fd16a6"
+      "definitionDigest": "7a66f48e17172fe192e501d470612bf58b497dc65be2d8121c3b6c7812cd9d15"
     },
     {
       "name": "Melty A second partial cap aligns with the middle",
@@ -235,7 +235,7 @@
       "prefix": "U_e_inv R_e U_e R_e_inv",
       "operation": "D_b_inv",
       "expectedStatus": "Committed",
-      "definitionDigest": "7791381a7cd6c553dfb953c232a81da34efb80027ba179f2229ec7a332fd16a6"
+      "definitionDigest": "7a66f48e17172fe192e501d470612bf58b497dc65be2d8121c3b6c7812cd9d15"
     },
     {
       "name": "Melty B principal turn",
@@ -243,7 +243,7 @@
       "operation": "U",
       "expectedStatus": "Committed",
       "source": "packages/melty-b/package.json",
-      "definitionDigest": "b825c00ccdc2b10b891918213779bcab81516d93e24135b43769fa08e553d0d6"
+      "definitionDigest": "ddc703141406fc5dbb9e2059abe293ea1e09693d53a5a5db47be144ed9d36b42"
     },
     {
       "name": "Melty B opposite caps execute separately",
@@ -251,7 +251,7 @@
       "operation": "B",
       "expectedStatus": "Committed",
       "source": "packages/melty-b/package.json",
-      "definitionDigest": "b825c00ccdc2b10b891918213779bcab81516d93e24135b43769fa08e553d0d6"
+      "definitionDigest": "ddc703141406fc5dbb9e2059abe293ea1e09693d53a5a5db47be144ed9d36b42"
     },
     {
       "name": "Melty B partial cap F aligns with the middle",
@@ -259,7 +259,7 @@
       "operation": "F",
       "expectedStatus": "Committed",
       "source": "packages/melty-b/package.json",
-      "definitionDigest": "b825c00ccdc2b10b891918213779bcab81516d93e24135b43769fa08e553d0d6"
+      "definitionDigest": "ddc703141406fc5dbb9e2059abe293ea1e09693d53a5a5db47be144ed9d36b42"
     },
     {
       "name": "Melty B partial cap B aligns with the middle",
@@ -267,7 +267,7 @@
       "operation": "B",
       "expectedStatus": "Committed",
       "source": "packages/melty-b/package.json",
-      "definitionDigest": "b825c00ccdc2b10b891918213779bcab81516d93e24135b43769fa08e553d0d6"
+      "definitionDigest": "ddc703141406fc5dbb9e2059abe293ea1e09693d53a5a5db47be144ed9d36b42"
     },
     {
       "name": "Melty C principal turn",
@@ -275,7 +275,7 @@
       "operation": "U",
       "expectedStatus": "Committed",
       "source": "packages/melty-c/package.json",
-      "definitionDigest": "8b51c4727beef885afb7173c8a34415b268209923fbacc9cc1e9641931c45e67"
+      "definitionDigest": "c67b2f573fa5b2a5730700ec7c2b0fdaf89bbdbe7df9c68bf19c5f91d9ee05c1"
     },
     {
       "name": "Melty C opposite caps execute separately",
@@ -283,7 +283,7 @@
       "operation": "B_d",
       "expectedStatus": "Committed",
       "source": "packages/melty-c/package.json",
-      "definitionDigest": "8b51c4727beef885afb7173c8a34415b268209923fbacc9cc1e9641931c45e67"
+      "definitionDigest": "c67b2f573fa5b2a5730700ec7c2b0fdaf89bbdbe7df9c68bf19c5f91d9ee05c1"
     },
     {
       "name": "Melty C partial cap F aligns with the middle",
@@ -291,7 +291,7 @@
       "operation": "F",
       "expectedStatus": "Committed",
       "source": "packages/melty-c/package.json",
-      "definitionDigest": "8b51c4727beef885afb7173c8a34415b268209923fbacc9cc1e9641931c45e67"
+      "definitionDigest": "c67b2f573fa5b2a5730700ec7c2b0fdaf89bbdbe7df9c68bf19c5f91d9ee05c1"
     },
     {
       "name": "Melty C partial cap B_d aligns with the middle",
@@ -299,7 +299,7 @@
       "operation": "B_d",
       "expectedStatus": "Committed",
       "source": "packages/melty-c/package.json",
-      "definitionDigest": "8b51c4727beef885afb7173c8a34415b268209923fbacc9cc1e9641931c45e67"
+      "definitionDigest": "c67b2f573fa5b2a5730700ec7c2b0fdaf89bbdbe7df9c68bf19c5f91d9ee05c1"
     },
     {
       "name": "Melty D principal turn",
@@ -307,7 +307,7 @@
       "operation": "U",
       "expectedStatus": "Committed",
       "source": "packages/melty-d/package.json",
-      "definitionDigest": "9c1a05d8fab85a247fd25f17f156f92e08ea53b2120c03e254d240d520984ae8"
+      "definitionDigest": "d2b08f55cea35fa7c26403a50ea6b5377c5abc3fae68c16b94cf8b467b08f51a"
     },
     {
       "name": "Melty D opposite caps execute separately",
@@ -315,7 +315,7 @@
       "operation": "L_c",
       "expectedStatus": "Committed",
       "source": "packages/melty-d/package.json",
-      "definitionDigest": "9c1a05d8fab85a247fd25f17f156f92e08ea53b2120c03e254d240d520984ae8"
+      "definitionDigest": "d2b08f55cea35fa7c26403a50ea6b5377c5abc3fae68c16b94cf8b467b08f51a"
     },
     {
       "name": "Melty D partial cap R_e aligns with the middle",
@@ -323,7 +323,7 @@
       "operation": "R_e",
       "expectedStatus": "Committed",
       "source": "packages/melty-d/package.json",
-      "definitionDigest": "9c1a05d8fab85a247fd25f17f156f92e08ea53b2120c03e254d240d520984ae8"
+      "definitionDigest": "d2b08f55cea35fa7c26403a50ea6b5377c5abc3fae68c16b94cf8b467b08f51a"
     },
     {
       "name": "Melty D partial cap L_c aligns with the middle",
@@ -331,7 +331,7 @@
       "operation": "L_c",
       "expectedStatus": "Committed",
       "source": "packages/melty-d/package.json",
-      "definitionDigest": "9c1a05d8fab85a247fd25f17f156f92e08ea53b2120c03e254d240d520984ae8"
+      "definitionDigest": "d2b08f55cea35fa7c26403a50ea6b5377c5abc3fae68c16b94cf8b467b08f51a"
     },
     {
       "name": "Melty D may stop without a globally free intersecting cut",
@@ -339,7 +339,7 @@
       "prefix": "U",
       "operation": "D_e_inv",
       "expectedStatus": "Committed",
-      "definitionDigest": "9c1a05d8fab85a247fd25f17f156f92e08ea53b2120c03e254d240d520984ae8"
+      "definitionDigest": "d2b08f55cea35fa7c26403a50ea6b5377c5abc3fae68c16b94cf8b467b08f51a"
     },
     {
       "name": "Melty C intermediate stop uses an expanded placement",
@@ -347,7 +347,7 @@
       "prefix": "F_inv F_b_inv B_e_inv B_f_inv B_g F_inv R_c_inv F_inv F_inv F_b_inv R_a_inv B_g_inv B_e_inv B_inv R_b F_inv F_inv F F F_b F_c R B_g_inv B B_d B U_e F_b F F_inv F_b_inv F_c_inv F_inv F_b_inv F_inv F_inv L F L_inv U_c F_inv U_e_inv",
       "operation": "B_e_inv",
       "expectedStatus": "Committed",
-      "definitionDigest": "8b51c4727beef885afb7173c8a34415b268209923fbacc9cc1e9641931c45e67"
+      "definitionDigest": "c67b2f573fa5b2a5730700ec7c2b0fdaf89bbdbe7df9c68bf19c5f91d9ee05c1"
     },
     {
       "name": "Melty A still blocks a straddling driving cut",
@@ -356,7 +356,7 @@
       "operation": "B",
       "expectedStatus": "Blocked",
       "reasonCode": "relation.rejected",
-      "definitionDigest": "7791381a7cd6c553dfb953c232a81da34efb80027ba179f2229ec7a332fd16a6"
+      "definitionDigest": "7a66f48e17172fe192e501d470612bf58b497dc65be2d8121c3b6c7812cd9d15"
     },
     {
       "name": "Melty B still blocks a straddling driving cut",
@@ -365,7 +365,7 @@
       "operation": "B",
       "expectedStatus": "Blocked",
       "reasonCode": "relation.rejected",
-      "definitionDigest": "b825c00ccdc2b10b891918213779bcab81516d93e24135b43769fa08e553d0d6"
+      "definitionDigest": "ddc703141406fc5dbb9e2059abe293ea1e09693d53a5a5db47be144ed9d36b42"
     },
     {
       "name": "Melty C still blocks a straddling driving cut",
@@ -374,7 +374,7 @@
       "operation": "B",
       "expectedStatus": "Blocked",
       "reasonCode": "relation.rejected",
-      "definitionDigest": "8b51c4727beef885afb7173c8a34415b268209923fbacc9cc1e9641931c45e67"
+      "definitionDigest": "c67b2f573fa5b2a5730700ec7c2b0fdaf89bbdbe7df9c68bf19c5f91d9ee05c1"
     },
     {
       "name": "Melty D still blocks a straddling driving cut",
@@ -383,7 +383,7 @@
       "operation": "R",
       "expectedStatus": "Blocked",
       "reasonCode": "relation.rejected",
-      "definitionDigest": "9c1a05d8fab85a247fd25f17f156f92e08ea53b2120c03e254d240d520984ae8"
+      "definitionDigest": "d2b08f55cea35fa7c26403a50ea6b5377c5abc3fae68c16b94cf8b467b08f51a"
     }
   ]
 }

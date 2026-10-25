@@ -60,7 +60,7 @@ def reflect_third(p, a, b):
     return sub(scale(2*c/(1+dot(a, b)), add(a, b)), p)
 
 
-def rays(family, degrees):
+def _construction_rays(family, degrees):
     c = math.cos(math.radians(degrees))
     s = math.sqrt(1-c*c)
     x = (c-c*c)/s
@@ -85,6 +85,69 @@ def rays(family, degrees):
     result = [u, r, f, l, b, d]
     assert all(abs(dot(v, v)-1) < 1e-12 for v in result)
     return result
+
+
+def rays(family, degrees):
+    """Orient the six rays relative to the fixed, face-colored cube.
+
+    A/D use the face-centered member of their two symmetry-compatible cube
+    orientations. B/C use the smallest angular RMS in the opposite-edge-axis
+    and diagonal-mirror-plane families, respectively. All maps are proper
+    rotations; the equal-angle construction and chirality are unchanged.
+    """
+    original = _construction_rays(family, degrees)
+    u, r, f, l, _, _ = original
+    if family in 'AD':
+        axis = unit(add(add(u, r), f))
+        radial = unit(sub(r, f)) if family == 'A' else unit(add(u, l))
+        target_axis = unit((1., 1., 1.))
+        target_radial = unit((1., -1., 0.)) if family == 'A' else unit((-1., 0., 1.))
+    else:
+        axis = unit(add(u, r)) if family == 'B' else unit(sub(r, f))
+        radial = unit(sub(u, scale(dot(u, axis), axis)))
+        target_axis = unit((1., 0., 1.)) if family == 'B' else unit((1., -1., 0.))
+        target_radial = unit(sub((0., 0., 1.), scale(target_axis[2], target_axis)))
+    source = (radial, cross(axis, radial), axis)
+    target = (target_radial, cross(target_axis, target_radial), target_axis)
+    aligned = [tuple(sum(target[j][i] * dot(source[j], v) for j in range(3))
+                     for i in range(3)) for v in original]
+    if family in 'BC':
+        # In this neighborhood the six nearest face normals are unambiguous.
+        # Solve the derivative of sum(acos(n.face_normal)**2), rather than
+        # optimizing rounded output coordinates or the squared chord distance.
+        normals = ((0., 0., 1.), (1., 0., 0.), (0., 1., 0.),
+                   (-1., 0., 0.), (0., -1., 0.), (0., 0., -1.))
+
+        def derivative(angle):
+            terms = []
+            for ray, normal in zip(aligned, normals):
+                v = rotation(target_axis, angle, ray)
+                cosine = max(-1., min(1., dot(v, normal)))
+                distance = math.acos(cosine)
+                factor = distance / math.sqrt(1 - cosine*cosine) if distance > 1e-8 else 1.
+                terms.append(-factor * dot(cross(target_axis, v), normal))
+            return math.fsum(terms)
+
+        low, high = -math.pi/8, math.pi/8
+        assert derivative(low) < 0 < derivative(high), 'RMS minimum is outside its cube-face branch'
+        for _ in range(64):
+            middle = (low + high)/2
+            if derivative(middle) < 0:
+                low = middle
+            else:
+                high = middle
+        aligned = [rotation(target_axis, (low + high)/2, v) for v in aligned]
+    return aligned
+
+
+def cube_orientation(axes, family):
+    """Reviewable geometry metadata; independent of abstract placement IDs."""
+    angles = [math.degrees(math.acos(min(1., max(abs(x) for x in ray)))) for ray in axes]
+    return dict(selection='smallest-rms' if family in 'BC' else 'near-face-centers',
+                raySymmetry=dict(A='C3v', B='C2', C='Cs', D='D3')[family],
+                rayDirections=dict(zip(LABELS, axes)),
+                rmsAngleDegrees=math.sqrt(math.fsum(a*a for a in angles)/6),
+                maximumAngleDegrees=max(angles))
 
 
 def intersection(a, b, c):

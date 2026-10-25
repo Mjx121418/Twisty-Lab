@@ -7,6 +7,25 @@ rigid realizations. The checked-in authoring inputs live in `scripts/data/`;
 generation and runtime have no dependency on the ignored research directory.
 Each package has 27 piece-specific domains, including the fixed internal core.
 
+The cube is centered at the common ray origin and oriented to preserve each
+family's complete ray symmetry. A and D use the near-face-center choice of the
+two isolated orientations, with their threefold axis on a cube body diagonal.
+B puts its half-turn axis through opposite edge midpoints; C uses a diagonal
+cube mirror plane. Their remaining twist minimizes the angular RMS distance
+from each ray to its corresponding face normal, rather than the largest angle.
+The resulting RMS angles for A/B/C/D are approximately
+7.558829° / 7.578041° / 8.157399° / 9.381828°. All six rays meet distinct face
+interiors. The package manifest records `cubeOrientation`, including the chosen
+policy, ray directions in the author's z-up cube frame, and angular metrics.
+The realizations convert this frame to the application's y-up convention.
+
+The orientation is a proper rotation of the analytic construction, preserving
+ray angles, chirality, placement IDs, and phase recipes. Piece bodies, stickers,
+cut blockers, and complete-solid exclusions are regenerated relative to the
+fixed cube. Existing placement witnesses and geometric catalog-coverage audits
+are replayed against these new solids; the original research coordinate frame
+does not determine the cube's current orientation.
+
 | Family | Catalog placements | Witnessed placements | Witness nodes | Directed requests |
 | --- | ---: | ---: | ---: | ---: |
 | A | 2,320 | 1,466 | 6,818 | 72 |

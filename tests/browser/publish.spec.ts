@@ -52,7 +52,10 @@ test('published simulator loads every preset and keeps both views working throug
       await expect(page.locator('canvas')).toHaveCount(2);
       await resting(page);
       const initial = await page.getByTestId('state-digest').textContent();
-      await page.getByRole('button', { name: `Move ${move}`, exact: true }).click();
+      const movement = page.getByRole('button', { name: `Move ${move}`, exact: true });
+      const advanced = page.getByText('Advanced movement list', { exact: true });
+      if (await advanced.isVisible() && !await movement.isVisible()) await advanced.click();
+      await movement.click();
       await expect(page.getByTestId('state-digest')).not.toHaveText(initial!);
       await resting(page);
       await page.getByRole('button', { name: '↶ Undo', exact: true }).click();
