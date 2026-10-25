@@ -5,6 +5,8 @@
     "helicopter_packages.py",
     "bagua_packages.py",
     "melty_packages.py",
+    "icosahedron_packages.py",
+    "icosahedron_152_packages.py",
     "flat_surface_packages.py",
     "hex_surface_packages.py",
     "pillowcase_packages.py",
@@ -61,7 +63,8 @@
     "scripts/data/melty-a-middle-catalog.json",
     "scripts/data/melty-b-middle-catalog.json",
     "scripts/data/melty-c-middle-catalog.json",
-    "scripts/data/melty-d-middle-catalog.json"
+    "scripts/data/melty-d-middle-catalog.json",
+    "scripts/data/icosahedron-152-witness.json"
   ],
   "puzzles": [
     {
@@ -139,6 +142,26 @@
         "melty-d-euclidean.json",
         "melty-d-port-diagram.json",
         "melty-d-spherical.json"
+      ],
+      "files": [
+        "manifest.json"
+      ]
+    },
+    {
+      "id": "icosahedron-110",
+      "realizations": [
+        "icosahedron-110-euclidean.json",
+        "icosahedron-110-spherical.json"
+      ],
+      "files": [
+        "manifest.json"
+      ]
+    },
+    {
+      "id": "icosahedron-152",
+      "realizations": [
+        "icosahedron-152-euclidean.json",
+        "icosahedron-152-spherical.json"
       ],
       "files": [
         "manifest.json"

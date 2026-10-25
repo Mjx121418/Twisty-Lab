@@ -208,6 +208,10 @@ footer { border-top: 1px solid #293840; display: flex; justify-content: space-be
 .angular-stop.current-stop { background: #f0c474; color: #17232a; border: 3px solid #fff4d2; box-shadow: 0 0 0 4px #f0c47433; font-weight: 800; }
 .angular-stop.draft-stop:not(.current-stop) { outline: 2px solid #7cdddf; outline-offset: 3px; }
 .angular-stop:focus-visible { outline: 3px solid #fff; outline-offset: 5px; }
+.relative-ring { width: 320px; max-width: 100%; height: auto; aspect-ratio: 1; }
+.relative-ring svg { display: block; width: 100%; height: 100%; }
+.relative-ring .ring-center { inset: 39.0625% 32.8125%; }
+.angular-stop.relative-stop { width: 44px; min-width: 44px; height: 44px; padding: 0; font-size: .68rem; white-space: nowrap; }
 .advanced-moves { margin: .75rem 0; }
 .advanced-moves > summary { cursor: pointer; margin-bottom: .7rem; }
 .path-choices { display: flex; flex-wrap: wrap; gap: .5rem; }

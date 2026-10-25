@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 // Check every shipped preset without native tools or exhaustive model audits.
-const presets = [
+const inventory = [
   ['cube3', 'R'],
   ['bandaged-uf-ufr', 'U'],
   ['helicopter', 'UF_ab'],
@@ -10,6 +10,8 @@ const presets = [
   ['melty-b', 'U'],
   ['melty-c', 'U'],
   ['melty-d', 'U'],
+  ['icosahedron-110', 'A'],
+  ['icosahedron-152', 'A'],
   ['gear', 'R'],
   ['gear-extreme', 'Uq'],
   ['gear-plain', 'Rq'],
@@ -22,6 +24,12 @@ const presets = [
   ['flat-333', 'A'],
   ['flat-333-6', 'D'],
 ] as const;
+
+// A bounded workspace can run disjoint batches in fresh browser processes.
+// The default publish action still checks the complete inventory.
+const selected = process.env.PUBLISH_PRESETS?.split(',').filter(Boolean);
+if (selected?.some(id => !inventory.some(([puzzle]) => puzzle === id))) throw new Error('Unknown PUBLISH_PRESETS selection');
+const presets = selected ? inventory.filter(([id]) => selected.includes(id)) : inventory;
 
 function collectErrors(page: Page): string[] {
   const errors: string[] = [];

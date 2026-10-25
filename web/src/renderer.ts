@@ -105,9 +105,11 @@ export class RenderView {
       geometry.computeBoundingSphere();
       this.assets.set(asset.id, geometry);
     }
+    const materialColors = { ...colors };
     for (const part of this.descriptor.visualParts) {
+      if (/^#[0-9a-f]{6}$/i.test(part.materialBindingId)) materialColors[part.materialBindingId] = parseInt(part.materialBindingId.slice(1), 16);
       const material = new THREE.MeshStandardMaterial({
-        color: colors[part.materialBindingId] ?? 0x999999,
+        color: materialColors[part.materialBindingId] ?? 0x999999,
         roughness: 0.55,
         metalness: part.role === 'port' ? 0.0 : 0.1,
         side: this.descriptor.diagram ? THREE.DoubleSide : THREE.FrontSide,
@@ -141,7 +143,7 @@ export class RenderView {
         this.scene.add(sprite);
       }
     }
-    this.destinations = new DestinationOverlay(this.geometry, host, this.scene, this.descriptor, this.assets, colors, onDestination, canPick);
+    this.destinations = new DestinationOverlay(this.geometry, host, this.scene, this.descriptor, this.assets, materialColors, onDestination, canPick);
     this.updateTransforms();
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(host);

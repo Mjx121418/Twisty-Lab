@@ -384,6 +384,48 @@
       "expectedStatus": "Blocked",
       "reasonCode": "relation.rejected",
       "definitionDigest": "d2b08f55cea35fa7c26403a50ea6b5377c5abc3fae68c16b94cf8b467b08f51a"
+    },
+    {
+      "name": "Icosahedron intersecting jumble",
+      "source": "packages/icosahedron-110/package.json",
+      "prefix": "A_j",
+      "operation": "O_j",
+      "expectedStatus": "Committed",
+      "definitionDigest": "3fd0edcd7ee163f843fe94f060e2f835db647f93a19b2bfdd748d6dfafddac95"
+    },
+    {
+      "name": "Icosahedron jumble blocks neighbor",
+      "source": "packages/icosahedron-110/package.json",
+      "prefix": "A_j",
+      "operation": "I",
+      "expectedStatus": "Blocked",
+      "definitionDigest": "3fd0edcd7ee163f843fe94f060e2f835db647f93a19b2bfdd748d6dfafddac95",
+      "reasonCode": "relation.rejected"
+    },
+    {
+      "name": "Icosahedron 152 intersecting jumble",
+      "source": "packages/icosahedron-152/package.json",
+      "prefix": "A_j",
+      "operation": "O_j",
+      "expectedStatus": "Committed",
+      "definitionDigest": "db3a8d5d39b6f2fc4af59ff6757e7f283f7f05cc2b10f6cf98cb70cf25f85328"
+    },
+    {
+      "name": "Icosahedron 152 jumble blocks neighbor",
+      "source": "packages/icosahedron-152/package.json",
+      "prefix": "A_j",
+      "operation": "I",
+      "expectedStatus": "Blocked",
+      "reasonCode": "relation.rejected",
+      "definitionDigest": "db3a8d5d39b6f2fc4af59ff6757e7f283f7f05cc2b10f6cf98cb70cf25f85328"
+    },
+    {
+      "name": "Icosahedron 152 retains spherical legality for planar model",
+      "source": "packages/icosahedron-152/package.json",
+      "prefix": "A_j",
+      "operation": "D",
+      "expectedStatus": "Committed",
+      "definitionDigest": "db3a8d5d39b6f2fc4af59ff6757e7f283f7f05cc2b10f6cf98cb70cf25f85328"
     }
   ]
 }

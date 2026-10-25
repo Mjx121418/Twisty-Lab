@@ -1,5 +1,5 @@
 import { expect, type Page } from '@playwright/test';
-import { viewLabels, type ViewId } from '../../web/src/viewSelection';
+import type { ViewId } from '../../web/src/viewSelection';
 
 const pairs: Record<string, ViewId[]> = {
   'cube-sphere': ['cube', 'sphere'], 'cube-diagram': ['cube', 'diagram'],
@@ -15,14 +15,14 @@ export async function setViews(page: Page, selection: string | ViewId[]): Promis
   const ids = typeof selection === 'string' ? pairs[selection] : selection;
   const picker = page.locator('.view-picker');
   if (await picker.getAttribute('open') === null) await picker.locator('summary').click();
-  for (const id of ids) await picker.getByRole('checkbox', { name: viewLabels[id], exact: true }).check();
-  for (const checkbox of await picker.getByRole('checkbox').all()) {
-    const name = await checkbox.locator('..').textContent();
-    if (!ids.some(id => viewLabels[id] === name)) await checkbox.uncheck();
+  for (const id of ids) await picker.locator(`[data-view-option="${id}"]`).getByRole('checkbox').check();
+  for (const row of await picker.locator('[data-view-option]').all()) {
+    const id = await row.getAttribute('data-view-option') as ViewId;
+    if (!ids.includes(id)) await row.getByRole('checkbox').uncheck();
   }
   for (const [index, id] of ids.entries()) {
     while ((await picker.locator('li').evaluateAll(nodes => nodes.map(node => node.getAttribute('data-view-option')))).indexOf(id) > index) {
-      await picker.getByRole('button', { name: `Move ${viewLabels[id]} earlier`, exact: true }).click();
+      await picker.locator(`[data-view-option="${id}"]`).getByRole('button', { name: / earlier$/ }).click();
     }
   }
   await picker.locator('summary').click();

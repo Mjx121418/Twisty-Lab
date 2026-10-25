@@ -20,6 +20,7 @@ import meltyAManifest from '../../packages/melty-a/manifest.json';
 import meltyBManifest from '../../packages/melty-b/manifest.json';
 import meltyCManifest from '../../packages/melty-c/manifest.json';
 import meltyDManifest from '../../packages/melty-d/manifest.json';
+import icosahedronManifest from '../../packages/icosahedron-110/manifest.json';
 import gearSource from '../../packages/gear/source.json?raw';
 import gearExtremeSource from '../../packages/gear-extreme/source.json?raw';
 import gearPlainSource from '../../packages/gear-plain/source.json?raw';
@@ -32,6 +33,7 @@ import gearExtremeManifest from '../../packages/gear-extreme/manifest.json';
 import gearPlainManifest from '../../packages/gear-plain/manifest.json';
 import { KernelController, KernelSession, loadRuntime, type Realization, type Result, type Snapshot, type Transition, type TurnIntent } from './kernel';
 import { FamilyControls } from './controls/FamilyControls';
+import { RelativeControls, relativeTurnAngle } from './controls/RelativeControls';
 import { RenderView } from './renderer';
 import { SurfaceView } from './surfaceRenderer';
 import torusSource from '../../packages/flat-torus/package.json?raw';
@@ -53,7 +55,7 @@ import orbifold333SixRealization from '../../packages/flat-333-6/flat-quotient.j
 import { pieceDestinations, type PieceDestination } from './destinations';
 import { defaultViews, moveView, restoreViews, viewLabels, type ViewId, type ViewSelection } from './viewSelection';
 
-type Preset = { id: string; label: string; source: string; realizations: Realization[]; spherical?: Realization; surface?: boolean; turnAnglesDegrees?: Record<string, number>; cameraScale?: number };
+type Preset = { id: string; label: string; source: string; realizations: Realization[]; spherical?: Realization; surface?: boolean; turnAnglesDegrees?: Record<string, number>; cameraScale?: number; euclideanLabel?: string; deferred?: boolean };
 type PuzzleView = RenderView | SurfaceView;
 type ViewDefinition = { id: ViewId; realization: Realization; surfaceMode?: 'square' | 'tiles' };
 type MountedView = { view: PuzzleView; realizationId: string; generation: number; cameras: Map<ViewId, unknown> };
@@ -79,25 +81,27 @@ const meltyPresets: Preset[] = Object.entries({
   source: '', realizations: [], turnAnglesDegrees: manifest.turnAnglesDegrees, cameraScale: 2/3 }));
 // Fetch prebuilt JSON on selection; URL imports keep large datasets out of
 // JavaScript parsing and minification while retaining Vite's subpath handling.
-const meltyFiles = import.meta.glob<string>([
+const prebuiltFiles = import.meta.glob<string>([
   '../../packages/melty-*/package.json',
   '../../packages/melty-*/melty-*-euclidean.json',
   '../../packages/melty-*/melty-*-port-diagram.json',
   '../../packages/melty-*/melty-*-spherical.json',
+  '../../packages/icosahedron-*/package.json',
+  '../../packages/icosahedron-*/icosahedron-*-*.json',
 ], { query: '?url', import: 'default', eager: true });
 const meltyLoading = new Map<string, Promise<void>>();
 function loadPreset(preset: Preset): Promise<void> {
-  if (!preset.turnAnglesDegrees || preset.source) return Promise.resolve();
+  if ((!preset.turnAnglesDegrees && !preset.deferred) || preset.source) return Promise.resolve();
   const previous = meltyLoading.get(preset.id);
   if (previous) return previous;
-  const loading = Promise.all(['package', `${preset.id}-euclidean`, `${preset.id}-port-diagram`, `${preset.id}-spherical`]
+  const loading = Promise.all(['package', `${preset.id}-euclidean`, `${preset.id}-spherical`, ...(!preset.deferred ? [`${preset.id}-port-diagram`] : [])]
     .map(async name => {
-      const response = await fetch(meltyFiles[`../../packages/${preset.id}/${name}.json`]);
+      const response = await fetch(prebuiltFiles[`../../packages/${preset.id}/${name}.json`]);
       if (!response.ok) throw new Error(`Could not load ${preset.label} (${response.status}).`);
       return response.text();
     }))
-    .then(([source, cube, diagram, sphere]) => {
-      preset.realizations = [JSON.parse(cube), JSON.parse(diagram)];
+    .then(([source, cube, sphere, diagram]) => {
+      preset.realizations = [JSON.parse(cube), ...(diagram ? [JSON.parse(diagram)] : [])];
       preset.spherical = JSON.parse(sphere);
       preset.source = source;
     }).catch(error => { meltyLoading.delete(preset.id); throw error; });
@@ -110,6 +114,8 @@ const presets = [
   { id: 'helicopter', label: 'Helicopter Cube · jumbling', source: helicopterSource, realizations: [helicopterRealization, helicopterDiagram], spherical: helicopterSphere },
   { id: 'bagua', label: 'Bagua Cube', source: baguaSource, realizations: [baguaRealization, baguaDiagram], spherical: baguaSphere },
   ...meltyPresets,
+  { id: 'icosahedron-110', label: `Face-turning icosahedron · ${icosahedronManifest.pieces} pieces`, source: '', realizations: [], deferred: true, euclideanLabel: 'Icosahedron' },
+  { id: 'icosahedron-152', label: 'Face-turning icosahedron · 152 pieces', source: '', realizations: [], deferred: true, euclideanLabel: 'Icosahedron' },
   gearPreset('gear', 'Gear Cube', gearSource, gearManifest.definitionDigest),
   gearPreset('gear-extreme', 'Gear Cube Extreme', gearExtremeSource, gearExtremeManifest.definitionDigest),
   gearPreset('gear-plain', 'Gear family · all plain', gearPlainSource, gearPlainManifest.definitionDigest),
@@ -131,7 +137,7 @@ function availableViews(preset: Preset): ViewDefinition[] {
   ];
   const [cube, diagram] = preset.realizations;
   return [{ id: 'cube', realization: cube }, ...(preset.spherical ? [{ id: 'sphere' as const, realization: preset.spherical }] : []),
-    { id: 'diagram', realization: diagram }];
+    ...(diagram ? [{ id: 'diagram' as const, realization: diagram }] : [])];
 }
 
 function download(filename: string, content: string): void {
@@ -182,19 +188,21 @@ export function App() {
   speedRef.current = duration;
   const availablePresets = customGear ? [...presets, customGear] : presets;
   const activePreset = snapshot && availablePresets.find((item) => item.realizations[0]?.compatibleDefinitionDigest === snapshot.definitionDigest);
+  const labels = { ...viewLabels, cube: activePreset?.euclideanLabel ?? viewLabels.cube };
   const viewDefinitions = useMemo(() => activePreset ? availableViews(activePreset) : [], [activePreset]);
   const orderedViews = viewSelection.order.flatMap(id => viewDefinitions.filter(view => view.id === id));
   const displayedViews = orderedViews.filter(view => viewSelection.visible.includes(view.id));
   const rhombus = ['rhombus-60','orbifold-333-rhombus'].includes(activePreset?.realizations[0].flatSurface?.chart??'');
 
+  function relativeSession(session: KernelSession): boolean { return session.definition.puzzleId === 'icosahedron-152-v1'; }
   function readSnapshot(session: KernelSession): Snapshot {
-    return controller.current && !advanced.current ? { ...session.stateSnapshot(), legalRequests: [], candidateRequests: [] } : session.snapshot();
+    return (controller.current || relativeSession(session)) && !advanced.current ? { ...session.stateSnapshot(), legalRequests: [], candidateRequests: [] } : session.snapshot();
   }
   function replaceController(runtime: MainModule, session: KernelSession): void {
     controller.current?.dispose(); controller.current = undefined;
     const next = new KernelController(runtime, session);
     if (next.controls.families.length) { controller.current = next; session.lightweightResults(); }
-    else next.dispose();
+    else { next.dispose(); if (relativeSession(session)) session.lightweightResults(); }
     advanced.current = false;
   }
 
@@ -228,7 +236,7 @@ export function App() {
     setSourceId(id); setSnapshot(initial); setVisualDigest(initial.stateDigest);
     setSelected([]); setEvidence(undefined); setLastScramble(''); setVisualError('');
     setAlgorithm(initial.puzzleId === 'flat-333-6-v1' ? "A D A' D'" : initial.puzzleId.startsWith('flat-') ? "A B A' B'" : initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' :
-      initial.puzzleId === 'bagua-experimental-v1' ? "U+ R' L' D2 R L U-" : initial.puzzleId.startsWith('melty-') ? "U U'" :
+      initial.puzzleId === 'bagua-experimental-v1' ? "U+ R' L' D2 R L U-" : initial.puzzleId.startsWith('icosahedron-') ? "A_j O_j (A_j O_j)'" : initial.puzzleId.startsWith('melty-') ? "U U'" :
       parsedSource.kind === 'relational-gear-prototypes' ? (parsedSource.gearedEdges.length === 0 ? "Rq Uq Rq' Uq'" :
         initial.legalRequests.some((request) => request.operation === 'R') ? "R R'" : "Rq Rq'") : "R U R' U'");
     setGeneration((value) => value + 1);
@@ -306,7 +314,7 @@ export function App() {
   useEffect(() => {
     if (!kernel.current || !snapshot || !views.current.length) return;
     for (const view of views.current) view.setDestinations(undefined, []);
-    if (busy || !selected.length || controller.current) return;
+    if (busy || !selected.length || controller.current || relativeSession(kernel.current)) return;
     const session = kernel.current;
     let timer: ReturnType<typeof setTimeout> | undefined;
     // Paint selection feedback before preparing optional endpoint ghosts.
@@ -326,7 +334,8 @@ export function App() {
   }, [selected, snapshot, busy, generation, viewSelection, viewDefinitions]);
 
   function choosePiece(piece?: string): void {
-    setSelected(previous => !piece ? [] : !controller.current ? [piece] :
+    const familySelection = controller.current || (kernel.current && relativeSession(kernel.current));
+    setSelected(previous => !piece ? [] : !familySelection ? [piece] :
       previous.includes(piece) ? previous.filter(id => id !== piece) : [...previous, piece]);
   }
 
@@ -451,7 +460,7 @@ export function App() {
       if (file.size > 16 * 1024 * 1024) throw new Error('Definition import is limited to 16 MiB.');
       const text = await file.text();
       const parsed = JSON.parse(text);
-      const meltyPreset = meltyPresets.find(preset => `${preset.id}-v1` === (parsed.source?.id ?? parsed.puzzleId));
+      const meltyPreset = presets.find(preset => `${preset.id}-v1` === (parsed.source?.id ?? parsed.puzzleId));
       if (meltyPreset) await loadPreset(meltyPreset);
       install(module, text, 'imported');
     } catch (error: unknown) {
@@ -493,9 +502,11 @@ export function App() {
   // the authority for legality, including blockers on these same requests.
   const candidates = snapshot?.candidateRequests && new Set(snapshot.candidateRequests.map((request) => request.operation));
   const melty = activePreset?.turnAnglesDegrees;
+  const icosahedron = activePreset?.id.startsWith('icosahedron-');
+  const relative = activePreset?.id === 'icosahedron-152';
   const phaseRequests = definition?.operations.filter((operation) => candidates?.has(operation.id));
   const families = Array.from(new Set(definition?.operations.map((operation) => operation.family) ?? []));
-  const faceOrder = activePreset?.surface ? ['A', 'B', 'C', 'D'] : ['U', 'R', 'F', 'D', 'L', 'B'];
+  const faceOrder = activePreset?.surface ? ['A', 'B', 'C', 'D'] : icosahedron ? Array.from({ length: 20 }, (_, i) => String.fromCharCode(65+i)) : ['U', 'R', 'F', 'D', 'L', 'B'];
   families.sort((a, b) => (faceOrder.includes(a) ? faceOrder.indexOf(a) : 6) - (faceOrder.includes(b) ? faceOrder.indexOf(b) : 6) || a.localeCompare(b));
   const selectedPiece = definition?.pieces.find((piece) => piece.id === selected[0]);
   const selectedDomain = definition?.pieceTypes.find((type) => type.id === selectedPiece?.type)?.placementDomainId;
@@ -531,10 +542,10 @@ export function App() {
                   <ol>{orderedViews.map(({ id }, index) => <li key={id} data-view-option={id}>
                     <label><input type="checkbox" checked={viewSelection.visible.includes(id)}
                       disabled={viewSelection.visible.includes(id) && displayedViews.length === 1}
-                      onChange={(event) => setViewSelection(current => ({ ...current, visible: event.target.checked ? [...current.visible, id] : current.visible.filter(value => value !== id) }))} />{viewLabels[id]}</label>
+                      onChange={(event) => setViewSelection(current => ({ ...current, visible: event.target.checked ? [...current.visible, id] : current.visible.filter(value => value !== id) }))} />{labels[id]}</label>
                     <div className="view-order-controls">
-                      <button aria-label={`Move ${viewLabels[id]} earlier`} disabled={index === 0} onClick={() => setViewSelection(current => moveView(current, id, -1))}>↑</button>
-                      <button aria-label={`Move ${viewLabels[id]} later`} disabled={index === orderedViews.length - 1} onClick={() => setViewSelection(current => moveView(current, id, 1))}>↓</button>
+                      <button aria-label={`Move ${labels[id]} earlier`} disabled={index === 0} onClick={() => setViewSelection(current => moveView(current, id, -1))}>↑</button>
+                      <button aria-label={`Move ${labels[id]} later`} disabled={index === orderedViews.length - 1} onClick={() => setViewSelection(current => moveView(current, id, 1))}>↓</button>
                     </div>
                   </li>)}</ol>
                   <button className="restore-views" onClick={() => setViewSelection(defaultViews(viewDefinitions.map(view => view.id)))}>Restore default views</button>
@@ -559,9 +570,9 @@ export function App() {
 
           <div className={`views view-count-${displayedViews.length}`}>
             {displayedViews.map(({ id }, index) => <article key={id} className={`view-panel ${id === 'diagram' ? 'diagram-panel' : ''}`} data-view={id}>
-              <div className="view-title"><span>{String(index + 1).padStart(2, '0')} / {viewLabels[id]}</span><span className="subtle">{
+              <div className="view-title"><span>{String(index + 1).padStart(2, '0')} / {labels[id]}</span><span className="subtle">{
                 id === 'fundamental-domain' ? 'Drag to pan' : id === 'tiled-plane' ? 'Drag to pan · scroll to zoom' :
-                id === 'sphere' ? 'Drag to rotate freely · scroll to zoom' : id === 'cube' ? 'Drag to orbit · scroll to zoom' : controller.current ? 'Click pieces to choose a twist family' : 'Click a piece, then a translucent destination'
+                id === 'sphere' ? 'Drag to rotate freely · scroll to zoom' : id === 'cube' ? 'Drag to orbit · scroll to zoom' : (controller.current || relative) ? 'Click pieces to choose a twist family' : 'Click a piece, then a translucent destination'
               }</span></div>
               <div ref={host => { if (host) viewHosts.current.set(id, host); else viewHosts.current.delete(id); }} className="canvas-host"
                 data-testid={index === 0 ? 'cube-view' : index === 1 ? 'diagram-view' : 'extra-view'} data-view-id={id} data-state-digest={visualDigest} />
@@ -578,18 +589,26 @@ export function App() {
           </div>
 
           <section className="commands">
-            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{activePreset?.surface ? `Face keys ${Object.keys(activePreset.realizations[0].flatSurface?.diskCenters??{}).join(' ')} · ${rhombus ? 60 : 90}° turns · Shift for inverse` : snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : snapshot?.puzzleId === 'bagua-experimental-v1' ? '+ / −: 45° · face keys: 90° · Shift for inverse' : melty ? 'Face keys U R F D L B · choose each cap independently · hover for angles' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
+            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{activePreset?.surface ? `Face keys ${Object.keys(activePreset.realizations[0].flatSurface?.diskCenters??{}).join(' ')} · ${rhombus ? 60 : 90}° turns · Shift for inverse` : icosahedron ? '20 face axes · ordinary turns: 120° · select pieces to choose an axis' : snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : snapshot?.puzzleId === 'bagua-experimental-v1' ? '+ / −: 45° · face keys: 90° · Shift for inverse' : melty ? 'Face keys U R F D L B · choose each cap independently · hover for angles' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
             {controller.current && snapshot && <FamilyControls key={generation} controller={controller.current} revision={snapshot.revision}
               layout={activePreset?.realizations[0].controlLayout} busy={busy} onTurn={turnTo}
               selectedPieces={selected} onClearSelection={() => setSelected([])} onRemovePiece={choosePiece} />}
-            <details key={`advanced-${generation}`} className="advanced-moves" open={controller.current ? undefined : true} onToggle={event => {
+            {relative && kernel.current && snapshot && <RelativeControls key={generation} session={kernel.current} revision={snapshot.revision}
+              history={snapshot.history} cursor={snapshot.cursor}
+              realization={activePreset?.realizations[0]} busy={busy} selectedPieces={selected} onClearSelection={() => setSelected([])}
+              onMove={(operation, revision) => {
+                const session = kernel.current!;
+                enqueue(() => session === kernel.current ? session.move(operation, revision) : { status: 'StaleRevision' });
+              }} />}
+            <details key={`advanced-${generation}`} className="advanced-moves" open={(controller.current || relative) ? undefined : true} onToggle={event => {
               advanced.current = event.currentTarget.open;
               if (kernel.current) setSnapshot(readSnapshot(kernel.current));
             }}><summary>Advanced movement list</summary>
             <div className="moves">{families.map((family) => <div className={`move-pair ${(phaseRequests?.filter((op) => op.family === family).length ?? 0) > 2 ? 'many-moves' : ''}`} key={family}>{phaseRequests?.filter((operation) => operation.family === family).map((operation) => {
               const inverse = operation.id === `${family}'` || operation.id === `${family}_inv`;
               const half = operation.id === `${family}_half`;
-              const angle = melty ? operation.id.split('+').map(id => `${melty[id].toFixed(3)}°`).join(' / ') : undefined;
+              const angle = melty ? operation.id.split('+').map(id => `${melty[id].toFixed(3)}°`).join(' / ') : icosahedron ?
+                `${(relativeTurnAngle(activePreset?.realizations[0],operation.id)*180/Math.PI).toFixed(3)}°` : undefined;
               return <button key={operation.id} title={angle} aria-label={`Move ${inverse ? `${family} inverse` : half ? `${family} half turn` : operation.id}`} className={!legal.has(operation.id) ? 'may-block' : ''} disabled={!snapshot} onClick={() => enqueue(() => kernel.current!.move(operation.id))}>{inverse ? '′' : half ? `${family}2` : operation.id}</button>;
             })}</div>)}
             </div></details>

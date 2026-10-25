@@ -33,6 +33,7 @@ function draw() {
   context.clearRect(0, 0, canvas.width, canvas.height);
   hits = [];
   const bounds=descriptor.flatSurface?.fundamentalBounds;
+  const threeD=!bounds&&!descriptor.diagram, commands=[];
   const scale = bounds ? Math.min(canvas.width/(bounds[2]*1.2),canvas.height/(bounds[3]*1.2)) : Math.min(canvas.width / 13, canvas.height / 10);
   const project=(x,y)=>[(x-(bounds?bounds[2]/2:1.5))*scale+canvas.width/2,canvas.height/2-(y-(bounds?bounds[3]/2:0))*scale];
   context.save();clipPixels=undefined;clipPolygon=undefined;
@@ -54,15 +55,25 @@ function draw() {
       const [x, y, z] = positions.subarray(start, start + 3);
       const px = matrix[0] * x + matrix[4] * y + matrix[8] * z + matrix[12];
       const py = matrix[1] * x + matrix[5] * y + matrix[9] * z + matrix[13];
+      if(threeD){
+        const pz=matrix[2]*x+matrix[6]*y+matrix[10]*z+matrix[14],s=Math.min(canvas.width/6,canvas.height/5);
+        return [canvas.width/2+s*(.768221*px-.640184*pz),canvas.height/2-s*(-.310504*px+.874475*py-.372604*pz),.559885*px+.485234*py+.671862*pz];
+      }
       return project(px,py);
     };
     if(bounds)context.beginPath();
     for (let i = asset.indexOffset; i < asset.indexOffset + asset.indexCount; i += 3) {
       const triangle = [point(indices[i]), point(indices[i + 1]), point(indices[i + 2])];
+      const color=palette[part.materialBindingId] ?? (/^#[0-9a-f]{6}$/i.test(part.materialBindingId)?part.materialBindingId:'#999');
+      if(threeD){
+        const [a,b,c]=triangle;
+        if((b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])>=0)continue;
+        commands.push({triangle,part,color,depth:(a[2]+b[2]+c[2])/3});continue;
+      }
       if(!bounds)context.beginPath();
       triangle.forEach(([x, y], vertex) => vertex ? context.lineTo(x, y) : context.moveTo(x, y));
       context.closePath();
-      context.fillStyle = bounds && part.materialBindingId==='B' ? '#66c7a0' : bounds && part.materialBindingId==='D' ? '#7fa5ed' : bounds && part.materialBindingId==='F' ? '#f0a35f' : palette[part.materialBindingId] ?? '#999';
+      context.fillStyle = bounds && part.materialBindingId==='B' ? '#66c7a0' : bounds && part.materialBindingId==='D' ? '#7fa5ed' : bounds && part.materialBindingId==='F' ? '#f0a35f' : color;
       if(!bounds)context.fill();
       context.strokeStyle = blocked.includes(part.pieceId) ? '#ce3724' : selected === part.pieceId ? '#176b88' : '#60746f';
       context.lineWidth = blocked.includes(part.pieceId) || selected === part.pieceId ? 3 : 1;
@@ -72,6 +83,12 @@ function draw() {
     // Fill a flat patch as one path so Canvas antialiasing does not expose
     // the internal triangulation as hairline gaps between filled triangles.
     if(bounds)context.fill();
+  });
+  commands.sort((a,b)=>a.depth-b.depth).forEach(({triangle,part,color})=>{
+    context.beginPath();triangle.forEach(([x,y],i)=>i?context.lineTo(x,y):context.moveTo(x,y));context.closePath();
+    context.fillStyle=color;context.fill();
+    if(blocked.includes(part.pieceId)||selected===part.pieceId){context.strokeStyle=blocked.includes(part.pieceId)?'#ce3724':'#176b88';context.stroke();}
+    hits.push({triangle,part});
   });
   context.restore();
   if(clipPolygon){context.strokeStyle='#758ca5';context.lineWidth=2;context.beginPath();clipPolygon.forEach(([x,y],i)=>i?context.lineTo(x,y):context.moveTo(x,y));context.closePath();context.stroke();}
@@ -109,7 +126,7 @@ async function install(puzzle) {
   document.querySelector('#status').textContent = 'Loading…';
   const [source, realization] = await Promise.all([
     fetch(`./data/${puzzle}/package.json`).then((response) => response.text()),
-    fetch(`./data/${puzzle}/${puzzle.startsWith('flat-') ? 'flat-quotient.json' : `${puzzle === 'helicopter' || puzzle === 'bagua' || puzzle.startsWith('melty-') || puzzle.startsWith('gear') ? puzzle : 'cube'}-port-diagram.json`}`).then((response) => response.text()),
+    fetch(`./data/${puzzle}/${puzzle.startsWith('icosahedron-')?`${puzzle}-euclidean.json`:puzzle.startsWith('flat-') ? 'flat-quotient.json' : `${puzzle === 'helicopter' || puzzle === 'bagua' || puzzle.startsWith('melty-') || puzzle.startsWith('gear') ? puzzle : 'cube'}-port-diagram.json`}`).then((response) => response.text()),
   ]);
   if (epoch !== installEpoch) return;
   // A preset selection replaces the old puzzle. Drop its geometry and session
@@ -121,7 +138,7 @@ async function install(puzzle) {
   try {
     view = new GeometryInstance(module, next.native, realization);
     const scene = view.scene;
-    if ((!scene.diagram&&!scene.flatSurface) || scene.requiredCapabilities.some((capability) => !supported.has(capability))) throw new Error('This renderer supports flat triangle-mesh diagrams and polygonal quotients.');
+    if (scene.requiredCapabilities.some((capability) => !supported.has(capability))) throw new Error('This renderer does not support a required realization capability.');
     session = next; geometry = view; descriptor = scene;
   } catch (error) { view?.dispose(); next.dispose(); throw error; }
   positions = copyFloatView(geometry.definition.positions());
@@ -149,7 +166,7 @@ async function install(puzzle) {
   selected = undefined; blocked = [];
   document.querySelector('#selection').textContent = 'No piece selected';
   document.querySelector('#notation').value = puzzle === 'flat-333-6' ? "A D A' D'" : puzzle.startsWith('flat-') ? "A B A' B'" : puzzle === 'helicopter' ? 'UF_ab UL_af' :
-    puzzle.startsWith('melty-') ? "U U'" : puzzle === 'bagua' ? "U+ R' L' D2 R L U-" : puzzle === 'gear-plain' ? "Rq Uq Rq' Uq'" : puzzle.startsWith('gear') ? "R R'" : "R U R' U'";
+    puzzle.startsWith('icosahedron-')?"A_j O_j (A_j O_j)'":puzzle.startsWith('melty-') ? "U U'" : puzzle === 'bagua' ? "U+ R' L' D2 R L U-" : puzzle === 'gear-plain' ? "Rq Uq Rq' Uq'" : puzzle.startsWith('gear') ? "R R'" : "R U R' U'";
   document.querySelector('#status').textContent = 'Ready';
   busy = false;
   refresh(); draw();
