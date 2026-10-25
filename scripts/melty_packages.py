@@ -304,7 +304,10 @@ def realizations(model, digest):
     for asset in diagram['assets'].values():
         asset['vertices'] = [scale(.6, v) for v in asset['vertices']]
     diagram.update(id=model.id+'-port-diagram-v1', kind='articulated-port-diagram')
-    return {model.id+'-euclidean.json': euclidean, model.id+'-port-diagram.json': diagram}
+    from melty_spherical import realization as spherical_realization
+    spherical = spherical_realization(model, euclidean)
+    return {model.id+'-euclidean.json': euclidean, model.id+'-port-diagram.json': diagram,
+            model.id+'-spherical.json': spherical}
 
 
 UNPINNED = '0' * 64

@@ -104,7 +104,8 @@
       "id": "melty-a",
       "realizations": [
         "melty-a-euclidean.json",
-        "melty-a-port-diagram.json"
+        "melty-a-port-diagram.json",
+        "melty-a-spherical.json"
       ],
       "files": [
         "manifest.json"
@@ -114,7 +115,8 @@
       "id": "melty-b",
       "realizations": [
         "melty-b-euclidean.json",
-        "melty-b-port-diagram.json"
+        "melty-b-port-diagram.json",
+        "melty-b-spherical.json"
       ],
       "files": [
         "manifest.json"
@@ -124,7 +126,8 @@
       "id": "melty-c",
       "realizations": [
         "melty-c-euclidean.json",
-        "melty-c-port-diagram.json"
+        "melty-c-port-diagram.json",
+        "melty-c-spherical.json"
       ],
       "files": [
         "manifest.json"
@@ -134,7 +137,8 @@
       "id": "melty-d",
       "realizations": [
         "melty-d-euclidean.json",
-        "melty-d-port-diagram.json"
+        "melty-d-port-diagram.json",
+        "melty-d-spherical.json"
       ],
       "files": [
         "manifest.json"

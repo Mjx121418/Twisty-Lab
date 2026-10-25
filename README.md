@@ -55,6 +55,8 @@ The [Bagua Cube](docs/bagua-model.md) preset adds 146 pieces, exact 45° face tu
 
 Each Melty cube preserves its ray configuration's full symmetry. A and D use the near-face-center orientation; B and C use the smallest angular RMS orientation with one ray per face. These choices determine the actual cut pieces and movement geometry.
 
+Melty opens in **Cube + sphere**, with the same axes and moves in both views. Its spherical model uses the unit-sphere sections of the six cutting planes. In the solved state, each surface point takes the color of its nearest directed ray by angular distance; those colored patches move with the pieces. The port diagram is available in the view picker, and all three realizations are packaged for independent kernel consumers.
+
 The [Gear Cube family](docs/gear-model.md) uses the supplied low-poly meshes. Normal Gear Cube has 6 centers, 8 corners, 12 edge bases, 12 six-tooth pinions, and a fixed internal ball. Extreme and custom variants replace each unchecked edge with the supplied rigid [plain edge](packages/gear-extreme/plain-edge-meshes.json) and share the normal cube's remaining parts. Each variant has one cubic model, one spherical model, and one phase diagram. A supplied spherical assembly provides corresponding geared and plain parts for every configuration, opening in **Cube + sphere** with trackball controls. The C++ interpreter animates carriers and the full 300° local pinion spin; Three.js draws its assets and frames. Euclidean, spherical, and diagram views share state, selection, and history. Continuous spherical gear contacts and coverage remain a [verification goal](docs/gear-model.md#verification).
 
 

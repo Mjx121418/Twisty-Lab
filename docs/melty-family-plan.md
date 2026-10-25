@@ -2,10 +2,30 @@
 
 Status: Melty A–D are implemented for the declared 85°, d=1/3 cube models.
 `scripts/melty_model.py` reconstructs the analytic rays and reviewed placement
-recipes; `scripts/melty_packages.py` generates the prebuilt package and both
+recipes; `scripts/melty_packages.py` generates the prebuilt package and all three
 rigid realizations. The checked-in authoring inputs live in `scripts/data/`;
 generation and runtime have no dependency on the ignored research directory.
 Each package has 27 piece-specific domains, including the fixed internal core.
+
+Each family supplies Euclidean, spherical, and port-diagram realizations. The
+default presentation is **Cube + sphere**; the diagram remains available in
+the view picker. The spherical model intersects the same six cutting halfspaces
+with the unit sphere, then displays the result at radius 2.05. Its six axes,
+rotation frames, and signed motion tracks are identical to the cubic model's.
+Angular Voronoi sectors of the six directed rays color the solved sphere: each
+point takes its nearest ray's corresponding cube-face color. The colored patches
+then move rigidly with their pieces. Smooth radial normals shade the small-circle
+mesh patches; an inner black shell and
+inset colored patches provide visible piece boundaries. The fixed core stays
+inside the sphere. Logical legality still follows the cubic solid model, so a
+cut can look unobstructed on the sphere while being blocked by the full solid.
+Adding this view does not change rule packages, definition pins, or session
+formats. All three realizations are included in the independent SDK.
+
+Before display scaling, each spherical surface patch is a subset of its
+unshrunk cubic piece. A clear volumetric driving cut therefore cannot slice a
+spherical participant or stationary patch. The same origin-centered rotation
+preserves both the sphere and the driving disk throughout a legal twist.
 
 The cube is centered at the common ray origin and oriented to preserve each
 family's complete ray symmetry. A and D use the near-face-center choice of the

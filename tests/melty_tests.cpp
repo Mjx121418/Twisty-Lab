@@ -175,7 +175,7 @@ int main(int argc, char **argv) {
     for (std::size_t i = 0; i + 1 < path.size(); ++i)
       prefix += (i ? " " : "") + path[i];
 
-    for (const auto *name : {"euclidean", "port-diagram"}) {
+    for (const auto *name : {"euclidean", "port-diagram", "spherical"}) {
       const auto text = read(directory + id + "-" + name + ".json");
       GeometryDefinition geometry(execution, text);
       const auto record = execution->encode(*sample).dump();

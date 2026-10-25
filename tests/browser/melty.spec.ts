@@ -15,7 +15,7 @@ for (const family of ['b', 'c', 'd']) test(`Melty ${family.toUpperCase()} suppor
   await expect(page.getByTestId('state-digest')).toHaveText(/^[0-9a-f]{64}$/);
   await page.getByLabel('Puzzle', { exact: true }).selectOption(id);
   await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', `${id}-euclidean-v1`, { timeout: 30_000 });
-  await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-realization-id', `${id}-port-diagram-v1`);
+  await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-realization-id', `${id}-spherical-v1`);
   await page.getByLabel('Animation speed').selectOption('0');
   await page.getByText('Advanced movement list', { exact: true }).click();
   await expect(page.getByRole('button', { name: 'Move D', exact: true })).toHaveAttribute('title', family === 'c' ? '89.709°' : '85.402°');
@@ -93,7 +93,7 @@ test('Melty A supports shape changes, independent cap stops, history and saved s
   await expect(page.getByTestId('state-digest')).toHaveText(/^[0-9a-f]{64}$/);
   await page.getByLabel('Puzzle', { exact: true }).selectOption('melty-a');
   await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', 'melty-a-euclidean-v1', { timeout: 30_000 });
-  await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-realization-id', 'melty-a-port-diagram-v1');
+  await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-realization-id', 'melty-a-spherical-v1');
   await expect(page.locator('canvas')).toHaveCount(2);
   await page.getByLabel('Animation speed').selectOption('0');
   await page.getByText('Advanced movement list', { exact: true }).click();

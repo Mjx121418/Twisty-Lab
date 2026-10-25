@@ -83,20 +83,22 @@ const meltyFiles = import.meta.glob<string>([
   '../../packages/melty-*/package.json',
   '../../packages/melty-*/melty-*-euclidean.json',
   '../../packages/melty-*/melty-*-port-diagram.json',
+  '../../packages/melty-*/melty-*-spherical.json',
 ], { query: '?url', import: 'default', eager: true });
 const meltyLoading = new Map<string, Promise<void>>();
 function loadPreset(preset: Preset): Promise<void> {
   if (!preset.turnAnglesDegrees || preset.source) return Promise.resolve();
   const previous = meltyLoading.get(preset.id);
   if (previous) return previous;
-  const loading = Promise.all(['package', `${preset.id}-euclidean`, `${preset.id}-port-diagram`]
+  const loading = Promise.all(['package', `${preset.id}-euclidean`, `${preset.id}-port-diagram`, `${preset.id}-spherical`]
     .map(async name => {
       const response = await fetch(meltyFiles[`../../packages/${preset.id}/${name}.json`]);
       if (!response.ok) throw new Error(`Could not load ${preset.label} (${response.status}).`);
       return response.text();
     }))
-    .then(([source, cube, diagram]) => {
+    .then(([source, cube, diagram, sphere]) => {
       preset.realizations = [JSON.parse(cube), JSON.parse(diagram)];
+      preset.spherical = JSON.parse(sphere);
       preset.source = source;
     }).catch(error => { meltyLoading.delete(preset.id); throw error; });
   meltyLoading.set(preset.id, loading);
