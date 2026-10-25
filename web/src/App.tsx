@@ -53,7 +53,7 @@ import orbifold333SixRealization from '../../packages/flat-333-6/flat-quotient.j
 import { pieceDestinations, type PieceDestination } from './destinations';
 import { defaultViews, moveView, restoreViews, viewLabels, type ViewId, type ViewSelection } from './viewSelection';
 
-type Preset = { id: string; label: string; source: string; realizations: Realization[]; spherical?: Realization; surface?: boolean; turnAnglesDegrees?: Record<string, number> };
+type Preset = { id: string; label: string; source: string; realizations: Realization[]; spherical?: Realization; surface?: boolean; turnAnglesDegrees?: Record<string, number>; cameraScale?: number };
 type PuzzleView = RenderView | SurfaceView;
 type ViewDefinition = { id: ViewId; realization: Realization; surfaceMode?: 'square' | 'tiles' };
 type MountedView = { view: PuzzleView; realizationId: string; generation: number; cameras: Map<ViewId, unknown> };
@@ -75,7 +75,8 @@ const gearEdges = ['UF', 'UR', 'UB', 'UL', 'DF', 'DR', 'DB', 'DL', 'FR', 'FL', '
 const meltyPresets: Preset[] = Object.entries({
   'melty-a': meltyAManifest, 'melty-b': meltyBManifest, 'melty-c': meltyCManifest, 'melty-d': meltyDManifest,
 }).map(([id, manifest]) => ({ id, label: `Melty ${id.at(-1)!.toUpperCase()} · 85° axes`,
-  source: '', realizations: [], turnAnglesDegrees: manifest.turnAnglesDegrees }));
+  // Melty uses a side-2 cube; the reference cubic camera is framed for side 3.
+  source: '', realizations: [], turnAnglesDegrees: manifest.turnAnglesDegrees, cameraScale: 2/3 }));
 // Fetch prebuilt JSON on selection; URL imports keep large datasets out of
 // JavaScript parsing and minification while retaining Vite's subpath handling.
 const meltyFiles = import.meta.glob<string>([
@@ -284,7 +285,8 @@ export function App() {
         if (!host) continue;
         const view = surfaceMode
           ? new SurfaceView(module, host, session.native, realization, setSelected, () => !busyRef.current, chooseDestination, surfaceMode)
-          : new RenderView(module, host, session.native, realization, setSelected, () => !busyRef.current, chooseDestination);
+          : new RenderView(module, host, session.native, realization, setSelected, () => !busyRef.current, chooseDestination,
+            id === 'cube' ? activePreset.cameraScale : undefined);
         view.restoreCamera(restoredCameras?.get(id) ?? cameras.get(id));
         view.setState(session.stateText());
         mountedViews.current.set(id, { view, realizationId: realization.id, generation, cameras });

@@ -39,6 +39,7 @@ export class RenderView {
     private readonly onPick: (piece: string | undefined) => void,
     private readonly canPick: () => boolean,
     onDestination: (destination: PieceDestination) => void,
+    initialCameraScale = 1,
   ) {
     const geometry = new GeometryInstance(module, session, JSON.stringify(realization));
     this.geometry = geometry;
@@ -55,12 +56,13 @@ export class RenderView {
     this.renderer.domElement.setAttribute('aria-label', this.descriptor.diagram ? 'Port diagram' : this.descriptor.ambientSpace === 'S2' ? 'Spherical puzzle' : 'Euclidean puzzle');
     this.host.dataset.realizationId = this.descriptor.realizationId;
     this.host.append(this.renderer.domElement);
+    const cameraScale = this.descriptor.diagram ? 1 : initialCameraScale;
     if (this.descriptor.diagram) {
       this.camera = new THREE.OrthographicCamera(-6, 6, 4.5, -4.5, 0.1, 100);
       this.camera.position.set(1.5, 0, 15);
     } else {
       this.camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
-      this.camera.position.set(5, 4.2, 6);
+      this.camera.position.set(5, 4.2, 6).multiplyScalar(cameraScale);
     }
     if (this.descriptor.ambientSpace === 'S2') {
       const controls = new TrackballControls(this.camera, this.renderer.domElement);
@@ -77,8 +79,8 @@ export class RenderView {
       this.controls = controls;
     }
     this.controls.target.set(this.descriptor.diagram ? 1.5 : 0, 0, 0);
-    this.controls.minDistance = 5;
-    this.controls.maxDistance = 18;
+    this.controls.minDistance = 5 * cameraScale;
+    this.controls.maxDistance = 18 * cameraScale;
     this.controls.minZoom = 0.6;
     this.controls.maxZoom = 3;
     if (this.controls instanceof TrackballControls) this.alignCameraUp();
