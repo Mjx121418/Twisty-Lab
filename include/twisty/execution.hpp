@@ -3,6 +3,7 @@
 #include "twisty/completion.hpp"
 
 namespace twisty {
+class ControlCatalog;
 // Grouped State/Definition are symbolic presentation and interpreter catalogs.
 // Permission, validity, and goals are evaluated only by the domain-free Program.
 struct CompletedTransition : Transition {
@@ -28,6 +29,7 @@ public:
   Json legal(const State &) const;
   // Available default completions, including candidates rejected by the relation.
   Json candidates(const State &) const;
+  std::shared_ptr<const ControlCatalog> controls() const { return controls_; }
   bool articulated_events() const {
     return articulated_events_;
   }
@@ -38,6 +40,7 @@ private:
   Execution(Json source, Json catalog);
   std::shared_ptr<const Definition> definition_;
   std::shared_ptr<const language::CompiledPuzzle> puzzle_;
+  std::shared_ptr<const ControlCatalog> controls_;
   std::vector<std::vector<Index>> global_of_local_;
   std::vector<Index> local_of_global_;
   std::vector<Index> core_piece_of_display_, display_piece_of_core_;

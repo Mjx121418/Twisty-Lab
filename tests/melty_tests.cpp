@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
     const auto execution = Execution::from_source(read(directory + "package.json"));
     const auto definition = execution->definition();
     const auto manifest = Json::parse(read(directory + "manifest.json"));
-    const auto seed = Json::parse(read("scripts/data/" + id + "-catalog.json"));
+    const auto seed = Json::parse(read("scripts/data/" + id + "-middle-catalog.json"));
     const auto witnesses = Json::parse(read("scripts/data/" + id + "-witnesses.json"));
     const std::string labels = "URFLBD";
     std::map<std::string, std::vector<std::string>> tuples;
@@ -72,12 +72,12 @@ int main(int argc, char **argv) {
                        [&](const auto &piece) { return piece.id == "center/" + labels.substr(i, 1); }) -
           definition->pieces.begin());
     std::vector<State> states;
-    std::vector<std::string> operations;
+    std::vector<std::vector<std::string>> operations;
     states.reserve(witnesses.at("nodes").size());
     operations.reserve(witnesses.at("nodes").size());
-    std::optional<CompletedTransition> paired;
-    Index paired_node = 0;
-    bool paired_only = false;
+    std::optional<CompletedTransition> sample;
+    Index sample_node = 0;
+    std::size_t split_nodes = 0, primitive_steps = 0;
     for (const auto &node : witnesses.at("nodes")) {
       const int parent = node.at(0);
       if (parent < 0) {
@@ -86,7 +86,8 @@ int main(int argc, char **argv) {
         continue;
       }
       const auto &before = states.at(parent);
-      std::string op;
+      auto state = before;
+      std::vector<std::string> steps;
       for (const auto &[g, t] : {std::pair<int, int>{node.at(1), node.at(3)}, {node.at(2), node.at(4)}}) {
         if (g < 0)
           continue;
@@ -98,31 +99,37 @@ int main(int argc, char **argv) {
           if (name[0] == labels[g] && std::abs(value.get<double>() - angle) < 1e-8)
             local = name;
         check(!local.empty(), "Unresolved witness phase");
-        if (!op.empty())
-          op += '+';
-        op += local;
-      }
-      // Supplying the complete tuple also checks that guards are relational,
-      // independently of the default completion policy.
-      const auto plan = execution->plan(before, op, tuples.at(op));
-      check(plan.transition.has_value(),
-            "Rejected reachable witness " + std::to_string(states.size()) + ": " + op);
-      states.push_back(plan.transition->after);
-      operations.push_back(op);
-      if (node.at(2).get<int>() >= 0 && !paired_only) {
-        const auto split = op.find('+');
-        paired_only = !execution->plan(before, op.substr(0, split)).transition &&
-                      !execution->plan(before, op.substr(split + 1)).transition;
-        if (!paired || paired_only) {
-          paired = plan.transition;
-          paired_node = static_cast<Index>(states.size() - 1);
+        // Each old paired witness must now pass through a legal intermediate
+        // state. Supply complete tuples independently of default completion.
+        const auto plan = execution->plan(state, local, tuples.at(local));
+        check(plan.transition.has_value(),
+              "Rejected reachable witness " + std::to_string(states.size()) + ": " + local);
+        if (states.size() % 128 == 0) {
+          const auto inverse = execution->inverse(*plan.transition);
+          check(inverse.transition && inverse.transition->after == state,
+                "Melty inverse changed the complete state");
+        }
+        state = plan.transition->after;
+        steps.push_back(local);
+        ++primitive_steps;
+        if (node.at(2).get<int>() >= 0 && !sample) {
+          sample = plan.transition;
+          sample_node = static_cast<Index>(states.size());
         }
       }
-      if (states.size() % 128 == 0) {
-        const auto inverse = execution->inverse(*plan.transition);
-        check(inverse.transition && inverse.transition->after == before,
-              "Melty inverse changed the complete state");
+      if (steps.size() == 2) {
+        // Opposite cap sweeps are disjoint; both orders have the same endpoint.
+        auto reversed = before;
+        for (auto it = steps.rbegin(); it != steps.rend(); ++it) {
+          auto plan = execution->plan(reversed, *it);
+          check(plan.transition.has_value(), "Reversed independent cap is blocked");
+          reversed = plan.transition->after;
+        }
+        check(reversed == state, "Opposite cap order changed the state");
+        ++split_nodes;
       }
+      states.push_back(std::move(state));
+      operations.push_back(std::move(steps));
     }
     std::set<std::pair<Index, Index>> covered;
     for (const auto &w : witnesses.at("witnesses")) {
@@ -138,31 +145,27 @@ int main(int argc, char **argv) {
           expected.emplace(p, a);
     }
     const Index total = manifest.at("placementCount");
-    const Index unclassified = family == "c" ? 10 : 0;
-    check(covered == expected && covered.size() == total - unclassified && paired.has_value(),
-          "Incomplete placement/paired coverage");
-    if (family != "a")
-      check(manifest.at("unclassifiedPlacements").size() == unclassified, "Unclassified catalog metadata differs");
+    const Index unclassified = manifest.at("unclassifiedPlacements").size();
+    check(covered == expected && covered.size() == total - unclassified && sample.has_value(),
+          "Incomplete placement/split witness coverage");
+    check(manifest.at("stopRule") == "middle-aligned-single-caps", "Wrong local stop rule");
+    Controller controls(execution);
+    check(controls.catalog().at("families").size() == 6, "Melty should expose six independent families");
+    for (const auto &op : definition->operations)
+      check(op.id.find('+') == std::string::npos, "Retained a redundant paired request");
     states.clear();
     Session session(execution), restored(execution);
+    session.lightweight_results(true);
     const auto initial = session.state();
+    std::vector<Index> nodes;
+    for (Index node = sample_node; node != 0; node = witnesses.at("nodes").at(node).at(0))
+      nodes.push_back(node);
+    std::reverse(nodes.begin(), nodes.end());
     std::vector<std::string> path;
-    for (Index node = paired_node; node != 0; node = witnesses.at("nodes").at(node).at(0))
-      path.push_back(operations.at(node));
-    std::reverse(path.begin(), path.end());
-    if (family == "a") {
-      path = {"U_e_inv", "R_e", "U_e", "R_e_inv", "U_c+D_b_inv"};
-      check(session.run("U_e_inv R_e U_e R_e_inv", "transactional", session.revision()).at("status") == "Committed",
-            "Paired prefix failed");
-      check(session.execute("U_c", session.revision()).at("status") == "Blocked",
-            "First partial cap unexpectedly handed off");
-      check(session.execute("D_b_inv", session.revision()).at("status") == "Blocked",
-            "Second partial cap unexpectedly handed off");
-      check(session.execute(path.back(), session.revision()).at("status") == "Committed", "Paired handoff failed");
-    } else {
-      for (const auto &op : path)
-        check(session.execute(op, session.revision()).at("status") == "Committed", "Paired path failed");
-    }
+    for (const auto node : nodes)
+      path.insert(path.end(), operations.at(node).begin(), operations.at(node).end());
+    for (const auto &op : path)
+      check(session.execute(op, session.revision()).at("status") == "Committed", "Independent cap path failed");
     check(restored.load(session.save()).at("status") == "Loaded" && restored.state() == session.state(),
           "Melty replay differs");
     for (std::size_t i = 0; i < path.size(); ++i)
@@ -175,37 +178,45 @@ int main(int argc, char **argv) {
     for (const auto *name : {"euclidean", "port-diagram"}) {
       const auto text = read(directory + id + "-" + name + ".json");
       GeometryDefinition geometry(execution, text);
-      const auto record = execution->encode(*paired).dump();
+      const auto record = execution->encode(*sample).dump();
       const auto animation = geometry.animate(record);
-      const auto target = geometry.frame(encode_state(*definition, paired->after).dump());
-      check(animation.evaluate(1).isometries() == target.isometries(), "Paired geometry endpoint differs");
+      const auto target = geometry.frame(encode_state(*definition, sample->after).dump());
+      check(animation.evaluate(1).isometries() == target.isometries(), "Single-cap geometry endpoint differs");
       for (auto x : animation.evaluate(.5).isometries())
-        check(std::isfinite(x), "Nonfinite paired animation");
+        check(std::isfinite(x), "Nonfinite single-cap animation");
       if (family != "a")
         continue;
       auto model = Json::parse(text);
-      auto table = model.at("operationTrackTables").at("URF");
-      for (auto &entries : table)
-        for (auto &path : entries)
-          path = model.at("rotationTracks").at(path.get<std::string>());
+      Json table=Json::object();
+      const auto d=static_cast<Index>(std::find_if(definition->domains.begin(),definition->domains.end(),
+        [](const auto &d){return d.id=="URF";})-definition->domains.begin());
+      for(const auto &op:definition->operations) {
+        auto &entries=table[op.id]=Json::object();
+        for(const auto &region:model.at("operationTrackTables").at("caps").at(op.id).at("regions")) {
+          const auto &support=definition->operations.at(definition->operation_ids.at(region.at("request")));
+          for(Index q=0;q<definition->domains[d].placements.size();++q) if(support.roles[d][q]==1)
+            entries[definition->domains[d].placements[q].key]=model.at("rotationTracks").at(region.at("path"));
+        }
+      }
       model["componentsByDomain"]["URF"][0]["operationTracks"] = table;
       GeometryDefinition expanded(execution, model.dump());
       check(expanded.animate(record).evaluate(.5).isometries() == animation.evaluate(.5).isometries(),
             "Shared and explicit paths differ");
       model["componentsByDomain"]["URF"][0]["operationTracks"] = "missing";
       rejects([&] { GeometryDefinition bad(execution, model.dump()); });
-      model["componentsByDomain"]["URF"][0]["operationTracks"] = "URF";
-      model["operationTrackTables"]["URF"]["U"]["p0"] = "missing";
+      model["componentsByDomain"]["URF"][0]["operationTracks"] = "caps";
+      model["operationTrackTables"]["caps"]["U"]["regions"][0]["path"] = "missing";
       rejects([&] { GeometryDefinition bad(execution, model.dump()); });
-      model["operationTrackTables"]["URF"]["U"]["p0"] = "U";
-      model["rotationTracks"]["U"][0]["angle"] = .1;
+      model["operationTrackTables"]["caps"]["U"]["regions"][0]["path"] = "U";
+      model["rotationTracks"]["U"]["rate"] = .1;
       rejects([&] { GeometryDefinition bad(execution, model.dump()); });
     }
     std::cout << id << ": " << covered.size() << " witnessed placements, " << unclassified
               << " unclassified memberships, " << operations.size()
-              << " compiled witness nodes, paired handoffs, replay and shared tracks passed\n";
+              << " compiled witness nodes, " << split_nodes << " split paired nodes, " << primitive_steps
+              << " single turns, replay and shared tracks passed\n";
     std::cout << Json{{"family", family}, {"prefix", prefix}, {"operation", path.back()},
-                      {"pairedOnly", paired_only}, {"definitionDigest", definition->digest}}.dump() << '\n';
+                      {"definitionDigest", definition->digest}}.dump() << '\n';
   } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return 1;

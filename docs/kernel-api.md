@@ -2,9 +2,98 @@
 
 The C++ abstract core, compiler, session, and geometric interpreter form the reusable kernel. Native C++ applications and JavaScript/TypeScript applications using WebAssembly consume the same implementation. Renderers and controllers are clients: Three.js, React, Vite, Canvas, camera controls, input gestures, and animation clocks stay outside the kernel.
 
-The current kernel version is `0.5.0`, public API version `5`, and frame-buffer version `1`. Geometry API and pose-buffer versions remain `1`. The runtime accepts package/definition formats 1 and 2, the version-1 Gear factory wrapper, and session schema 2. Version-1 definitions retain their original fingerprints; migrated compact packages receive new pins, so old saves require their matching old definitions. Native consumers rebuild against the new headers; the SDK and WASM runtime must be updated together.
+The current kernel version is `0.6.0`, public API version `6`, and frame-buffer version `1`. Geometry API and pose-buffer versions remain `1`. The runtime accepts package/definition formats 1 and 2, the version-1 Gear factory wrapper, and session schema 2. Version-1 definitions retain their original fingerprints; migrated compact packages receive new pins, so old saves require their matching old definitions. Native consumers rebuild against the new headers; the SDK and WASM runtime must be updated together.
 
 The [puzzle language API](core-language.md), advertised as `languageAPIVersion = 2`, exposes the JSON language and domain-free executor through `Twisty::core`, `Twisty::language`, WASM `Puzzle`, and the TypeScript `Puzzle` adapter. Completion selection and bounded discovery are separate from permission checking. The cube/bandage authoring library is exposed as C++ `language::cube_module()`, WASM `cubeModuleJSON()`, and TypeScript `createCubeSource()`; `authoringLibraries` lists the supported models. `Twisty::symmetry` provides the shared standard-C++ finite-group utilities. Every shipped preset, including Bagua and custom Gear masks, uses the same core through an explicit package adapter. The pure program preview remains separate from the persisted definition format. Current session schemas refer to the standalone state schema; the retired finite-definition schema is not shipped.
+
+## API 6 family controller
+
+`Twisty::controller` is an optional portable library above session/execution.
+`ControlCatalog` is immutable data shared by an execution context; `Controller`
+holds that context and accepts explicit states or live sessions. It owns no UI,
+clock, camera or additional logical state. `controllerAPIVersion` is `1`.
+
+```ts
+const session = new KernelSession(module, packageText);
+const controller = new KernelController(module, session);
+controller.catalog();
+controller.familyState('UF'); // current: {UF: 'a'}, revision, definitionDigest
+controller.destinations('UF', 0, 2); // paginated; maximum 32 destinations
+const intent = {family: 'UF', targets: {UF: 'd'}};
+controller.planTo(intent, session.native.revision()); // pure, returns Planned
+controller.turnTo(intent, session.native.revision()); // one atomic history entry
+controller.dispose();
+session.dispose();
+```
+
+Matching WASM calls are `createController(session)`, `catalogJSON()`,
+`familyStateJSON(session, family)`, `destinationsJSON(session, family, offset, limit)`,
+`planToJSON(session, intentJSON, revision)` and `turnToJSON(...)`. Native typed
+methods use `family_state`, `destinations`, `plan_to`, and `turn_to`. All JSON
+strings/results are owned copies; no controller method exposes a borrowed buffer.
+Dispose a controller before its frontend session wrapper. The native controller
+retains its immutable execution context; a supplied live session must share that
+exact context, including when created by `createSessionFromDefinition`.
+
+Source stops come from placement readers. Requests, complete profile choices,
+path IDs and preferred paths come from optional `catalog.controls` version 1.
+The controller asks the existing permission relation to check the complete tuple
+and verifies its target stops. It does not execute transports directly. Controls
+are independent of optimized core reference-family IDs. Missing metadata yields
+an empty control catalog, leaving existing request APIs available.
+The public catalog contains driver/family descriptors; complete route authoring
+records remain in the canonical definition's binding catalog and are not copied
+to every frontend controller instance. Routes share compiled completion tuples.
+
+Results distinguish `Ready`, `Planned`, `Committed`, `Blocked`, `NoDirectRoute`,
+`NoOp`, `ChoiceRequired`, `Unavailable`, `StaleRevision`, and `Invalid`. A preview
+never changes state/history. Explicit revisions are opaque decimal strings from
+the session; stale plans cannot commit. The controller rechecks the route at
+execution. `ChoiceRequired.paths` lists stable path IDs; supplying `pathId` selects
+one. A current-stop intent is a no-op unless an explicit nontrivial path is given.
+Paired families supply both targets and commit one simultaneous tuple.
+
+`Session::snapshot(SnapshotDetail::StateOnly)` / WASM `stateSnapshotJSON()` / SDK
+`stateSnapshot()` omit `legalRequests` and `candidateRequests`. They retain state,
+digests, revision, solvedness and history information. `lightweightResults(true)`
+configures command results to use this form; explicit full `snapshot()` remains
+available. Controller `turnTo` always returns a lightweight snapshot. Its JSON
+result includes canonical `transitionRecords` for the existing animation API.
+This configuration is presentation-only and is not included in saves or pins.
+
+Helicopter now distinguishes six marked mechanism stops per grip. Physical rules
+and goals project the stop pairs `(a,d)`, `(b,e)`, `(c,f)` onto their original
+classes. Melty controls reuse existing center phases. These packages have new
+definition fingerprints; older saves require their matching older definitions.
+
+## Family motion and transport selectors
+
+Realizations may declare `motionFamilies: {version: 1, families: {...}}`. A family
+contains `axis`, `pivot`, `space: 'world' | 'local'`, and `coordinates`, mapping
+finite stop IDs to radians. A path binding `{family, from, to, winding, rate?}`
+generates the signed angle
+`rate * (coordinates[to] - coordinates[from] + 2*pi*winding)`. It applies to the
+actual source pose. `rate` defaults to 1; it is never inferred from endpoint
+orientation. Fixed-axis subtraction is supported; noncommuting motion retains
+explicit ordered steps. Bindings work in catalog `operationTracks`, articulated
+`rotationTracks`, and inline paths. Declare `family-rotation-generators` as a
+required capability. Signed path limits and endpoint/port certification still
+apply, including pivot restrictions for spherical and planar realizations.
+
+With `transport-path-selectors`, an articulated operation entry may be
+`{kind: 'transport-regions', regions: [{request, path}, ...]}`. Each region uses
+that request's shared transport support in the component's domain and a named
+rotation path. Regions must cover exactly the operation's participants, agree
+with its targets, and agree on full signed paths where they overlap. Validation
+iterates placements without retaining another dense request/placement table.
+Sampling resolves a participating source through the shared transport views.
+Legacy explicit/shared path tables remain supported.
+
+Optional `controlLayout` version 1 appears in the realization and scene descriptor.
+Its `drivers[id].angles` arrays match authored stop order; optional `paths[pathId]`
+records signed display angles by driver. These numbers describe the geometric
+control diagram, not permission. Geometry API 1 and all binary buffer layouts are
+unchanged. Unknown required geometric capabilities are rejected.
 
 ## API 5 placement actions and compact transports
 
@@ -369,7 +458,7 @@ An articulated document is pinned by `compatibleDefinitionDigest` and has:
 
 The optional `shared-rotation-tracks` capability adds two document-local libraries without changing methods, ownership, buffer layouts, or schema version 1. `rotationTracks` maps names to arrays of up to eight rotation steps. A placement path may be a string naming one of these arrays. `operationTrackTables` maps names to complete operation/placement tables; a component's `operationTracks` may be a string naming one of these tables. Names resolve only inside the same realization. Unknown names, missing capability declarations, malformed steps, and incorrect endpoints are rejected. At most 8,192 named paths and 4,096 named tables are accepted. The interpreter checks every referenced path against its exact abstract transport, including different axes for different participants in a paired turn. Components in one domain with identical frames, the same named table, and no declared mesh symmetries share one verified pose table; frame/step limits count that table once. Assets, colors, picking identities, and one output transform per visual part remain independent. Older runtimes must be updated before loading documents requiring this capability; `kernelInfoJSON().geometryCapabilities` advertises support.
 
-Melty A–D are offline-authored packages at `packages/melty-{a,b,c,d}/`, with 1,466 / 1,208 / 1,692 / 2,020 per-piece placements and 492 / 202 / 480 / 978 directed single/paired requests. A retains its original `relational-port-bindings` representation and semantic pin. B–D use existing `relational-articulated-bindings` to share identical local movements; sharing requires both the full transport and the signed driving path to agree at every source placement. Each scoped event certifies that local movement through an explicit representative request, with reciprocal local inverses. Articulated default profiles may have state-dependent availability guards; their selected local movement tuples remain fixed per request. Whole-piece cut blockers, center phases, endpoint handoffs, and solid compatibility remain finite membership/count predicates. C retains ten memberships whose reachability is unresolved alongside 1,682 witnessed placements; its manifest lists them explicitly. The cubic and piece-diagram realizations use shared rotation tracks. The independent SDK includes all four packages and both realizations of each, using the same generic runtime.
+Melty A–D are offline-authored packages at `packages/melty-{a,b,c,d}/`, with 2,320 / 1,474 / 2,721 / 4,303 placements and 72 / 48 / 76 / 108 single-cap requests. Each exposes six independent control families. Local middle alignment permits stops even when the opposite cap obstructs the intersecting full cut; old paired requests are replaced by two single requests with separate history entries. Whole-piece cut blockers, center phases, local alignment and exact solid compatibility compile to existing membership/count predicates. The larger catalogs preserve old placement IDs as prefixes; manifests distinguish witnessed placements from conservative candidates. A uses port bindings; B–D use articulated bindings sharing a local move only when its complete transport and signed driving path agree. Shared generator tracks and transport selectors serve both rigid realizations. This puzzle rule revision changes definition pins; old saves require their matching older definitions. Public APIs and buffer versions are unchanged by this rule revision.
 
 Vertex, axis, pivot, and frame coordinates must be finite and have absolute value at most `Float32.max / 128` (approximately `2.66e36`). This reserves buffer headroom for eight composed pivot rotations and rejects finite doubles that would overflow renderer buffers.
 

@@ -4,11 +4,12 @@
 #include "twisty/completion.hpp"
 #include "twisty/geometry.hpp"
 #include "twisty/session.hpp"
+#include "twisty/controller.hpp"
 
 namespace twisty {
 // API compatibility is independent of puzzle schema and semantic digests.
-inline constexpr int kernel_api_version = 5;
-inline constexpr const char *kernel_version = "0.5.0";
+inline constexpr int kernel_api_version = 6;
+inline constexpr const char *kernel_version = "0.6.0";
 inline Json kernel_info() {
   return {{"apiVersion", kernel_api_version},
           {"version", kernel_version},
@@ -19,6 +20,8 @@ inline Json kernel_info() {
           {"sessionFeatures", {"completed-choices", "shared-definitions"}},
           {"frameBufferVersion", 1},
           {"geometryAPIVersion", 1},
+          {"controllerAPIVersion", 1},
+          {"controllerCapabilities", {"state-backed-phases", "destination-intents", "scoped-previews"}},
           {"poseBufferVersion", 1},
           {"languageAPIVersion", 2},
           {"abstractCapabilities", {"placement-actions", "reference-twist-families", "compact-transports"}},
@@ -33,6 +36,7 @@ inline Json kernel_info() {
           {"geometryCapabilities",
            {"triangle-meshes", "rigid-transforms", "quotient-surface", "quotient-orbifold",
             "shared-geometry-definitions", "shared-rotation-tracks", "space-qualified-poses",
+            "family-rotation-generators", "transport-path-selectors",
             "seekable-animations"}}};
 }
 } // namespace twisty

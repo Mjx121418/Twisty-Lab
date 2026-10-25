@@ -5,8 +5,14 @@ A portable twisty-puzzle kernel with exact C++ rules and interchangeable C++ geo
 The [abstract core](docs/core-language.md#compact-format-version-2) supports finite
 group actions on placement collections and shared reference-based twist families.
 Cube, Bandage, Helicopter, Bagua, Gear, and Melty use compact transports through
-the same native/WASM executor. Kernel API 5 reads formats 1 and 2; migrated
+the same native/WASM executor. Kernel API 6 reads formats 1 and 2; migrated
 packages have new semantic pins.
+
+Helicopter and Melty A–D provide a two-step controller: choose a **Twist family**,
+then select a destination on its angular-stop circle. The current marker comes
+from the exact state. Paired Melty caps use linked circles and one atomic Apply
+action. The **Advanced movement list** retains direct requests. Native and WASM
+frontends can use the same [controller API](docs/kernel-api.md#api-6-family-controller).
 
 The initial release includes a 3×3 cube and a reference bandaged cube with the UF edge and UFR corner fused into one rigid piece. It provides explainable blocking, synchronized views, file-based definition inspection, algorithms, reproducible legal scrambles, undo/redo, and portable saved sessions.
 
@@ -44,7 +50,7 @@ An experimental Helicopter Cube preset adds exact jumbling stops, placement-depe
 
 The [Bagua Cube](docs/bagua-model.md) preset adds 146 pieces, exact 45° face turns, placement-dependent blocking, polygonal stickers and synchronized cube, [sphere](docs/spherical-bagua.md) and port-diagram views. It opens in **Cube + sphere**, retaining all existing pieces and ports. Its [acceptance checks](docs/bagua-model.md#independent-acceptance-targets) cover published pair/kite cycles, blocking and replay fixtures; whole-model human review and a reproducible physical blocked-state comparison remain open. Select **Bagua Cube**; `+` / `−` buttons turn 45°, while face keys turn 90°.
 
-[Melty A, B, C, and D](docs/melty-family-plan.md) cut a cube with six planes orthogonal to four 85° ray configurations. Each has 26 colored pieces and a fixed internal core, with shape changes and whole-piece cut blocking. Face keys usually turn about 85.402°; C's D grip turns about 89.709°. Hover over a move for its signed angle. Buttons containing `+` turn opposite caps together, including handoffs unavailable to either cap alone. The catalogs contain 1,466 / 1,208 / 1,692 / 2,020 per-piece placements for A / B / C / D. All A, B, and D entries have replayed paths from solved; C has 1,682 witnessed entries and ten retained, unclassified memberships. Both the reference app and standalone Canvas SDK example consume prebuilt relational packages and rigid geometry, loaded when selected.
+[Melty A, B, C, and D](docs/melty-family-plan.md) cut a cube with six planes orthogonal to four 85° ray configurations. Each has 26 colored pieces and a fixed internal core, with shape changes and whole-piece cut blocking. Face keys usually turn about 85.402°; C's D grip turns about 89.709°. Each cap can stop when it aligns with the stationary middle, even if the opposite cap blocks the intersecting full cut. Opposite caps turn independently; paired requests are unnecessary. The catalogs contain 2,320 / 1,474 / 2,721 / 4,303 per-piece placements for A / B / C / D, including conservative candidates not yet witnessed from solved. Both the reference app and standalone Canvas SDK example load prebuilt rules and rigid geometry when selected.
 
 The [Gear Cube family](docs/gear-model.md) uses the supplied low-poly meshes. Normal Gear Cube has 6 centers, 8 corners, 12 edge bases, 12 six-tooth pinions, and a fixed internal ball. Extreme and custom variants replace each unchecked edge with the supplied rigid [plain edge](packages/gear-extreme/plain-edge-meshes.json) and share the normal cube's remaining parts. Each variant has one cubic model, one spherical model, and one phase diagram. A supplied spherical assembly provides corresponding geared and plain parts for every configuration, opening in **Cube + sphere** with trackball controls. The C++ interpreter animates carriers and the full 300° local pinion spin; Three.js draws its assets and frames. Euclidean, spherical, and diagram views share state, selection, and history. Continuous spherical gear contacts and coverage remain a [verification goal](docs/gear-model.md#verification).
 

@@ -30,7 +30,8 @@ import gearSphericalText from '../../packages/gear/gear-spherical.json?raw';
 import gearManifest from '../../packages/gear/manifest.json';
 import gearExtremeManifest from '../../packages/gear-extreme/manifest.json';
 import gearPlainManifest from '../../packages/gear-plain/manifest.json';
-import { KernelSession, loadRuntime, type Realization, type Result, type Snapshot, type Transition } from './kernel';
+import { KernelController, KernelSession, loadRuntime, type Realization, type Result, type Snapshot, type Transition, type TurnIntent } from './kernel';
+import { FamilyControls } from './controls/FamilyControls';
 import { RenderView } from './renderer';
 import { SurfaceView } from './surfaceRenderer';
 import torusSource from '../../packages/flat-torus/package.json?raw';
@@ -158,6 +159,8 @@ export function App() {
   const [fatalError, setFatalError] = useState('');
   const [lastScramble, setLastScramble] = useState('');
   const kernel = useRef<KernelSession | undefined>(undefined);
+  const controller = useRef<KernelController | undefined>(undefined);
+  const advanced = useRef(false);
   const views = useRef<PuzzleView[]>([]);
   const mountedViews = useRef(new Map<ViewId, MountedView>());
   const cameraCache = useRef(new Map<ViewId, unknown>());
@@ -181,6 +184,17 @@ export function App() {
   const displayedViews = orderedViews.filter(view => viewSelection.visible.includes(view.id));
   const rhombus = ['rhombus-60','orbifold-333-rhombus'].includes(activePreset?.realizations[0].flatSurface?.chart??'');
 
+  function readSnapshot(session: KernelSession): Snapshot {
+    return controller.current && !advanced.current ? { ...session.stateSnapshot(), legalRequests: [], candidateRequests: [] } : session.snapshot();
+  }
+  function replaceController(runtime: MainModule, session: KernelSession): void {
+    controller.current?.dispose(); controller.current = undefined;
+    const next = new KernelController(runtime, session);
+    if (next.controls.families.length) { controller.current = next; session.lightweightResults(); }
+    else next.dispose();
+    advanced.current = false;
+  }
+
   function install(runtime: MainModule, source: string, id: string): void {
     // Shipped presets replace the current puzzle. Release every old owner
     // before compiling, so large catalogs do not overlap in the bounded WASM
@@ -188,11 +202,15 @@ export function App() {
     if (presets.some(preset => preset.source && preset.source === source)) {
       for (const { view } of mountedViews.current.values()) view.dispose();
       mountedViews.current.clear(); views.current = [];
+      controller.current?.dispose(); controller.current = undefined;
       kernel.current?.dispose(); kernel.current = undefined;
       setSnapshot(undefined);
     }
     const next = new KernelSession(runtime, source);
-    const initial = next.snapshot();
+    epoch.current++; cancelAnimationFrame(animationFrame.current);
+    busyRef.current = false; setBusy(false); setPlaying('');
+    replaceController(runtime, next);
+    const initial = readSnapshot(next);
     const parsedSource = JSON.parse(source);
     if (parsedSource.kind === 'relational-gear-prototypes') {
       setCustomGear(gearPreset(id, id === 'gear-custom' ? 'Gear family · custom' : 'Gear family', source, initial.definitionDigest));
@@ -234,6 +252,7 @@ export function App() {
       alive = false; epoch.current++; cancelAnimationFrame(animationFrame.current);
       for (const { view } of mountedViews.current.values()) view.dispose();
       mountedViews.current.clear(); views.current = [];
+      controller.current?.dispose(); controller.current = undefined;
       kernel.current?.dispose(); kernel.current = undefined;
     };
   }, []);
@@ -292,7 +311,7 @@ export function App() {
     const frame = requestAnimationFrame(() => { timer = setTimeout(() => {
       if (kernel.current !== session || session.native.revision() !== snapshot.revision) return;
       try {
-        const destinations = pieceDestinations(session, snapshot, selected);
+        const destinations = pieceDestinations(session, controller.current ? session.snapshot() : snapshot, selected);
         for (const view of views.current) view.setDestinations(selected, destinations);
       } catch (error: unknown) {
         for (const view of views.current) view.setDestinations(undefined, []);
@@ -338,7 +357,7 @@ export function App() {
     } finally {
       if (epoch.current === token && kernel.current) {
         for (const view of views.current) view.setState(kernel.current.stateText());
-        setVisualDigest(kernel.current.snapshot().stateDigest);
+        setVisualDigest(kernel.current.stateSnapshot().stateDigest);
         busyRef.current = false; setBusy(false); setPlaying('');
         if (progressBar.current) progressBar.current.style.width = '0%';
         drain.current();
@@ -350,14 +369,14 @@ export function App() {
     if (busyRef.current || !kernel.current) return;
     const command = commands.current.shift(); if (!command) return;
     const result = command();
-    setEvidence(result.status === 'Blocked' || result.status === 'Invalid' ? result : undefined);
-    setSnapshot(kernel.current.snapshot());
+    setEvidence(['Blocked', 'Invalid', 'NoDirectRoute'].includes(result.status) ? result : undefined);
+    setSnapshot(readSnapshot(kernel.current));
     if (result.scramble) setLastScramble(result.scramble.notation);
     if (result.transitionRecords?.length) {
       busyRef.current = true; setBusy(true); void animate(result);
     } else {
       for (const view of views.current) view.setState(kernel.current.stateText());
-      setVisualDigest(kernel.current.snapshot().stateDigest);
+      setVisualDigest(kernel.current.stateSnapshot().stateDigest);
       drain.current();
     }
   };
@@ -366,15 +385,22 @@ export function App() {
     if (commands.current.length >= 100) { setEvidence({ status: 'Invalid', diagnostics: [{ reasonCode: 'queue.limit', source: '/commands', message: 'The command queue is full.' }] }); return; }
     commands.current.push(command); drain.current();
   }
+  function turnTo(intent: TurnIntent): void {
+    const active = controller.current, session = kernel.current;
+    if (!active || !session) return;
+    enqueue(() => active === controller.current && session === kernel.current ? active.turnTo(intent) : { status: 'StaleRevision' });
+  }
   function resetPuzzle(): void {
     const current = kernel.current;
     if (!module || !current || busyRef.current) return;
     // Share the compiled definition, including imported/custom puzzles, while
     // starting a fresh controller history. Recreated views retain their cameras.
     const next = new KernelSession(module, current);
+    epoch.current++; cancelAnimationFrame(animationFrame.current);
+    replaceController(module, next);
     kernel.current = next; current.dispose();
     commands.current = [];
-    const initial = next.snapshot();
+    const initial = readSnapshot(next);
     setSnapshot(initial); setVisualDigest(initial.stateDigest);
     setSelected(undefined); setEvidence(undefined); setLastScramble(''); setVisualError('');
     setGeneration((value) => value + 1);
@@ -396,9 +422,8 @@ export function App() {
         const face = event.key.toUpperCase(), inverse = event.shiftKey;
         if (kernel.current?.definition.operations.some((move) => move.id === face)) enqueue(() => {
           const session = kernel.current!;
-          const legal = new Set(session.snapshot().legalRequests.map((request) => request.operation));
           const candidates = session.definition.operations.filter((move) => move.id === face || move.id === `${face}q`);
-          const base = candidates.find((move) => legal.has(inverse ? move.inverse : move.id)) ?? candidates.find((move) => move.id === face)!;
+          const base = candidates.find((move) => session.plan({ operation: inverse ? move.inverse : move.id, parameters: {} }).status === 'Legal') ?? candidates.find((move) => move.id === face)!;
           return session.move(inverse ? base.inverse : base.id);
         });
       }
@@ -429,7 +454,7 @@ export function App() {
     if (file.size > 4 * 1024 * 1024) { setEvidence({ status: 'Invalid', diagnostics: [{ reasonCode: 'document.limit', source: file.name, message: 'Session import is limited to 4 MiB.' }] }); return; }
     const text = await file.text(); const result = kernel.current.load(text);
     if (result.status !== 'Loaded') { setEvidence(result); return; }
-    setSnapshot(kernel.current.snapshot()); setVisualDigest(kernel.current.snapshot().stateDigest); setEvidence(undefined);
+    setSnapshot(readSnapshot(kernel.current)); setVisualDigest(kernel.current.stateSnapshot().stateDigest); setEvidence(undefined);
     for (const view of views.current) view.setState(kernel.current.stateText());
     const presentation = JSON.parse(text).presentation as { cameras?: unknown[] } | undefined;
     if (!presentation) return;
@@ -459,8 +484,7 @@ export function App() {
   // the authority for legality, including blockers on these same requests.
   const candidates = snapshot?.candidateRequests && new Set(snapshot.candidateRequests.map((request) => request.operation));
   const melty = activePreset?.turnAnglesDegrees;
-  const phaseRequests = definition?.operations.filter((operation) => candidates?.has(operation.id) &&
-    (!melty || !operation.id.includes('+') || legal.has(operation.id)));
+  const phaseRequests = definition?.operations.filter((operation) => candidates?.has(operation.id));
   const families = Array.from(new Set(definition?.operations.map((operation) => operation.family) ?? []));
   const faceOrder = activePreset?.surface ? ['A', 'B', 'C', 'D'] : ['U', 'R', 'F', 'D', 'L', 'B'];
   families.sort((a, b) => (faceOrder.includes(a) ? faceOrder.indexOf(a) : 6) - (faceOrder.includes(b) ? faceOrder.indexOf(b) : 6) || a.localeCompare(b));
@@ -545,15 +569,21 @@ export function App() {
           </div>
 
           <section className="commands">
-            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{activePreset?.surface ? `Face keys ${Object.keys(activePreset.realizations[0].flatSurface?.diskCenters??{}).join(' ')} · ${rhombus ? 60 : 90}° turns · Shift for inverse` : snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : snapshot?.puzzleId === 'bagua-experimental-v1' ? '+ / −: 45° · face keys: 90° · Shift for inverse' : melty ? 'Face keys U R F D L B · hover for angles · + joins opposite caps' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
+            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{activePreset?.surface ? `Face keys ${Object.keys(activePreset.realizations[0].flatSurface?.diskCenters??{}).join(' ')} · ${rhombus ? 60 : 90}° turns · Shift for inverse` : snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : snapshot?.puzzleId === 'bagua-experimental-v1' ? '+ / −: 45° · face keys: 90° · Shift for inverse' : melty ? 'Face keys U R F D L B · choose each cap independently · hover for angles' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
+            {controller.current && snapshot && <FamilyControls key={generation} controller={controller.current} revision={snapshot.revision}
+              layout={activePreset?.realizations[0].controlLayout} busy={busy} onTurn={turnTo} />}
+            <details key={`advanced-${generation}`} className="advanced-moves" open={controller.current ? undefined : true} onToggle={event => {
+              advanced.current = event.currentTarget.open;
+              if (kernel.current) setSnapshot(readSnapshot(kernel.current));
+            }}><summary>Advanced movement list</summary>
             <div className="moves">{families.map((family) => <div className={`move-pair ${(phaseRequests?.filter((op) => op.family === family).length ?? 0) > 2 ? 'many-moves' : ''}`} key={family}>{phaseRequests?.filter((operation) => operation.family === family).map((operation) => {
               const inverse = operation.id === `${family}'` || operation.id === `${family}_inv`;
               const half = operation.id === `${family}_half`;
               const angle = melty ? operation.id.split('+').map(id => `${melty[id].toFixed(3)}°`).join(' / ') : undefined;
               return <button key={operation.id} title={angle} aria-label={`Move ${inverse ? `${family} inverse` : half ? `${family} half turn` : operation.id}`} className={!legal.has(operation.id) ? 'may-block' : ''} disabled={!snapshot} onClick={() => enqueue(() => kernel.current!.move(operation.id))}>{inverse ? '′' : half ? `${family}2` : operation.id}</button>;
             })}</div>)}
+            </div></details>
               <div className="history-controls"><button disabled={!snapshot?.canUndo} onClick={() => enqueue(() => kernel.current!.undo())}>↶ Undo</button><button disabled={!snapshot?.canRedo} onClick={() => enqueue(() => kernel.current!.redo())}>↷ Redo</button><button disabled={!snapshot || busy} onClick={resetPuzzle}>Reset puzzle</button></div>
-            </div>
             <div className="algorithm-row"><textarea aria-label="Algorithm" value={algorithm} onChange={(event) => setAlgorithm(event.target.value)} spellCheck={false} rows={2} />
               <div className="algorithm-actions"><select aria-label="Execution policy" value={policy} onChange={(event) => setPolicy(event.target.value)}><option value="interactive">Keep legal prefix</option><option value="transactional">All or nothing</option></select><button className="primary" disabled={!snapshot} onClick={() => { const notation = algorithm, execution = policy; enqueue(() => kernel.current!.run(notation, execution)); }}>Play algorithm →</button></div>
             </div>
@@ -568,7 +598,7 @@ export function App() {
         <aside className="inspector">
           <div className="inspector-header"><span className="eyebrow">LOOK UNDER THE SURFACE</span><h2>Definition inspector</h2><p>Follow a piece from abstract placement to visual part.</p></div>
           <div className="metrics"><div><strong>{definition?.pieces.length ?? '—'}</strong><span>pieces</span></div><div><strong>{definition?.operations.length ?? '—'}</strong><span>primitives</span></div><div><strong>{definition?.symmetry?.members?.length ?? '—'}</strong><span>symmetries</span></div></div>
-          {evidence && <section className="evidence" role="alert" data-testid="blocking-evidence"><span className="eyebrow">{evidence.status === 'Blocked' ? 'MOVE BLOCKED' : 'INVALID INPUT'}</span><h3>{evidence.reasonCode === 'relation.rejected' ? 'The puzzle interaction rules block this move.' : evidence.diagnostics?.[0]?.message ?? evidence.reasonCode}</h3><code>{evidence.reasonCode ?? evidence.diagnostics?.[0]?.reasonCode}</code>{evidence.implicatedPieces?.map((piece) => <button key={piece} onClick={() => setSelected(piece)}>{piece}</button>)}{evidence.evidence !== undefined && <details><summary>Abstract evidence</summary><pre>{JSON.stringify(evidence.evidence, null, 2)}</pre></details>}</section>}
+          {evidence && <section className="evidence" role="alert" data-testid="blocking-evidence"><span className="eyebrow">{evidence.status === 'Blocked' ? 'MOVE BLOCKED' : evidence.status === 'NoDirectRoute' ? 'TURN UNAVAILABLE' : 'INVALID INPUT'}</span><h3>{evidence.reasonCode === 'relation.rejected' ? 'The puzzle interaction rules block this move.' : evidence.reasonCode === 'controls.no_route' ? 'No direct turn is defined between these stops. Choose another target or use the single-cap family.' : evidence.diagnostics?.[0]?.message ?? evidence.reasonCode}</h3><code>{evidence.reasonCode ?? evidence.diagnostics?.[0]?.reasonCode}</code>{evidence.implicatedPieces?.map((piece) => <button key={piece} onClick={() => setSelected(piece)}>{piece}</button>)}{evidence.evidence !== undefined && <details><summary>Abstract evidence</summary><pre>{JSON.stringify(evidence.evidence, null, 2)}</pre></details>}</section>}
           <div className="inspector-tabs">{(['pieces', 'history', 'definition'] as Inspector[]).map((value) => <button key={value} aria-pressed={inspector === value} onClick={() => setInspector(value)}>{value === 'definition' ? 'Source & rules' : value[0].toUpperCase() + value.slice(1)}</button>)}</div>
           {inspector === 'pieces' && <>
             <div className="piece-list">{definition?.pieces.map((piece) => <button key={piece.id} aria-label={`Select ${piece.id}`} aria-pressed={selected === piece.id} onClick={() => setSelected(piece.id)}><span>{piece.id}</span><small>{piece.type}</small></button>)}</div>

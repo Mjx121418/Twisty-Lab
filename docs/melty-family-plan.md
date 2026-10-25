@@ -9,62 +9,78 @@ Each package has 27 piece-specific domains, including the fixed internal core.
 
 | Family | Catalog placements | Witnessed placements | Witness nodes | Directed requests |
 | --- | ---: | ---: | ---: | ---: |
-| A | 1,466 | 1,466 | 6,818 | 492 |
-| B | 1,208 | 1,208 | 766 | 202 |
-| C | 1,692 | 1,682 | 10,587 | 480 |
-| D | 2,020 | 2,020 | 1,667 | 978 |
+| A | 2,320 | 1,466 | 6,818 | 72 |
+| B | 1,474 | 1,208 | 766 | 48 |
+| C | 2,721 | 1,682 | 10,587 | 76 |
+| D | 4,303 | 2,020 | 1,667 | 108 |
 
-C retains ten unclassified memberships, five each on RBD and FLD. They are
-marked in the authoring seed and listed in the package manifest; absence of a
-witness is not treated as proof of unreachability. Every witnessed placement
-replays through the compiled relational program. Pruning is numerical evidence,
-not a formal completeness proof. Sharing cut frames across physical pieces
-remains a storage refinement; complete colored bodies retain their own domains.
+The current stop rule is **middle-aligned single caps**. The driving cut must
+be clear. At the endpoint, some intersecting cut must align across the moving
+cap and stationary middle; the opposite cap may obstruct that full cut. We do
+not require another complete twist to be immediately available. The same local
+alignment is checked at the source to keep inverse requests well-defined on
+imported states; it holds throughout reachable paths.
 
-All four are available in the reference app and independent Canvas SDK example.
-Principal turns are about 85.401744°, except C's D grip at about 89.709219°.
-Additional buttons carry signed angle tooltips, and paired buttons turn
-opposite caps simultaneously. Native tests replay each complete witness graph,
-including paired-only handoffs and blocked individual caps.
-Shared rotation tracks reduce duplicated geometry data without adding an
-abstract opcode or changing public method/buffer versions.
+Opposite caps remain disjoint inside the radius-√3 ball containing every
+rotated piece. Therefore old simultaneous opposite-cap turns can be performed
+as two single-cap turns, in either order. All four packages expose six families,
+with no paired requests. Each cap creates its own undo/history entry. Principal
+turns remain about 85.401744°, except C's D grip at about 89.709219°; the
+controller shows the actual discrete angular stops.
 
-Known limitation: requests currently require an intersecting cut to be free at
-the endpoint. This completed-handoff restriction is stronger than the geometric
-cut-alignment rule. For example, Melty D accepts `U D_e` (F remains free) but
-rejects `U D_e_inv` (only opposite cuts U and D remain free), even though the
-latter has a clear driving cut, catalogued destinations, and a valid assembly.
-Supporting these intermediate discrete states remains follow-up work; the
-current packages retain the handoff restriction.
+The previous production catalogs kept only completed handoffs. Removing that
+restriction needs additional intermediate placements, including a concrete C
+path which escapes its old catalog. The new frozen `*-middle-catalog.json`
+inputs preserve every old placement and rotation ID as a prefix. They were
+selected from the existing finite phase/anchor construction using a relaxation
+that tracks one piece and all six center phases. Other pieces' collisions and
+blockers are omitted during this projection, so candidate placements are a
+conservative superset, not a claim that every entry is reachable. Original
+witnesses cover 1,466 / 1,208 / 1,682 / 2,020 placements; remaining entries are
+marked `reachabilityWitnessed: false` and listed in each manifest. This numerical
+evidence is not a formal completeness proof or an extension to arbitrary
+continuous stops.
 
-B–D use the existing articulated binding format to share local movements only
-when their entire transport and signed rotation path agree. Scoped events and
-reciprocal local inverse bindings preserve the animation and exact witnesses.
-Binary solid exclusions use cardinality bounds, and repeated memberships use
-predicate aliases, within the existing language budgets. A's original package
-and semantic pin are retained. Authoring generation and native validation run
-in separate processes so their graphs do not overlap in memory. The supplied
-WASM heap starts at 32 MiB and can grow to 384 MiB for the larger D catalog.
+Every old witness graph is replayed with paired nodes split into legal single
+steps. Native tests also reverse their order, check inverses, session replay,
+and geometric endpoints. A regression permits D's `U D_e_inv` endpoint even
+though no intersecting full cut is free. Complete-solid collision exclusions
+remain unchanged in meaning: an exact bipartite factoring reconstructs every
+original forbidden pose pair before emitting shared IN/RANGE predicates.
 
-The broader counts below describe the original guarded supersets used in the
-investigation, before the production catalog pruning summarized above. The
-following design and gates record the implementation approach. Remaining
-investigation includes classifying C's ten memberships, independent comparisons
-with physical puzzles, and extending the declared parameters.
+The reference app and standalone Canvas SDK load prebuilt rules and rigid
+geometry. A uses port bindings; B–D share identical articulated local movements
+only when complete transports and signed paths agree. Shared rotation tracks
+and transport selectors avoid dense per-request geometric path catalogs. No
+abstract opcode, API version, buffer layout, mesh complexity, or continuous
+rotation direction changes are needed for the new stop rule. Generation and
+native compilation run in separate processes within the 4 GiB budget.
 
-Implement the offline authoring model first, then ship prebuilt puzzle packages
-through the existing portable kernel. The essential feasibility gate is a
-complete finite catalog of piece placements and center phases. That gate now
-has computer-assisted closure verification for A–D, including paired opposite
-turns, exact rotation identities, and conservative geometric predicate audits.
+Rule-revision checks: all four native witness suites pass, including 1,769 old
+paired nodes checked in both single-turn orders. `python3 tests/melty_middle.py`
+audits 3,000 sampled turns per family and 84,443 geometrically permitted
+destinations without a catalog escape. It visits six additional C placements.
+The separate C regression preserves a concrete 42-turn route to a destination
+missing from the old production catalog. Driving-cut straddling remains blocked
+in regression fixtures for all four families.
 
-The agreed rule is geometric: a twist is available when its cutting plane
-passes between complete pieces. Internal mechanisms impose no additional
-restrictions. Later investigation establishes a complete method for discovering
-next handoff angles and provides complete guarded catalogs for the declared
-model. These are supersets of reachable handoff placements, not claims that
-every entry or combination is reachable. Continuous intermediate turn angles
-are outside the finite logical catalog.
+Despite the larger candidate catalogs, removing paired requests and factoring
+solid exclusions reduces the serialized packages:
+
+| Family | Previous package bytes | Current package bytes |
+| --- | ---: | ---: |
+| A | 5,197,871 | 3,241,842 |
+| B | 2,670,397 | 1,826,165 |
+| C | 5,417,935 | 4,696,489 |
+| D | 9,611,396 | 9,093,436 |
+
+D's standalone language source is 8,124,687 bytes, below the existing 8 MiB
+source limit. No compiler budgets or WASM heap settings were increased.
+
+The following sections record the original investigation. Counts referring to
+4,480 / 2,583 / 4,981 / 7,471 are the broader guarded authoring universes,
+before the current projection. New parameters still require a separate
+feasibility audit; do not silently truncate an unbounded placement space.
 
 ## Model to implement
 
@@ -193,9 +209,9 @@ source configurations; a random-walk sample cannot replace the closure evidence.
 
 Distinguish complete aligned turns from intermediate motion. Arbitrary partial
 rotations are continuous even on a normal cube. Some handoffs require both
-opposite caps to turn before a third grip becomes free. The closure argument
-combines commuting turns of those disjoint caps; production move generation and
-controls must retain these paired handoffs.
+opposite caps to turn before a third full grip becomes free. With the current
+local middle-alignment rule these are two commuting single turns; their
+intermediate state is retained instead of requiring an atomic paired request.
 
 Completion: production generation reproduces the verified catalogs, stable IDs,
 and certificates for the agreed cut-alignment rule. Repeat the feasibility and
@@ -215,10 +231,9 @@ Add `scripts/melty_packages.py` to export the verified finite data:
   over four million edges. Verify that the compact encoding covers exactly the
   original conflicts and stays within compiler limits. Encode center phases and
   piece-to-center phase guards abstractly.
-- Explicit paired opposite-cap requests, with disjoint participant sets, both
-  source/target center phases, and the corresponding two geometric tracks.
-  Verify that existing operation-track formats express these paths before
-  considering any public API change.
+- Single-cap requests with source/target center phases and local middle
+  alignment guards. Split older paired witness steps in both orders and verify
+  that their endpoints agree. Keep one signed rotation track per single turn.
 - Explicit directed operations and inverses, including phase guards and event
   witnesses. Preserve participation when an oriented/marked center's abstract
   endpoint is a self-loop.

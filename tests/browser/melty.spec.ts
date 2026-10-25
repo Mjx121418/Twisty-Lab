@@ -5,10 +5,10 @@ const handoffs = JSON.parse(readFileSync('tests/fixtures/core.json', 'utf8')).ca
   name: string; source: string; prefix: string; operation: string;
 }>;
 
-for (const family of ['b', 'c', 'd']) test(`Melty ${family.toUpperCase()} supports paired handoffs, exact angles and saved history`, async ({ page }) => {
+for (const family of ['b', 'c', 'd']) test(`Melty ${family.toUpperCase()} supports independent opposite caps, exact angles and saved history`, async ({ page }) => {
   test.setTimeout(120_000);
   const id = `melty-${family}`;
-  const fixture = handoffs.find(item => item.source === `packages/${id}/package.json` && item.name.endsWith('aligned opposite caps hand off together'))!;
+  const fixture = handoffs.find(item => item.source === `packages/${id}/package.json` && item.name.endsWith('opposite caps execute separately'))!;
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('./');
@@ -17,6 +17,7 @@ for (const family of ['b', 'c', 'd']) test(`Melty ${family.toUpperCase()} suppor
   await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', `${id}-euclidean-v1`, { timeout: 30_000 });
   await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-realization-id', `${id}-port-diagram-v1`);
   await page.getByLabel('Animation speed').selectOption('0');
+  await page.getByText('Advanced movement list', { exact: true }).click();
   await expect(page.getByRole('button', { name: 'Move D', exact: true })).toHaveAttribute('title', family === 'c' ? '89.709°' : '85.402°');
   const initial = await page.getByTestId('state-digest').textContent();
   await page.getByRole('button', { name: 'Select corner/URF', exact: true }).click();
@@ -29,32 +30,26 @@ for (const family of ['b', 'c', 'd']) test(`Melty ${family.toUpperCase()} suppor
   await page.getByRole('button', { name: 'Play algorithm →' }).click();
   await expect(page.getByTestId('state-digest')).not.toHaveText(initial!);
   await expect(page.getByTestId('app')).toHaveAttribute('data-animating', 'false');
-  const beforePair = await page.getByTestId('state-digest').textContent();
-  for (const partial of fixture.operation.split('+')) {
-    const label = /^[URFDLB]_inv$/.test(partial) ? `${partial[0]} inverse` : partial;
-    await page.getByRole('button', { name: `Move ${label}`, exact: true }).click();
-    await expect(page.getByTestId('blocking-evidence')).toContainText('relation.rejected');
-    await expect(page.getByTestId('state-digest')).toHaveText(beforePair!);
-  }
+  const beforeCap = await page.getByTestId('state-digest').textContent();
   await page.getByRole('button', { name: `Move ${fixture.operation}`, exact: true }).click();
-  await expect(page.getByTestId('state-digest')).not.toHaveText(beforePair!);
+  await expect(page.getByTestId('state-digest')).not.toHaveText(beforeCap!);
   await expect(page.getByTestId('app')).toHaveAttribute('data-animating', 'false');
-  const paired = await page.getByTestId('state-digest').textContent();
+  const completed = await page.getByTestId('state-digest').textContent();
   const downloading = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save session ↗' }).click();
   const saved = await (await downloading).path();
   await page.getByRole('button', { name: '↶ Undo', exact: true }).click();
-  await expect(page.getByTestId('state-digest')).toHaveText(beforePair!);
+  await expect(page.getByTestId('state-digest')).toHaveText(beforeCap!);
   await page.getByRole('button', { name: '↷ Redo', exact: true }).click();
-  await expect(page.getByTestId('state-digest')).toHaveText(paired!);
+  await expect(page.getByTestId('state-digest')).toHaveText(completed!);
   await page.getByRole('button', { name: '↶ Undo', exact: true }).click();
   await page.getByLabel('Open session file').setInputFiles(saved!);
-  await expect(page.getByTestId('state-digest')).toHaveText(paired!);
+  await expect(page.getByTestId('state-digest')).toHaveText(completed!);
   for (const view of ['cube-view', 'diagram-view'])
-    await expect(page.getByTestId(view)).toHaveAttribute('data-state-digest', paired!);
+    await expect(page.getByTestId(view)).toHaveAttribute('data-state-digest', completed!);
   await expect(page.getByRole('alert')).toHaveCount(0);
   expect(errors).toEqual([]);
-  await page.screenshot({ path: `test-results/${id}-paired.png`, fullPage: true });
+  await page.screenshot({ path: `test-results/${id}-independent.png`, fullPage: true });
 });
 
 test('Melty selections refresh endpoint ghosts after rapid selection and state changes', async ({ page }) => {
@@ -65,6 +60,7 @@ test('Melty selections refresh endpoint ghosts after rapid selection and state c
   const cube = page.getByTestId('cube-view');
   await expect(cube).toHaveAttribute('data-realization-id', 'melty-a-euclidean-v1', { timeout: 30_000 });
   await page.getByLabel('Animation speed').selectOption('0');
+  await page.getByText('Advanced movement list', { exact: true }).click();
   const initial = await page.getByTestId('state-digest').textContent();
   await page.getByRole('button', { name: 'Select corner/URF', exact: true }).evaluate(button => {
     (button as HTMLButtonElement).click();
@@ -89,7 +85,7 @@ test('Melty selections refresh endpoint ghosts after rapid selection and state c
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
 
-test('Melty A supports shape changes, paired handoffs, history and saved sessions', async ({ page }) => {
+test('Melty A supports shape changes, independent cap stops, history and saved sessions', async ({ page }) => {
   test.setTimeout(120_000);
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -100,6 +96,7 @@ test('Melty A supports shape changes, paired handoffs, history and saved session
   await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-realization-id', 'melty-a-port-diagram-v1');
   await expect(page.locator('canvas')).toHaveCount(2);
   await page.getByLabel('Animation speed').selectOption('0');
+  await page.getByText('Advanced movement list', { exact: true }).click();
   const initial = await page.getByTestId('state-digest').textContent();
   await expect(page.getByRole('button', { name: 'Move U', exact: true })).toHaveAttribute('title', '85.402°');
   await page.getByRole('button', { name: 'Move U', exact: true }).click();
@@ -110,25 +107,24 @@ test('Melty A supports shape changes, paired handoffs, history and saved session
   await page.getByRole('button', { name: 'Play algorithm →' }).click();
   await expect(page.getByTestId('state-digest')).not.toHaveText(initial!);
   await expect(page.getByTestId('app')).toHaveAttribute('data-animating', 'false');
-  const beforePair = await page.getByTestId('state-digest').textContent();
+  const beforeCap = await page.getByTestId('state-digest').textContent();
   const partial = page.getByRole('button', { name: 'Move U_c', exact: true });
-  await expect(partial).toHaveClass(/may-block/);
   await partial.click();
-  await expect(page.getByTestId('blocking-evidence')).toContainText('relation.rejected');
-  await expect(page.getByTestId('state-digest')).toHaveText(beforePair!);
-  await page.getByRole('button', { name: 'Move U_c+D_b_inv', exact: true }).click();
-  await expect(page.getByTestId('state-digest')).not.toHaveText(beforePair!);
-  const paired = await page.getByTestId('state-digest').textContent();
+  await expect(page.getByTestId('state-digest')).not.toHaveText(beforeCap!);
+  const intermediate = await page.getByTestId('state-digest').textContent();
+  await page.getByRole('button', { name: 'Move D_b_inv', exact: true }).click();
+  await expect(page.getByTestId('state-digest')).not.toHaveText(intermediate!);
+  const completed = await page.getByTestId('state-digest').textContent();
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save session ↗' }).click();
   const saved = (await download);
   await page.getByRole('button', { name: '↶ Undo', exact: true }).click();
-  await expect(page.getByTestId('state-digest')).toHaveText(beforePair!);
+  await expect(page.getByTestId('state-digest')).toHaveText(intermediate!);
   await page.getByLabel('Open session file').setInputFiles((await saved.path())!);
-  await expect(page.getByTestId('state-digest')).toHaveText(paired!);
+  await expect(page.getByTestId('state-digest')).toHaveText(completed!);
   for (const id of ['cube-view', 'diagram-view'])
-    await expect(page.getByTestId(id)).toHaveAttribute('data-state-digest', paired!);
+    await expect(page.getByTestId(id)).toHaveAttribute('data-state-digest', completed!);
   await expect(page.getByRole('alert')).toHaveCount(0);
-  await page.screenshot({ path: 'test-results/melty-a-paired.png', fullPage: true });
+  await page.screenshot({ path: 'test-results/melty-a-independent.png', fullPage: true });
   expect(errors).toEqual([]);
 });

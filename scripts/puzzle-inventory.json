@@ -55,7 +55,13 @@
     "scripts/data/melty-d-catalog.json",
     "scripts/data/melty-d-witnesses.json",
     "scripts/melty_solids.cpp",
-    "src/transports.cpp"
+    "src/transports.cpp",
+    "include/twisty/controller.hpp",
+    "src/controller/catalog.cpp",
+    "scripts/data/melty-a-middle-catalog.json",
+    "scripts/data/melty-b-middle-catalog.json",
+    "scripts/data/melty-c-middle-catalog.json",
+    "scripts/data/melty-d-middle-catalog.json"
   ],
   "puzzles": [
     {

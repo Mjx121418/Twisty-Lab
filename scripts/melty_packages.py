@@ -2,6 +2,7 @@
 """Build the reviewed, fixed-angle Melty A–D packages and rigid realizations."""
 import argparse
 from collections import Counter, defaultdict
+from itertools import product
 import json
 import math
 import multiprocessing
@@ -83,17 +84,14 @@ def module(model, conflicts):
                     if allowed:
                         terms.append({'all': [at(model, p, allowed), at(model, model.centers[i], [s])]})
             invariant.append({'any': terms})
-    # One exclusion clause per forbidden row, rather than a predicate per collision.
-    # The native offline SAT tool checks full solids, including cube outer faces.
-    rows = defaultdict(list)
-    for (p, a, r), entries in sorted(conflicts.items()):
-        rows[p, r, tuple(entries)].append(a)
-    for (p, r, entries), poses in sorted(rows.items()):
-        a, b = at(model, p, poses), at(model, r, entries)
-        # Preserve A's canonical source. New members express mutual exclusion
-        # directly as a cardinality bound to fit the existing compiler budget.
-        invariant.append({'implies': [a, {'not': b}]} if model.family == 'A' else
-                         {'count': dict(min=0, max=1, of=[a, b])})
+    # Factor exact complete-solid exclusions before serialization. This changes
+    # storage only; every original conflicting pose pair remains excluded.
+    from melty_guards import exclusion_groups, bits
+    for (p, poses), neighbors in exclusion_groups(model, conflicts):
+        a=at(model,p,bits(poses))
+        terms=[at(model,r,bits(entries)) for r,entries in neighbors]
+        b=terms[0] if len(terms)==1 else {'any':terms}
+        invariant.append({'count':dict(min=0,max=1,of=[a,b])})
     source['invariant'] = {'all': invariant}
 
     def forbidden(name, select):
@@ -106,6 +104,18 @@ def module(model, conflicts):
 
     for i in range(6):
         forbidden('free/'+LABELS[i], lambda p, a, i=i: model.roles[p][a][i] == 'blocked')
+        # A local stop aligns this cap with the stationary middle. The disjoint
+        # opposite cap may still obstruct the same cut on its own side.
+        aligned=[]
+        for k in range(6):
+            if k in (i,OPPOSITE[i]):continue
+            middle='middle/'+LABELS[i]+'/'+LABELS[k]
+            cap='cap/'+LABELS[i]+'/'+LABELS[k]
+            forbidden(middle,lambda p,a,i=i,k=k:model.roles[p][a][i]!='moving' and
+                      model.roles[p][a][OPPOSITE[i]]!='moving' and model.roles[p][a][k]=='blocked')
+            forbidden(cap,lambda p,a,i=i,k=k:model.roles[p][a][i]=='moving' and model.roles[p][a][k]=='blocked')
+            aligned.append({'all':[ref(middle),ref(cap)]})
+        predicates['aligned/'+LABELS[i]]={'any':aligned}
         for d in range(len(model.deltas[i])):
             name = ids[i, d]
             predicates['phase/'+name] = at(model, model.centers[i], [s for s, _ in model.phase_pairs[i][d]])
@@ -122,19 +132,17 @@ def module(model, conflicts):
                                       if abs(a + model.deltas[i][d]) < 1e-10)) for i, d in macro)
         assert inverse_macro in macros
         cuts = tuple(i for i, _ in macro)
-        stationary = 'stationary/' + ''.join(LABELS[i] for i in cuts)
-        handoffs = []
+        assert len(cuts)==1
+        local_stops = []
         for k in range(6):
             if k in (cuts[0], OPPOSITE[cuts[0]]):
                 continue
-            key = stationary + '/' + LABELS[k]
-            if key not in predicates:
-                forbidden(key, lambda p, a, k=k, cuts=cuts:
-                          all(model.roles[p][a][i] != 'moving' for i in cuts) and
-                          model.roles[p][a][k] == 'blocked')
-            handoffs.append({'all': [ref(key)] + [ref('clear/'+ids[i, d]+'/'+LABELS[k]) for i, d in macro]})
+            key='middle/'+LABELS[cuts[0]]+'/'+LABELS[k]
+            local_stops.append({'all':[ref(key)]+[ref('clear/'+ids[i,d]+'/'+LABELS[k]) for i,d in macro]})
         phase = {'all': [ref('phase/'+ids[i, d]) for i, d in macro]}
-        clauses = [phase, {'any': handoffs}]
+        # Source alignment is inherited along reachable paths; spelling it out
+        # also gives the inverse the same contract for imported assignments.
+        clauses = [phase,ref('aligned/'+LABELS[cuts[0]]),{'any':local_stops}]
         for i, d in macro:
             clauses += [ref('free/'+LABELS[i]), ref('mapped/'+ids[i, d])]
         choices = {}
@@ -172,7 +180,21 @@ def module(model, conflicts):
                                        for a, b, i, d in motion))
                 inverses[local] = local_moves[p][inverse]
             catalog['moveInverses'][domain['id']] = inverses
-        share_atoms(source)
+    share_atoms(source)
+    controls = dict(version=1,drivers=[],families=[])
+    for i,label in enumerate(LABELS):
+        controls['drivers'].append(dict(id=label,piece=piece_id(model.pieces[model.centers[i]]),
+            stops=[str(s) for s in range(len(model.phases[i]))],
+            placements={'p'+str(s):str(s) for s in range(len(model.phases[i]))}))
+    families={}
+    for macro in macros:
+        cuts=[LABELS[i] for i,d in macro]
+        family=families.setdefault('+'.join(cuts),dict(id='+'.join(cuts),drivers=cuts,routes=[]))
+        for pairs in product(*(model.phase_pairs[i][d] for i,d in macro)):
+            family['routes'].append({'from':[str(s) for s,t in pairs],'to':[str(t) for s,t in pairs],
+                                      'request':macro_id(macro)})
+    controls['families']=list(families.values())
+    catalog['controls']=controls
     return source, catalog
 
 
@@ -196,7 +218,7 @@ def share_atoms(source):
     collect(source)
     shared = {}
     for key in sorted(counts):
-        name = 'atom/'+str(len(shared))
+        name = 'v'+str(len(shared))
         reference = json.dumps(ref(name), separators=(',', ':'))
         if len(key)*counts[key] > len(key)+len(name)+4+len(reference)*counts[key]:
             shared[key] = name
@@ -233,28 +255,20 @@ def realizations(model, digest):
     ids = names(model)
     assets, components, tables, paths = {}, {}, {}, {}
     for (i, d), name in ids.items():
-        axis = model.axes[i]
-        paths[name] = [dict(axis=[axis[0], axis[2], axis[1]], pivot=[0., 0., 0.],
-                           angle=-model.deltas[i][d], space='world')]
+        s,t=model.phase_pairs[i][d][0]
+        paths[name] = {'family':LABELS[i],'from':str(s),'to':str(t),
+                      'winding':round((-model.deltas[i][d]+model.phases[i][t]-model.phases[i][s])/math.tau)}
     for p, (piece, cell) in enumerate(zip(model.pieces, model.cells)):
         domain = piece['id']
         resting = {}
         for a, pose in enumerate(piece['placements']):
             w, x, y, z = model.rotations[pose['rotation']]
             resting['p'+str(a)] = frame((w, -x, -z, -y))
-        table = {}
-        for macro in model.macros():
-            op = '+'.join(ids[part] for part in macro)
-            entries = {}
-            for i, d in macro:
-                entries.update({'p'+str(a): ids[i, d] for a in model.maps[i, d][p]})
-            table[op] = entries
-        tables[domain] = table
         center = scale(1/len(cell['vertices']), tuple(sum(v[j] for v in cell['vertices']) for j in range(3)))
         body = [[add(center, scale(.992, sub(v, center))) for v in f['vertices']] for f in cell['faces']]
         assets[domain+'/body'] = mesh(body)
         components[domain] = [dict(id='body', role='body', meshAssetId=domain+'/body',
-                                    placementFrames=resting, operationTracks=domain)]
+                                    placementFrames=resting, operationTracks='caps')]
         for face in cell['faces']:
             if face['plane'] >= 6:
                 continue
@@ -266,11 +280,19 @@ def realizations(model, digest):
             asset = domain+'/port-'+port
             assets[asset] = mesh([sticker])
             components[domain].append(dict(id='port-'+port, role='port', portId=port, meshAssetId=asset,
-                                           placementFrames=resting, operationTracks=domain))
+                                           placementFrames=resting, operationTracks='caps'))
+    tables['caps']={'+'.join(ids[part] for part in macro):dict(kind='transport-regions',regions=[
+        dict(request=ids[part],path=ids[part]) for part in macro]) for macro in model.macros()}
     common = dict(schemaVersion=1, compatibleDefinitionDigest=digest,
-                  requiredCapabilities=['triangle-meshes', 'rigid-transforms', 'shared-rotation-tracks'],
+                  requiredCapabilities=['triangle-meshes', 'rigid-transforms', 'shared-rotation-tracks', 'family-rotation-generators','transport-path-selectors'],
                   assets=assets, componentsByDomain=components, rotationTracks=paths, operationTrackTables=tables,
                   fidelity='literal-six-plane-cut-cube')
+    common['motionFamilies']=dict(version=1,families={LABELS[i]:dict(axis=[axis[0],axis[2],axis[1]],
+        pivot=[0,0,0],space='world',coordinates={str(s):-angle for s,angle in enumerate(model.phases[i])})
+        for i,axis in enumerate(model.axes)})
+    common['controlLayout']=dict(version=1,drivers={LABELS[i]:dict(angles=phases) for i,phases in enumerate(model.phases)})
+    common['controlLayout']['paths']={'+'.join(ids[i,d] for i,d in macro):{LABELS[i]:model.deltas[i][d] for i,d in macro}
+                                    for macro in model.macros()}
     euclidean = dict(common, id=model.id+'-euclidean-v1', kind='articulated-euclidean')
     # A grid of rigid piece views makes every colored surface inspectable. It
     # shares the same rotations, rules, and signed tracks as the physical cube.
@@ -308,8 +330,7 @@ def generate(family, directory):
         requestCount=len(source['requests']), witnessCheck=witnesses,
         phaseAnglesDegrees={LABELS[i]: [math.degrees(a) for a in angles] for i, angles in enumerate(model.phases)},
         turnAnglesDegrees={name: math.degrees(model.deltas[i][d]) for (i,d), name in names(model).items()})
-    if family != 'A':
-        manifest.update(family=family, witnessedPlacementCount=witnesses['placements'],
+    manifest.update(family=family, stopRule='middle-aligned-single-caps', witnessedPlacementCount=witnesses['placements'],
             unclassifiedPlacements=[dict(piece=piece_id(piece), placement=piece['id']+'/p'+str(a))
                 for piece in model.pieces for a, pose in enumerate(piece['placements'])
                 if not pose.get('reachabilityWitnessed', True)])

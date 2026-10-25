@@ -391,6 +391,8 @@ test('imports independent type/domain IDs and named operations without visual su
 
 test('imports the Helicopter model, animates both views, and explains jumbling blockers', async ({ page }) => {
   await page.getByLabel('Import definition file').setInputFiles('packages/helicopter/package.json');
+  await expect(page.getByLabel('Twist family', { exact: true })).toBeVisible();
+  await page.getByText('Advanced movement list', { exact: true }).click();
   await expect(page.getByRole('button', { name: 'Move UF_ab', exact: true })).toBeVisible();
   await expect(page.getByRole('alert')).toHaveCount(0);
   await expect(page.locator('canvas')).toHaveCount(2);
@@ -449,6 +451,7 @@ test('realizes Helicopter jumbling on a sphere with shared blocking, picking and
   const sphere = page.getByLabel('Spherical puzzle', { exact: true });
   await expect(sphere).toBeVisible();
   await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-realization-id', 'helicopter-spherical-v1');
+  await page.getByText('Advanced movement list', { exact: true }).click();
   await resting(page);
   const initial = await page.getByTestId('state-digest').textContent();
   await page.screenshot({ path: 'test-results/helicopter-spherical-solved.png', fullPage: true });

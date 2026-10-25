@@ -9,14 +9,24 @@ struct GeometryRotation {
   GeometryPoint axis, pivot;
   double angle;
   bool local;
+  bool operator==(const GeometryRotation &) const = default;
 };
+void validate_motion_families(const Json &realization);
+GeometryRotation family_rotation(const Json &realization, const Json &binding);
 struct GeometryTrack {
   // A uniform path or placement-indexed shared paths, never both.
   double extent_hint = 0;
   std::vector<GeometryRotation> uniform;
   std::vector<Index> placement_paths;
   std::shared_ptr<const std::vector<std::vector<GeometryRotation>>> path_library;
+  struct Region { TransportRoles support; Index path; };
+  std::vector<Region> regions;
   const std::vector<GeometryRotation> &at(Index q) const {
+    if (!regions.empty()) {
+      for (const auto &region : regions)
+        if (region.support[q] == 1) return path_library->at(region.path);
+      return path_library->at(0);
+    }
     return placement_paths.empty() ? uniform : path_library->at(placement_paths.at(q));
   }
 };

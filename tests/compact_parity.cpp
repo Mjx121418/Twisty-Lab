@@ -23,34 +23,62 @@ int main(int argc, char **argv) {
     if (argc != 2)
       throw std::runtime_error("Expected baseline fixture");
     auto baseline = Json::parse(read(argv[1]));
-    std::size_t checks = 0;
+    std::size_t checks = 0, extended_rows = 0, retired_pairs = 0;
     for (const auto &fixture : baseline) {
       auto name = fixture.at("package").get<std::string>();
       const auto source =
           Json::parse(read(std::string(PROJECT_ROOT) + "/packages/" + name + "/puzzle.pzl.json"));
       auto puzzle = language::compile(source);
       const auto &bindings = puzzle.bindings;
+      const bool melty = name.starts_with("melty-");
       Index offset = 0;
       for (Index d = 0; d < fixture.at("domains").size(); ++d) {
         const auto &expected = fixture.at("domains")[d];
-        check(expected.at("placements") == source.at("domains")[d].at("placements"),
-              name + ": changed placement identities");
-        check(expected.at("moves").size() == source.at("domains")[d].at("moves").size(),
+        const auto &current = source.at("domains")[d].at("placements");
+        const bool lifted = name == "helicopter" && expected.at("id") == "mechanism";
+        check(melty ? current.size() >= expected.at("placements").size() &&
+                   std::equal(expected.at("placements").begin(), expected.at("placements").end(), current.begin()) :
+              lifted ? current.size() == 2 * expected.at("placements").size() : expected.at("placements") == current,
+              name + ": changed placement identities outside declared phase refinement");
+        std::map<std::string,Index> old_ids;
+        for(Index q=0;q<expected.at("placements").size();++q)
+          old_ids.emplace(expected.at("placements")[q].get<std::string>(),q);
+        const auto project = [&](Index q) {
+          auto key=current.at(q).get<std::string>();
+          if(lifted && key.back()>='d' && key.back()<='f') key.back()-=3;
+          check(old_ids.contains(key),"Phase projection lost an old placement");
+          return old_ids.at(key);
+        };
+        check(melty || expected.at("moves").size() == source.at("domains")[d].at("moves").size(),
               name + ": changed movement choices");
-        const auto n = static_cast<Index>(expected.at("placements").size());
+        const auto n = static_cast<Index>(current.size());
         for (Index m = 0; m < expected.at("moves").size(); ++m) {
           const auto &move = expected.at("moves")[m];
-          const auto &actual = source.at("domains")[d].at("moves")[m];
+          if (melty && move.at("id").get<std::string>().find('+') != std::string::npos) {
+            ++retired_pairs;
+            continue;
+          }
+          const auto &moves = source.at("domains")[d].at("moves");
+          auto found = std::find_if(moves.begin(), moves.end(), [&](const auto &x) {return x.at("id") == move.at("id");});
+          check(found != moves.end(), name + ": lost a single-cap choice");
+          const auto index = static_cast<Index>(found - moves.begin());
+          const auto &actual = *found;
           check(actual.at("id") == move.at("id") && actual.at("event") == move.at("event"),
                 name + ": changed choice/event");
           std::map<Index, Index> rows;
           for (const auto &r : move.at("rows"))
             rows[r[0].get<Index>()] = r[1].get<Index>();
-          const auto map = bindings.move_maps[d][m + 1];
-          for (Index q = 0; q < n; ++q) {
+          const auto map = bindings.move_maps[d][index + 1];
+          for (Index q = 0; q < (melty ? expected.at("placements").size() : n); ++q) {
             const auto to = puzzle.program.transport(map, offset + q);
-            const auto wanted = rows.contains(q) ? std::optional<Index>{offset + rows[q]} : std::nullopt;
-            check(to == wanted, name + "/" + expected.at("id").get<std::string>() + "/" +
+            if (melty && !rows.contains(q)) {
+              if (to) ++extended_rows;
+              continue;
+            }
+            const auto old_q=project(q);
+            const auto wanted = rows.contains(old_q) ? std::optional<Index>{rows[old_q]} : std::nullopt;
+            const auto projected = to ? std::optional<Index>{project(*to-offset)} : std::nullopt;
+            check(projected == wanted, name + "/" + expected.at("id").get<std::string>() + "/" +
                                     move.at("id").get<std::string>() +
                                     ": transport or participation differs at " + std::to_string(q));
             ++checks;
@@ -58,7 +86,7 @@ int main(int argc, char **argv) {
         }
         offset += n;
       }
-      std::cout << name << ": exact transport parity; compact payload "
+      std::cout << name << (melty ? ": retained single-cap rows agree; expanded catalog payload " : name == "helicopter" ? ": phase-projected transport parity; compact payload " : ": exact transport parity; compact payload ")
                 << puzzle.program.transport_storage_bytes() << " bytes\n";
       if (fixture.contains("compatibility")) {
         const auto &old = fixture.at("compatibility");
@@ -75,7 +103,8 @@ int main(int argc, char **argv) {
               "Version-1 replay failed");
       }
     }
-    std::cout << checks << " exact source/target/participation comparisons passed\n";
+    std::cout << checks << " source/target/participation comparisons passed (Helicopter uses phase projection)\n"
+              << extended_rows << " additional Melty rows; " << retired_pairs << " retired paired choices\n";
   } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return 1;

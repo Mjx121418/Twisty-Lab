@@ -18,7 +18,10 @@ int main(int argc, char **argv) {
     twisty::Session session(read(argv[1]));
     twisty::GeometryDefinition geometry(session.execution(), read(argv[2]));
     auto drawing = geometry.project(geometry.frame(session.state_json()));
-    const auto result = session.run(argv[3], "transactional", session.revision());
+    const auto result = argv[3][0] == '{'
+                            ? twisty::Controller(session.execution())
+                                  .turn_to(session, twisty::Json::parse(argv[3]), session.revision())
+                            : session.run(argv[3], "transactional", session.revision());
     if (result.at("status") != "Committed")
       throw std::runtime_error(result.dump());
     for (const auto &transition : result.at("transitions")) {

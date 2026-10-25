@@ -301,6 +301,12 @@ void GeometryCompiler::build_catalog(const Json &realization) {
       "/angularStops", "Clockwise stops must be finite, distinct, and sorted within one revolution.");
   for (const auto &operation : definition_->operations) {
     const auto &track = realization.at("operationTracks").at(operation.id);
+    if(track.contains("family")) {
+      const auto r=family_rotation(realization,track);
+      ensure(!r.local && r.pivot==Point{0,0,0}, operation.id, "Catalog families require world rotations about the origin.");
+      tracks_.push_back({r.axis,r.angle});
+      continue;
+    }
     const auto from = track.at("fromStop").get<int>(), to = track.at("toStop").get<int>();
     ensure(from >= 0 && static_cast<std::size_t>(from) < stops.size() && to >= 0 &&
                static_cast<std::size_t>(to) < stops.size(),

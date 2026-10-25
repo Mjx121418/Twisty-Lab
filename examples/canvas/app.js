@@ -13,7 +13,7 @@ let session, geometry, descriptor, positions, indices, transforms;
 let busy = false, selected, blocked = [], hits = [];
 let installEpoch = 0;
 const assets = new Map();
-const supported = new Set(['triangle-meshes', 'rigid-transforms', 'quotient-surface', 'quotient-orbifold', 'shared-rotation-tracks']);
+const supported = new Set(['triangle-meshes', 'rigid-transforms', 'quotient-surface', 'quotient-orbifold', 'shared-rotation-tracks', 'family-rotation-generators', 'transport-path-selectors']);
 const identity = () => [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 function multiply(a,b) {
   const out=Array(16).fill(0);

@@ -64,7 +64,7 @@
     },
     {
       "source": "packages/helicopter/package.json",
-      "definitionDigest": "b4d6235aa22b09b9b4c41286a7de1cfc871bd46cdf0969d6d02091f9f0e7e5db",
+      "definitionDigest": "3316576c068683ae1c3e0cf6d888297e1830abf23d59f7f7bc40f53d25a1f3a3",
       "name": "Helicopter jumble stop is legal",
       "prefix": "",
       "operation": "UF_ab",
@@ -72,7 +72,7 @@
     },
     {
       "source": "packages/helicopter/package.json",
-      "definitionDigest": "b4d6235aa22b09b9b4c41286a7de1cfc871bd46cdf0969d6d02091f9f0e7e5db",
+      "definitionDigest": "3316576c068683ae1c3e0cf6d888297e1830abf23d59f7f7bc40f53d25a1f3a3",
       "name": "Helicopter stop guard rejects wrong source",
       "prefix": "UF_ab",
       "operation": "UF_ac",
@@ -87,7 +87,7 @@
     },
     {
       "source": "packages/helicopter/package.json",
-      "definitionDigest": "b4d6235aa22b09b9b4c41286a7de1cfc871bd46cdf0969d6d02091f9f0e7e5db",
+      "definitionDigest": "3316576c068683ae1c3e0cf6d888297e1830abf23d59f7f7bc40f53d25a1f3a3",
       "name": "Helicopter face piece blocks a cut",
       "prefix": "UF_ab",
       "operation": "UR_ad",
@@ -97,7 +97,7 @@
     },
     {
       "source": "packages/helicopter/package.json",
-      "definitionDigest": "b4d6235aa22b09b9b4c41286a7de1cfc871bd46cdf0969d6d02091f9f0e7e5db",
+      "definitionDigest": "3316576c068683ae1c3e0cf6d888297e1830abf23d59f7f7bc40f53d25a1f3a3",
       "name": "Helicopter second jumble stop is legal",
       "prefix": "UF_ab",
       "operation": "UL_af",
@@ -211,33 +211,31 @@
       "prefix": "",
       "operation": "U",
       "expectedStatus": "Committed",
-      "definitionDigest": "848e5bd062acbc0a7849278e4baaaf9fc834f798228c57ad7a6660c7c2bfcadb"
+      "definitionDigest": "8e029f9a920e99c128669bc4a21a858b539b451cf039174645351852c172995c"
     },
     {
-      "name": "Melty A aligned opposite caps hand off together",
+      "name": "Melty A opposite caps execute separately",
       "source": "packages/melty-a/package.json",
-      "prefix": "U_e_inv R_e U_e R_e_inv",
-      "operation": "U_c+D_b_inv",
+      "prefix": "U_e_inv R_e U_e R_e_inv U_c",
+      "operation": "D_b_inv",
       "expectedStatus": "Committed",
-      "definitionDigest": "848e5bd062acbc0a7849278e4baaaf9fc834f798228c57ad7a6660c7c2bfcadb"
+      "definitionDigest": "8e029f9a920e99c128669bc4a21a858b539b451cf039174645351852c172995c"
     },
     {
-      "name": "Melty A first partial cap has no handoff",
+      "name": "Melty A first partial cap aligns with the middle",
       "source": "packages/melty-a/package.json",
       "prefix": "U_e_inv R_e U_e R_e_inv",
       "operation": "U_c",
-      "expectedStatus": "Blocked",
-      "definitionDigest": "848e5bd062acbc0a7849278e4baaaf9fc834f798228c57ad7a6660c7c2bfcadb",
-      "reasonCode": "relation.rejected"
+      "expectedStatus": "Committed",
+      "definitionDigest": "8e029f9a920e99c128669bc4a21a858b539b451cf039174645351852c172995c"
     },
     {
-      "name": "Melty A second partial cap has no handoff",
+      "name": "Melty A second partial cap aligns with the middle",
       "source": "packages/melty-a/package.json",
       "prefix": "U_e_inv R_e U_e R_e_inv",
       "operation": "D_b_inv",
-      "expectedStatus": "Blocked",
-      "definitionDigest": "848e5bd062acbc0a7849278e4baaaf9fc834f798228c57ad7a6660c7c2bfcadb",
-      "reasonCode": "relation.rejected"
+      "expectedStatus": "Committed",
+      "definitionDigest": "8e029f9a920e99c128669bc4a21a858b539b451cf039174645351852c172995c"
     },
     {
       "name": "Melty B principal turn",
@@ -245,33 +243,31 @@
       "operation": "U",
       "expectedStatus": "Committed",
       "source": "packages/melty-b/package.json",
-      "definitionDigest": "686e4714ee0ff3cc5ecf4dfceb11a57a1e22dca23c3b19681aa0f42bb9c69760"
+      "definitionDigest": "2440eb9e84e993d80d45e2535b0e1b836c96051f37c74441e02b239c3ef87339"
     },
     {
-      "name": "Melty B aligned opposite caps hand off together",
-      "prefix": "U_e L F_inv L_inv U_c",
-      "operation": "F+B",
+      "name": "Melty B opposite caps execute separately",
+      "prefix": "U_e L F_inv L_inv U_c F",
+      "operation": "B",
       "expectedStatus": "Committed",
       "source": "packages/melty-b/package.json",
-      "definitionDigest": "686e4714ee0ff3cc5ecf4dfceb11a57a1e22dca23c3b19681aa0f42bb9c69760"
+      "definitionDigest": "2440eb9e84e993d80d45e2535b0e1b836c96051f37c74441e02b239c3ef87339"
     },
     {
-      "name": "Melty B partial cap F has no handoff",
+      "name": "Melty B partial cap F aligns with the middle",
       "prefix": "U_e L F_inv L_inv U_c",
       "operation": "F",
-      "expectedStatus": "Blocked",
-      "reasonCode": "relation.rejected",
+      "expectedStatus": "Committed",
       "source": "packages/melty-b/package.json",
-      "definitionDigest": "686e4714ee0ff3cc5ecf4dfceb11a57a1e22dca23c3b19681aa0f42bb9c69760"
+      "definitionDigest": "2440eb9e84e993d80d45e2535b0e1b836c96051f37c74441e02b239c3ef87339"
     },
     {
-      "name": "Melty B partial cap B has no handoff",
+      "name": "Melty B partial cap B aligns with the middle",
       "prefix": "U_e L F_inv L_inv U_c",
       "operation": "B",
-      "expectedStatus": "Blocked",
-      "reasonCode": "relation.rejected",
+      "expectedStatus": "Committed",
       "source": "packages/melty-b/package.json",
-      "definitionDigest": "686e4714ee0ff3cc5ecf4dfceb11a57a1e22dca23c3b19681aa0f42bb9c69760"
+      "definitionDigest": "2440eb9e84e993d80d45e2535b0e1b836c96051f37c74441e02b239c3ef87339"
     },
     {
       "name": "Melty C principal turn",
@@ -279,33 +275,31 @@
       "operation": "U",
       "expectedStatus": "Committed",
       "source": "packages/melty-c/package.json",
-      "definitionDigest": "e75770a0f9819f5fe3f79f5af174bea1f6d97b86366e938ec3f35d6a5d456dd2"
+      "definitionDigest": "cf2efa80084991e8e304e272ac0e8ec76da184734882cc28930796d588c17e7b"
     },
     {
-      "name": "Melty C aligned opposite caps hand off together",
-      "prefix": "U_c B_g_inv U_e",
-      "operation": "F+B_d",
+      "name": "Melty C opposite caps execute separately",
+      "prefix": "U_c B_g_inv U_e F",
+      "operation": "B_d",
       "expectedStatus": "Committed",
       "source": "packages/melty-c/package.json",
-      "definitionDigest": "e75770a0f9819f5fe3f79f5af174bea1f6d97b86366e938ec3f35d6a5d456dd2"
+      "definitionDigest": "cf2efa80084991e8e304e272ac0e8ec76da184734882cc28930796d588c17e7b"
     },
     {
-      "name": "Melty C partial cap F has no handoff",
+      "name": "Melty C partial cap F aligns with the middle",
       "prefix": "U_c B_g_inv U_e",
       "operation": "F",
-      "expectedStatus": "Blocked",
-      "reasonCode": "relation.rejected",
+      "expectedStatus": "Committed",
       "source": "packages/melty-c/package.json",
-      "definitionDigest": "e75770a0f9819f5fe3f79f5af174bea1f6d97b86366e938ec3f35d6a5d456dd2"
+      "definitionDigest": "cf2efa80084991e8e304e272ac0e8ec76da184734882cc28930796d588c17e7b"
     },
     {
-      "name": "Melty C partial cap B_d has no handoff",
+      "name": "Melty C partial cap B_d aligns with the middle",
       "prefix": "U_c B_g_inv U_e",
       "operation": "B_d",
-      "expectedStatus": "Blocked",
-      "reasonCode": "relation.rejected",
+      "expectedStatus": "Committed",
       "source": "packages/melty-c/package.json",
-      "definitionDigest": "e75770a0f9819f5fe3f79f5af174bea1f6d97b86366e938ec3f35d6a5d456dd2"
+      "definitionDigest": "cf2efa80084991e8e304e272ac0e8ec76da184734882cc28930796d588c17e7b"
     },
     {
       "name": "Melty D principal turn",
@@ -313,33 +307,83 @@
       "operation": "U",
       "expectedStatus": "Committed",
       "source": "packages/melty-d/package.json",
-      "definitionDigest": "8bc795e8d35f3e7e72a83b3654518349a6b9db98b8709be8c866affdcd623e9e"
+      "definitionDigest": "58978dc488ae25b951e13a0a1cd420046389aa4685fda394a1d8fac9d793c34c"
     },
     {
-      "name": "Melty D aligned opposite caps hand off together",
-      "prefix": "U_g_inv L_g_inv U_g",
-      "operation": "R_e+L_c",
+      "name": "Melty D opposite caps execute separately",
+      "prefix": "U_g_inv L_g_inv U_g R_e",
+      "operation": "L_c",
       "expectedStatus": "Committed",
       "source": "packages/melty-d/package.json",
-      "definitionDigest": "8bc795e8d35f3e7e72a83b3654518349a6b9db98b8709be8c866affdcd623e9e"
+      "definitionDigest": "58978dc488ae25b951e13a0a1cd420046389aa4685fda394a1d8fac9d793c34c"
     },
     {
-      "name": "Melty D partial cap R_e has no handoff",
+      "name": "Melty D partial cap R_e aligns with the middle",
       "prefix": "U_g_inv L_g_inv U_g",
       "operation": "R_e",
-      "expectedStatus": "Blocked",
-      "reasonCode": "relation.rejected",
+      "expectedStatus": "Committed",
       "source": "packages/melty-d/package.json",
-      "definitionDigest": "8bc795e8d35f3e7e72a83b3654518349a6b9db98b8709be8c866affdcd623e9e"
+      "definitionDigest": "58978dc488ae25b951e13a0a1cd420046389aa4685fda394a1d8fac9d793c34c"
     },
     {
-      "name": "Melty D partial cap L_c has no handoff",
+      "name": "Melty D partial cap L_c aligns with the middle",
       "prefix": "U_g_inv L_g_inv U_g",
       "operation": "L_c",
+      "expectedStatus": "Committed",
+      "source": "packages/melty-d/package.json",
+      "definitionDigest": "58978dc488ae25b951e13a0a1cd420046389aa4685fda394a1d8fac9d793c34c"
+    },
+    {
+      "name": "Melty D may stop without a globally free intersecting cut",
+      "source": "packages/melty-d/package.json",
+      "prefix": "U",
+      "operation": "D_e_inv",
+      "expectedStatus": "Committed",
+      "definitionDigest": "58978dc488ae25b951e13a0a1cd420046389aa4685fda394a1d8fac9d793c34c"
+    },
+    {
+      "name": "Melty C intermediate stop uses an expanded placement",
+      "source": "packages/melty-c/package.json",
+      "prefix": "F_inv F_b_inv B_e_inv B_f_inv B_g F_inv R_c_inv F_inv F_inv F_b_inv R_a_inv B_g_inv B_e_inv B_inv R_b F_inv F_inv F F F_b F_c R B_g_inv B B_d B U_e F_b F F_inv F_b_inv F_c_inv F_inv F_b_inv F_inv F_inv L F L_inv U_c F_inv U_e_inv",
+      "operation": "B_e_inv",
+      "expectedStatus": "Committed",
+      "definitionDigest": "cf2efa80084991e8e304e272ac0e8ec76da184734882cc28930796d588c17e7b"
+    },
+    {
+      "name": "Melty A still blocks a straddling driving cut",
+      "source": "packages/melty-a/package.json",
+      "prefix": "U",
+      "operation": "B",
       "expectedStatus": "Blocked",
       "reasonCode": "relation.rejected",
+      "definitionDigest": "8e029f9a920e99c128669bc4a21a858b539b451cf039174645351852c172995c"
+    },
+    {
+      "name": "Melty B still blocks a straddling driving cut",
+      "source": "packages/melty-b/package.json",
+      "prefix": "U",
+      "operation": "B",
+      "expectedStatus": "Blocked",
+      "reasonCode": "relation.rejected",
+      "definitionDigest": "2440eb9e84e993d80d45e2535b0e1b836c96051f37c74441e02b239c3ef87339"
+    },
+    {
+      "name": "Melty C still blocks a straddling driving cut",
+      "source": "packages/melty-c/package.json",
+      "prefix": "U",
+      "operation": "B",
+      "expectedStatus": "Blocked",
+      "reasonCode": "relation.rejected",
+      "definitionDigest": "cf2efa80084991e8e304e272ac0e8ec76da184734882cc28930796d588c17e7b"
+    },
+    {
+      "name": "Melty D still blocks a straddling driving cut",
       "source": "packages/melty-d/package.json",
-      "definitionDigest": "8bc795e8d35f3e7e72a83b3654518349a6b9db98b8709be8c866affdcd623e9e"
+      "prefix": "U",
+      "operation": "R",
+      "expectedStatus": "Blocked",
+      "reasonCode": "relation.rejected",
+      "definitionDigest": "58978dc488ae25b951e13a0a1cd420046389aa4685fda394a1d8fac9d793c34c"
     }
   ]
 }

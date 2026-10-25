@@ -51,6 +51,143 @@
         },
         "version": {
           "const": 1
+        },
+        "controls": {
+          "type": "object",
+          "required": [
+            "version",
+            "drivers",
+            "families"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "version": {
+              "const": 1
+            },
+            "drivers": {
+              "type": "array",
+              "maxItems": 128,
+              "items": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "piece",
+                  "stops",
+                  "placements"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "piece": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "stops": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 128,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "placements": {
+                    "type": "object",
+                    "minProperties": 1,
+                    "additionalProperties": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              }
+            },
+            "families": {
+              "type": "array",
+              "maxItems": 256,
+              "items": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "drivers",
+                  "routes"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "drivers": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 2,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "routes": {
+                    "type": "array",
+                    "maxItems": 131072,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "from",
+                        "to",
+                        "request"
+                      ],
+                      "additionalProperties": false,
+                      "properties": {
+                        "from": {
+                          "type": "array",
+                          "minItems": 1,
+                          "maxItems": 2,
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "to": {
+                          "type": "array",
+                          "minItems": 1,
+                          "maxItems": 2,
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "request": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "profile": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "pathId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "preferred": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       },
       "allOf": [

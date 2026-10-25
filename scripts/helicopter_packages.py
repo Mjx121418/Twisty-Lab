@@ -6,12 +6,48 @@ current portable compiler validates the package before realization pins change.
 """
 import argparse
 from collections import defaultdict
+from copy import deepcopy
 import json
+import math
 from pathlib import Path
 import subprocess
 import tempfile
 
-from helicopter_model import AuthoringModel, ROOT
+from helicopter_model import AuthoringModel, ROOT, GRIPS, matmul
+
+
+def lift_phases(document, model):
+    """Mark the twofold mechanism symmetry without changing occupied solids."""
+    for domain in document['placementDomains']:
+        if not domain['id'].startswith('edge/'):
+            continue
+        axis = GRIPS.index(domain['id'].split('/')[1])
+        base = model.visual_frames[domain['id']+'/a']
+        for phase in range(3, 6):
+            entry = deepcopy(domain['placements'][phase-3])
+            entry['key'] = domain['id']+'/'+'abcdef'[phase]
+            domain['placements'].append(entry)
+            model.visual_frames[entry['key']] = matmul(model.rotations[axis][phase], base)
+    for op in document['operations']:
+        axis = GRIPS.index(op['family'])
+        p, q = map('abcdef'.index, op['id'][-2:])
+        rotation = model.relative[axis][p][q]
+        for domain in document['placementDomains']:
+            if not domain['id'].startswith('edge/'):
+                continue
+            rule = op['placementRules'][domain['id']]
+            original = dict(rule['transports'])
+            frames = {model.visual_frames[e['key']]: e['key'] for e in domain['placements']}
+            rule['transports'] = {}
+            for entry in domain['placements']:
+                key = entry['key']
+                old = key[:-1]+'abc'['abcdef'.index(key[-1]) % 3]
+                if old in original:
+                    target = frames[matmul(rotation, model.visual_frames[key])]
+                    assert target[:-1]+'abc'['abcdef'.index(target[-1]) % 3] == original[old]
+                    rule['transports'][key] = target
+                if key[-1] in 'def' and old in rule['blocked']:
+                    rule['blocked'].append(key)
 
 
 def module(document):
@@ -78,7 +114,8 @@ def module(document):
         event = operation['transport']
         piece, phase = next(iter(operation['pieceGuards'].items()))
         phase_predicate = 'phase/' + phase
-        source['predicates'][phase_predicate] = {'at': dict(piece=piece, placements=[qualified[phase]])}
+        opposite = phase[:-1]+'def'['abc'.index(phase[-1])]
+        source['predicates'][phase_predicate] = {'at': dict(piece=piece, placements=[qualified[phase],qualified[opposite]])}
         blocked_locations = set()
         unavailable = []
         for group, entries in groups.items():
@@ -112,6 +149,18 @@ def module(document):
         # Unavailable sections are frame-verification metadata, never runtime guards.
         catalog['requests'][op] = dict(inverse=operation['inverse'], family=operation['family'],
                                        event=event, profile='turn', unavailablePlacements=sorted(unavailable))
+    source['goal'] = {'all': [dict(at=dict(piece=p['id'], placements=[qualified[p['homePlacement']]] +
+        ([qualified[p['homePlacement'][:-1]+'d']] if p['id'].startswith('mechanism/') else [])))
+        for p in sorted(pieces.values(), key=lambda p:p['id'])]}
+    catalog['controls'] = dict(version=1, drivers=[], families=[])
+    for name in GRIPS:
+        stops = list('abcdef')
+        catalog['controls']['drivers'].append(dict(id=name,piece='mechanism/'+name,stops=stops,
+            placements={f'edge/{name}/{s}':s for s in stops}))
+        routes = [dict(from_=[stops[a]],to=[stops[b]],request=f'{name}_{stops[a%3]}{stops[(b-(3 if a>=3 else 0))%6]}')
+                  for a in range(6) for b in range(6) if a != b]
+        for route in routes: route['from'] = route.pop('from_')
+        catalog['controls']['families'].append(dict(id=name,label=name,drivers=[name],routes=routes))
     return source, catalog
 
 
@@ -122,6 +171,7 @@ def main():
     args = parser.parse_args()
     model = AuthoringModel()
     document = model.definition()
+    lift_phases(document, model)
     source, catalog = module(document)
     from compact_transports import helicopter_module
     helicopter_module(source,catalog,model)
@@ -139,18 +189,33 @@ def main():
             assert result['status'] == 'Compiled', result
         geometry_catalog = {**document, 'definitionDigest': result['definition']['definitionDigest']}
         for filename, realization in model.realizations(geometry_catalog).items():
+            realization = deepcopy(realization)
             realization['modelByDomain'] = {'center': 'center', 'corner': 'corner', 'mechanism': 'edge'}
+            realization['controlLayout'] = dict(version=1, drivers={name:dict(angles=realization['angularStops']) for name in GRIPS})
+            angles = realization['angularStops']
+            realization['controlLayout']['paths'] = {}
+            realization['requiredCapabilities'].append('family-rotation-generators')
+            realization['motionFamilies'] = dict(version=1, families={name:dict(axis=list(model.axes[i]),pivot=[0,0,0],
+                space='world',coordinates={s:-a for s,a in zip('abcdef',angles)}) for i,name in enumerate(GRIPS)})
+            for op,track in realization['operationTracks'].items():
+                a,b=track['fromStop'],track['toStop']
+                angle=math.remainder(angles[a]-angles[b],math.tau)
+                if abs(abs(angle)-math.pi)<1e-12: angle=-math.pi
+                realization['controlLayout']['paths'][op] = {op.split('_')[0]:-angle}
+                realization['operationTracks'][op]=dict(family=op.split('_')[0],from_='abcdef'[a],to='abcdef'[b],
+                    winding=round((angle-(angles[a]-angles[b]))/math.tau))
+                realization['operationTracks'][op]['from']=realization['operationTracks'][op].pop('from_')
             documents[filename] = realization
     for name, content in documents.items():
         path = directory / name
         if args.write or args.write_source:
             # Keep the runtime bundle below the existing 4 MiB import ceiling;
-            # the separate AST and binding files remain readable for review.
-            options = dict(separators=(',', ':')) if name == 'package.json' else dict(indent=2)
+            # keep the separate binding file readable for review.
+            options = dict(separators=(',', ':')) if name in ('package.json','puzzle.pzl.json') else dict(indent=2)
             path.write_text(json.dumps(content, sort_keys=True, **options) + '\n')
         elif not path.exists() or json.loads(path.read_text()) != content:
             raise SystemExit(f'Helicopter {name} is stale; review before regenerating.')
-    print('Helicopter relational authoring: 3 domains, 44 identities, 420 placements, 180 requests')
+    print('Helicopter relational authoring: 3 domains, 44 identities, 456 placements, 180 requests')
 
 
 if __name__ == '__main__':

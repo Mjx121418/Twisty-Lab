@@ -58,24 +58,26 @@ std::string Session::revision() const {
 bool Session::stale(const std::string &expected) const {
   return parse_revision(expected) != revision_;
 }
-Json Session::snapshot() const {
-  if (cached_snapshot_ && cached_revision_ == revision_)
+Json Session::snapshot(SnapshotDetail detail) const {
+  if (detail == SnapshotDetail::Full && cached_snapshot_ && cached_revision_ == revision_)
     return *cached_snapshot_;
   Json history = Json::array();
   for (const auto &transition : history_)
     history.push_back(transition.operation);
-  cached_snapshot_ = Json{{"definitionDigest", definition_->digest},
+  Json result{{"definitionDigest", definition_->digest},
                           {"puzzleId", definition_->id},
                           {"revision", revision()},
                           {"stateDigest", state_digest(*definition_, state_)},
                           {"state", encode_state(*definition_, state_)},
                           {"solved", execution_->is_solved(state_)},
-                          {"legalRequests", execution_->legal(state_)},
                           {"history", history},
                           {"cursor", cursor_},
                           {"canUndo", cursor_ > 0},
                           {"canRedo", cursor_ < history_.size()}};
-  (*cached_snapshot_)["candidateRequests"] = execution_->candidates(state_);
+  if (detail == SnapshotDetail::StateOnly) return result;
+  result["legalRequests"] = execution_->legal(state_);
+  result["candidateRequests"] = execution_->candidates(state_);
+  cached_snapshot_ = std::move(result);
   cached_revision_ = revision_;
   return *cached_snapshot_;
 }
@@ -89,21 +91,21 @@ Json Session::commit(const CompletedTransition &transition, bool truncate) {
   return execution_->encode(transition);
 }
 Json Session::execute(const std::string &operation, const std::string &expected) {
-  return execute_completed(operation, nullptr, expected);
+  return execute_completed(operation, nullptr, expected, result_detail_);
 }
 Json Session::execute(const std::string &operation, const std::vector<std::string> &choices,
-                      const std::string &expected) {
-  return execute_completed(operation, choices, expected);
+                      const std::string &expected, SnapshotDetail detail) {
+  return execute_completed(operation, choices, expected, detail);
 }
 Json Session::execute_completed(const std::string &operation, const Json &choices,
-                                const std::string &expected) {
+                                const std::string &expected, SnapshotDetail detail) {
   if (stale(expected))
     return stale_result(revision());
   const auto result = execution_->plan(state_, operation, choices);
   if (!result.transition)
     return result.blocked;
   const auto transition = commit(*result.transition);
-  return {{"status", "Committed"}, {"transitions", Json::array({transition})}, {"snapshot", snapshot()}};
+  return {{"status", "Committed"}, {"transitions", Json::array({transition})}, {"snapshot", snapshot(detail)}};
 }
 Json Session::run(const std::string &notation, const std::string &policy, const std::string &expected) {
   if (stale(expected))
@@ -122,7 +124,7 @@ Json Session::run(const std::string &notation, const std::string &policy, const 
       blocked["failureState"] = encode_state(*definition_, policy == "transactional" ? temporary : state_);
       blocked["committed"] = transitions.size();
       blocked["transitions"] = transitions;
-      blocked["snapshot"] = snapshot();
+      blocked["snapshot"] = snapshot(result_detail_);
       return blocked;
     }
     if (policy == "transactional") {
@@ -133,7 +135,7 @@ Json Session::run(const std::string &notation, const std::string &policy, const 
   }
   for (const auto &transition : staged)
     transitions.push_back(commit(transition));
-  return {{"status", "Committed"}, {"transitions", transitions}, {"snapshot", snapshot()}};
+  return {{"status", "Committed"}, {"transitions", transitions}, {"snapshot", snapshot(result_detail_)}};
 }
 Json Session::undo(const std::string &expected) {
   if (stale(expected))
@@ -149,7 +151,7 @@ Json Session::undo(const std::string &expected) {
   ++revision_;
   return {{"status", "Committed"},
           {"transitions", Json::array({execution_->encode(*result.transition)})},
-          {"snapshot", snapshot()}};
+          {"snapshot", snapshot(result_detail_)}};
 }
 Json Session::redo(const std::string &expected) {
   if (stale(expected))
@@ -165,7 +167,7 @@ Json Session::redo(const std::string &expected) {
   ++revision_;
   return {{"status", "Committed"},
           {"transitions", Json::array({execution_->encode(*result.transition)})},
-          {"snapshot", snapshot()}};
+          {"snapshot", snapshot(result_detail_)}};
 }
 Json Session::scramble(std::uint32_t seed, std::uint32_t length, const std::string &expected) {
   if (stale(expected))
@@ -212,7 +214,7 @@ Json Session::scramble(std::uint32_t seed, std::uint32_t length, const std::stri
   Json transitions = Json::array();
   for (const auto &transition : staged)
     transitions.push_back(commit(transition));
-  Json result{{"status", "Committed"}, {"transitions", transitions}, {"snapshot", snapshot()}};
+  Json result{{"status", "Committed"}, {"transitions", transitions}, {"snapshot", snapshot(result_detail_)}};
   result["scramble"] = {{"seed", seed},
                         {"generatorVersion", "xorshift32-v1"},
                         {"selectionPolicy", "legal-walk/no-immediate-inverse-v1"},
@@ -302,7 +304,7 @@ Json Session::load(const Json &document) {
   history_ = std::move(history);
   cursor_ = cursor;
   revision_ = std::max(revision_, loaded_revision) + 1;
-  return {{"status", "Loaded"}, {"snapshot", snapshot()}};
+  return {{"status", "Loaded"}, {"snapshot", snapshot(result_detail_)}};
 }
 std::string Session::definition_json() const {
   // Emit the same sorted canonical object as definition_json().dump(), without
@@ -330,7 +332,7 @@ std::string Session::definition_json() const {
 std::string Session::execute_json(const std::string &request, const std::string &expected) {
   return guarded([&]() {
     return execute_completed(request_operation(request), Json::parse(request).value("choices", Json{}),
-                             expected);
+                             expected, result_detail_);
   });
 }
 std::string Session::plan_json(const std::string &request, const std::string &state) const {

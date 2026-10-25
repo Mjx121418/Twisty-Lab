@@ -204,7 +204,7 @@ export function wasmPuzzleLoader(module) {
   return (_path, text) => {
     const session = new module.Session(text);
     try {
-      const digest = JSON.parse(session.snapshotJSON()).definitionDigest;
+      const digest = JSON.parse(session.stateSnapshotJSON()).definitionDigest;
       return {
         digest,
         checkRealization(model) {

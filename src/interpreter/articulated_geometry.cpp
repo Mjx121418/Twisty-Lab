@@ -131,7 +131,13 @@ void GeometryCompiler::build_articulated(const Json &realization) {
     std::vector<Frame> matrices;
   };
   std::map<std::string, PreparedPath> named_paths;
-  const auto prepare_path = [&](const Json &steps, const std::string &id) {
+  const auto prepare_path = [&](const Json &input, const std::string &id) {
+    Json generated;
+    if(input.is_object() && input.contains("family")) {
+      const auto r=family_rotation(realization,input);
+      generated=Json::array({{{"axis",r.axis},{"pivot",r.pivot},{"angle",r.angle},{"space",r.local?"local":"world"}}});
+    }
+    const auto &steps=generated.is_null()?input:generated;
     ensure(steps.is_array() && steps.size() <= 8, id, "A track has at most eight simple rotations.");
     std::vector<Rotation> path;
     std::vector<Frame> matrices;
@@ -359,34 +365,54 @@ void GeometryCompiler::build_articulated(const Json &realization) {
       for (const auto &op : definition_->operations) {
         const auto &entries = tracks.at(op.id);
         GeometryTrack track;
-        track.placement_paths.resize(domain.placements.size());
         track.path_library = path_library;
+        const bool selected=entries.is_object() && entries.value("kind",Json{})=="transport-regions";
+        const auto named_path=[&](const std::string &name) -> const PreparedPath * {
+          ensure(shared_tracks && rotation_tracks.contains(name),id,"Unknown shared rotation path.");
+          auto found=named_paths.find(name);
+          if(found==named_paths.end()) found=named_paths.emplace(name,prepare_path(rotation_tracks.at(name),id)).first;
+          return &found->second;
+        };
+        std::vector<std::pair<const Operation *,const PreparedPath *>> selectors;
+        if(selected) {
+          ensure(std::find(capabilities.begin(),capabilities.end(),"transport-path-selectors")!=capabilities.end(),id,
+            "Transport regions require the transport-path-selectors capability.");
+          ensure(entries.size()==2 && entries.at("regions").is_array() && entries.at("regions").size()<=8,id,"Supply at most eight transport regions.");
+          for(const auto &region:entries.at("regions")) {
+            const auto request=region.at("request").get<std::string>();
+            ensure(definition_->operation_ids.contains(request),id,"Unknown region transport request.");
+            const auto *support=&definition_->operations[definition_->operation_ids.at(request)];
+            const auto *path=named_path(region.at("path").get<std::string>());
+            selectors.emplace_back(support,path);
+            track.regions.push_back({support->roles[d],path->index});
+          }
+        } else track.placement_paths.resize(domain.placements.size());
         std::size_t count = 0;
         for (Index q = 0; q < domain.placements.size(); ++q) {
+          const PreparedPath *prepared=nullptr;
+          if(selected) {
+            for(const auto &[support,path]:selectors) if(support->roles[d][q]==1) {
+              ensure(op.roles[d][q]==1 && op.maps[d][q]==support->maps[d][q],id,"A region disagrees with its operation's transport.");
+              ensure(!prepared || path_library->at(prepared->index)==path_library->at(path->index),id,"Overlapping regions disagree on the signed path.");
+              prepared=path;
+            }
+          }
           if (op.roles[d][q] != 1)
             continue;
           ++count;
-          const auto &path = entries.at(domain.placements[q].key);
-          ensure(path.is_array() || (shared_tracks && path.is_string()), id,
-                 "A rotation path requires steps or a declared shared track reference.");
-          ensure(!path.is_string() || rotation_tracks.contains(path.get<std::string>()), id,
-                 "Unknown shared rotation path.");
           PreparedPath inline_path{};
-          const PreparedPath *prepared;
-          if (path.is_string()) {
-            const auto name = path.get<std::string>();
-            auto found = named_paths.find(name);
-            if (found == named_paths.end())
-              found = named_paths.emplace(name, prepare_path(rotation_tracks.at(name), id)).first;
-            prepared = &found->second;
-          } else {
-            inline_path = prepare_path(path, id);
-            prepared = &inline_path;
+          if(selected) ensure(prepared,id,"Transport regions omit a participating placement.");
+          else {
+            const auto &path=entries.at(domain.placements[q].key);
+            ensure(path.is_array() || (path.is_object() && path.contains("family")) || (shared_tracks && path.is_string()),id,
+              "A rotation path requires steps or a declared shared track reference.");
+            if(path.is_string()) prepared=named_path(path.get<std::string>());
+            else { inline_path=prepare_path(path,id);prepared=&inline_path; }
+            track.placement_paths[q]=prepared->index;
           }
           const auto &steps = path_library->at(prepared->index);
           total_steps += steps.size();
           ensure(total_steps <= 524288, id, "Combined rotation tracks exceed the realization limit.");
-          track.placement_paths[q] = prepared->index;
           auto endpoint = component.frames[q];
           for (Index s = 0; s < steps.size(); ++s)
             endpoint = steps[s].local ? multiply(endpoint, prepared->matrices[s])
@@ -402,7 +428,7 @@ void GeometryCompiler::build_articulated(const Json &realization) {
                  op.id + "/" + id + "/" + domain.placements[q].key,
                  "Track endpoint disagrees with the exact transport.");
         }
-        ensure(entries.size() == count, id, "Tracks must name exactly the participating source placements.");
+        ensure(selected || entries.size() == count, id, "Tracks must name exactly the participating source placements.");
         component.tracks.push_back(std::move(track));
       }
       const auto index = static_cast<Index>(components_.size());

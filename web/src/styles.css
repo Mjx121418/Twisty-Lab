@@ -193,3 +193,21 @@ footer { border-top: 1px solid #293840; display: flex; justify-content: space-be
 .gear-configuration { margin: 0 0 1rem; padding: .75rem 1rem; border: 1px solid var(--border, #3d4c57); border-radius: .65rem; }
 .gear-configuration label { display: inline-flex; align-items: center; gap: .3rem; margin: .25rem .7rem .25rem 0; }
 .gear-configuration small { display: block; margin-top: .5rem; opacity: .8; }
+
+.family-controls { margin: 1rem 0; padding: 1rem; border: 1px solid #3d4c57; border-radius: .65rem; }
+.family-controls > label { display: flex; align-items: center; gap: .8rem; }
+.stop-rings { display: flex; flex-wrap: wrap; justify-content: center; }
+.stop-ring { position: relative; width: 280px; height: 280px; }
+.stop-ring svg { width: 280px; height: 280px; pointer-events: none; }
+.stop-ring circle { fill: none; stroke: #55636d; stroke-width: 1.5; }
+.ring-center { position: absolute; inset: 95px 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .4rem; }
+.ring-center strong { font-size: 1.7rem; }
+.ring-center span { font-size: .8rem; }
+.angular-stop { position: absolute; transform: translate(-50%, -50%); min-width: 38px; height: 38px; border-radius: 50%; background: #28343d; color: #edf6f7; border: 1px solid #82949e; }
+.angular-stop.blocked-stop { background: #20272c; border-style: dashed; color: #a5afb4; }
+.angular-stop.current-stop { background: #f0c474; color: #17232a; border: 3px solid #fff4d2; box-shadow: 0 0 0 4px #f0c47433; font-weight: 800; }
+.angular-stop.draft-stop:not(.current-stop) { outline: 2px solid #7cdddf; outline-offset: 3px; }
+.angular-stop:focus-visible { outline: 3px solid #fff; outline-offset: 5px; }
+.advanced-moves { margin: .75rem 0; }
+.advanced-moves > summary { cursor: pointer; margin-bottom: .7rem; }
+.path-choices { display: flex; flex-wrap: wrap; gap: .5rem; }

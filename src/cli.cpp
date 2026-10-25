@@ -60,6 +60,7 @@ int main(int argc, char **argv) {
       Json results = Json::array();
       for (const auto &fixture : fixtures.at("cases")) {
         Session session(read(fixture.at("source"), 16 * 1024 * 1024));
+        session.lightweight_results(true);
         if (fixture.at("definitionDigest") != session.definition()->digest)
           throw DiagnosticError("fixture.digest", fixture.at("name"),
                                 "Fixture is pinned to different puzzle semantics.");

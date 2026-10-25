@@ -363,7 +363,8 @@ def helicopter_module(source,catalog,model):
     frames={}
     for d in source['domains']:
         frames[d['id']]={q:model.visual_frames[q] for q in d['placements']}
-    by_frame={d:{v:k for k,v in qs.items()} for d,qs in frames.items() if d!='mechanism'}
+    marked = len(frames['mechanism']) == 72
+    by_frame={d:{v:k for k,v in qs.items()} for d,qs in frames.items() if d!='mechanism' or marked}
     by_shape={transformed(v,EDGE):q for q,v in frames['mechanism'].items()}
     qid={d['id']+'/'+q:i for i,(d,q) in enumerate((d,q) for d in source['domains'] for q in d['placements'])}
     actions=[]
@@ -372,13 +373,15 @@ def helicopter_module(source,catalog,model):
         for d in source['domains']:
             for q in d['placements']:
                 f=matmul(g,frames[d['id']][q])
-                target=by_shape[transformed(f,EDGE)] if d['id']=='mechanism' else by_frame[d['id']][f]
+                target=by_shape[transformed(f,EDGE)] if d['id']=='mechanism' and not marked else by_frame[d['id']][f]
                 row.append(qid[d['id']+'/'+target])
         actions.append(row)
     phases={}
     for r in source['requests']:
         family,stops=r['id'].split('_')
         phases.setdefault(family,dict(count=6,pairs={}))['pairs'][r['id']]=[(ord(stops[0])-97,ord(stops[1])-97)]
+        if marked:
+            phases[family]['pairs'][r['id']].append(((ord(stops[0])-97+3)%6,(ord(stops[1])-97+3)%6))
     return compress(source,catalog,phases,actions)
 
 

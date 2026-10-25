@@ -4,6 +4,7 @@ export type { MainModule } from './generated/twisty.mjs';
 export type KernelInfo = {
   apiVersion: number; version: string; documentKinds: string[]; frameBufferVersion: number;
   languageAPIVersion: number;
+  controllerAPIVersion: number; controllerCapabilities: string[];
   geometryAPIVersion: number; poseBufferVersion: number;
   authoringLibraries?: string[];
   catalogKinds?: string[];
@@ -16,7 +17,7 @@ export async function createKernel(options: KernelOptions = {}): Promise<MainMod
     filename.endsWith('.wasm') && options.wasmURL ? String(options.wasmURL) : directory + filename);
   const module = await createModule({ locateFile });
   const info = JSON.parse(module.kernelInfoJSON()) as KernelInfo;
-  if (info.apiVersion !== 5 || info.frameBufferVersion !== 1) throw new Error('Unsupported kernel API or frame-buffer version.');
+  if (info.apiVersion !== 6 || info.frameBufferVersion !== 1) throw new Error('Unsupported kernel API or frame-buffer version.');
   return module;
 }
 
@@ -28,6 +29,16 @@ export type Snapshot = {
   candidateRequests: Request[];
   history: string[]; cursor: number; canUndo: boolean; canRedo: boolean;
 };
+export type StateSnapshot = Omit<Snapshot, 'legalRequests' | 'candidateRequests'>;
+export type TurnIntent = { family: string; targets: Record<string, string>; pathId?: string };
+export type ControlDriver = { id: string; piece: string; stops: string[]; placements: Record<string, string> };
+export type ControlFamily = { id: string; label?: string; drivers: string[] };
+export type ControlCatalog = { version: 1; drivers: ControlDriver[]; families: ControlFamily[] };
+export type ControlResult = Result & {
+  revision?: string; family?: string; current?: Record<string, string>; pathId?: string;
+  targets?: Record<string, string>; destinations?: ControlResult[]; nextOffset?: number; total?: number;
+  request?: Request; paths?: { pathId: string; request: Request }[];
+};
 export type Transition = {
   definitionDigest: string; beforeStateDigest: string; afterStateDigest: string;
   request: Request & { choices: string[] }; beforeState: State; afterState: State;
@@ -35,7 +46,7 @@ export type Transition = {
   pieceActions: { pieceId: string; from: string; to: string; role: string; transport: string; event: string }[];
 };
 export type Result = {
-  status: string; snapshot?: Snapshot; transitions?: Transition[]; reasonCode?: string;
+  status: string; snapshot?: Snapshot | StateSnapshot; transitions?: Transition[]; reasonCode?: string;
   transitionRecords?: string[];
   transition?: Transition; transitionRecord?: string;
   implicatedPieces?: string[]; evidence?: unknown; failureIndex?: number;
@@ -59,6 +70,7 @@ export type SceneDescriptor = {
   ambientSpace?: 'R3' | 'S2' | 'E2'; sphereRadius?: number; diskAngleDegrees?: number; fidelity?: string;
   flatSurface?: FlatSurface;
   diskCenters?: Record<string, [number, number, number]>; surfaceTransportVerified?: boolean; catalogTransportVerified?: boolean;
+  controlLayout?: Realization['controlLayout'];
 };
 /** Model-qualified layout, not a promise that poses are affine model matrices. */
 export type GeometrySpace = {
@@ -108,6 +120,9 @@ export type PolyhedralModel = {
   surfaceVertices?: number[][];
 };
 export type Realization = {
+  controlLayout?: { version: 1; drivers: Record<string, { angles: number[] }>; paths?: Record<string, Record<string,number>> };
+  motionFamilies?: { version: 1; families: Record<string, { axis: [number,number,number]; pivot: [number,number,number];
+    space: 'world' | 'local'; coordinates: Record<string,number> }> };
   schemaVersion: number; id: string; kind: 'cube-euclidean' | 'cube-port-diagram' | 'cube-spherical' | 'polyhedral-euclidean' | 'polyhedral-port-diagram' | 'polyhedral-spherical' | 'articulated-euclidean' | 'articulated-port-diagram' | 'articulated-spherical' | 'flat-quotient';
   flatSurface?: { topology: 'torus' | 'klein-bottle' | 'pillowcase' | 'orbifold-333'; sideLength: number; chart?: 'square' | 'rhombus-60' | 'pillowcase-square' | 'orbifold-333-rhombus'; cutRadius?: number; diskCenters?: Record<string, [number, number]> };
   radius?: number;
@@ -120,13 +135,14 @@ export type Realization = {
   }>;
   componentsByDomain?: Record<string, ArticulatedComponent[]>;
   /** Named, reusable articulated paths and per-operation placement tables. */
-  rotationTracks?: Record<string, RotationTrackStep[]>;
+  rotationTracks?: Record<string, RotationTrackStep[] | FamilyRotationBinding>;
   operationTrackTables?: Record<string, OperationTrackTable>;
 };
 export type RotationTrackStep = {
   axis: [number, number, number]; pivot: [number, number, number]; angle: number; space: 'world' | 'local';
 };
-export type OperationTrackTable = Record<string, Record<string, RotationTrackStep[] | string>>;
+export type FamilyRotationBinding = { family: string; from: string; to: string; winding: number; rate?: number };
+export type OperationTrackTable = Record<string, Record<string, RotationTrackStep[] | FamilyRotationBinding | string> | { kind: 'transport-regions'; regions: { request: string; path: string }[] }>;
 export type ArticulatedComponent = {
   /** Optional body-only filter; ports bind every piece, possibly in several patches. */
   pieceIds?: string[];
@@ -291,6 +307,8 @@ export class KernelSession {
   }
 
   snapshot(): Snapshot { return JSON.parse(this.native.snapshotJSON()) as Snapshot; }
+  stateSnapshot(): StateSnapshot { return JSON.parse(this.native.stateSnapshotJSON()) as StateSnapshot; }
+  lightweightResults(enabled = true): void { this.native.lightweightResults(enabled); }
   stateText(): string { return this.native.stateJSON(); }
   plan(request: Request, stateText = this.stateText()): Result {
     return JSON.parse(this.native.planJSON(JSON.stringify(request), stateText)) as Result;
@@ -325,6 +343,31 @@ export function copyIndexView(view: Uint32Array): Uint32Array { return new Uint3
 
 /** Optional presentation helper. Uses the explicit frame/animation/projection API;
  * no camera, clock, easing, abstract mutation, or renderer dependency. */
+export class KernelController {
+  readonly native: NonNullable<ReturnType<MainModule['createController']>>;
+  readonly controls: ControlCatalog;
+  constructor(module: MainModule, private readonly session: KernelSession) {
+    const native = module.createController(session.native);
+    if (!native) throw new Error('Cannot create controller.');
+    this.native = native;
+    this.controls = JSON.parse(native.catalogJSON()) as ControlCatalog;
+  }
+  catalog(): ControlCatalog { return this.controls; }
+  familyState(family: string): ControlResult {
+    return JSON.parse(this.native.familyStateJSON(this.session.native, family)) as ControlResult;
+  }
+  destinations(family: string, offset = 0, limit = 16): ControlResult {
+    return JSON.parse(this.native.destinationsJSON(this.session.native, family, offset, limit)) as ControlResult;
+  }
+  planTo(intent: TurnIntent, expectedRevision = this.session.native.revision()): ControlResult {
+    return JSON.parse(this.native.planToJSON(this.session.native, JSON.stringify(intent), expectedRevision)) as ControlResult;
+  }
+  turnTo(intent: TurnIntent, expectedRevision = this.session.native.revision()): ControlResult {
+    return JSON.parse(this.native.turnToJSON(this.session.native, JSON.stringify(intent), expectedRevision)) as ControlResult;
+  }
+  dispose(): void { this.native.delete(); }
+}
+
 export class GeometryInstance {
   readonly definition: NonNullable<ReturnType<MainModule['createGeometryDefinition']>>;
   readonly scene: SceneDescriptor;

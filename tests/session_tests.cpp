@@ -304,7 +304,7 @@ void alternative() {
   check(!unsolved.snapshot().at("solved").get<bool>(), "Relational session used the old home goal");
 }
 void retired_formats() {
-  check(kernel_info().at("apiVersion") == 5 && kernel_info().at("sessionSchemaVersions") == Json::array({2}),
+  check(kernel_info().at("apiVersion") == 6 && kernel_info().at("sessionSchemaVersions") == Json::array({2}),
         "Runtime still advertises retired APIs");
   for (const auto *kind : {"cube-prototypes", "gear-cube-prototypes", "finite-definition"}) {
     const auto result = compile_execution_json(Json{{"kind", kind}, {"schemaVersion", 1}}.dump());

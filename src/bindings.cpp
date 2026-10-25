@@ -38,6 +38,7 @@ Geometry *create_geometry_instance(const GeometryDefinition &definition) {
 Session *create_session_from_definition(const Session &session) {
   return new Session(session.execution());
 }
+Controller *create_controller(const Session &session) { return new Controller(session.execution()); }
 } // namespace
 EMSCRIPTEN_BINDINGS(twisty) {
   function("compileExecutionJSON", &compile_execution);
@@ -50,6 +51,13 @@ EMSCRIPTEN_BINDINGS(twisty) {
   function("createGeometryInstance", &create_geometry_instance, return_value_policy::take_ownership());
   function("createSessionFromDefinition", &create_session_from_definition,
            return_value_policy::take_ownership());
+  function("createController", &create_controller, return_value_policy::take_ownership());
+  class_<Controller>("Controller")
+      .function("catalogJSON", &Controller::catalog_json)
+      .function("familyStateJSON", &Controller::family_state_json)
+      .function("destinationsJSON", &Controller::destinations_json)
+      .function("planToJSON", &Controller::plan_to_json)
+      .function("turnToJSON", &Controller::turn_to_json);
   class_<twisty::language::Puzzle>("Puzzle")
       .constructor<std::string>()
       .function("inspectJSON", &twisty::language::Puzzle::inspect_json)
@@ -57,6 +65,8 @@ EMSCRIPTEN_BINDINGS(twisty) {
   class_<Session>("Session")
       .constructor<std::string>()
       .function("snapshotJSON", &Session::snapshot_json)
+      .function("stateSnapshotJSON", &Session::state_snapshot_json)
+      .function("lightweightResults", &Session::lightweight_results)
       .function("revision", &Session::revision)
       .function("definitionJSON", &Session::definition_json)
       .function("stateJSON", &Session::state_json)

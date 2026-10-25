@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent
 OPPOSITE = (5, 3, 4, 1, 2, 0)
 LABELS = ('U', 'R', 'F', 'L', 'B', 'D')
 TOL = 1e-9
-PLACEMENTS = dict(A=1466, B=1208, C=1692, D=2020)
+PLACEMENTS = dict(A=2320, B=1474, C=2721, D=4303)
 WITNESSED = dict(A=1466, B=1208, C=1682, D=2020)
 PHASE_COUNTS = dict(A=[7, 7, 7, 5, 5, 5], B=[7, 7, 5, 3, 5, 3],
                     C=[7, 5, 5, 7, 7, 5], D=[7, 7, 7, 7, 7, 7])
@@ -211,10 +211,10 @@ def frame(q):
 
 
 class Model:
-    def __init__(self, family='A'):
+    def __init__(self, family='A', seed=None):
         self.family = family
         self.id = 'melty-' + family.lower()
-        seed = json.loads((ROOT / f'scripts/data/{self.id}-catalog.json').read_text())
+        seed = seed or json.loads((ROOT / f'scripts/data/{self.id}-middle-catalog.json').read_text())
         assert (seed['formatVersion'], seed['family'], seed['angleDegrees'], seed['cutDepth']) == (1, family, 85, '1/3')
         self.axes = rays(family, 85)
         # In the radius-sqrt(3) ball containing every rotated cube piece, the
@@ -241,6 +241,14 @@ class Model:
         # No small rounded-key collision may silently merge catalog identities.
         assert len({key(q) for q in self.rotations}) == len(self.rotations)
         self.rotation_index = {key(q): i for i, q in enumerate(self.rotations)}
+        # Only numerical lookup fallback is accelerated here: an adjacent-cell
+        # search still checks the full quaternion distance before accepting an ID.
+        # Both signs are indexed, so no quaternion-sign convention is assumed.
+        self.rotation_bins = defaultdict(list)
+        for r,q in enumerate(self.rotations):
+            for sign in (-1,1):
+                cell=tuple(math.floor(sign*x/2e-6) for x in q[:3])
+                self.rotation_bins[cell].append(r)
         self.pieces = seed['pieces']
         self.centers = [next(p for p, c in enumerate(self.cells) if c['caps'] == [i]) for i in range(6)]
         self.vertices, self.roles = [], []
@@ -251,7 +259,7 @@ class Model:
                         for q in piece['placements']]
             self.vertices.append(vertices)
             self.roles.append([[role(vs, axis, 1/3) for axis in self.axes] for vs in vertices])
-        assert sum(len(p['placements']) for p in self.pieces) == PLACEMENTS[family]
+        assert sum(len(p['placements']) for p in self.pieces) == seed.get('placementCount',PLACEMENTS[family])
         self.deltas = []
         self.phase_pairs = []
         for i, angles in enumerate(self.phases):
@@ -280,8 +288,13 @@ class Model:
                         q = mul(rotation, self.rotations[pose['rotation']])
                         r = self.rotation_index.get(key(q))
                         if r is None:
-                            nearest, error = min(((b, min(math.dist(q, v), math.dist(q, scale(-1, v))))
-                                                  for b, v in enumerate(self.rotations)), key=lambda x: x[1])
+                            cell=tuple(math.floor(x/2e-6) for x in q[:3])
+                            nearby={r for offset in product((-1,0,1),repeat=3)
+                                    for r in self.rotation_bins.get(tuple(a+b for a,b in zip(cell,offset)),())}
+                            if not nearby:
+                                continue # Every stored quaternion is farther than 1e-6.
+                            nearest, error = min(((b, min(math.dist(q, self.rotations[b]), math.dist(q, scale(-1, self.rotations[b]))))
+                                                  for b in nearby), key=lambda x: x[1])
                             if error < 1e-11:
                                 r = nearest
                             else:
@@ -300,38 +313,18 @@ class Model:
         return next(d for d, value in enumerate(self.deltas[grip]) if abs(value-angle) < 1e-11)
 
     def macros(self):
-        """Both single grips and disjoint opposite caps, with signed winding."""
+        """Single-cap moves; disjoint opposite turns can be executed in either order."""
         if hasattr(self, '_macros'):
             return self._macros
-        candidates = ([((i, d),) for i in range(6) for d in range(len(self.deltas[i]))] +
-                      [((i, d), (OPPOSITE[i], e)) for i in range(3)
-                       for d in range(len(self.deltas[i])) for e in range(len(self.deltas[OPPOSITE[i]]))])
-        # Exclude only macros for which even the centers cannot free a third
-        # grip. This necessary test does not rely on sampled whole states.
-        result = []
-        for macro in candidates:
-            i = macro[0][0]
-            driven = {g for g, _ in macro}
-            for k in range(6):
-                if k in (i, OPPOSITE[i]):
-                    continue
-                if not all(any(self.roles[self.centers[g]][t][k] != 'blocked'
-                               for _, t in self.phase_pairs[g][d]) for g, d in macro):
-                    continue
-                if not all(any(all(self.roles[p][a][g] != 'blocked' for g in driven | {k})
-                               for a in range(len(self.roles[p])))
-                           for g, p in enumerate(self.centers) if g not in driven):
-                    continue
-                result.append(macro)
-                break
-        # A completed handoff has an intersecting free cut at both ends. A
-        # one-sided center test can admit dead directions in the larger ray
-        # systems; retain only the bidirectional necessary condition.
-        possible = set(result)
-        inverse = lambda macro: tuple((i, next(e for e, value in enumerate(self.deltas[i])
-                                               if abs(value+self.deltas[i][d]) < 1e-10)) for i, d in macro)
-        self._macros = tuple(macro for macro in result if inverse(macro) in possible)
+        self._macros = tuple(((i,d),) for i in range(6) for d in range(len(self.deltas[i])))
         return self._macros
+
+    def middle_aligned(self, state, grip):
+        """The active cap and middle share a cut; its opposite cap is ignored."""
+        opposite=OPPOSITE[grip]
+        return any(k not in (grip,opposite) and all(
+            self.roles[p][a][opposite]=='moving' or self.roles[p][a][k]!='blocked'
+            for p,a in enumerate(state)) for k in range(6))
 
     def table(self, macro, p):
         result = {}
@@ -388,18 +381,20 @@ class Model:
                     assert j == OPPOSITE[i]
                     macro.append((j, self.delta_index(j, before[self.centers[j]], u)))
                     paired += 1
-                assert tuple(macro) in self.macros(), (node, 'missing directed request')
                 state = before.copy()
-                for p, a in enumerate(before):
-                    for grip, delta in macro:
+                for grip,delta in macro:
+                    assert ((grip,delta),) in self.macros(), (node,'missing single request')
+                    assert self.middle_aligned(state,grip),(node,'source middle alignment')
+                    changed=state.copy()
+                    for p,a in enumerate(state):
                         r = self.roles[p][a][grip]
                         assert r != 'blocked', (node, p, 'source cut')
                         if r == 'moving':
-                            state[p] = self.maps[grip, delta][p][a]
-                assert any(k not in (i, OPPOSITE[i]) and all(
-                    self.roles[p][a][k] != 'blocked' for p, a in enumerate(state)) for k in range(6)), (node, 'handoff')
-                assert all(not piece['caps'] or any(state[self.centers[k]] == s for k, s in piece['placements'][a]['phaseGuards'])
-                           for piece, a in zip(self.pieces, state)), (node, 'phase guard')
+                            changed[p] = self.maps[grip, delta][p][a]
+                    state=changed
+                    assert self.middle_aligned(state,grip),(node,'target middle alignment')
+                    assert all(not piece['caps'] or any(state[self.centers[k]] == s for k,s in piece['placements'][a]['phaseGuards'])
+                               for piece,a in zip(self.pieces,state)),(node,'phase guard')
             for p, a in by_node[node]:
                 assert state[p] == a, (node, p, a)
                 covered.add((p, a))
@@ -407,6 +402,7 @@ class Model:
         expected = {(p, a) for p, piece in enumerate(self.pieces) for a, pose in enumerate(piece['placements'])
                     if pose.get('reachabilityWitnessed', True)}
         assert covered == expected and len(covered) == WITNESSED[self.family]
-        return dict(placements=len(covered), nodes=len(states), pairedMoves=paired)
+        return dict(placements=len(covered), nodes=len(states), splitPairedNodes=paired,
+                    primitiveSteps=len(states)-1+paired)
 
 

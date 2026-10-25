@@ -44,7 +44,9 @@
           "rigid-transforms",
           "quotient-surface",
           "quotient-orbifold",
-          "shared-rotation-tracks"
+          "shared-rotation-tracks",
+          "family-rotation-generators",
+          "transport-path-selectors"
         ]
       }
     },
@@ -71,25 +73,32 @@
     "operationTracks": {
       "type": "object",
       "additionalProperties": {
-        "type": "object",
-        "required": [
-          "axis",
-          "fromStop",
-          "toStop"
-        ],
-        "properties": {
-          "axis": {
-            "$ref": "#/$defs/point"
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "axis",
+              "fromStop",
+              "toStop"
+            ],
+            "properties": {
+              "axis": {
+                "$ref": "#/$defs/point"
+              },
+              "fromStop": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "toStop": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
           },
-          "fromStop": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "toStop": {
-            "type": "integer",
-            "minimum": 0
+          {
+            "$ref": "#/$defs/motionBinding"
           }
-        }
+        ]
       }
     },
     "angularStops": {
@@ -260,11 +269,18 @@
       "type": "object",
       "maxProperties": 8192,
       "additionalProperties": {
-        "type": "array",
-        "maxItems": 8,
-        "items": {
-          "$ref": "#/$defs/rotationStep"
-        }
+        "oneOf": [
+          {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "$ref": "#/$defs/rotationStep"
+            }
+          },
+          {
+            "$ref": "#/$defs/motionBinding"
+          }
+        ]
       }
     },
     "operationTrackTables": {
@@ -272,6 +288,104 @@
       "maxProperties": 4096,
       "additionalProperties": {
         "$ref": "#/$defs/operationTrackTable"
+      }
+    },
+    "motionFamilies": {
+      "type": "object",
+      "required": [
+        "version",
+        "families"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "families": {
+          "type": "object",
+          "maxProperties": 256,
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "axis",
+              "pivot",
+              "space",
+              "coordinates"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "axis": {
+                "$ref": "#/$defs/point"
+              },
+              "pivot": {
+                "$ref": "#/$defs/point"
+              },
+              "space": {
+                "enum": [
+                  "world",
+                  "local"
+                ]
+              },
+              "coordinates": {
+                "type": "object",
+                "minProperties": 2,
+                "maxProperties": 128,
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": -100,
+                  "maximum": 100
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "controlLayout": {
+      "type": "object",
+      "required": [
+        "version",
+        "drivers"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "drivers": {
+          "type": "object",
+          "maxProperties": 128,
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "angles"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "angles": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 128,
+                "items": {
+                  "type": "number",
+                  "minimum": 0,
+                  "exclusiveMaximum": 6.283185307179587
+                }
+              }
+            }
+          }
+        },
+        "paths": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "minimum": -100,
+              "maximum": 100
+            }
+          }
+        }
       }
     }
   },
@@ -440,15 +554,91 @@
         {
           "type": "string",
           "minLength": 1
+        },
+        {
+          "$ref": "#/$defs/motionBinding"
         }
       ]
     },
     "operationTrackTable": {
       "type": "object",
       "additionalProperties": {
-        "type": "object",
-        "additionalProperties": {
-          "$ref": "#/$defs/rotationPath"
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/$defs/rotationPath"
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "kind",
+              "regions"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "transport-regions"
+              },
+              "regions": {
+                "type": "array",
+                "maxItems": 8,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "request",
+                    "path"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "path": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "motionBinding": {
+      "type": "object",
+      "required": [
+        "family",
+        "from",
+        "to",
+        "winding"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "family": {
+          "type": "string",
+          "minLength": 1
+        },
+        "from": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to": {
+          "type": "string",
+          "minLength": 1
+        },
+        "winding": {
+          "type": "integer",
+          "minimum": -16,
+          "maximum": 16
+        },
+        "rate": {
+          "type": "number",
+          "minimum": -100,
+          "maximum": 100
         }
       }
     }

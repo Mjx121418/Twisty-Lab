@@ -1,8 +1,10 @@
 #include "geometry_compiler.hpp"
+#include "twisty/controller.hpp"
 #include <algorithm>
 #include <cmath>
 #include <limits>
 #include <numbers>
+#include <set>
 #include <tuple>
 
 namespace twisty {
@@ -88,6 +90,12 @@ GeometryCompiler::GeometryCompiler(std::shared_ptr<const Execution> execution,
                                    const std::string &realization_json)
     : execution_(std::move(execution)), definition_(execution_->definition()) {
   const auto realization = Json::parse(realization_json);
+  const std::set<std::string> supported{"triangle-meshes", "rigid-transforms", "quotient-surface",
+    "quotient-orbifold", "shared-rotation-tracks", "family-rotation-generators", "transport-path-selectors"};
+  for(const auto &cap:realization.at("requiredCapabilities"))
+    if(!supported.contains(cap.get<std::string>()))
+      throw DiagnosticError("realization.capability", "/requiredCapabilities", "Unsupported required geometric capability.");
+  validate_motion_families(realization);
   if (realization.at("schemaVersion") != 1 ||
       realization.at("compatibleDefinitionDigest") != definition_->digest)
     throw DiagnosticError("realization.digest_mismatch", "/compatibleDefinitionDigest",
@@ -122,6 +130,28 @@ GeometryCompiler::GeometryCompiler(std::shared_ptr<const Execution> execution,
             {"visualParts", Json::array()},
             {"labels", Json::array()},
             {"diagram", diagram_}};
+  if(realization.contains("controlLayout")) {
+    const auto ensure=[](bool ok,const std::string &source,const std::string &message) {
+      if(!ok) throw DiagnosticError("realization.control_layout",source,message);
+    };
+    const auto &layout=realization.at("controlLayout");
+    ensure(layout.at("version")==1 && layout.at("drivers").is_object(), "/controlLayout", "Invalid control layout.");
+    const auto controls=execution_->controls();
+    ensure(controls && layout.at("drivers").size()==controls->json().at("drivers").size(),
+      "/controlLayout", "Control layout does not match the declared drivers.");
+    for(const auto &d:controls->json().at("drivers")) {
+      const auto &angles=layout.at("drivers").at(d.at("id").get<std::string>()).at("angles");
+      ensure(angles.is_array() && angles.size()==d.at("stops").size(), "/controlLayout", "Stop angles differ in arity.");
+      for(const auto &a:angles) ensure(a.is_number() && std::isfinite(a.get<double>()) && a>=0 && a<2*std::numbers::pi,
+        "/controlLayout", "Stop angles must lie in one revolution.");
+    }
+    if(layout.contains("paths")) for(const auto &[path,angles]:layout.at("paths").items()) {
+      ensure(!path.empty() && angles.is_object(), "/controlLayout/paths", "Invalid display path.");
+      for(const auto &[d,a]:angles.items()) ensure(layout.at("drivers").contains(d) && a.is_number() &&
+        std::isfinite(a.get<double>()) && std::abs(a.get<double>())<=100, "/controlLayout/paths", "Invalid display path angle.");
+    }
+    scene_["controlLayout"]=layout;
+  }
   if (articulated_) {
     if (flat_surface_)
       build_flat_surface(realization);

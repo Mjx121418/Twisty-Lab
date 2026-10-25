@@ -44,12 +44,14 @@ try {
     schemaIDs.push(schema.$id);
   }
   for (const id of schemaIDs) assert.ok(schemas.getSchema(id), `Packaged schema cannot resolve: ${id}`);
-  const { createKernel, KernelSession, GeometryInstance, Puzzle, createCubeSource, createGearSource } = await import(pathToFileURL(join(javascript, 'index.js')).href);
+  const { createKernel, KernelSession, KernelController, GeometryInstance, Puzzle, createCubeSource, createGearSource } = await import(pathToFileURL(join(javascript, 'index.js')).href);
   const module = await createKernel();
   const info = JSON.parse(module.kernelInfoJSON());
   const manifest = JSON.parse(await readFile(join(javascript, 'package.json'), 'utf8'));
-  assert.equal(info.apiVersion, 5); assert.equal(info.frameBufferVersion, 1);
+  assert.equal(info.apiVersion, 6); assert.equal(info.frameBufferVersion, 1);
   assert.equal(info.geometryAPIVersion, 1); assert.equal(info.poseBufferVersion, 1);
+  assert.equal(info.controllerAPIVersion, 1);
+  assert.ok(exported.includes('Twisty::controller'));
   assert.equal(info.version, manifest.version);
   assert.deepEqual(info.ruleModules, ['relational@1']);
   assert.deepEqual(info.sessionSchemaVersions, [2]);
@@ -61,6 +63,29 @@ try {
   assert.equal(typeof module.RelationalPuzzle, 'undefined');
   assert.equal(typeof module.compileRelationalJSON, 'undefined');
   assert.deepEqual(info.authoringLibraries, ['cube3', 'bandaged-uf-ufr', 'gear-family']);
+  await stagePuzzle('helicopter');
+  {
+    const data = join(dataDirectory, 'helicopter');
+    const source = await readFile(join(data, 'package.json'), 'utf8');
+    const session = new KernelSession(module, source);
+    const control = new KernelController(module, session);
+    try {
+      const intent = { family: 'UF', targets: { UF: 'd' } };
+      assert.equal(control.controls.families.length, 12);
+      assert.equal(control.familyState('UF').current.UF, 'a');
+      assert.equal(control.planTo(intent).status, 'Planned');
+      assert.equal(session.native.revision(), '0');
+      assert.equal(control.turnTo(intent).status, 'Committed');
+      assert.equal(control.familyState('UF').current.UF, 'd');
+      assert.equal(control.turnTo(intent, '0').status, 'StaleRevision');
+      const native = JSON.parse(execFileSync(join(consumer, 'build/custom_kernel_consumer'),
+        [join(data, 'package.json'), join(data, 'helicopter-port-diagram.json'), JSON.stringify(intent)], { encoding: 'utf8' }));
+      assert.equal(native.snapshot.stateDigest, session.stateSnapshot().stateDigest);
+      const drawing = new GeometryInstance(module, session.native, await readFile(join(data, 'helicopter-port-diagram.json'), 'utf8'));
+      drawing.dispose();
+      console.log('Independent native/WASM family controllers agree on the marked Helicopter phase.');
+    } finally { control.dispose(); session.dispose(); }
+  }
   const languageConsumer = join(temporary, 'language-consumer');
   await cp(join(javascript, 'examples/language'), languageConsumer, { recursive: true });
   execFileSync('cmake', ['-S', languageConsumer, '-B', join(languageConsumer, 'build'), '-G', 'Ninja',
@@ -145,8 +170,8 @@ try {
   const fixtures = JSON.parse(await readFile(new URL('../tests/fixtures/core.json', import.meta.url), 'utf8'));
   const meltyAlgorithm = (family) => {
     const fixture = fixtures.cases.find(item => item.source === `packages/melty-${family}/package.json`
-      && item.name.endsWith('aligned opposite caps hand off together'));
-    assert.ok(fixture, `Missing Melty ${family} paired fixture`);
+      && item.name.endsWith('opposite caps execute separately'));
+    assert.ok(fixture, `Missing Melty ${family} independent-cap fixture`);
     const path = `${fixture.prefix} ${fixture.operation}`;
     return `${path} (${path})'`;
   };
@@ -160,7 +185,7 @@ try {
     ['bagua', "U+ R' L' D2 R L U-", 'U+', 'bagua-port-diagram'],
     ['bagua', '[[U+ R2:U+],[R R+ L-:D2]]', 'U+', 'bagua-euclidean'],
     ['bagua', "U+ R F- (U+ R F-)'", 'U+', 'bagua-spherical'],
-    ['melty-a', "U_e_inv R_e U_e R_e_inv U_c+D_b_inv (U_e_inv R_e U_e R_e_inv U_c+D_b_inv)'", 'U', 'melty-a-euclidean'],
+    ['melty-a', "U_e_inv R_e U_e R_e_inv U_c D_b_inv (U_e_inv R_e U_e R_e_inv U_c D_b_inv)'", 'U', 'melty-a-euclidean'],
     ['melty-a', "U U'", 'U', 'melty-a-port-diagram'],
     ['melty-b', meltyAlgorithm('b'), 'U', 'melty-b-euclidean'],
     ['melty-b', meltyAlgorithm('b'), 'U', 'melty-b-port-diagram'],

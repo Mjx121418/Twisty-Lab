@@ -2,6 +2,7 @@
 #include "twisty/execution.hpp"
 
 namespace twisty {
+enum class SnapshotDetail { Full, StateOnly };
 std::vector<std::string> parse_notation(const Definition &, const std::string &text);
 
 class Session {
@@ -19,10 +20,13 @@ public:
   const State &state() const {
     return state_;
   }
-  Json snapshot() const;
+  Json snapshot(SnapshotDetail detail = SnapshotDetail::Full) const;
   Json execute(const std::string &, const std::string &expected_revision);
   Json execute(const std::string &operation, const std::vector<std::string> &choices,
-               const std::string &expected_revision);
+               const std::string &expected_revision, SnapshotDetail detail = SnapshotDetail::Full);
+  // Presentation configuration only; state/history and full snapshot() are unchanged.
+  void lightweight_results(bool value) { result_detail_ = value ? SnapshotDetail::StateOnly : SnapshotDetail::Full; }
+  std::string state_snapshot_json() const { return snapshot(SnapshotDetail::StateOnly).dump(); }
   Json run(const std::string &notation, const std::string &policy, const std::string &expected_revision);
   Json undo(const std::string &expected_revision);
   Json redo(const std::string &expected_revision);
@@ -61,8 +65,10 @@ private:
   // Every successful state/history edit advances the revision.
   mutable std::optional<Json> cached_snapshot_;
   mutable std::uint64_t cached_revision_ = 0;
+  SnapshotDetail result_detail_ = SnapshotDetail::Full;
   Json commit(const CompletedTransition &, bool truncate = true);
-  Json execute_completed(const std::string &, const Json &choices, const std::string &expected);
+  Json execute_completed(const std::string &, const Json &choices, const std::string &expected,
+                         SnapshotDetail detail);
   bool stale(const std::string &) const;
 };
 } // namespace twisty

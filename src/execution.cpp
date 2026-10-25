@@ -1,4 +1,5 @@
 #include "twisty/execution.hpp"
+#include "twisty/controller.hpp"
 #include "json_input.hpp"
 #include "twisty/authoring/gear.hpp"
 #include <algorithm>
@@ -318,6 +319,8 @@ Execution::Execution(Json source, Json catalog)
   definition->canonical["bindings"] = std::move(preview.at("bindings"));
   if (catalog.contains("symmetry"))
     definition->canonical["symmetry"] = {{"members", catalog.at("symmetry")}};
+  if (catalog.contains("controls"))
+    controls_ = ControlCatalog::compile(*definition, source, catalog.at("controls"));
   definition->canonical["source"] = std::move(source);
   definition->canonical["catalog"] = std::move(catalog);
   // Versioned canonical bytes cover the executable, completion policy, symbolic

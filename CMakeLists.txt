@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(twisty_lab VERSION 0.5.0 LANGUAGES CXX)
+project(twisty_lab VERSION 0.6.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -52,15 +52,19 @@ add_library(puzzle_language
   src/language_api.cpp)
 target_link_libraries(puzzle_language PUBLIC puzzle_core puzzle_symmetry json_headers)
 
-add_library(puzzle_execution src/execution.cpp)
+add_library(puzzle_execution src/execution.cpp src/controller/catalog.cpp)
 target_link_libraries(puzzle_execution PUBLIC puzzle_catalog puzzle_language)
 
 add_library(puzzle_session src/session.cpp src/notation.cpp)
 target_link_libraries(puzzle_session PUBLIC puzzle_execution)
 
+add_library(puzzle_controller src/controller/controller.cpp)
+target_link_libraries(puzzle_controller PUBLIC puzzle_session)
+
 add_library(puzzle_geometry
   src/interpreter/geometry.cpp
   src/interpreter/geometry_compiler.cpp
+  src/interpreter/motion_families.cpp
   src/interpreter/catalog_geometry.cpp
   src/interpreter/spherical_geometry.cpp
   src/interpreter/catalog_spherical_geometry.cpp
@@ -69,15 +73,15 @@ add_library(puzzle_geometry
 target_link_libraries(puzzle_geometry PUBLIC puzzle_execution)
 
 add_library(puzzle_kernel INTERFACE)
-target_link_libraries(puzzle_kernel INTERFACE puzzle_session puzzle_geometry puzzle_language)
-foreach(component IN ITEMS catalog execution session geometry symmetry core language kernel)
+target_link_libraries(puzzle_kernel INTERFACE puzzle_controller puzzle_session puzzle_geometry puzzle_language)
+foreach(component IN ITEMS catalog execution session controller geometry symmetry core language kernel)
   add_library(Twisty::${component} ALIAS puzzle_${component})
   set_target_properties(puzzle_${component} PROPERTIES EXPORT_NAME ${component})
 endforeach()
 
 if(EMSCRIPTEN)
   add_executable(twisty_wasm src/bindings.cpp)
-  target_link_libraries(twisty_wasm PRIVATE puzzle_session puzzle_geometry puzzle_language embind)
+  target_link_libraries(twisty_wasm PRIVATE puzzle_controller puzzle_geometry puzzle_language embind)
   set_target_properties(twisty_wasm PROPERTIES
     OUTPUT_NAME twisty SUFFIX .mjs
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/kernel/generated")
@@ -88,7 +92,7 @@ if(EMSCRIPTEN)
     -sMAXIMUM_MEMORY=402653184 -sSTACK_SIZE=1048576
     --emit-tsd "${CMAKE_SOURCE_DIR}/kernel/generated/twisty.d.mts")
 else()
-  install(TARGETS puzzle_catalog puzzle_execution puzzle_session puzzle_geometry puzzle_symmetry puzzle_core puzzle_language puzzle_kernel
+  install(TARGETS puzzle_catalog puzzle_execution puzzle_session puzzle_controller puzzle_geometry puzzle_symmetry puzzle_core puzzle_language puzzle_kernel
     json_headers project_options EXPORT TwistyKernelTargets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -115,8 +119,14 @@ else()
   target_link_libraries(melty_solids PRIVATE project_options)
   target_compile_options(melty_solids PRIVATE -O2)
   if(BUILD_TESTING)
+    add_executable(controller_tests tests/controller_tests.cpp)
+    target_link_libraries(controller_tests PRIVATE puzzle_kernel)
+    target_compile_definitions(controller_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+    add_test(NAME family_controller COMMAND controller_tests)
     add_executable(transport_bench tests/transport_bench.cpp)
     target_link_libraries(transport_bench PRIVATE puzzle_session)
+    add_executable(controller_bench tests/controller_bench.cpp)
+    target_link_libraries(controller_bench PRIVATE puzzle_kernel)
     add_executable(compact_parity tests/compact_parity.cpp)
     target_link_libraries(compact_parity PRIVATE puzzle_session)
     target_compile_definitions(compact_parity PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
