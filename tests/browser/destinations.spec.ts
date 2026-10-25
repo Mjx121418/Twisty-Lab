@@ -170,27 +170,32 @@ test('filters bandaged destinations and keeps camera drags and keyboard focus pu
   await expect(page.getByTestId('state-digest')).not.toHaveText(initial!);
 });
 
-test('shows Helicopter candidates, executes a clicked destination, and clears previews during playback', async ({ page }) => {
+test('Helicopter selection chooses a twist family without destination ghosts', async ({ page }) => {
   await page.getByLabel('Puzzle', { exact: true }).selectOption('helicopter');
   await setViews(page, 'sphere-diagram');
+  await page.getByLabel('Animation speed').selectOption('0');
   await page.getByRole('button', { name: 'Select corner/BDL', exact: true }).click();
-  for (const id of ['cube-view', 'diagram-view']) await expect(page.getByTestId(id)).toHaveAttribute('data-destination-count', '15');
-  await page.screenshot({ path: 'test-results/destinations-helicopter.png', fullPage: true });
-  await clickDestination(page, 'cube-view', 'helicopter', 'helicopter-spherical', 'corner/BDL', 'BL_ab');
+  const families = page.getByRole('region', { name: 'Twist family controller', exact: true });
+  await expect(page.getByTestId('family-piece-selection')).toHaveText('1 selected piece · 3 matching families');
+  for (const id of ['cube-view', 'diagram-view']) {
+    await expect(page.getByTestId(id)).toHaveAttribute('data-selected-piece', 'corner/BDL');
+    await expect(page.getByTestId(id)).toHaveAttribute('data-destination-count', '0');
+  }
+  await page.getByRole('button', { name: 'Choose BL family', exact: true }).click();
+  await page.getByRole('button', { name: /^BL destination b(?:,|$)/ }).click();
+  await resting(page);
   const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/helicopter/package.json', '--algorithm', 'BL_ab', '--json'], { encoding: 'utf8' }));
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
+  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-selected-piece', 'corner/BDL');
   await page.getByLabel('Animation speed').selectOption('450');
   await page.getByLabel('Algorithm', { exact: true }).fill('BL_ba UF_ab');
   await page.getByRole('button', { name: 'Play algorithm →' }).click();
   await expect(page.getByTestId('app')).toHaveAttribute('data-animating', 'true');
   for (const id of ['cube-view', 'diagram-view']) await expect(page.getByTestId(id)).toHaveAttribute('data-destination-count', '0');
   await resting(page);
-  const session = new KernelSession(runtime, readFileSync('packages/helicopter/package.json', 'utf8'));
-  try {
-    session.run('UF_ab', 'transactional');
-    const expected = pieceDestinations(session, session.snapshot(), 'corner/BDL').map((option) => option.request.operation).join(',');
-    await expect(page.getByTestId('cube-view')).toHaveAttribute('data-destination-operations', expected);
-  } finally { session.dispose(); }
+  await expect(families).toHaveAttribute('data-matching-families', /BL/);
+  await page.getByRole('button', { name: 'Clear piece selection', exact: true }).click();
+  await expect(page.getByTestId('cube-view')).toHaveAttribute('data-selected-count', '0');
   await page.getByLabel('Puzzle', { exact: true }).selectOption('cube3');
   for (const id of ['cube-view', 'diagram-view']) await expect(page.getByTestId(id)).toHaveAttribute('data-destination-count', '0');
   await expect(page.getByRole('alert')).toHaveCount(0);

@@ -142,7 +142,7 @@ export class SurfaceView {
     this.chooser.className='destination-chooser'; this.hint.className='destination-hint';
     this.chooser.setAttribute('role','group'); this.chooser.setAttribute('aria-label','Choose a twist for this destination');
     this.root.append(this.destinationControls,this.hint,this.chooser); host.append(this.root);
-    this.clearDestinations(); this.decorate(); this.updateTransforms(); this.highlight(undefined,[]);
+    this.clearDestinations(); this.decorate(); this.updateTransforms(); this.highlight([],[]);
     this.resizeObserver=new ResizeObserver(()=>this.resize()); this.resizeObserver.observe(host);
     const canvas=this.renderer.domElement;
     canvas.addEventListener('pointerdown',this.pointerDown); canvas.addEventListener('pointermove',this.pointerMove);
@@ -357,22 +357,23 @@ export class SurfaceView {
   private updateOutlines():void{
     for(const outline of this.outlines){const {part,image}=outline.userData as Instance;outline.matrix.multiplyMatrices(this.images[image].matrix,this.local.fromArray(this.frameData,part*16));}
   }
-  highlight(selected:string|undefined,blocked:string[]):void{
+  highlight(selected:readonly string[],blocked:string[]):void{
+    const selection=new Set(selected);
     for(const {mesh,instances} of this.batches){
       instances.forEach(({part},i)=>{
-        const p=this.descriptor.visualParts[part],isSelected=p.pieceId===selected,isBlocked=blocked.includes(p.pieceId);
+        const p=this.descriptor.visualParts[part],isSelected=selection.has(p.pieceId),isBlocked=blocked.includes(p.pieceId);
         let color=palette[p.materialBindingId]??0x999999;
         if(isBlocked)color=0xff553e;else if(isSelected&&p.materialBindingId==='body')color=0xffc44c;
-        this.color.setHex(color);if(selected&&!isSelected&&!isBlocked)this.color.multiplyScalar(.62);mesh.setColorAt(i,this.color);
+        this.color.setHex(color);if(selected.length&&!isSelected&&!isBlocked)this.color.multiplyScalar(.62);mesh.setColorAt(i,this.color);
       });if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
     }
     for(const line of this.outlines)this.scene.remove(line);this.outlines.length=0;
     this.descriptor.visualParts.forEach((p,part)=>{
-      if(p.pieceId!==selected||p.materialBindingId!=='body')return;
+      if(!selection.has(p.pieceId)||p.materialBindingId!=='body')return;
       let edges=this.edgeAssets.get(p.meshAssetId);if(!edges){edges=new THREE.EdgesGeometry(this.assets.get(p.meshAssetId)!);this.edgeAssets.set(p.meshAssetId,edges);}
       this.images.forEach((_,image)=>{const line=new THREE.LineSegments(edges,this.outlineMaterial);line.matrixAutoUpdate=false;line.renderOrder=22;line.userData={part,image};this.outlines.push(line);this.scene.add(line);});
     });this.updateOutlines();
-    this.host.dataset.selectedPiece=selected??'';this.host.dataset.blockedPieces=blocked.join(',');
+    this.host.dataset.selectedPiece=selected.length===1?selected[0]:'';this.host.dataset.selectedPieces=JSON.stringify(selected);this.host.dataset.selectedCount=String(selected.length);this.host.dataset.blockedPieces=blocked.join(',');
   }
   setState(state:string):void{this.clearDestinations();this.geometry.setState(state);this.updateTransforms();}
   prepare(record:string):void{this.clearDestinations();this.geometry.prepare(record);}

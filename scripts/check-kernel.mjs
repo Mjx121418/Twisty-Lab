@@ -74,13 +74,18 @@ try {
       const intent = { family: 'UF', targets: { UF: 'd' } };
       assert.equal(control.controls.families.length, 12);
       assert.equal(control.familyState('UF').current.UF, 'a');
+      assert.ok(info.controllerCapabilities.includes('piece-family-selection'));
+      const selectedPieces = ['corner/FLU', 'corner/FRU'];
+      const selection = control.familiesForPieces(selectedPieces);
+      assert.deepEqual(selection.families, ['UF']);
       assert.equal(control.planTo(intent).status, 'Planned');
       assert.equal(session.native.revision(), '0');
       assert.equal(control.turnTo(intent).status, 'Committed');
       assert.equal(control.familyState('UF').current.UF, 'd');
       assert.equal(control.turnTo(intent, '0').status, 'StaleRevision');
       const native = JSON.parse(execFileSync(join(consumer, 'build/custom_kernel_consumer'),
-        [join(data, 'package.json'), join(data, 'helicopter-port-diagram.json'), JSON.stringify(intent)], { encoding: 'utf8' }));
+        [join(data, 'package.json'), join(data, 'helicopter-port-diagram.json'), JSON.stringify(intent), JSON.stringify(selectedPieces)], { encoding: 'utf8' }));
+      assert.deepEqual(native.familySelection, selection);
       assert.equal(native.snapshot.stateDigest, session.stateSnapshot().stateDigest);
       const drawing = new GeometryInstance(module, session.native, await readFile(join(data, 'helicopter-port-diagram.json'), 'utf8'));
       drawing.dispose();

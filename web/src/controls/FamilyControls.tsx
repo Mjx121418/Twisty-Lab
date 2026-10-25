@@ -1,12 +1,45 @@
 import { useEffect, useMemo, useState } from 'react';
 import { KernelController, type ControlResult, type Realization, type TurnIntent } from '../kernel';
 
-type Props = { controller: KernelController; revision: string; layout?: Realization['controlLayout'];
+type Props = { selectedPieces: readonly string[]; onClearSelection: () => void; onRemovePiece: (piece: string) => void; controller: KernelController; revision: string; layout?: Realization['controlLayout'];
   busy: boolean; onTurn: (intent: TurnIntent) => void };
 
-export function FamilyControls({ controller, revision, layout, busy, onTurn }: Props) {
+export function FamilyControls(props: Props) {
+  const { controller, revision, selectedPieces, onClearSelection, onRemovePiece } = props;
   const catalog = controller.controls;
-  const [familyId, setFamily] = useState(catalog.families[0].id);
+  const [choice, setFamily] = useState(catalog.families[0].id);
+  const selection = JSON.stringify(selectedPieces);
+  const matching = useMemo(() => selectedPieces.length ? controller.familiesForPieces(selectedPieces) :
+    { status: 'Matched', revision, families: catalog.families.map(f => f.id) }, [controller, revision, selection]);
+  const matches = matching.status === 'Matched' && matching.revision === revision ? matching.families ?? [] : [];
+  const familyId = matches.length === 1 ? matches[0] : matches.includes(choice) ? choice : '';
+  useEffect(() => { if (matches.length === 1) setFamily(matches[0]); }, [JSON.stringify(matches)]);
+  return <section className="family-controls" aria-label="Twist family controller" data-matching-families={matches.join(',')}>
+    <div className="family-piece-selection">
+      <p role="status" data-testid="family-piece-selection">{selectedPieces.length ?
+        `${selectedPieces.length} selected ${selectedPieces.length === 1 ? 'piece' : 'pieces'} · ${matches.length} matching ${matches.length === 1 ? 'family' : 'families'}` :
+        'Click pieces to choose a twist family. Click again to deselect.'}</p>
+      {selectedPieces.length > 0 && <><div className="selected-piece-chips">{selectedPieces.map(id =>
+        <button key={id} type="button" aria-label={`Remove ${id} from selection`} onClick={() => onRemovePiece(id)}>{id} ×</button>)}</div>
+        <button type="button" onClick={onClearSelection}>Clear piece selection</button></>}
+    </div>
+    <label>Twist family <select aria-label="Twist family" value={familyId} onChange={e => setFamily(e.target.value)} disabled={!matches.length}>
+      {!familyId && <option value="">{matches.length ? 'Choose a matching family' : 'No matching family'}</option>}
+      {catalog.families.filter(f => matches.includes(f.id)).map(f => <option key={f.id} value={f.id}>{f.label ?? f.id}</option>)}
+    </select></label>
+    {selectedPieces.length > 0 && matches.length > 1 && <div className="family-options" aria-label="Matching twist families">
+      {catalog.families.filter(f => matches.includes(f.id)).map(f =>
+        <button key={f.id} type="button" aria-pressed={f.id === familyId} onClick={() => setFamily(f.id)}>Choose {f.label ?? f.id} family</button>)}
+    </div>}
+    {familyId ? <FamilyStops key={familyId} {...props} familyId={familyId} /> :
+      <p className="subtle">{matching.status !== 'Matched' ? 'Piece-based family selection is unavailable in this runtime.' : matches.length ?
+        'Choose one of the matching families, then pick an angular destination.' :
+        'No twist family includes all selected pieces from this position. Remove a piece or clear the selection.'}</p>}
+  </section>;
+}
+
+function FamilyStops({ controller, revision, layout, busy, onTurn, familyId }: Props & { familyId: string }) {
+  const catalog = controller.controls;
   const [current, setCurrent] = useState<Record<string, string>>({});
   const [previews, setPreviews] = useState<Record<string, ControlResult>>({});
   const [draft, setDraft] = useState<Record<string, string>>({});
@@ -48,10 +81,7 @@ export function FamilyControls({ controller, revision, layout, busy, onTurn }: P
   const selected = previews[key(draft)];
   const inspected = previews[key(hover ?? draft)];
   const path = inspected?.pathId ? layout?.paths?.[inspected.pathId] : undefined;
-  return <section className="family-controls" aria-label="Twist family controller">
-    <label>Twist family <select aria-label="Twist family" value={familyId} onChange={e => setFamily(e.target.value)}>
-      {catalog.families.map(f => <option key={f.id} value={f.id}>{f.label ?? f.id}</option>)}
-    </select></label>
+  return <>
     {unavailable ? <p role="status">{unavailable}</p> : <>
       <div className="stop-rings">{drivers.map(driver => {
         const sourceAngle = layout?.drivers[driver.id]?.angles[driver.stops.indexOf(current[driver.id])];
@@ -103,5 +133,5 @@ export function FamilyControls({ controller, revision, layout, busy, onTurn }: P
           if(drivers.length===1) onTurn({family:familyId,targets});
         }}>{driver.stops.map(stop => <option key={stop} value={stop}>{stop}{current[driver.id]===stop?' (current)':''}</option>)}</select></label>)}</details>
     </>}
-  </section>;
+  </>;
 }

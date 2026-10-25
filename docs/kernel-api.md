@@ -66,6 +66,7 @@ const session = new KernelSession(module, packageText);
 const controller = new KernelController(module, session);
 controller.catalog();
 controller.familyState('UF'); // current: {UF: 'a'}, revision, definitionDigest
+controller.familiesForPieces(['corner/FLU', 'corner/FRU']); // families: ['UF']
 controller.destinations('UF', 0, 2); // paginated; maximum 32 destinations
 const intent = {family: 'UF', targets: {UF: 'd'}};
 controller.planTo(intent, session.native.revision()); // pure, returns Planned
@@ -100,6 +101,34 @@ the session; stale plans cannot commit. The controller rechecks the route at
 execution. `ChoiceRequired.paths` lists stable path IDs; supplying `pathId` selects
 one. A current-stop intent is a no-op unless an explicit nontrivial path is given.
 Paired families supply both targets and commit one simultaneous tuple.
+
+The additive `piece-family-selection` controller capability provides
+`familiesForPieces(pieceIds)` / WASM `familiesForPiecesJSON(session, piecesJSON)` /
+native `families_for_pieces(stateOrSession, pieceIds)`. A `Matched` result contains
+deduplicated persistent `pieces` and matching `families` in catalog order; session
+queries also include `revision` and `definitionDigest`. Every selected piece must
+participate in **one common route** from that family's current phase. Defined
+self-loops count as participation. Matching uses the route's complete local-move
+choices and compact transport lookups, without planning all destinations or
+retaining expanded maps. It is structural: guards can still block a matching
+family, so clients must use `planTo` / `turnTo` for legality and execution.
+
+An empty selection returns all families; an incompatible selection returns an
+empty list. Missing control metadata returns `Unavailable`; unknown pieces or
+malformed input return `Invalid` through JSON wrappers (typed native methods
+throw `DiagnosticError`). Inputs are limited to 4,096 piece IDs and 1 MiB of JSON.
+Queries own their results and never change state, history or revision. Controller
+API 1, puzzle formats, fingerprints and sessions are unchanged; the SDK returns
+`Unavailable` when an older runtime lacks this optional method.
+
+In the reference application, Helicopter and Melty piece clicks toggle a shared
+multi-selection across views and the inspector. Matching families replace piece
+destination ghosts: a unique family opens automatically; otherwise the user
+chooses a matching family, then an angular destination. Selections follow piece
+identities through moves and undo/redo. Click a selected piece again or remove its
+chip to deselect it. Use Clear piece selection, click the background, or press
+Escape to clear the whole selection.
+Other puzzles retain their existing single-piece destination controls.
 
 `Session::snapshot(SnapshotDetail::StateOnly)` / WASM `stateSnapshotJSON()` / SDK
 `stateSnapshot()` omit `legalRequests` and `candidateRequests`. They retain state,

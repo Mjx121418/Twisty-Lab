@@ -211,3 +211,10 @@ footer { border-top: 1px solid #293840; display: flex; justify-content: space-be
 .advanced-moves { margin: .75rem 0; }
 .advanced-moves > summary { cursor: pointer; margin-bottom: .7rem; }
 .path-choices { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+.family-piece-selection { margin-bottom: .9rem; }
+.family-piece-selection p { margin: 0 0 .6rem; color: #b5d2da; }
+.selected-piece-chips, .family-options { display: flex; flex-wrap: wrap; gap: .4rem; margin: .6rem 0; }
+.selected-piece-chips button { padding: .35rem .6rem; border-color: #b99a52; color: #ffdb80; }
+.family-options button[aria-pressed='true'] { border-color: #7cdddf; background: #294342; }
+.piece-detail li { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .5rem; }

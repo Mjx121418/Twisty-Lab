@@ -55,6 +55,7 @@ EMSCRIPTEN_BINDINGS(twisty) {
   class_<Controller>("Controller")
       .function("catalogJSON", &Controller::catalog_json)
       .function("familyStateJSON", &Controller::family_state_json)
+      .function("familiesForPiecesJSON", &Controller::families_for_pieces_json)
       .function("destinationsJSON", &Controller::destinations_json)
       .function("planToJSON", &Controller::plan_to_json)
       .function("turnToJSON", &Controller::turn_to_json);

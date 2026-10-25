@@ -40,6 +40,74 @@ Json Controller::family_state(const State &s, const std::string &id) const {
   execution_->validate(s);
   return read_family_state(s, id);
 }
+Json Controller::families_for_pieces(const State &s, const std::vector<std::string> &pieces) const {
+  execution_->validate(s);
+  return read_families_for_pieces(s, pieces);
+}
+Json Controller::families_for_pieces(const Session &s, const std::vector<std::string> &pieces) const {
+  same_session(s);
+  return stamp(read_families_for_pieces(s.state(), pieces), s);
+}
+Json Controller::read_families_for_pieces(const State &s, const std::vector<std::string> &ids) const {
+  const auto catalog = execution_->controls();
+  if (!catalog)
+    return {{"status", "Unavailable"}, {"reasonCode", "controls.absent"}};
+  if (ids.size() > 4096)
+    throw DiagnosticError("controls.pieces", "/pieces", "Select at most 4096 pieces.");
+  const auto &definition = *execution_->definition();
+  struct Selection { Index domain; std::set<std::string> moves; };
+  std::vector<Selection> selected;
+  std::set<std::string> seen;
+  Json pieces = Json::array();
+  for (const auto &id : ids) {
+    if (!seen.insert(id).second) continue;
+    const auto found = std::find_if(definition.pieces.begin(), definition.pieces.end(),
+                                    [&](const auto &piece) { return piece.id == id; });
+    if (found == definition.pieces.end())
+      throw DiagnosticError("controls.piece", "/pieces", "Unknown selected piece: " + id);
+    const auto p = static_cast<Index>(found - definition.pieces.begin());
+    Selection selection{found->domain, {}};
+    const auto &source = definition.canonical.at("source").at("domains").at(found->domain);
+    for (const auto &move : source.at("moves")) {
+      if (move.contains("pieces") && !std::any_of(move.at("pieces").begin(), move.at("pieces").end(),
+                                                [&](const auto &piece) { return piece.template get<std::string>() == id; }))
+        continue;
+      // Inspect the chosen local move's support, rather than planning every
+      // target or assuming that the route uses its request's default profile.
+      // The existing view supplies shared program/global placement indices.
+      bool participates = false;
+      if (move.contains("map")) {
+        if (!definition.operations.empty()) {
+          const auto &view = *definition.operations.front().roles[found->domain].view;
+          participates = view.program->transport(move.at("map").get<Index>(),
+                                                  view.placements->at(s.placement_of[p])).has_value();
+        }
+      } else {
+        participates = move.at("transport").contains(definition.domains[found->domain].placements[s.placement_of[p]].key);
+      }
+      if (participates)
+        selection.moves.insert(move.at("id").get<std::string>());
+    }
+    selected.push_back(std::move(selection));
+    pieces.push_back(id);
+  }
+  Json families = Json::array();
+  for (const auto &entry : catalog->json().at("families")) {
+    const auto id = entry.at("id").get<std::string>();
+    if (selected.empty()) { families.push_back(id); continue; }
+    const auto &family = catalog->family(id);
+    const auto current = catalog->read(s, family);
+    if (!current) continue;
+    const auto routes = family.routes.find(*current);
+    if (routes == family.routes.end()) continue;
+    if (std::any_of(routes->second.begin(), routes->second.end(), [&](const auto &route) {
+          return std::all_of(selected.begin(), selected.end(), [&](const auto &piece) {
+            return piece.moves.contains(route.choices->at(piece.domain));
+          });
+        })) families.push_back(id);
+  }
+  return {{"status", "Matched"}, {"pieces", pieces}, {"families", families}};
+}
 Json Controller::read_family_state(const State &s, const std::string &id) const {
   const auto c = execution_->controls();
   if (!c)
@@ -189,6 +257,13 @@ std::string Controller::catalog_json() const {
 }
 std::string Controller::family_state_json(const Session &s, const std::string &f) const {
   return guarded([&] { return family_state(s, f); });
+}
+std::string Controller::families_for_pieces_json(const Session &s, const std::string &pieces) const {
+  return guarded([&]() {
+    if (pieces.size() > 1024 * 1024)
+      throw DiagnosticError("controls.pieces", "/pieces", "Piece selection exceeds 1 MiB.");
+    return families_for_pieces(s, Json::parse(pieces).get<std::vector<std::string>>());
+  });
 }
 std::string Controller::destinations_json(const Session &s, const std::string &f, Index o, Index n) const {
   return guarded([&] { return destinations(s, f, o, n); });

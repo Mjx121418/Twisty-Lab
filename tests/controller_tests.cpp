@@ -29,6 +29,89 @@ int main() {
     Controller c(e);
     check(c.catalog().at("families").size() == 12, "Expected twelve grip controls");
     check(c.family_state(s, "UF").at("current").at("UF") == "a", "Initial phase differs");
+    const auto selection_before = s.save();
+    check(c.families_for_pieces(s, {}).at("families").size() == 12, "Empty selection hides families");
+    check(c.families_for_pieces(s, {"mechanism/UF"}).at("families") == Json::array({"UF"}),
+          "Phase driver selects the wrong family");
+    check(c.families_for_pieces(s, {"corner/FLU"}).at("families").size() == 3,
+          "Corner should offer three incident families");
+    const auto selected = c.families_for_pieces(s, {"corner/FLU", "corner/FRU", "corner/FLU"});
+    check(selected.at("families") == Json::array({"UF"}) && selected.at("pieces").size() == 2 &&
+              selected.at("revision") == "0", "Combined selection or deduplication differs");
+    check(c.families_for_pieces(s, {"mechanism/UF", "mechanism/UR"}).at("families").empty(),
+          "Unrelated drivers share a family");
+    check(Json::parse(c.families_for_pieces_json(s, R"(["unknown"])" )).at("status") == "Invalid",
+          "Unknown selection accepted");
+    check(Json::parse(c.families_for_pieces_json(s, "{}")).at("status") == "Invalid",
+          "Malformed selection accepted");
+    check(s.save() == selection_before && s.revision() == "0", "Selection mutated session/history");
+    {
+      Session blocked(e);
+      check(blocked.run("UF_ab UL_af", "transactional", "0").at("status") == "Committed",
+            "Blocked selection fixture failed");
+      check(c.families_for_pieces(blocked, {"mechanism/UR"}).at("families") == Json::array({"UR"}),
+            "Blocked families should remain discoverable");
+      check(c.plan_to(blocked, {{"family", "UR"}, {"targets", {{"UR", "d"}}}}, blocked.revision()).at("status") == "Blocked",
+            "Selecting a family bypassed its permission relation");
+      Session foreign(Execution::from_source(package.dump()));
+      check(Json::parse(c.families_for_pieces_json(foreign, "[]")).at("status") == "Invalid",
+            "Selection accepted a foreign execution context");
+    }
+    {
+      // Two routes in one synthetic family have different supports. Their
+      // union must not imply that both centers can participate in one turn.
+      auto cube = Json::parse(read("packages/cube3/package.json"));
+      auto execution = Execution::from_source(cube.dump());
+      check(Controller(execution).families_for_pieces(execution->definition()->initial, {}).at("status") ==
+                "Unavailable", "Missing controls should be unavailable");
+      const auto initial = execution->definition()->initial;
+      auto key = [&](const State &state) {
+        const auto &d = *execution->definition();
+        Index p = 0;
+        while (d.pieces[p].id != "corner/UFR") ++p;
+        return d.domains[d.pieces[p].domain].placements[state.placement_of[p]].key;
+      };
+      cube["catalog"]["controls"] = {
+          {"version", 1},
+          {"drivers", Json::array({{{"id", "test"}, {"piece", "corner/UFR"},
+              {"stops", {"a", "b", "c"}}, {"placements", {
+                  {key(initial), "a"}, {key(execution->plan(initial, "U").transition->after), "b"},
+                  {key(execution->plan(initial, "F").transition->after), "c"}}}}})},
+          {"families", Json::array({{{"id", "mixed"}, {"drivers", {"test"}}, {"routes", Json::array({
+              {{"from", {"a"}}, {"to", {"b"}}, {"request", "U"}},
+              {{"from", {"b"}}, {"to", {"a"}}, {"request", "U'"}},
+              {{"from", {"a"}}, {"to", {"c"}}, {"request", "F"}},
+              {{"from", {"c"}}, {"to", {"a"}}, {"request", "F'"}}})}}})}};
+      auto fixture = Execution::from_source(cube.dump());
+      Controller support(fixture);
+      const auto &state = fixture->definition()->initial;
+      for (const auto &piece : {"center/U", "center/F"})
+        check(support.families_for_pieces(state, {piece}).at("families") == Json::array({"mixed"}),
+              "Participating self-loop was ignored");
+      check(support.families_for_pieces(state, {"center/U", "center/F"}).at("families").empty(),
+            "Selection combined incompatible routes' supports");
+      // A route may carry a nondefault completion. Discover its actual support,
+      // even if the request's permission relation will reject that completion.
+      for (const auto &[request, move] : {std::pair{"U", "F"}, std::pair{"U'", "F'"}}) {
+        for (auto &r : cube["source"]["requests"])
+          if (r.at("id") == request)
+            r["profiles"].push_back({{"id", "other"}, {"choices", {
+                {"center", move}, {"corner", move}, {"edge", move}}}});
+      }
+      auto &route = cube["catalog"]["controls"]["families"][0]["routes"];
+      for (Index i : {2u, 3u}) {
+        route[i]["request"] = i == 2 ? "U" : "U'";
+        route[i]["profile"] = "other";
+        route[i]["pathId"] = "other";
+      }
+      auto alternate = Execution::from_source(cube.dump());
+      Controller completion(alternate);
+      check(completion.families_for_pieces(alternate->definition()->initial, {"center/F"}).at("families") ==
+                Json::array({"mixed"}), "Selection used the request's default completion");
+      check(completion.plan_to(alternate->definition()->initial,
+                {{"family", "mixed"}, {"targets", {{"test", "c"}}}}).at("status") == "Blocked",
+            "Structural matching bypassed completion permissions");
+    }
     auto intent = Json{{"family", "UF"}, {"targets", {{"UF", "d"}}}};
     auto before = s.save();
     auto preview = c.plan_to(s, intent, "0");

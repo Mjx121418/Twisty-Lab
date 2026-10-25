@@ -39,6 +39,7 @@ export type ControlResult = Result & {
   targets?: Record<string, string>; destinations?: ControlResult[]; nextOffset?: number; total?: number;
   request?: Request; paths?: { pathId: string; request: Request }[];
 };
+export type FamilySelection = Result & { revision?: string; pieces?: string[]; families?: string[] };
 export type Transition = {
   definitionDigest: string; beforeStateDigest: string; afterStateDigest: string;
   request: Request & { choices: string[] }; beforeState: State; afterState: State;
@@ -360,6 +361,11 @@ export class KernelController {
   catalog(): ControlCatalog { return this.controls; }
   familyState(family: string): ControlResult {
     return JSON.parse(this.native.familyStateJSON(this.session.native, family)) as ControlResult;
+  }
+  familiesForPieces(pieces: readonly string[]): FamilySelection {
+    if (typeof this.native.familiesForPiecesJSON !== 'function')
+      return { status: 'Unavailable', reasonCode: 'controls.piece_selection_unsupported' };
+    return JSON.parse(this.native.familiesForPiecesJSON(this.session.native, JSON.stringify(pieces))) as FamilySelection;
   }
   destinations(family: string, offset = 0, limit = 16): ControlResult {
     return JSON.parse(this.native.destinationsJSON(this.session.native, family, offset, limit)) as ControlResult;

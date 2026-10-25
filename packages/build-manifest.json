@@ -9,7 +9,7 @@
     "include/twisty/authoring/gear.hpp": "93e2172fc8b664aac8ea67eeed0223bdedcfefc39868d4bc8dd4fa397bace739",
     "include/twisty/catalog.hpp": "1f563a55ef967f1ef431127ec145ec91f0b9a3f973864e4510dcb1b20c150c73",
     "include/twisty/completion.hpp": "25c08c38d4cefe8e79577be09be0e436849eb33caf3a3e0f3c9b63d78642cff3",
-    "include/twisty/controller.hpp": "33176eb4b5fe95dc6df0048b10d1d4c75b85f5e8ed68a43d455e17aadc96038a",
+    "include/twisty/controller.hpp": "3352cf2f6b77fd8ae5434cbcd8ef2743d2768c6f48646d4667afd9f61f24c348",
     "include/twisty/core.hpp": "921609d205e318271c21259e578552f89c33f8b889874b881877d1d0629c83c5",
     "include/twisty/execution.hpp": "7f1ab966d8f3a7b9c0406ff0856f458cfe85d3f525fa50e2f8fa772bb3c5ac47",
     "include/twisty/session.hpp": "a3cc095d33652f1525a85356c6ab9263ed0f8cfe8d5273aae706aaec1e8bd911",

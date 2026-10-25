@@ -156,7 +156,7 @@ export function App() {
   const [busy, setBusy] = useState(false);
   const [playing, setPlaying] = useState('');
   const [visualDigest, setVisualDigest] = useState('');
-  const [selected, setSelected] = useState<string>();
+  const [selected, setSelected] = useState<string[]>([]);
   const [evidence, setEvidence] = useState<Result>();
   const [visualError, setVisualError] = useState('');
   const [fatalError, setFatalError] = useState('');
@@ -226,7 +226,7 @@ export function App() {
     const available: ViewId[] = preset ? availableViews(preset).map(view => view.id) : ['cube', 'sphere', 'diagram'];
     setViewSelection(current => current.order.length === available.length && current.order.every(id => available.includes(id)) ? current : defaultViews(available));
     setSourceId(id); setSnapshot(initial); setVisualDigest(initial.stateDigest);
-    setSelected(undefined); setEvidence(undefined); setLastScramble(''); setVisualError('');
+    setSelected([]); setEvidence(undefined); setLastScramble(''); setVisualError('');
     setAlgorithm(initial.puzzleId === 'flat-333-6-v1' ? "A D A' D'" : initial.puzzleId.startsWith('flat-') ? "A B A' B'" : initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' :
       initial.puzzleId === 'bagua-experimental-v1' ? "U+ R' L' D2 R L U-" : initial.puzzleId.startsWith('melty-') ? "U U'" :
       parsedSource.kind === 'relational-gear-prototypes' ? (parsedSource.gearedEdges.length === 0 ? "Rq Uq Rq' Uq'" :
@@ -286,8 +286,8 @@ export function App() {
         const host = viewHosts.current.get(id);
         if (!host) continue;
         const view = surfaceMode
-          ? new SurfaceView(module, host, session.native, realization, setSelected, () => !busyRef.current, chooseDestination, surfaceMode)
-          : new RenderView(module, host, session.native, realization, setSelected, () => !busyRef.current, chooseDestination,
+          ? new SurfaceView(module, host, session.native, realization, choosePiece, () => !busyRef.current, chooseDestination, surfaceMode)
+          : new RenderView(module, host, session.native, realization, choosePiece, () => !busyRef.current, chooseDestination,
             id === 'cube' ? activePreset.cameraScale : undefined);
         view.restoreCamera(restoredCameras?.get(id) ?? cameras.get(id));
         view.setState(session.stateText());
@@ -306,7 +306,7 @@ export function App() {
   useEffect(() => {
     if (!kernel.current || !snapshot || !views.current.length) return;
     for (const view of views.current) view.setDestinations(undefined, []);
-    if (busy || !selected) return;
+    if (busy || !selected.length || controller.current) return;
     const session = kernel.current;
     let timer: ReturnType<typeof setTimeout> | undefined;
     // Paint selection feedback before preparing optional endpoint ghosts.
@@ -315,8 +315,8 @@ export function App() {
     const frame = requestAnimationFrame(() => { timer = setTimeout(() => {
       if (kernel.current !== session || session.native.revision() !== snapshot.revision) return;
       try {
-        const destinations = pieceDestinations(session, controller.current ? session.snapshot() : snapshot, selected);
-        for (const view of views.current) view.setDestinations(selected, destinations);
+        const destinations = pieceDestinations(session, snapshot, selected[0]);
+        for (const view of views.current) view.setDestinations(selected[0], destinations);
       } catch (error: unknown) {
         for (const view of views.current) view.setDestinations(undefined, []);
         setVisualError(`Destination preview unavailable: ${String(error)}`);
@@ -324,6 +324,11 @@ export function App() {
     }, 0); });
     return () => { cancelAnimationFrame(frame); if (timer !== undefined) clearTimeout(timer); };
   }, [selected, snapshot, busy, generation, viewSelection, viewDefinitions]);
+
+  function choosePiece(piece?: string): void {
+    setSelected(previous => !piece ? [] : !controller.current ? [piece] :
+      previous.includes(piece) ? previous.filter(id => id !== piece) : [...previous, piece]);
+  }
 
   function chooseDestination(destination: PieceDestination): void {
     const session = kernel.current;
@@ -406,7 +411,7 @@ export function App() {
     commands.current = [];
     const initial = readSnapshot(next);
     setSnapshot(initial); setVisualDigest(initial.stateDigest);
-    setSelected(undefined); setEvidence(undefined); setLastScramble(''); setVisualError('');
+    setSelected([]); setEvidence(undefined); setLastScramble(''); setVisualError('');
     setGeneration((value) => value + 1);
   }
 
@@ -418,7 +423,7 @@ export function App() {
       const element = event.target as HTMLElement;
       if (event.repeat || ['INPUT', 'TEXTAREA', 'SELECT'].includes(element.tagName)) return;
       if (event.key === 'Escape') {
-        setSelected(undefined);
+        setSelected([]);
       } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
         event.preventDefault(); enqueue(() => event.shiftKey ? kernel.current!.redo() : kernel.current!.undo());
       } else if (!event.ctrlKey && !event.metaKey && !event.altKey && /^[urfdlabce]$/i.test(event.key)) {
@@ -492,7 +497,7 @@ export function App() {
   const families = Array.from(new Set(definition?.operations.map((operation) => operation.family) ?? []));
   const faceOrder = activePreset?.surface ? ['A', 'B', 'C', 'D'] : ['U', 'R', 'F', 'D', 'L', 'B'];
   families.sort((a, b) => (faceOrder.includes(a) ? faceOrder.indexOf(a) : 6) - (faceOrder.includes(b) ? faceOrder.indexOf(b) : 6) || a.localeCompare(b));
-  const selectedPiece = definition?.pieces.find((piece) => piece.id === selected);
+  const selectedPiece = definition?.pieces.find((piece) => piece.id === selected[0]);
   const selectedDomain = definition?.pieceTypes.find((type) => type.id === selectedPiece?.type)?.placementDomainId;
   const selectedPlacement = selectedPiece && snapshot ? definition?.placementDomains.find((domain) => domain.id === selectedDomain)?.placements.find((q) => q.key === snapshot.state.placementOf[selectedPiece.id]) : undefined;
 
@@ -556,7 +561,7 @@ export function App() {
             {displayedViews.map(({ id }, index) => <article key={id} className={`view-panel ${id === 'diagram' ? 'diagram-panel' : ''}`} data-view={id}>
               <div className="view-title"><span>{String(index + 1).padStart(2, '0')} / {viewLabels[id]}</span><span className="subtle">{
                 id === 'fundamental-domain' ? 'Drag to pan' : id === 'tiled-plane' ? 'Drag to pan · scroll to zoom' :
-                id === 'sphere' ? 'Drag to rotate freely · scroll to zoom' : id === 'cube' ? 'Drag to orbit · scroll to zoom' : 'Click a piece, then a translucent destination'
+                id === 'sphere' ? 'Drag to rotate freely · scroll to zoom' : id === 'cube' ? 'Drag to orbit · scroll to zoom' : controller.current ? 'Click pieces to choose a twist family' : 'Click a piece, then a translucent destination'
               }</span></div>
               <div ref={host => { if (host) viewHosts.current.set(id, host); else viewHosts.current.delete(id); }} className="canvas-host"
                 data-testid={index === 0 ? 'cube-view' : index === 1 ? 'diagram-view' : 'extra-view'} data-view-id={id} data-state-digest={visualDigest} />
@@ -575,7 +580,8 @@ export function App() {
           <section className="commands">
             <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{activePreset?.surface ? `Face keys ${Object.keys(activePreset.realizations[0].flatSurface?.diskCenters??{}).join(' ')} · ${rhombus ? 60 : 90}° turns · Shift for inverse` : snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : snapshot?.puzzleId === 'bagua-experimental-v1' ? '+ / −: 45° · face keys: 90° · Shift for inverse' : melty ? 'Face keys U R F D L B · choose each cap independently · hover for angles' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
             {controller.current && snapshot && <FamilyControls key={generation} controller={controller.current} revision={snapshot.revision}
-              layout={activePreset?.realizations[0].controlLayout} busy={busy} onTurn={turnTo} />}
+              layout={activePreset?.realizations[0].controlLayout} busy={busy} onTurn={turnTo}
+              selectedPieces={selected} onClearSelection={() => setSelected([])} onRemovePiece={choosePiece} />}
             <details key={`advanced-${generation}`} className="advanced-moves" open={controller.current ? undefined : true} onToggle={event => {
               advanced.current = event.currentTarget.open;
               if (kernel.current) setSnapshot(readSnapshot(kernel.current));
@@ -602,11 +608,11 @@ export function App() {
         <aside className="inspector">
           <div className="inspector-header"><span className="eyebrow">LOOK UNDER THE SURFACE</span><h2>Definition inspector</h2><p>Follow a piece from abstract placement to visual part.</p></div>
           <div className="metrics"><div><strong>{definition?.pieces.length ?? '—'}</strong><span>pieces</span></div><div><strong>{definition?.operations.length ?? '—'}</strong><span>primitives</span></div><div><strong>{definition?.symmetry?.members?.length ?? '—'}</strong><span>symmetries</span></div></div>
-          {evidence && <section className="evidence" role="alert" data-testid="blocking-evidence"><span className="eyebrow">{evidence.status === 'Blocked' ? 'MOVE BLOCKED' : evidence.status === 'NoDirectRoute' ? 'TURN UNAVAILABLE' : 'INVALID INPUT'}</span><h3>{evidence.reasonCode === 'relation.rejected' ? 'The puzzle interaction rules block this move.' : evidence.reasonCode === 'controls.no_route' ? 'No direct turn is defined between these stops. Choose another target or use the single-cap family.' : evidence.diagnostics?.[0]?.message ?? evidence.reasonCode}</h3><code>{evidence.reasonCode ?? evidence.diagnostics?.[0]?.reasonCode}</code>{evidence.implicatedPieces?.map((piece) => <button key={piece} onClick={() => setSelected(piece)}>{piece}</button>)}{evidence.evidence !== undefined && <details><summary>Abstract evidence</summary><pre>{JSON.stringify(evidence.evidence, null, 2)}</pre></details>}</section>}
+          {evidence && <section className="evidence" role="alert" data-testid="blocking-evidence"><span className="eyebrow">{evidence.status === 'Blocked' ? 'MOVE BLOCKED' : evidence.status === 'NoDirectRoute' ? 'TURN UNAVAILABLE' : 'INVALID INPUT'}</span><h3>{evidence.reasonCode === 'relation.rejected' ? 'The puzzle interaction rules block this move.' : evidence.reasonCode === 'controls.no_route' ? 'No direct turn is defined between these stops. Choose another target or use the single-cap family.' : evidence.diagnostics?.[0]?.message ?? evidence.reasonCode}</h3><code>{evidence.reasonCode ?? evidence.diagnostics?.[0]?.reasonCode}</code>{evidence.implicatedPieces?.map((piece) => <button key={piece} onClick={() => choosePiece(piece)}>{piece}</button>)}{evidence.evidence !== undefined && <details><summary>Abstract evidence</summary><pre>{JSON.stringify(evidence.evidence, null, 2)}</pre></details>}</section>}
           <div className="inspector-tabs">{(['pieces', 'history', 'definition'] as Inspector[]).map((value) => <button key={value} aria-pressed={inspector === value} onClick={() => setInspector(value)}>{value === 'definition' ? 'Source & rules' : value[0].toUpperCase() + value.slice(1)}</button>)}</div>
           {inspector === 'pieces' && <>
-            <div className="piece-list">{definition?.pieces.map((piece) => <button key={piece.id} aria-label={`Select ${piece.id}`} aria-pressed={selected === piece.id} onClick={() => setSelected(piece.id)}><span>{piece.id}</span><small>{piece.type}</small></button>)}</div>
-            <section className="piece-detail"><span className="eyebrow">SELECTED PIECE</span><h3>{selected ?? 'Choose a piece or port'}</h3>{selectedPiece && <><dl><dt>Placement</dt><dd><code>{snapshot?.state.placementOf[selectedPiece.id]}</code></dd><dt>Footprint</dt><dd>{selectedPlacement?.footprint.join(', ')}</dd><dt>Ports</dt><dd>{Object.entries(selectedPiece.portLabels).map(([port, label]) => `${port}: ${label}`).join(' · ')}</dd></dl><details><summary>Port attachments</summary><pre>{JSON.stringify(selectedPlacement?.portAttachment, null, 2)}</pre></details></>}</section>
+            <div className="piece-list">{definition?.pieces.map((piece) => <button key={piece.id} aria-label={`Select ${piece.id}`} aria-pressed={selected.includes(piece.id)} disabled={busy} onClick={() => choosePiece(piece.id)}><span>{piece.id}</span><small>{piece.type}</small></button>)}</div>
+            <section className="piece-detail"><span className="eyebrow">SELECTED {selected.length > 1 ? 'PIECES' : 'PIECE'}</span><h3>{selected.length > 1 ? `${selected.length} pieces selected` : selected[0] ?? 'Choose a piece or port'}</h3>{selected.length > 1 ? <ul>{selected.map(id => <li key={id}><strong>{id}</strong><code>{snapshot?.state.placementOf[id]}</code></li>)}</ul> : selectedPiece && <><dl><dt>Placement</dt><dd><code>{snapshot?.state.placementOf[selectedPiece.id]}</code></dd><dt>Footprint</dt><dd>{selectedPlacement?.footprint.join(', ')}</dd><dt>Ports</dt><dd>{Object.entries(selectedPiece.portLabels).map(([port, label]) => `${port}: ${label}`).join(' · ')}</dd></dl><details><summary>Port attachments</summary><pre>{JSON.stringify(selectedPlacement?.portAttachment, null, 2)}</pre></details></>}</section>
           </>}
           {inspector === 'history' && <section className="history-list"><p>{snapshot?.cursor ?? 0} committed primitives at the cursor.</p>{snapshot?.history.length ? snapshot.history.map((move, index) => <div key={index} className={index >= snapshot.cursor ? 'future' : ''}><span>{String(index + 1).padStart(3, '0')}</span><strong>{move}</strong><small>{index >= snapshot.cursor ? 'redo' : 'committed'}</small></div>) : <p className="empty-state">Your first move starts a history.</p>}</section>}
           {inspector === 'definition' && <section className="definition-detail"><dl>{definition?.placementDomains.map((domain) => <div key={domain.id}><dt>{domain.id} domain</dt><dd>{domain.placements.length} exact placements</dd></div>)}</dl><h3>Position orbits & stabilizers</h3><dl>{Object.entries(definition?.symmetry?.positionOrbits ?? {}).map(([type, orbit]) => <div key={type}><dt>{type}</dt><dd>{orbit.positions.length} positions · |H| = {orbit.stabilizer.length}</dd></div>)}</dl><h3>Directed operations</h3><div className="operation-list">{definition?.operations.map((operation) => <details key={operation.id}><summary>{operation.id} <span>inverse {operation.inverse}</span></summary><pre>{JSON.stringify(operation, null, 2)}</pre></details>)}</div><details><summary>Compiled definition</summary><pre>{definitionText}</pre></details></section>}

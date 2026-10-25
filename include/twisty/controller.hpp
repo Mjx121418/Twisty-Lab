@@ -47,6 +47,10 @@ public:
   explicit Controller(std::shared_ptr<const Execution>);
   Json catalog() const;
   Json family_state(const State &, const std::string &family) const;
+  // Structural support only: some current-phase route includes every piece.
+  // Blocking and target validity remain the responsibility of plan_to/turn_to.
+  Json families_for_pieces(const State &, const std::vector<std::string> &pieces) const;
+  Json families_for_pieces(const Session &, const std::vector<std::string> &pieces) const;
   Json plan_to(const State &, const Json &intent) const;
   Json family_state(const Session &, const std::string &family) const;
   Json destinations(const Session &, const std::string &family, Index offset = 0, Index limit = 16) const;
@@ -54,6 +58,7 @@ public:
   Json turn_to(Session &, const Json &intent, const std::string &expected) const;
   std::string catalog_json() const;
   std::string family_state_json(const Session &, const std::string &) const;
+  std::string families_for_pieces_json(const Session &, const std::string &) const;
   std::string destinations_json(const Session &, const std::string &, Index, Index) const;
   std::string plan_to_json(const Session &, const std::string &, const std::string &) const;
   std::string turn_to_json(Session &, const std::string &, const std::string &) const;
@@ -61,6 +66,7 @@ public:
 private:
   std::shared_ptr<const Execution> execution_;
   Json read_family_state(const State &, const std::string &) const;
+  Json read_families_for_pieces(const State &, const std::vector<std::string> &) const;
   Json resolve(const State &, const Json &) const;
   void same_session(const Session &) const;
 };

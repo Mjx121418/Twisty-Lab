@@ -239,12 +239,13 @@ export class RenderView {
   }
   sample(progress: number): void { this.geometry.evaluate(progress); this.updateTransforms(); }
   setDestinations(piece: string | undefined, destinations: PieceDestination[]): void { this.destinations.setDestinations(piece, destinations); }
-  highlight(selected: string | undefined, blocked: string[]): void {
+  highlight(selected: readonly string[], blocked: string[]): void {
+    const selection = new Set(selected);
     for (let index = 0; index < this.meshes.length; index++) {
       const mesh = this.meshes[index];
       const isBlocked = blocked.includes(mesh.userData.pieceId);
-      const isSelected = mesh.userData.pieceId === selected;
-      mesh.material.color.setHex(mesh.userData.baseColor).multiplyScalar(selected && !isSelected && !isBlocked ? 0.65 : 1);
+      const isSelected = selection.has(mesh.userData.pieceId);
+      mesh.material.color.setHex(mesh.userData.baseColor).multiplyScalar(selected.length > 0 && !isSelected && !isBlocked ? 0.65 : 1);
       mesh.material.emissive.setHex(isBlocked ? 0xff553e : isSelected ? 0xffc75f : 0x000000);
       mesh.material.emissiveIntensity = isBlocked ? 0.5 : isSelected ? 0.45 : 0;
       // Opaque selected surfaces join the transparent pass at full opacity,
@@ -273,8 +274,10 @@ export class RenderView {
       }
       if (outline) outline.visible = isSelected;
     }
-    for (const sprite of this.labelSprites) sprite.renderOrder = this.meshes[sprite.userData.meshIndex].userData.pieceId === selected ? 23 : 0;
-    this.host.dataset.selectedPiece = selected ?? '';
+    for (const sprite of this.labelSprites) sprite.renderOrder = selection.has(this.meshes[sprite.userData.meshIndex].userData.pieceId) ? 23 : 0;
+    this.host.dataset.selectedPiece = selected.length === 1 ? selected[0] : '';
+    this.host.dataset.selectedPieces = JSON.stringify(selected);
+    this.host.dataset.selectedCount = String(selected.length);
     this.host.dataset.blockedPieces = blocked.join(',');
   }
   cameraState(): unknown { return { position: this.camera.position.toArray(), target: this.controls.target.toArray(), up: this.camera.up.toArray(), zoom: this.camera.zoom }; }

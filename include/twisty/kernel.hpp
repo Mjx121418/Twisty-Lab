@@ -21,7 +21,7 @@ inline Json kernel_info() {
           {"frameBufferVersion", 1},
           {"geometryAPIVersion", 1},
           {"controllerAPIVersion", 1},
-          {"controllerCapabilities", {"state-backed-phases", "destination-intents", "scoped-previews"}},
+          {"controllerCapabilities", {"state-backed-phases", "destination-intents", "scoped-previews", "piece-family-selection"}},
           {"poseBufferVersion", 1},
           {"languageAPIVersion", 3},
           {"abstractCapabilities", {"placement-actions", "reference-twist-families", "compact-transports", "rectangular-position-maps"}},
