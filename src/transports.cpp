@@ -1,5 +1,6 @@
 #include "twisty/core.hpp"
 #include <algorithm>
+#include <array>
 #include <numeric>
 #include <set>
 
@@ -16,10 +17,10 @@ std::optional<Index> lookup(const std::vector<Row> &rows, Index q) {
     return {};
   return i->to;
 }
-std::vector<Row> reverse(const std::vector<Row> &rows, Index size) {
+std::vector<Row> reverse(const std::vector<Row> &rows, Index source_size, Index target_size) {
   std::vector<Row> out;
   for (const auto &r : rows) {
-    check(r.from < size && r.to < size, "Unknown reference in partial permutation");
+    check(r.from < source_size && r.to < target_size, "Partial injection index outside its source or target space");
     check(out.empty() || rows[out.size() - 1].from < r.from, "Unsorted or duplicate reference source");
     out.push_back({r.to, r.from});
   }
@@ -50,20 +51,28 @@ Index Program::act(Index c, Index g, Index q) const {
     throw Error("core.input", "Unknown group element");
   return collection.placements[finite_action(collection.action, g, local_of_[q])];
 }
-std::optional<Index> Program::permutation(Index id, Index q, bool inverse) const {
-  const auto &p = data_.permutations[id];
+std::optional<Index> Program::position_map_unchecked(Index id, Index q, bool inverse) const {
+  const auto &p = data_.position_maps[id];
   if (p.base == no_index)
-    return lookup(inverse ? permutation_inverses_[id] : p.rows, q);
+    return lookup(inverse ? position_inverses_[id] : p.rows, q);
   const auto pre = inverse ? p.output_action : p.input_action;
   const auto post = inverse ? p.input_action : p.output_action;
   const auto pre_g = inverse ? p.output_element : p.input_element;
   const auto post_g = inverse ? p.input_element : p.output_element;
   if (pre != no_index)
     q = finite_action(pre, data_.groups[data_.finite_actions[pre].group].inverses[pre_g], q);
-  auto result = permutation(p.base, q, inverse);
+  auto result = position_map_unchecked(p.base, q, inverse);
   if (result && post != no_index)
     result = finite_action(post, post_g, *result);
   return result;
+}
+std::optional<Index> Program::position_map(Index id, Index point, bool inverse) const {
+  if (id >= data_.position_maps.size())
+    throw Error("core.input", "Unknown position map");
+  const auto &p = data_.position_maps[id];
+  if (point >= data_.reference_spaces[inverse ? p.target_space : p.source_space].size)
+    throw Error("core.input", "Position-map input outside its reference space");
+  return position_map_unchecked(id, point, inverse);
 }
 Index Program::bind(Index id, Index q, bool inverse) const {
   const auto &b = data_.reference_bindings[id];
@@ -99,10 +108,10 @@ std::optional<Index> Program::transport_unchecked(Index id, Index q) const {
     if (r == no_index)
       return {};
     const auto &f = data_.twist_families[t.family];
-    const auto anchor = permutation(f.positions[t.source], r, true);
+    const auto anchor = position_map_unchecked(f.positions[t.source], r, true);
     if (!anchor)
       return {};
-    const auto target = permutation(f.positions[t.target], *anchor, false);
+    const auto target = position_map_unchecked(f.positions[t.target], *anchor, false);
     if (!target)
       return {};
     return bind(t.binding, *target, false);
@@ -134,7 +143,7 @@ void Program::validate_transports() {
       throw Error("core.limit", "Transport validation exceeds work limit");
   };
   check(d.groups.size() <= 4096 && d.finite_actions.size() <= 1000000 &&
-            d.collections.size() <= d.placement_count && d.permutations.size() <= 1000000 &&
+            d.collections.size() <= d.placement_count && d.position_maps.size() <= 1000000 &&
             d.reference_bindings.size() <= 1000000 && d.reference_spaces.size() <= 1000000 &&
             d.twist_families.size() <= 1000000,
         "Too many transport descriptors");
@@ -203,32 +212,37 @@ void Program::validate_transports() {
     check(std::find(collection_of_.begin(), collection_of_.end(), no_index) == collection_of_.end(),
           "Placement is missing from collections");
   }
+  charge(d.reference_spaces.size() + d.position_maps.size() * 2 + d.reference_bindings.size() + d.twist_families.size() * 2);
   for (const auto &s : d.reference_spaces)
     check(s.size > 0 && s.size <= 1000000, "Invalid reference space");
-  permutation_inverses_.resize(d.permutations.size());
-  std::vector<Index> depths(d.permutations.size());
-  for (Index i = 0; i < d.permutations.size(); ++i) {
-    const auto &p = d.permutations[i];
-    check(p.space < d.reference_spaces.size(), "Unknown reference space");
+  position_inverses_.resize(d.position_maps.size());
+  std::vector<Index> depths(d.position_maps.size());
+  for (Index i = 0; i < d.position_maps.size(); ++i) {
+    const auto &p = d.position_maps[i];
+    check(p.source_space < d.reference_spaces.size() && p.target_space < d.reference_spaces.size(),
+          "Unknown position-map source or target space");
     if (p.base == no_index) {
       check(p.input_action == no_index && p.output_action == no_index,
-            "Explicit permutation has derived fields");
+            "Explicit position map has derived fields");
       charge(p.rows.size() * 2);
-      permutation_inverses_[i] = reverse(p.rows, d.reference_spaces[p.space].size);
+      position_inverses_[i] = reverse(p.rows, d.reference_spaces[p.source_space].size, d.reference_spaces[p.target_space].size);
     } else {
-      check(p.base < i && d.permutations[p.base].space == p.space && p.rows.empty(),
-            "Cyclic, forward or incompatible permutation dependency");
+      check(p.base < i && d.position_maps[p.base].source_space == p.source_space &&
+                d.position_maps[p.base].target_space == p.target_space && p.rows.empty(),
+            "Cyclic, forward or incompatible position-map dependency");
       depths[i] = depths[p.base] + 1;
-      check(depths[i] <= 64, "Permutation derivation is too deep");
-      for (auto [action, element] :
-           {std::pair{p.input_action, p.input_element}, std::pair{p.output_action, p.output_element}})
+      check(depths[i] <= 64, "Position-map derivation is too deep");
+      for (auto [action, element, space] :
+           {std::array{p.input_action, p.input_element, p.source_space},
+            std::array{p.output_action, p.output_element, p.target_space}})
         if (action != no_index)
           check(action < d.finite_actions.size() &&
-                    d.finite_actions[action].size == d.reference_spaces[p.space].size &&
+                    d.finite_actions[action].size == d.reference_spaces[space].size &&
                     element < d.groups[d.finite_actions[action].group].order,
                 "Invalid reference action");
     }
   }
+  const auto position_depths = depths;
   binding_inverses_.resize(d.reference_bindings.size());
   depths.assign(d.reference_bindings.size(), 0);
   for (Index i = 0; i < d.reference_bindings.size(); ++i) {
@@ -242,7 +256,7 @@ void Program::validate_transports() {
         check(b.placements[r] < d.placement_count, "Unknown bound placement");
         rows.push_back({r, b.placements[r]});
       }
-      binding_inverses_[i] = reverse(rows, std::max<Index>(d.placement_count, b.placements.size()));
+      binding_inverses_[i] = reverse(rows, d.reference_spaces[b.space].size, d.placement_count);
     } else {
       check(b.base < i && d.reference_bindings[b.base].space == b.space && b.placements.empty() &&
                 b.group < d.groups.size() && b.element < d.groups[b.group].order && !d.collections.empty(),
@@ -250,18 +264,21 @@ void Program::validate_transports() {
       depths[i] = depths[b.base] + 1;
       check(depths[i] <= 64, "Binding derivation is too deep");
       for (Index r = 0; r < d.reference_spaces[b.space].size; ++r) {
-        step();
+        step(depths[b.base] + 1);
         const auto q = bind(b.base, r, false);
         check(d.finite_actions[d.collections[collection_of_[q]].action].group == b.group,
               "Binding action group differs from collection group");
       }
     }
   }
+  const auto binding_depths = depths;
   for (const auto &f : d.twist_families) {
-    check(f.space < d.reference_spaces.size() && !f.positions.empty(), "Invalid twist family");
+    check(f.anchor_space < d.reference_spaces.size() && f.reference_space < d.reference_spaces.size() &&
+              !f.positions.empty(), "Invalid twist family");
     charge(f.positions.size());
     for (auto p : f.positions)
-      check(p < d.permutations.size() && d.permutations[p].space == f.space, "Incompatible position map");
+      check(p < d.position_maps.size() && d.position_maps[p].source_space == f.anchor_space &&
+                d.position_maps[p].target_space == f.reference_space, "Incompatible position map");
   }
   if (d.transports.empty())
     return;
@@ -285,9 +302,11 @@ void Program::validate_transports() {
       check(t.family < d.twist_families.size() && t.binding < d.reference_bindings.size(),
             "Invalid reference transport");
       const auto &f = d.twist_families[t.family];
-      check(d.reference_bindings[t.binding].space == f.space && t.source < f.positions.size() &&
+      check(d.reference_bindings[t.binding].space == f.reference_space && t.source < f.positions.size() &&
                 t.target < f.positions.size(),
             "Incompatible twist positions or binding");
+      costs[i] = 4 + 2 * binding_depths[t.binding] + position_depths[f.positions[t.source]] +
+                 position_depths[f.positions[t.target]];
     } else {
       check(t.kind == TransportKind::join, "Unknown transport kind");
       charge(t.parts.size());
@@ -354,15 +373,15 @@ std::size_t Program::transport_storage_bytes() const {
     n += a.table.size() + 3;
   for (const auto &c : data_.collections)
     n += c.placements.size() + 1;
-  for (const auto &p : data_.permutations)
-    n += p.rows.size() * 2 + 6;
+  for (const auto &p : data_.position_maps)
+    n += p.rows.size() * 2 + 7;
   for (const auto &b : data_.reference_bindings)
     n += b.placements.size() + 4;
   for (const auto &f : data_.twist_families)
-    n += f.positions.size() + 1;
+    n += f.positions.size() + 2;
   for (const auto &t : data_.transports)
     n += t.parts.size() + 8;
-  for (const auto &v : permutation_inverses_)
+  for (const auto &v : position_inverses_)
     n += v.size() * 2;
   for (const auto &v : binding_inverses_)
     n += v.size() * 2;

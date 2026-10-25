@@ -324,7 +324,7 @@ def generate(family, directory):
     del conflicts
     emit('puzzle.pzl.json', source)
     emit('bindings.json', catalog)
-    emit('package.json', dict(kind='relational-package', formatVersion=2, source=source, catalog=catalog))
+    emit('package.json', dict(kind='relational-package', formatVersion=source['languageVersion'], source=source, catalog=catalog))
     manifest = dict(puzzleId=source['id'], definitionDigest=UNPINNED, transportCompression=compression,
         angleDegrees=85, cutDepth='1/3', placementCount=sum(len(p['placements']) for p in model.pieces), domainCount=27,
         requestCount=len(source['requests']), witnessCheck=witnesses,

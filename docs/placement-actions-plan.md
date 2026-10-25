@@ -1,5 +1,10 @@
 # Placement actions and compact twist families
 
+The square-map results below are the original migration checkpoint. The current
+[anchor/reference refactor](reference-anchors.md) removes charts introduced only
+by the square-map restriction, while retaining support for these older formats.
+
+
 Implement the approved two-extension plan with global placement IDs, unchanged
 IN/RANGE permission semantics, and immutable compact transports. The anchor is
 a coordinate convention, never a required legal intermediate stop.

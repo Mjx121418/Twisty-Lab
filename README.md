@@ -2,16 +2,17 @@
 
 A portable twisty-puzzle kernel with exact C++ rules and interchangeable C++ geometric realizations. Custom native and browser renderers/controllers use its public APIs. The bundled Three.js application displays synchronized Euclidean, spherical, and labeled port views of the same session.
 
-The [abstract core](docs/core-language.md#compact-format-version-2) supports finite
+The [abstract core](docs/core-language.md#compact-format-version-3) supports finite
 group actions on placement collections and shared reference-based twist families.
-Cube, Bandage, Helicopter, Bagua, Gear, and Melty use compact transports through
-the same native/WASM executor. Kernel API 6 reads formats 1 and 2; migrated
-packages have new semantic pins.
+Correspondence anchors and bound placement references are separate finite sets;
+partial position maps may have different source and target sizes. Cube, Bandage,
+Helicopter, Bagua, Gear and Melty share the native/WASM executor. Kernel API 7
+reads formats 1, 2 and 3. [Refactor measurements](docs/reference-anchors.md).
 
 Helicopter and Melty A–D provide a two-step controller: choose a **Twist family**,
 then select a destination on its angular-stop circle. The current marker comes
-from the exact state. Paired Melty caps use linked circles and one atomic Apply
-action. The **Advanced movement list** retains direct requests. Native and WASM
+from the exact state. Melty caps turn independently with their own history
+entries. The **Advanced movement list** retains direct requests. Native and WASM
 frontends can use the same [controller API](docs/kernel-api.md#api-6-family-controller).
 
 The initial release includes a 3×3 cube and a reference bandaged cube with the UF edge and UFR corner fused into one rigid piece. It provides explainable blocking, synchronized views, file-based definition inspection, algorithms, reproducible legal scrambles, undo/redo, and portable saved sessions.

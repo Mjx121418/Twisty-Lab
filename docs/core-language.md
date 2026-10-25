@@ -304,10 +304,66 @@ continuous angle, or geometry is introduced.
 a C3 action to derive a position map. Load it with the existing native/WASM
 `Puzzle` API and query `act`, `transport`, or normal permission planning.
 
-Migration uses additional charts for some Helicopter and Melty piece/grip
-combinations. Bagua uses single charts. No explicit coverage fallback maps are
-needed for these presets. Small unions use exact explicit rows when this costs
-less than their exclusive descriptor/template graph, counting shared data and
-reverse indices once. These storage choices do not change permission or events.
-All maps are compared against the pre-extension
-transport oracle, including absent rows and participating self-loops.
+The initial version-2 compressor used extra charts when correspondence
+components outnumbered references. This is removed by version 3 below; legacy
+version-2 documents remain supported without rewriting their canonical bytes.
+
+## Compact format version 3
+
+The source/package/definition versions must agree. All domains, predicates,
+requests, profiles, choices, events, collections, groups, maps and bindings keep
+their version-2 meanings. `compact` now uses these declarations:
+
+| Field | Meaning |
+| --- | --- |
+| `spaces` | Finite coordinate-set sizes, including correspondence anchors A and placement references R |
+| `positionMaps` | Sorted injective partial rows A → R with `sourceSpace` and `targetSpace`; or a compatible earlier `base` with input/output actions |
+| `families` | `anchorSpace`, `referenceSpace`, and position-map IDs |
+| `bindings` | A total injection from the declared reference space R into actual placements; no entries for A |
+
+For position θ, `P_θ: A ⇀ R`. There is no restriction |A| ≤ |R|: only the
+participating subset at each position must inject into R. Undefined anchors
+may differ between positions. One correspondence can be present at positions
+1 and 2 but absent at nominal position 0. The anchor coordinate does not imply
+an identity position or a physically legal configuration.
+
+Movement is unchanged:
+
+`T(s→t) = B ∘ P_t ∘ inverse(P_s) ∘ inverse(B)`.
+
+First unbind a source placement to R, invert P_s to find its anchor in A, then
+apply P_t and bind its reference to the target placement. A row exists only
+where this entire composition is defined. Defined self-loops still participate
+and retain events. The core never stores angular state in anchors or creates
+placements just to bind them.
+
+A derived map is `output_action ∘ base ∘ inverse(input_action)`. Input acts
+on the source space, output on the target space. Their group orders may differ.
+Every family position and derived base must share the same exact source/target
+space IDs; cardinality equality alone is insufficient for map compatibility.
+Both spaces participate in authoring interning. Explicit reverse rows map R
+back to A and are built once; derived maps retain only descriptors.
+
+The compressor assigns one anchor per consistent connected component of the
+(position, placement) correspondence graph. It creates a single family across
+all declared positions, regardless of the anchor/reference size ratio. Unions
+remain useful for distinct phase cases and separate supports. Sparse explicit
+maps are retained when cheaper than the exclusive descriptor graph, including
+reverse rows, groups, actions, bindings and both spaces.
+
+[The version-3 example](../examples/language/anchors.pzl.json) uses five anchors
+and three bound references, with independent C5/C3 input/output actions. The
+older [square example](../examples/language/reference.pzl.json) remains a valid
+version-2 input. Native/WASM queries expose both forward and inverse
+`positionMap` lookups as well as `act`, `transport` and normal permission planning.
+
+Validation retains the 1,000,000-point bound per space, four-million-entry
+additional payload budget, 64-level dependency bound and bounded union
+validation scratch/work. Input/output dimensions, injectivity, binding space,
+family spaces, action laws and every dependency are checked before execution.
+Lookups and interpreter certification share compact descriptors; endpoint
+iteration does not create permanent expanded tables. No controller, geometric
+path, predicate, interaction or puzzle rule changes are part of this format.
+
+See [the refactor measurements](reference-anchors.md) for frozen-oracle parity,
+Helicopter factoring and storage/lookup results.

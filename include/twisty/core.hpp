@@ -52,8 +52,9 @@ struct PlacementCollection {
 struct ReferenceSpace {
   Index size = 0;
 };
-struct PartialPermutation {
-  Index space = 0;
+// A partial injection between finite coordinate sets; the source may be larger.
+struct PositionMap {
+  Index source_space = 0, target_space = 0;
   std::vector<Row> rows;
   // Derived: out * base * in^-1. Dependencies precede their users.
   Index base = no_index, input_action = no_index, output_action = no_index;
@@ -65,7 +66,7 @@ struct ReferenceBinding {
   Index base = no_index, group = 0, element = 0;
 };
 struct TwistFamily {
-  Index space = 0;
+  Index anchor_space = 0, reference_space = 0;
   std::vector<Index> positions;
 };
 enum class TransportKind : std::uint8_t { explicit_map, group, difference, join };
@@ -100,7 +101,7 @@ struct ProgramData {
   std::vector<FiniteAction> finite_actions;
   std::vector<PlacementCollection> collections;
   std::vector<ReferenceSpace> reference_spaces;
-  std::vector<PartialPermutation> permutations;
+  std::vector<PositionMap> position_maps;
   std::vector<ReferenceBinding> reference_bindings;
   std::vector<TwistFamily> twist_families;
   std::vector<Transport> transports; // if present, exactly one descriptor per maps entry
@@ -132,6 +133,8 @@ public:
   bool solved(std::span<const Index> state) const;
   Index act(Index collection, Index element, Index placement) const;
   std::optional<Index> transport(Index map, Index placement) const;
+  // Forward A -> R, or inverse R -> A. Undefined rows are not participants.
+  std::optional<Index> position_map(Index map, Index point, bool inverse = false) const;
   std::size_t transport_storage_bytes() const;
   Plan plan(Index request, std::span<const Index> state, std::span<const Index> choices) const;
   bool state_predicate(Ref root, std::span<const Index> state) const;
@@ -151,9 +154,9 @@ private:
   std::vector<ChoiceActions> choice_actions_;
   std::vector<Index> general_actions_;
   std::vector<Index> collection_of_, local_of_;
-  std::vector<std::vector<Row>> permutation_inverses_, binding_inverses_;
+  std::vector<std::vector<Row>> position_inverses_, binding_inverses_;
   Index finite_action(Index action, Index element, Index point) const;
-  std::optional<Index> permutation(Index id, Index point, bool inverse) const;
+  std::optional<Index> position_map_unchecked(Index id, Index point, bool inverse) const;
   Index bind(Index id, Index reference, bool inverse) const;
   std::optional<Index> transport_unchecked(Index map, Index placement) const;
   void validate_transports();

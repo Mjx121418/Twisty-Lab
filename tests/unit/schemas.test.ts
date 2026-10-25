@@ -23,9 +23,11 @@ it('shares immutable definitions while keeping histories and ownership independe
 it('validates the experimental relational AST and compiles the example', async () => {
   const ajv = new Ajv({ allErrors: true, strict: false });
   ajv.addSchema(JSON.parse(readFileSync('schemas/compact.schema.json','utf8')));
+  ajv.addSchema(JSON.parse(readFileSync('schemas/compact-v2.schema.json','utf8')));
   ajv.addSchema(JSON.parse(readFileSync('schemas/puzzle-v2.schema.json','utf8')));
+  ajv.addSchema(JSON.parse(readFileSync('schemas/puzzle-v3.schema.json','utf8')));
   const validateV1 = ajv.compile(JSON.parse(readFileSync('schemas/puzzle.schema.json', 'utf8')));
-  const validate = (value: any) => value.languageVersion === 2 ? ajv.getSchema('urn:twisty:schema:relational-puzzle:2')!(value) : validateV1(value);
+  const validate = (value: any) => value.languageVersion >= 2 ? ajv.getSchema(`urn:twisty:schema:relational-puzzle:${value.languageVersion}`)!(value) : validateV1(value);
   // Current schemas must resolve without registering the retired definition schema.
   ajv.addSchema(JSON.parse(readFileSync('schemas/state.schema.json', 'utf8')));
   const validatePackage = ajv.compile(JSON.parse(readFileSync('schemas/package.schema.json', 'utf8')));

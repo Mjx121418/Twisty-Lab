@@ -64,8 +64,8 @@ The separate C regression preserves a concrete 42-turn route to a destination
 missing from the old production catalog. Driving-cut straddling remains blocked
 in regression fixtures for all four families.
 
-Despite the larger candidate catalogs, removing paired requests and factoring
-solid exclusions reduces the serialized packages:
+At the middle-alignment checkpoint, before the later [anchor refactor](reference-anchors.md),
+removing paired requests and factoring solid exclusions reduced the serialized packages:
 
 | Family | Previous package bytes | Current package bytes |
 | --- | ---: | ---: |

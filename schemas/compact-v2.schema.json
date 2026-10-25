@@ -1,0 +1,406 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [],
+  "properties": {
+    "groups": {
+      "type": "array",
+      "maxItems": 1000000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "order",
+          "products",
+          "inverses"
+        ],
+        "properties": {
+          "order": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "products": {
+            "type": "array",
+            "maxItems": 4000000,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000
+            }
+          },
+          "inverses": {
+            "type": "array",
+            "maxItems": 4000000,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000
+            }
+          }
+        }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "maxItems": 1000000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "group",
+          "size",
+          "kind"
+        ],
+        "properties": {
+          "group": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "kind": {
+            "enum": [
+              "regular",
+              "tabulated",
+              "trivial"
+            ]
+          },
+          "table": {
+            "type": "array",
+            "maxItems": 4000000,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000
+            }
+          }
+        }
+      }
+    },
+    "collections": {
+      "type": "array",
+      "maxItems": 1000000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "action",
+          "placements"
+        ],
+        "properties": {
+          "action": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "placements": {
+            "type": "array",
+            "maxItems": 4000000,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000
+            }
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "spaces": {
+      "type": "array",
+      "maxItems": 1000000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "size"
+        ],
+        "properties": {
+          "size": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          }
+        }
+      }
+    },
+    "bindings": {
+      "type": "array",
+      "maxItems": 1000000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "space"
+        ],
+        "properties": {
+          "space": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "placements": {
+            "type": "array",
+            "maxItems": 4000000,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000
+            }
+          },
+          "base": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "group": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "element": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          }
+        }
+      }
+    },
+    "families": {
+      "type": "array",
+      "maxItems": 1000000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "anchorSpace",
+          "referenceSpace",
+          "positions"
+        ],
+        "properties": {
+          "positions": {
+            "type": "array",
+            "maxItems": 4000000,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000
+            }
+          },
+          "anchorSpace": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "referenceSpace": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          }
+        }
+      }
+    },
+    "maps": {
+      "type": "array",
+      "maxItems": 1000000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "explicit",
+              "group",
+              "difference",
+              "union"
+            ]
+          },
+          "rows": {
+            "type": "array",
+            "maxItems": 2000000,
+            "items": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000
+              }
+            }
+          },
+          "collection": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "element": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "support": {
+            "type": "array",
+            "maxItems": 4000000,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000
+            }
+          },
+          "family": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "binding": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "source": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "target": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "parts": {
+            "type": "array",
+            "maxItems": 4000000,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000
+            }
+          }
+        }
+      }
+    },
+    "positionMaps": {
+      "type": "array",
+      "maxItems": 1000000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sourceSpace",
+          "targetSpace"
+        ],
+        "properties": {
+          "rows": {
+            "type": "array",
+            "maxItems": 2000000,
+            "items": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000
+              }
+            }
+          },
+          "base": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "inputAction": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "outputAction": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "inputElement": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "outputElement": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "sourceSpace": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "targetSpace": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "rows"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "base"
+                  ]
+                },
+                {
+                  "required": [
+                    "inputAction"
+                  ]
+                },
+                {
+                  "required": [
+                    "inputElement"
+                  ]
+                },
+                {
+                  "required": [
+                    "outputAction"
+                  ]
+                },
+                {
+                  "required": [
+                    "outputElement"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "required": [
+              "base"
+            ],
+            "not": {
+              "required": [
+                "rows"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:twisty:schema:compact:2"
+}

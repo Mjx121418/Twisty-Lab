@@ -105,7 +105,7 @@ def main():
     bagua_module(source,catalog,model)
     del document
     assert len(json.dumps(source, separators=(',', ':')).encode()) <= 8 * 1024**2, 'AST exceeds the public source limit'
-    package = dict(kind='relational-package', formatVersion=2, source=source, catalog=catalog)
+    package = dict(kind='relational-package', formatVersion=source['languageVersion'], source=source, catalog=catalog)
     if args.probe:
         destination = ROOT / 'build/bagua-candidate.json'
         destination.parent.mkdir(parents=True, exist_ok=True)

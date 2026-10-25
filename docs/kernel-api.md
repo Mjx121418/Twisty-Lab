@@ -2,9 +2,57 @@
 
 The C++ abstract core, compiler, session, and geometric interpreter form the reusable kernel. Native C++ applications and JavaScript/TypeScript applications using WebAssembly consume the same implementation. Renderers and controllers are clients: Three.js, React, Vite, Canvas, camera controls, input gestures, and animation clocks stay outside the kernel.
 
-The current kernel version is `0.6.0`, public API version `6`, and frame-buffer version `1`. Geometry API and pose-buffer versions remain `1`. The runtime accepts package/definition formats 1 and 2, the version-1 Gear factory wrapper, and session schema 2. Version-1 definitions retain their original fingerprints; migrated compact packages receive new pins, so old saves require their matching old definitions. Native consumers rebuild against the new headers; the SDK and WASM runtime must be updated together.
+The current kernel version is `0.7.0`, public API version `7`, and frame-buffer version `1`. Geometry API and pose-buffer versions remain `1`. The runtime accepts package/definition formats 1, 2 and 3, the version-1 Gear factory wrapper, and session schema 2. Version-1 and version-2 definitions retain their original fingerprints; migrated compact packages receive new pins, so old saves require their matching old definitions. Native consumers rebuild against the new headers; the SDK and WASM runtime must be updated together.
 
-The [puzzle language API](core-language.md), advertised as `languageAPIVersion = 2`, exposes the JSON language and domain-free executor through `Twisty::core`, `Twisty::language`, WASM `Puzzle`, and the TypeScript `Puzzle` adapter. Completion selection and bounded discovery are separate from permission checking. The cube/bandage authoring library is exposed as C++ `language::cube_module()`, WASM `cubeModuleJSON()`, and TypeScript `createCubeSource()`; `authoringLibraries` lists the supported models. `Twisty::symmetry` provides the shared standard-C++ finite-group utilities. Every shipped preset, including Bagua and custom Gear masks, uses the same core through an explicit package adapter. The pure program preview remains separate from the persisted definition format. Current session schemas refer to the standalone state schema; the retired finite-definition schema is not shipped.
+The [puzzle language API](core-language.md), advertised as `languageAPIVersion = 3`, exposes the JSON language and domain-free executor through `Twisty::core`, `Twisty::language`, WASM `Puzzle`, and the TypeScript `Puzzle` adapter. Completion selection and bounded discovery are separate from permission checking. The cube/bandage authoring library is exposed as C++ `language::cube_module()`, WASM `cubeModuleJSON()`, and TypeScript `createCubeSource()`; `authoringLibraries` lists the supported models. `Twisty::symmetry` provides the shared standard-C++ finite-group utilities. Every shipped preset, including Bagua and custom Gear masks, uses the same core through an explicit package adapter. The pure program preview remains separate from the persisted definition format. Current session schemas refer to the standalone state schema; the retired finite-definition schema is not shipped.
+
+## API 7 correspondence anchors and placement references
+
+A `PositionMap` is an injective partial map between two explicit finite spaces:
+`source_space` (correspondence anchors A) and `target_space` (placement references
+R). `ProgramData.position_maps` replaces `permutations`; a `TwistFamily` stores
+`anchor_space`, `reference_space` and position-map IDs. Every position must have
+those exact space IDs. Its `ReferenceBinding.space` must be the reference space R.
+The two spaces may differ in size. Neither anchors nor reference indices are
+piece identities or mutable state; only R has a placement binding. A nominal
+anchor position need not cover A, be an identity map, or be a legal state.
+
+Transport remains `B * P_target * inverse(P_source) * inverse(B)`. The inverse
+of a position map returns an anchor index, not a placement reference. Derived
+maps remain `output * base * inverse(input)`: input actions have size |A|,
+output actions have size |R|, and base maps must match both space IDs. Actions
+may belong to different finite groups. Dependencies remain acyclic, ordered and
+bounded; only explicit rows and their reverse indices are retained. No dense
+derived table is cached by the executor or interpreter.
+
+```ts
+puzzle.query({op: 'positionMap', map: 1, point: 3});
+// {status: 'Evaluated', point: 0, defined: true}: anchor 3 -> reference 0
+puzzle.query({op: 'positionMap', map: 1, point: 0, inverse: true});
+// {status: 'Evaluated', point: 3, defined: true}: reference 0 -> anchor 3
+```
+
+Native clients use `Program::position_map(id, point, inverse=false)`. Bounds
+follow the source space for forward queries and target space for inverse queries.
+Undefined rows return null/empty; out-of-range inputs reject with `core.input`.
+`Program::transport` still reports undefined rows as nonparticipation and defined
+self-loops as participating actions with their original events.
+
+Source/package/definition and preview version **3** introduce `positionMaps`,
+`sourceSpace`/`targetSpace`, and family `anchorSpace`/`referenceSpace`. The compact
+schema is version 2. The runtime also accepts the unchanged source versions 1
+and 2. Version-2 square `permutations` are read with equal source/target spaces
+and serialized back in their original shape. Old canonical fingerprints and
+saved-session replay remain valid with the matching old definition. Migrated
+packages have new pins; there is no automatic save conversion. Cube/Gear
+factories still emit their supported version-2 square special case.
+
+Rebuild C++ consumers for the renamed structs/fields, and update the SDK and
+WASM together. `languageAPIVersion` is 3; `abstractCapabilities` advertises
+`rectangular-position-maps`. Predicate version 1, session schema 2, controller
+API 1, geometry API 1 and all binary buffer layouts remain unchanged. The
+[rectangular example](../examples/language/anchors.pzl.json) has five anchors,
+three references and correspondences absent at position zero.
 
 ## API 6 family controller
 

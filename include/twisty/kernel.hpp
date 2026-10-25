@@ -8,14 +8,14 @@
 
 namespace twisty {
 // API compatibility is independent of puzzle schema and semantic digests.
-inline constexpr int kernel_api_version = 6;
-inline constexpr const char *kernel_version = "0.6.0";
+inline constexpr int kernel_api_version = 7;
+inline constexpr const char *kernel_version = "0.7.0";
 inline Json kernel_info() {
   return {{"apiVersion", kernel_api_version},
           {"version", kernel_version},
           {"documentKinds", {"relational-package", "relational-definition", "relational-gear-prototypes"}},
-          {"definitionFormatVersion", 2},
-          {"supportedDefinitionFormatVersions", {1,2}},
+          {"definitionFormatVersion", 3},
+          {"supportedDefinitionFormatVersions", {1,2,3}},
           {"sessionSchemaVersions", {2}},
           {"sessionFeatures", {"completed-choices", "shared-definitions"}},
           {"frameBufferVersion", 1},
@@ -23,8 +23,8 @@ inline Json kernel_info() {
           {"controllerAPIVersion", 1},
           {"controllerCapabilities", {"state-backed-phases", "destination-intents", "scoped-previews"}},
           {"poseBufferVersion", 1},
-          {"languageAPIVersion", 2},
-          {"abstractCapabilities", {"placement-actions", "reference-twist-families", "compact-transports"}},
+          {"languageAPIVersion", 3},
+          {"abstractCapabilities", {"placement-actions", "reference-twist-families", "compact-transports", "rectangular-position-maps"}},
           {"authoringLibraries", {"cube3", "bandaged-uf-ufr", "gear-family"}},
           {"catalogKinds",
            {"relational-cube-bindings", "relational-port-bindings", "relational-articulated-bindings"}},

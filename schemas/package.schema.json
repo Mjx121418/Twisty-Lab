@@ -16,7 +16,8 @@
     "formatVersion": {
       "enum": [
         1,
-        2
+        2,
+        3
       ]
     },
     "source": {
@@ -26,6 +27,9 @@
         },
         {
           "$ref": "urn:twisty:schema:relational-puzzle:2"
+        },
+        {
+          "$ref": "urn:twisty:schema:relational-puzzle:3"
         }
       ]
     },
@@ -259,6 +263,26 @@
             "properties": {
               "languageVersion": {
                 "const": 2
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "formatVersion": {
+            "const": 3
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "source": {
+            "properties": {
+              "languageVersion": {
+                "const": 3
               }
             }
           }

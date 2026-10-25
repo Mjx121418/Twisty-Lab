@@ -1,0 +1,384 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:twisty:schema:relational-puzzle:3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "languageVersion",
+    "id",
+    "domains",
+    "requests",
+    "compact"
+  ],
+  "properties": {
+    "kind": {
+      "const": "relational-puzzle"
+    },
+    "languageVersion": {
+      "const": 3
+    },
+    "id": {
+      "$ref": "#/definitions/name"
+    },
+    "domains": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "items": {
+        "$ref": "#/definitions/domain"
+      }
+    },
+    "predicates": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/definitions/name"
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/predicate"
+      }
+    },
+    "relations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "predicate"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/definitions/name"
+          },
+          "predicate": {
+            "$ref": "#/definitions/predicate"
+          }
+        }
+      }
+    },
+    "requests": {
+      "type": "array",
+      "maxItems": 4096,
+      "items": {
+        "$ref": "#/definitions/request"
+      }
+    },
+    "invariant": {
+      "$ref": "#/definitions/predicate"
+    },
+    "goal": {
+      "$ref": "#/definitions/predicate"
+    },
+    "compact": {
+      "$ref": "urn:twisty:schema:compact:2"
+    }
+  },
+  "definitions": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "names": {
+      "type": "array",
+      "maxItems": 1000000,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/definitions/name"
+      }
+    },
+    "natural": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "domain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "placements",
+        "pieces",
+        "moves"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^/]+$"
+        },
+        "placements": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/names"
+            }
+          ],
+          "minItems": 1
+        },
+        "pieces": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "initial"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/name"
+              },
+              "initial": {
+                "$ref": "#/definitions/name"
+              }
+            }
+          }
+        },
+        "moves": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/name"
+                  }
+                ],
+                "not": {
+                  "const": "idle"
+                }
+              },
+              "support": {
+                "$ref": "#/definitions/names"
+              },
+              "transport": {
+                "type": "object",
+                "propertyNames": {
+                  "$ref": "#/definitions/name"
+                },
+                "additionalProperties": {
+                  "$ref": "#/definitions/name"
+                }
+              },
+              "pieces": {
+                "$ref": "#/definitions/names"
+              },
+              "requires": {
+                "$ref": "#/definitions/predicate"
+              },
+              "event": {
+                "$ref": "#/definitions/name"
+              },
+              "map": {
+                "$ref": "#/definitions/natural"
+              }
+            },
+            "oneOf": [
+              {
+                "required": [
+                  "map"
+                ],
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "support"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "transport"
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "required": [
+                  "support",
+                  "transport"
+                ],
+                "not": {
+                  "required": [
+                    "map"
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "relation"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/name"
+        },
+        "relation": {
+          "$ref": "#/definitions/predicate"
+        },
+        "defaultProfile": {
+          "$ref": "#/definitions/name"
+        },
+        "profiles": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "choices"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/name"
+              },
+              "choices": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/definitions/name"
+                }
+              },
+              "when": {
+                "$ref": "#/definitions/predicate"
+              }
+            }
+          }
+        }
+      }
+    },
+    "operands": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/predicate"
+      }
+    },
+    "binary": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/operands"
+        }
+      ],
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "predicate": {
+      "oneOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 1,
+          "additionalProperties": false,
+          "properties": {
+            "at": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "piece",
+                "placements"
+              ],
+              "properties": {
+                "piece": {
+                  "$ref": "#/definitions/name"
+                },
+                "placements": {
+                  "$ref": "#/definitions/names"
+                }
+              }
+            },
+            "chosen": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "domain",
+                "moves"
+              ],
+              "properties": {
+                "domain": {
+                  "$ref": "#/definitions/name"
+                },
+                "moves": {
+                  "$ref": "#/definitions/names"
+                }
+              }
+            },
+            "occupiedBy": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "placement",
+                "pieces"
+              ],
+              "properties": {
+                "placement": {
+                  "$ref": "#/definitions/name"
+                },
+                "pieces": {
+                  "$ref": "#/definitions/names"
+                }
+              }
+            },
+            "request": {
+              "$ref": "#/definitions/names"
+            },
+            "ref": {
+              "$ref": "#/definitions/name"
+            },
+            "not": {
+              "$ref": "#/definitions/predicate"
+            },
+            "all": {
+              "$ref": "#/definitions/operands"
+            },
+            "any": {
+              "$ref": "#/definitions/operands"
+            },
+            "implies": {
+              "$ref": "#/definitions/binary"
+            },
+            "iff": {
+              "$ref": "#/definitions/binary"
+            },
+            "count": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "min",
+                "max",
+                "of"
+              ],
+              "properties": {
+                "min": {
+                  "$ref": "#/definitions/natural"
+                },
+                "max": {
+                  "$ref": "#/definitions/natural"
+                },
+                "of": {
+                  "$ref": "#/definitions/operands"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

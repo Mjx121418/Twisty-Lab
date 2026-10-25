@@ -296,10 +296,10 @@ CompiledPuzzle compile_checked(const Json &source) {
   fields(source, {"kind", "languageVersion", "id", "domains", "predicates", "relations", "requests",
                   "invariant", "goal", "compact"});
   expect(source.at("kind") == "relational-puzzle" && source.at("languageVersion").is_number_integer() &&
-             (source.at("languageVersion") == 1 || source.at("languageVersion") == 2),
-         "Expected relational-puzzle languageVersion 1 or 2");
+             (source.at("languageVersion") == 1 || source.at("languageVersion") == 2 || source.at("languageVersion") == 3),
+         "Expected relational-puzzle languageVersion 1, 2 or 3");
   expect(source.at("languageVersion") == 1 || source.contains("compact"),
-         "Version 2 requires compact declarations");
+         "Compact source versions require compact declarations");
   Lowering c;
   c.bindings.puzzle_id = name(source.at("id"));
   const auto &domains = source.at("domains");
@@ -353,8 +353,8 @@ CompiledPuzzle compile_checked(const Json &source) {
   c.data.piece_count = static_cast<Index>(c.bindings.pieces.size());
   c.data.placement_count = static_cast<Index>(c.bindings.placements.size());
   if (source.contains("compact")) {
-    expect(source.at("languageVersion") == 2, "Compact declarations require languageVersion 2");
-    read_compact(source.at("compact"), c.data);
+    expect(source.at("languageVersion").get<int>() >= 2, "Compact declarations require languageVersion 2 or 3");
+    read_compact(source.at("compact"), c.data, source.at("languageVersion"));
     std::set<std::string> collection_names;
     Index collection_index = 0;
     for (const auto &collection : source.at("compact").value("collections", Json::array())) {
@@ -408,7 +408,7 @@ CompiledPuzzle compile_checked(const Json &source) {
       fields(move, {"id", "support", "transport", "map", "pieces", "requires", "event"});
       Index map;
       if (move.contains("map")) {
-        expect(source.at("languageVersion") == 2 && !move.contains("support") && !move.contains("transport"),
+        expect(source.at("languageVersion").get<int>() >= 2 && !move.contains("support") && !move.contains("transport"),
                "Compact movement cannot also store expanded rows");
         map = natural(move.at("map"));
         expect(map < c.data.maps.size(), "Unknown compact movement map");

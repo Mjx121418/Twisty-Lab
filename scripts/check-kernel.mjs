@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { checkReferenceCompatibility } from '../tests/reference_wasm.mjs';
 import Ajv from 'ajv';
 import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
@@ -48,7 +49,7 @@ try {
   const module = await createKernel();
   const info = JSON.parse(module.kernelInfoJSON());
   const manifest = JSON.parse(await readFile(join(javascript, 'package.json'), 'utf8'));
-  assert.equal(info.apiVersion, 6); assert.equal(info.frameBufferVersion, 1);
+  assert.equal(info.apiVersion, 7); assert.equal(info.frameBufferVersion, 1);
   assert.equal(info.geometryAPIVersion, 1); assert.equal(info.poseBufferVersion, 1);
   assert.equal(info.controllerAPIVersion, 1);
   assert.ok(exported.includes('Twisty::controller'));
@@ -59,7 +60,7 @@ try {
   assert.equal(typeof module.Session.prototype.convertLegacyJSON, 'undefined');
   assert.ok(info.realizationKinds.includes('articulated-spherical'));
   assert.ok(info.geometryCapabilities.includes('shared-rotation-tracks'));
-  assert.equal(info.languageAPIVersion, 2);
+  assert.equal(info.languageAPIVersion, 3);
   assert.equal(typeof module.RelationalPuzzle, 'undefined');
   assert.equal(typeof module.compileRelationalJSON, 'undefined');
   assert.deepEqual(info.authoringLibraries, ['cube3', 'bandaged-uf-ufr', 'gear-family']);
@@ -139,6 +140,25 @@ try {
         assert.deepEqual(referencePuzzle.query(query),expected);
       }
     } finally {referencePuzzle.dispose();}
+    {
+      const path=join(languageConsumer,'anchors.pzl.json');
+      const rectangular=new Puzzle(module,await readFile(path,'utf8'));
+      try {
+        assert.equal(rectangular.preview.experimentalVersion,3);
+        const queries=[];
+        for(let map=0;map<4;++map) {
+          for(let point=0;point<5;++point) queries.push({op:'positionMap',map,point});
+          for(let point=0;point<3;++point) queries.push({op:'positionMap',map,point,inverse:true});
+          for(let placement=0;placement<3;++placement) queries.push({op:'transport',map,placement});
+        }
+        queries.push({op:'plan',state:[0],request:'turn',choices:['step']});
+        const native=execFileSync(executable,[path],{encoding:'utf8',input:queries.map(q=>JSON.stringify(q)).join('\n')+'\n'}).trim().split('\n').map(line=>JSON.parse(line));
+        assert.deepEqual(queries.map(q=>rectangular.query(q)),native);
+        assert.equal(native.at(-1).transition.actions[0].event,0);
+        assert.equal(native.at(-1).transition.after[0],0);
+        console.log('Installed native and packaged WASM rectangular position maps, inverses and self-loop events agree.');
+      } finally {rectangular.dispose();}
+    }
     console.log('Installed native and packaged WASM cube/bandage authoring libraries agree.');
     for (const name of ['gear', 'gear-extreme', 'gear-plain']) {
       await stagePuzzle(name);
@@ -297,4 +317,5 @@ try {
       if (puzzle !== 'gear-custom') await rm(directory, { recursive: true });
     }
   }
+  await checkReferenceCompatibility(module);
 } finally { await rm(temporary, { recursive: true, force: true }); }

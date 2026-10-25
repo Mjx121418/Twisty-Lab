@@ -1,6 +1,7 @@
 """Exact finite factoring of reviewed transports; no geometric rule inference.
 
-Reference labels are coordinates, not pieces or required legal anchor states.
+Correspondence anchors match positions; placement references bind to placements.
+Neither coordinate set consists of pieces or requires a legal anchor state.
 Every rewritten local map is compared including its entire participating domain.
 """
 from collections import defaultdict
@@ -16,12 +17,13 @@ class Builder:
         self.source = source
         self.qnames = [d['id']+'/'+q for d in source['domains'] for q in d['placements']]
         self.qid = {q:i for i,q in enumerate(self.qnames)}
-        self.c = {k:[] for k in ('groups','actions','collections','spaces','permutations','bindings','families','maps')}
+        self.c = {k:[] for k in ('groups','actions','collections','spaces','positionMaps','bindings','families','maps')}
         self.interns = defaultdict(dict)
         self.images = {}
         self.world = actions
         self.qcollection = {}
         self.fallback = []
+        self.factorings = []
         if actions:
             self.world_group = self.group_from_permutations(actions)
             unseen = set(range(len(self.qnames)))
@@ -82,10 +84,10 @@ class Builder:
                         return space,self.intern('bindings',dict(space=space,base=i,group=self.world_group,element=g)),image
         return space,self.intern('bindings',dict(space=space,placements=qs)),qs
 
-    def permutation_rows(self, i):
-        p=self.c['permutations'][i]
+    def position_rows(self, i):
+        p=self.c.get('positionMaps',self.c.get('permutations',[]))[i]
         if 'rows' in p:return dict(p['rows'])
-        result=self.permutation_rows(p['base'])
+        result=self.position_rows(p['base'])
         def act(a,g,q):
             a=self.c['actions'][a]
             if a['kind']=='trivial':return q
@@ -97,20 +99,20 @@ class Builder:
             result={a:act(p['outputAction'],p.get('outputElement',0),b) for a,b in result.items()}
         return result
 
-    def position(self, space, rows, action=None):
-        explicit=dict(space=space,rows=[list(row) for row in sorted(rows.items())])
-        if _key(explicit) in self.interns['permutations']:
-            return self.interns['permutations'][_key(explicit)]
+    def position(self, source_space, target_space, rows, action=None):
+        explicit=dict(sourceSpace=source_space,targetSpace=target_space,rows=[list(row) for row in sorted(rows.items())])
+        if _key(explicit) in self.interns['positionMaps']:
+            return self.interns['positionMaps'][_key(explicit)]
         if action is not None:
             a=self.c['actions'][action];order=self.c['groups'][a['group']]['order']
-            for i,p in enumerate(self.c['permutations']):
-                if p['space']!=space or 'rows' not in p:continue
+            for i,p in enumerate(self.c['positionMaps']):
+                if (p['sourceSpace'],p['targetSpace'])!=(source_space,target_space) or 'rows' not in p:continue
                 old=dict(p['rows'])
                 if old.keys()!=rows.keys():continue
                 for g in range(1,order):
                     if all(a['table'][g*a['size']+v]==rows[k] for k,v in old.items()):
-                        return self.intern('permutations',dict(space=space,base=i,outputAction=action,outputElement=g))
-        return self.intern('permutations',explicit)
+                        return self.intern('positionMaps',dict(sourceSpace=source_space,targetSpace=target_space,base=i,outputAction=action,outputElement=g))
+        return self.intern('positionMaps',explicit)
 
     def image(self, i):
         if i in self.images:return self.images[i]
@@ -119,7 +121,7 @@ class Builder:
         elif kind=='group':result={q:self.world[m['element']][q] for q in m['support']}
         elif kind=='difference':
             f=self.c['families'][m['family']];b=self.bind_values(m['binding'])
-            a=self.permutation_rows(f['positions'][m['source']]);z=self.permutation_rows(f['positions'][m['target']])
+            a=self.position_rows(f['positions'][m['source']]);z=self.position_rows(f['positions'][m['target']])
             result={b[v]:b[z[k]] for k,v in a.items() if k in z}
         elif kind=='union':
             result={}
@@ -180,26 +182,26 @@ class Builder:
                 perms=[list(p) for p in dict.fromkeys(tuple(local[p[q]] for q in qs) for p in stabilizer)]
                 g=self.group_from_permutations(perms)
                 action=self.intern('actions',dict(group=g,size=len(qs),kind='tabulated',table=[v for p in perms for v in p]))
-        charts=[]
-        for offset in range(0,len(comps),len(qs)):
-            chunk=comps[offset:offset+len(qs)]
-            if offset:self.fallback.append(label+': additional chart '+str(offset//len(qs)+1))
-            positions=[]
-            for s in range(count):
-                rows={r:local[v[s]] for r,v in enumerate(chunk) if s in v}
-                positions.append(self.position(space,rows,action))
-            charts.append(self.intern('families',dict(space=space,positions=positions)))
+        # One anchor per connected correspondence component. Anchors need no
+        # binding entries, even when they outnumber bound placement references.
+        anchor_space=self.intern('spaces',dict(size=len(comps)))
+        positions=[]
+        for s in range(count):
+            rows={a:local[v[s]] for a,v in enumerate(comps) if s in v}
+            positions.append(self.position(anchor_space,space,rows,action))
+        family=self.intern('families',dict(anchorSpace=anchor_space,referenceSpace=space,positions=positions))
+        self.factorings.append(dict(label=label,anchors=len(comps),references=len(qs),positions=count))
         result={}
         for name,table in tables.items():
-            parts=[self.intern('maps',dict(kind='difference',family=f,binding=binding,source=s,target=t))
-                   for s,t in pairs[name] for f in charts]
+            parts=[self.intern('maps',dict(kind='difference',family=family,binding=binding,source=s,target=t))
+                   for s,t in pairs[name]]
             m=self.union(parts)
             if self.image(m)==table:result[name]=m
-            else:self.fallback.append(label+'/'+name+': incomplete chart coverage')
+            else:self.fallback.append(label+'/'+name+': incomplete correspondence coverage')
         return result
 
     def finish(self):
-        self.source['languageVersion']=2;self.source['compact']=self.c
+        self.source['languageVersion']=3;self.source['compact']=self.c
 
 
 def compress(source, catalog, phases, actions=None):
@@ -246,14 +248,14 @@ def compress(source, catalog, phases, actions=None):
     notes=b.fallback+(['explicit maps: '+', '.join(fallback[:8])+(' ...' if len(fallback)>8 else '')] if fallback else [])
     stats=dict(originalRows=old_rows,explicitFallbacks=len(fallback),explicitStorageChoices=storage_choices,notes=notes,
                groups=len(b.c['groups']),collections=len(b.c['collections']),maps=len(b.c['maps']),
-               storedRows=sum(len(m.get('rows',[])) for m in b.c['maps'])+sum(len(p.get('rows',[])) for p in b.c['permutations']),
-               derivedPositions=sum('base' in p for p in b.c['permutations']))
-    print(source['id']+' compact transports: '+_key({**stats,'notes':notes[:3],'additionalCharts':sum('additional chart' in n for n in notes)}),flush=True)
+               storedRows=sum(len(m.get('rows',[])) for m in b.c['maps'])+sum(len(p.get('rows',[])) for p in b.c['positionMaps']),
+               derivedPositions=sum('base' in p for p in b.c['positionMaps']),factorings=b.factorings)
+    print(source['id']+' compact transports: '+_key({**stats,'notes':notes[:3],'factorings':b.factorings[:3]}),flush=True)
     return stats
 
 
 def prefer_explicit(b):
-    """Keep a sparse leaf when it costs less than its exclusive union graph.
+    """Keep a sparse leaf when it costs less than its exclusive descriptor graph.
 
     Count shared families, actions, bindings and inverse rows only once. Changing
     a node in place preserves its IDs and all incoming references. This changes
@@ -266,10 +268,10 @@ def prefer_explicit(b):
         if field=='maps':
             if v['kind']=='union':out += [('maps',x) for x in v['parts']]
             elif v['kind']=='difference':out += [('families',v['family']),('bindings',v['binding'])]
-        elif field=='families':out += [('spaces',v['space'])]+[('permutations',x) for x in v['positions']]
-        elif field=='permutations':
-            out.append(('spaces',v['space']))
-            if 'base' in v:out.append(('permutations',v['base']))
+        elif field=='families':out += [('spaces',v['anchorSpace']),('spaces',v['referenceSpace'])]+[('positionMaps',x) for x in v['positions']]
+        elif field=='positionMaps':
+            out += [('spaces',v['sourceSpace']),('spaces',v['targetSpace'])]
+            if 'base' in v:out.append(('positionMaps',v['base']))
             for a in ('inputAction','outputAction'):
                 if a in v:out.append(('actions',v[a]))
         elif field=='bindings':
@@ -280,9 +282,9 @@ def prefer_explicit(b):
     def words(key):
         field,i=key;v=c[field][i]
         if field=='maps':return 8+len(v.get('parts',[]))+len(v.get('support',[]))+2*len(v.get('rows',[]))
-        if field=='permutations':return 6+4*len(v.get('rows',[]))
+        if field=='positionMaps':return 7+4*len(v.get('rows',[]))
         if field=='bindings':return 4+3*len(v.get('placements',[]))
-        if field=='families':return 1+len(v['positions'])
+        if field=='families':return 2+len(v['positions'])
         if field=='actions':return 3+len(v.get('table',[]))
         if field=='groups':return 1+len(v['products'])+len(v['inverses'])
         return 1
@@ -294,21 +296,46 @@ def prefer_explicit(b):
         if key in live:continue
         live.add(key)
         for child in edges(key):incoming[child]+=1;pending.append(child)
-    changed=0
-    for _,i in sorted(set(k for k in roots if k[0]=='maps'),reverse=True):
-        key=('maps',i);node=c['maps'][i]
-        if node['kind']!='union':continue
+    def replace(ids):
+        ids=sorted({i for i in ids if c['maps'][i]['kind'] in ('difference','union')})
+        if not ids:return 0
         released=Counter();freed=[]
         def release(child):
             released[child]+=1
             if released[child]==incoming[child]:
                 freed.append(child)
                 for descendant in edges(child):release(descendant)
-        for child in edges(key):release(child)
-        image=b.image(i)
-        if 8+2*len(image) < words(key)+sum(words(k) for k in freed):
-            c['maps'][i]=dict(kind='explicit',rows=[list(row) for row in sorted(image.items())])
-            incoming.subtract(released);changed+=1
+        for i in ids:
+            for child in edges(('maps',i)):release(child)
+        images={i:b.image(i) for i in ids}
+        old=sum(words(('maps',i)) for i in ids)+sum(words(k) for k in freed)
+        new=sum(8+2*len(images[i]) for i in ids)
+        if new>=old:return 0
+        for i in ids:
+            c['maps'][i]=dict(kind='explicit',rows=[list(row) for row in sorted(images[i].items())])
+        incoming.subtract(released)
+        return len(ids)
+
+    root_maps={i for field,i in roots if field=='maps'}
+    changed=sum(replace([i]) for i in sorted(root_maps,reverse=True))
+    # A family shared by many small moves can be more expensive than all its
+    # sparse images, although no single move exclusively owns enough data to
+    # release it. Evaluate such choices together, without expanding at runtime.
+    for _ in range(3):
+        families=defaultdict(set)
+        for i in root_maps:
+            seen=set();pending=[i]
+            while pending:
+                m=pending.pop()
+                if m in seen:continue
+                seen.add(m);node=c['maps'][m]
+                if node['kind']=='union':pending.extend(node['parts'])
+                elif node['kind']=='difference':families[node['family']].add(i)
+        count=sum(replace(families[f]) for f in sorted(families))
+        count+=sum(replace([m['map'] for m in d['moves']]) for d in b.source['domains'])
+        count+=replace(root_maps)
+        changed+=count
+        if not count:break
     return changed
 
 
@@ -322,11 +349,11 @@ def prune(b):
                 for p in v['parts']:use('maps',p)
             elif v['kind']=='difference':use('families',v['family']);use('bindings',v['binding'])
         elif field=='families':
-            use('spaces',v['space'])
-            for p in v['positions']:use('permutations',p)
-        elif field=='permutations':
-            use('spaces',v['space'])
-            if 'base' in v:use('permutations',v['base'])
+            use('spaces',v['anchorSpace']);use('spaces',v['referenceSpace'])
+            for p in v['positions']:use('positionMaps',p)
+        elif field=='positionMaps':
+            use('spaces',v['sourceSpace']);use('spaces',v['targetSpace'])
+            if 'base' in v:use('positionMaps',v['base'])
             for a in ('inputAction','outputAction'):
                 if a in v:use('actions',v[a])
         elif field=='bindings':
@@ -340,21 +367,22 @@ def prune(b):
     for field,ids in remap.items():c[field]=[c[field][i] for i in sorted(ids)]
     for v in c['actions']:v['group']=remap['groups'][v['group']]
     for v in c['collections']:v['action']=remap['actions'][v['action']]
-    for v in c['permutations']:
-        v['space']=remap['spaces'][v['space']]
-        if 'base' in v:v['base']=remap['permutations'][v['base']]
+    for v in c['positionMaps']:
+        v['sourceSpace']=remap['spaces'][v['sourceSpace']];v['targetSpace']=remap['spaces'][v['targetSpace']]
+        if 'base' in v:v['base']=remap['positionMaps'][v['base']]
         for a in ('inputAction','outputAction'):
             if a in v:v[a]=remap['actions'][v[a]]
     for v in c['bindings']:
         v['space']=remap['spaces'][v['space']]
         if 'base' in v:v['base']=remap['bindings'][v['base']];v['group']=remap['groups'][v['group']]
     for v in c['families']:
-        v['space']=remap['spaces'][v['space']];v['positions']=[remap['permutations'][p] for p in v['positions']]
+        v['anchorSpace']=remap['spaces'][v['anchorSpace']];v['referenceSpace']=remap['spaces'][v['referenceSpace']];v['positions']=[remap['positionMaps'][p] for p in v['positions']]
     for v in c['maps']:
         if v['kind']=='difference':v['family']=remap['families'][v['family']];v['binding']=remap['bindings'][v['binding']]
         if v['kind']=='union':v['parts']=[remap['maps'][p] for p in v['parts']]
     for d in b.source['domains']:
         for m in d['moves']:m['map']=remap['maps'][m['map']]
+    b.images.clear()
 
 
 def helicopter_module(source,catalog,model):

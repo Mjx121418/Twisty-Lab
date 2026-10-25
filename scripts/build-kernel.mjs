@@ -19,12 +19,12 @@ if (process.argv.includes('--stage-web')) {
   await writeFile(new URL('package.json', output), JSON.stringify({
     name: '@twisty/kernel', version, type: 'module',
     exports: { '.': { types: './index.d.ts', import: './index.js' }, './runtime': './generated/twisty.mjs', './wasm': './generated/twisty.wasm' },
-    files: ['index.js', 'index.d.ts', 'generated', 'examples', 'schemas', 'README.md', 'core-language.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'gear-model.md', 'flat-surfaces.md'],
+    files: ['index.js', 'index.d.ts', 'generated', 'examples', 'schemas', 'README.md', 'core-language.md', 'reference-anchors.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'gear-model.md', 'flat-surfaces.md'],
   }, null, 2) + '\n');
   const readme = (await readFile(new URL('../docs/kernel-api.md', import.meta.url), 'utf8'))
     .replaceAll('../schemas/', 'schemas/').replaceAll('../examples/', 'examples/');
   await writeFile(new URL('README.md', output), readme);
-  for (const file of ['core-language.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'gear-model.md', 'flat-surfaces.md']) {
+  for (const file of ['core-language.md', 'reference-anchors.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'gear-model.md', 'flat-surfaces.md']) {
     const guide = (await readFile(new URL(`../docs/${file}`, import.meta.url), 'utf8'))
       .replaceAll('../packages/', 'examples/canvas/data/').replaceAll('../examples/', 'examples/')
       .replaceAll('../schemas/', 'schemas/').replaceAll('[language roadmap](abstract-language-core-plan.md)', 'language roadmap')
@@ -35,7 +35,7 @@ if (process.argv.includes('--stage-web')) {
   await cp(new URL('../examples/language/', import.meta.url), new URL('examples/language/', output), { recursive: true });
   await mkdir(new URL('schemas/', output));
   await cp(new URL('../schemas/puzzle.schema.json', import.meta.url), new URL('schemas/puzzle.schema.json', output));
-  for (const file of ['puzzle-v2.schema.json', 'compact.schema.json', 'package.schema.json', 'gear-source.schema.json', 'session-v2.schema.json', 'state.schema.json', 'realization.schema.json'])
+  for (const file of ['puzzle-v2.schema.json', 'puzzle-v3.schema.json', 'compact.schema.json', 'compact-v2.schema.json', 'package.schema.json', 'gear-source.schema.json', 'session-v2.schema.json', 'state.schema.json', 'realization.schema.json'])
     await cp(new URL(`../schemas/${file}`, import.meta.url), new URL(`schemas/${file}`, output));
   for (const puzzle of inventory.puzzles) {
     const directory = new URL(`examples/canvas/data/${puzzle.id}/`, output);

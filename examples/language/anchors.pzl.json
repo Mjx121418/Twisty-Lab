@@ -1,0 +1,274 @@
+{
+  "kind": "relational-puzzle",
+  "languageVersion": 3,
+  "id": "rectangular-reference-example",
+  "domains": [
+    {
+      "id": "points",
+      "placements": [
+        "a",
+        "b",
+        "c"
+      ],
+      "pieces": [
+        {
+          "id": "p",
+          "initial": "a"
+        }
+      ],
+      "moves": [
+        {
+          "id": "step",
+          "map": 0,
+          "event": "path/step"
+        },
+        {
+          "id": "back",
+          "map": 1,
+          "event": "path/back"
+        }
+      ]
+    }
+  ],
+  "compact": {
+    "groups": [
+      {
+        "order": 5,
+        "products": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          1,
+          2,
+          3,
+          4,
+          0,
+          2,
+          3,
+          4,
+          0,
+          1,
+          3,
+          4,
+          0,
+          1,
+          2,
+          4,
+          0,
+          1,
+          2,
+          3
+        ],
+        "inverses": [
+          0,
+          4,
+          3,
+          2,
+          1
+        ]
+      },
+      {
+        "order": 3,
+        "products": [
+          0,
+          1,
+          2,
+          1,
+          2,
+          0,
+          2,
+          0,
+          1
+        ],
+        "inverses": [
+          0,
+          2,
+          1
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "group": 0,
+        "size": 5,
+        "kind": "regular"
+      },
+      {
+        "group": 1,
+        "size": 3,
+        "kind": "regular"
+      }
+    ],
+    "collections": [
+      {
+        "action": 1,
+        "placements": [
+          0,
+          1,
+          2
+        ]
+      }
+    ],
+    "spaces": [
+      {
+        "size": 5
+      },
+      {
+        "size": 3
+      }
+    ],
+    "positionMaps": [
+      {
+        "sourceSpace": 0,
+        "targetSpace": 1,
+        "rows": [
+          [
+            0,
+            0
+          ]
+        ]
+      },
+      {
+        "sourceSpace": 0,
+        "targetSpace": 1,
+        "rows": [
+          [
+            0,
+            1
+          ],
+          [
+            3,
+            0
+          ],
+          [
+            4,
+            2
+          ]
+        ]
+      },
+      {
+        "sourceSpace": 0,
+        "targetSpace": 1,
+        "rows": [
+          [
+            0,
+            2
+          ],
+          [
+            3,
+            0
+          ],
+          [
+            4,
+            1
+          ]
+        ]
+      },
+      {
+        "sourceSpace": 0,
+        "targetSpace": 1,
+        "base": 1,
+        "inputAction": 0,
+        "inputElement": 2,
+        "outputAction": 1,
+        "outputElement": 1
+      }
+    ],
+    "bindings": [
+      {
+        "space": 1,
+        "placements": [
+          0,
+          1,
+          2
+        ]
+      }
+    ],
+    "families": [
+      {
+        "anchorSpace": 0,
+        "referenceSpace": 1,
+        "positions": [
+          0,
+          1,
+          2,
+          3
+        ]
+      }
+    ],
+    "maps": [
+      {
+        "kind": "difference",
+        "family": 0,
+        "binding": 0,
+        "source": 1,
+        "target": 2
+      },
+      {
+        "kind": "difference",
+        "family": 0,
+        "binding": 0,
+        "source": 2,
+        "target": 1
+      },
+      {
+        "kind": "difference",
+        "family": 0,
+        "binding": 0,
+        "source": 1,
+        "target": 3
+      },
+      {
+        "kind": "difference",
+        "family": 0,
+        "binding": 0,
+        "source": 3,
+        "target": 1
+      }
+    ]
+  },
+  "requests": [
+    {
+      "id": "turn",
+      "relation": {
+        "chosen": {
+          "domain": "points",
+          "moves": [
+            "step"
+          ]
+        }
+      },
+      "profiles": [
+        {
+          "id": "turn",
+          "choices": {
+            "points": "step"
+          }
+        }
+      ],
+      "defaultProfile": "turn"
+    },
+    {
+      "id": "reverse",
+      "relation": {
+        "chosen": {
+          "domain": "points",
+          "moves": [
+            "back"
+          ]
+        }
+      },
+      "profiles": [
+        {
+          "id": "turn",
+          "choices": {
+            "points": "back"
+          }
+        }
+      ],
+      "defaultProfile": "turn"
+    }
+  ]
+}

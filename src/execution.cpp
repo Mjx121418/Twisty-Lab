@@ -45,9 +45,9 @@ std::shared_ptr<const Execution> Execution::from_source(const std::string &text)
         new Execution(std::move(module.source), std::move(module.catalog)));
   }
   if (kind == "relational-package" || kind == "relational-definition") {
-    if ((document.at("formatVersion") != 1 && document.at("formatVersion") != 2))
+    if ((document.at("formatVersion") != 1 && document.at("formatVersion") != 2 && document.at("formatVersion") != 3))
       throw DiagnosticError("schema.unsupported", "/formatVersion",
-                            "Expected relational format version 1 or 2.");
+                            "Expected relational format version 1, 2 or 3.");
     if (document.at("source").at("languageVersion") != document.at("formatVersion"))
       throw DiagnosticError("schema.unsupported", "/source/languageVersion",
                             "Package/definition and source versions differ.");

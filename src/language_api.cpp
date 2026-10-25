@@ -55,13 +55,17 @@ Json query(const CompiledPuzzle &p, const Json &q) {
   for (auto it = q.begin(); it != q.end(); ++it) {
     const std::vector<std::string> allowed{"op",      "state",          "request",     "choices",
                                            "profile", "candidateLimit", "resultLimit", "collection",
-                                           "element", "placement",      "map"};
+                                           "element", "placement",      "map", "point", "inverse"};
     if (std::find(allowed.begin(), allowed.end(), it.key()) == allowed.end())
       throw core::Error("core.input", "Unknown query field: " + it.key());
   }
   const auto op = q.at("op").get<std::string>();
-  if (op == "act" || op == "transport") {
+  if (op == "act" || op == "transport" || op == "positionMap") {
     const auto value = [&](const char *key) { return numbers(Json::array({q.at(key)})).at(0); };
+    if (op == "positionMap") {
+      const auto target = p.program.position_map(value("map"), value("point"), q.value("inverse", false));
+      return {{"status", "Evaluated"}, {"point", target ? Json(*target) : Json(nullptr)}, {"defined", target.has_value()}};
+    }
     if (op == "act")
       return {{"status", "Evaluated"},
               {"placement", p.program.act(value("collection"), value("element"), value("placement"))}};
@@ -188,10 +192,10 @@ Json inspect(const CompiledPuzzle &p) {
                    {"requestPrograms", requests},
                    {"invariantRoot", d.invariant},
                    {"goalRoot", d.goal}}}};
-  if (p.source_version == 2) {
-    result["experimentalVersion"] = 2;
+  if (p.source_version >= 2) {
+    result["experimentalVersion"] = p.source_version;
     result["program"].erase("transportMaps");
-    result["program"]["compact"] = write_compact(d);
+    result["program"]["compact"] = write_compact(d, p.source_version);
     result["program"]["transportStorageBytes"] = p.program.transport_storage_bytes();
     result["bindings"]["moveMaps"] = p.bindings.move_maps;
     result["bindings"]["collections"] = p.bindings.collection_names;

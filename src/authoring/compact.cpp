@@ -30,8 +30,8 @@ std::vector<Index> indices(const Json &j) {
   return result;
 }
 std::vector<Row> rows(const Json &j) {
-  if (!j.is_array())
-    throw Error("language.invalid", "Expected compact rows");
+  if (!j.is_array() || j.size() > 2000000)
+    throw Error("language.invalid", "Expected bounded compact rows");
   std::vector<Row> out;
   for (const auto &r : j) {
     if (!r.is_array() || r.size() != 2)
@@ -47,9 +47,13 @@ Json rows_json(const std::vector<Row> &v) {
   return out;
 }
 } // namespace
-void read_compact(const Json &j, core::ProgramData &d) {
+void read_compact(const Json &j, core::ProgramData &d, int version) {
   using namespace core;
-  fields(j, {"groups", "actions", "collections", "spaces", "permutations", "bindings", "families", "maps"});
+  const bool rectangular = version >= 3;
+  if (rectangular)
+    fields(j, {"groups", "actions", "collections", "spaces", "positionMaps", "bindings", "families", "maps"});
+  else
+    fields(j, {"groups", "actions", "collections", "spaces", "permutations", "bindings", "families", "maps"});
   const Json empty = Json::array();
   const auto array = [&](const char *key) -> const Json & {
     if (!j.contains(key))
@@ -82,27 +86,28 @@ void read_compact(const Json &j, core::ProgramData &d) {
     fields(s, {"size"});
     d.reference_spaces.push_back({number(s.at("size"))});
   }
-  for (const auto &p : array("permutations")) {
-    fields(p, {"space", "rows", "base", "inputAction", "outputAction", "inputElement", "outputElement"});
-    if (p.contains("base"))
-      fields(p, {"space", "base", "inputAction", "outputAction", "inputElement", "outputElement"});
-    else
-      fields(p, {"space", "rows"});
+  for (const auto &p : array(rectangular ? "positionMaps" : "permutations")) {
+    if (rectangular) {
+      if (p.contains("base"))
+        fields(p, {"sourceSpace", "targetSpace", "base", "inputAction", "outputAction", "inputElement", "outputElement"});
+      else fields(p, {"sourceSpace", "targetSpace", "rows"});
+    } else {
+      if (p.contains("base"))
+        fields(p, {"space", "base", "inputAction", "outputAction", "inputElement", "outputElement"});
+      else fields(p, {"space", "rows"});
+    }
     if (!p.contains("base") && !p.contains("rows"))
       throw Error("language.invalid", "A position needs rows or a base");
-    PartialPermutation v;
-    v.space = number(p.at("space"));
-    if (p.contains("rows"))
-      v.rows = rows(p.at("rows"));
-    if (p.contains("base"))
-      v.base = number(p.at("base"));
-    if (p.contains("inputAction"))
-      v.input_action = number(p.at("inputAction"));
-    if (p.contains("outputAction"))
-      v.output_action = number(p.at("outputAction"));
+    PositionMap v;
+    v.source_space = number(p.at(rectangular ? "sourceSpace" : "space"));
+    v.target_space = number(p.at(rectangular ? "targetSpace" : "space"));
+    if (p.contains("rows")) v.rows = rows(p.at("rows"));
+    if (p.contains("base")) v.base = number(p.at("base"));
+    if (p.contains("inputAction")) v.input_action = number(p.at("inputAction"));
+    if (p.contains("outputAction")) v.output_action = number(p.at("outputAction"));
     v.input_element = number(p.value("inputElement", Json(0)));
     v.output_element = number(p.value("outputElement", Json(0)));
-    d.permutations.push_back(std::move(v));
+    d.position_maps.push_back(std::move(v));
   }
   for (const auto &b : array("bindings")) {
     fields(b, {"space", "placements", "base", "group", "element"});
@@ -121,8 +126,10 @@ void read_compact(const Json &j, core::ProgramData &d) {
     d.reference_bindings.push_back(std::move(v));
   }
   for (const auto &f : array("families")) {
-    fields(f, {"space", "positions"});
-    d.twist_families.push_back({number(f.at("space")), indices(f.at("positions"))});
+    if (rectangular) fields(f, {"anchorSpace", "referenceSpace", "positions"});
+    else fields(f, {"space", "positions"});
+    d.twist_families.push_back({number(f.at(rectangular ? "anchorSpace" : "space")),
+                              number(f.at(rectangular ? "referenceSpace" : "space")), indices(f.at("positions"))});
   }
   for (const auto &m : array("maps")) {
     fields(m, {"kind", "rows", "collection", "element", "support", "family", "binding", "source", "target",
@@ -164,12 +171,15 @@ void read_compact(const Json &j, core::ProgramData &d) {
     d.transports.push_back(std::move(t));
   }
 }
-Json write_compact(const core::ProgramData &d) {
+Json write_compact(const core::ProgramData &d, int version) {
   using namespace core;
+  const bool rectangular = version >= 3;
+  const auto positions_key = rectangular ? "positionMaps" : "permutations";
   Json j = Json::object();
   for (auto key :
        {"groups", "actions", "collections", "spaces", "permutations", "bindings", "families", "maps"})
     j[key] = Json::array();
+  if (rectangular) { j.erase("permutations"); j[positions_key] = Json::array(); }
   for (const auto &g : d.groups)
     j["groups"].push_back({{"order", g.order}, {"products", g.products}, {"inverses", g.inverses}});
   for (const auto &a : d.finite_actions) {
@@ -186,8 +196,11 @@ Json write_compact(const core::ProgramData &d) {
     j["collections"].push_back({{"action", c.action}, {"placements", c.placements}});
   for (const auto &s : d.reference_spaces)
     j["spaces"].push_back({{"size", s.size}});
-  for (const auto &p : d.permutations) {
-    Json v{{"space", p.space}};
+  for (const auto &p : d.position_maps) {
+    if (!rectangular && p.source_space != p.target_space)
+      throw Error("language.invalid", "Rectangular position maps require version 3");
+    Json v = rectangular ? Json{{"sourceSpace", p.source_space}, {"targetSpace", p.target_space}}
+                         : Json{{"space", p.source_space}};
     if (p.base == no_index)
       v["rows"] = rows_json(p.rows);
     else {
@@ -201,7 +214,7 @@ Json write_compact(const core::ProgramData &d) {
         v["outputElement"] = p.output_element;
       }
     }
-    j["permutations"].push_back(std::move(v));
+    j[positions_key].push_back(std::move(v));
   }
   for (const auto &b : d.reference_bindings) {
     Json v{{"space", b.space}};
@@ -214,8 +227,12 @@ Json write_compact(const core::ProgramData &d) {
     }
     j["bindings"].push_back(std::move(v));
   }
-  for (const auto &f : d.twist_families)
-    j["families"].push_back({{"space", f.space}, {"positions", f.positions}});
+  for (const auto &f : d.twist_families) {
+    if (!rectangular && f.anchor_space != f.reference_space)
+      throw Error("language.invalid", "Distinct family spaces require version 3");
+    j["families"].push_back(rectangular ? Json{{"anchorSpace", f.anchor_space}, {"referenceSpace", f.reference_space}, {"positions", f.positions}}
+                                        : Json{{"space", f.reference_space}, {"positions", f.positions}});
+  }
   for (Index i = 0; i < d.maps.size(); ++i) {
     const auto t = d.transports.empty() ? Transport{} : d.transports[i];
     Json v;
