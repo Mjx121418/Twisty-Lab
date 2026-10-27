@@ -34,7 +34,7 @@ it('exposes portable destination queries and lightweight revision-checked execut
     expect(session.snapshot().candidateRequests).toHaveLength(60);
     const geometry = new GeometryInstance(module, session.native, read('packages/helicopter/helicopter-euclidean.json'));
     try {
-      expect(geometry.scene.controlLayout?.drivers.UF.angles).toHaveLength(6);
+      expect(geometry.scene.controlLayout?.version === 1 && geometry.scene.controlLayout.drivers.UF.angles).toHaveLength(6);
       const record = control.turnTo(intent).transitionRecords![0];
       geometry.prepare(record); geometry.evaluate(.5); geometry.evaluate(1);
       expect(Array.from(geometry.matrices).every(Number.isFinite)).toBe(true);

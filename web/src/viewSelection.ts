@@ -1,8 +1,8 @@
-export type ViewId = 'cube' | 'sphere' | 'diagram' | 'fundamental-domain' | 'tiled-plane';
+export type ViewId = 'cube' | 'sphere' | 'diagram' | 'fundamental-domain' | 'tiled-plane' | 'stereographic';
 export type ViewSelection = { order: ViewId[]; visible: ViewId[] };
 
 export const viewLabels: Record<ViewId, string> = {
-  cube: 'Cube', sphere: 'Sphere', diagram: 'Port diagram',
+  stereographic: 'Stereographic S³', cube: 'Cube', sphere: 'Sphere', diagram: 'Port diagram',
   'fundamental-domain': 'Fundamental domain', 'tiled-plane': 'Tiled plane',
 };
 

@@ -88,8 +88,10 @@ V diagram_center(const std::string &face) {
 } // namespace
 GeometryCompiler::GeometryCompiler(std::shared_ptr<const Execution> execution,
                                    const std::string &realization_json)
+    : GeometryCompiler(std::move(execution), Json::parse(realization_json)) {}
+GeometryCompiler::GeometryCompiler(std::shared_ptr<const Execution> execution,
+                                   const Json &realization)
     : execution_(std::move(execution)), definition_(execution_->definition()) {
-  const auto realization = Json::parse(realization_json);
   const std::set<std::string> supported{"triangle-meshes", "rigid-transforms", "quotient-surface",
     "quotient-orbifold", "shared-rotation-tracks", "family-rotation-generators", "transport-path-selectors"};
   for(const auto &cap:realization.at("requiredCapabilities"))

@@ -201,6 +201,7 @@ try {
     return `${path} (${path})'`;
   };
   for (const [puzzle, algorithm, firstMove, kind] of [
+    ['tesseract3', "Xp_fY Yp_fZ (Xp_fY Yp_fZ)'", 'Xp_fY', 'tesseract3-s3'],
     ['cube3', "R U R' U'", 'U', 'cube-port-diagram'],
     ['bandaged', 'U R', 'U', 'cube-port-diagram'],
     ['helicopter', 'UF_ab UL_af', 'UF_ab', 'helicopter-port-diagram'],
@@ -305,9 +306,20 @@ try {
       }
       const result = session.run(algorithm, 'transactional', origin.revision);
       assert.equal(result.status, 'Committed');
+      let sampleIndex = 0;
       for (const record of result.transitionRecords) {
         assert.ok(geometry.prepare(record) >= 0);
-        geometry.evaluate(0.5); geometry.evaluate(1);
+        geometry.evaluate(0.5);
+        if (geometry.scene.dynamicMeshes) {
+          const expected = reference.projectedSamples[sampleIndex++];
+          assert.equal(geometry.positions.length, expected.positionCount);
+          assert.equal(geometry.indices.length, expected.indexCount);
+          for (let i=0,j=0;i<geometry.positions.length;i+=Math.max(1,Math.floor(geometry.positions.length/64)),j++) {
+            assert.ok(Math.abs(geometry.positions[i]-expected.positions[j])<1e-5);
+            assert.ok(Math.abs(geometry.normals[i]-expected.normals[j])<1e-5);
+          }
+        }
+        geometry.evaluate(1);
       }
       assert.deepEqual(session.snapshot(), reference.snapshot);
       assert.deepEqual(geometry.scene, reference.scene);

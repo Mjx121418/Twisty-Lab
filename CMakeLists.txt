@@ -63,6 +63,7 @@ target_link_libraries(puzzle_controller PUBLIC puzzle_session)
 
 add_library(puzzle_geometry
   src/interpreter/geometry.cpp
+  src/interpreter/s3_geometry.cpp
   src/interpreter/geometry_compiler.cpp
   src/interpreter/motion_families.cpp
   src/interpreter/catalog_geometry.cpp
@@ -139,6 +140,10 @@ else()
     target_link_libraries(geometry_api_tests PRIVATE puzzle_kernel)
     target_compile_definitions(geometry_api_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
     add_test(NAME geometry_api COMMAND geometry_api_tests)
+    add_executable(s3_geometry_tests tests/s3_geometry_tests.cpp)
+    target_link_libraries(s3_geometry_tests PRIVATE puzzle_kernel)
+    target_compile_definitions(s3_geometry_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+    add_test(NAME s3_geometry COMMAND s3_geometry_tests)
     add_executable(runtime_api_tests tests/runtime_api_tests.cpp)
     target_link_libraries(runtime_api_tests PRIVATE puzzle_kernel)
     target_compile_definitions(runtime_api_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
@@ -148,6 +153,7 @@ else()
     target_compile_definitions(flat_surface_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
     add_test(NAME flat_surfaces COMMAND flat_surface_tests)
     find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    add_test(NAME tesseract_authoring COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/tesseract_model_test.py)
     add_test(NAME reference_transport_parity COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/reference_parity.py
       $<TARGET_FILE:reference_parity> ${CMAKE_SOURCE_DIR}/tests/fixtures/reference-baseline.jsonl.gz)
     add_test(NAME reference_authoring COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/reference_authoring.py)

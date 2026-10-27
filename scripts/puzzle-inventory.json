@@ -14,7 +14,8 @@
     "gear_model.py",
     "gear_normal.py",
     "gear_spherical.py",
-    "gear_packages.py"
+    "gear_packages.py",
+    "tesseract_packages.py"
   ],
   "inputs": [
     "scripts/puzzle-inventory.json",
@@ -273,6 +274,15 @@
       "id": "flat-333-6",
       "realizations": [
         "flat-quotient.json"
+      ],
+      "files": [
+        "manifest.json"
+      ]
+    },
+    {
+      "id": "tesseract3",
+      "realizations": [
+        "tesseract3-s3.json"
       ],
       "files": [
         "manifest.json"

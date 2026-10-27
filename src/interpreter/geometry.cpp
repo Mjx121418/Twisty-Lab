@@ -13,7 +13,18 @@ GeometryMatrix multiply(const GeometryMatrix &a, const GeometryMatrix &b) {
         out[col * 4 + row] += a[k * 4 + row] * b[col * 4 + k];
   return out;
 }
-GeometryMatrix rotation(const GeometryRotation &step, double progress) {
+} // namespace
+GeometryMatrix geometry_rotation(const GeometryRotation &step, double progress) {
+  if (step.plane) {
+    const auto &u = step.plane->at(0), &v = step.plane->at(1);
+    const double c = std::cos(step.angle * progress) - 1, s = std::sin(step.angle * progress);
+    GeometryMatrix out{};
+    for (int j = 0; j < 4; ++j)
+      for (int i = 0; i < 4; ++i)
+        out[j * 4 + i] =
+            (i == j ? 1. : 0.) + c * (u[i] * u[j] + v[i] * v[j]) + s * (v[i] * u[j] - u[i] * v[j]);
+    return out;
+  }
   const auto &n = step.axis;
   const double angle = step.angle * progress, c = std::cos(angle), s = std::sin(angle);
   GeometryMatrix out{};
@@ -33,6 +44,7 @@ GeometryMatrix rotation(const GeometryRotation &step, double progress) {
   out[15] = 1;
   return out;
 }
+namespace {
 double progress_value(double progress) {
   if (!std::isfinite(progress))
     throw DiagnosticError("animation.progress", "/progress", "Animation progress must be finite.");
@@ -55,7 +67,10 @@ GeometryDefinition::GeometryDefinition(std::shared_ptr<const Execution> executio
                                        const std::string &realization) {
   if (!execution)
     throw DiagnosticError("realization.definition", "/definition", "Expected an execution definition.");
-  program_ = GeometryCompiler(std::move(execution), realization).compile();
+  const auto document = Json::parse(realization);
+  program_ = document.value("kind", "") == "s3-cell-turning"
+                 ? compile_s3(std::move(execution), document)
+                 : GeometryCompiler(std::move(execution), document).compile();
 }
 std::string GeometryDefinition::scene_json() const {
   return program_->scene.dump();
@@ -139,14 +154,32 @@ std::string GeometryDefinition::resolve_part_json(const std::string &id) const {
   return result.dump();
 }
 GeometryDrawing GeometryDefinition::project(const GeometryFrame &frame, const std::string &projection) const {
-  if (projection != "embedding")
-    throw DiagnosticError("geometry.projection", "/projection",
-                          "This definition supports only the embedding projection.");
+  return project_with_options(frame, projection, "{}");
+}
+GeometryDrawing GeometryDefinition::project_with_options(const GeometryFrame &frame,
+                                                         const std::string &projection,
+                                                         const std::string &options_json) const {
   if (frame.program_ != program_)
     throw DiagnosticError("geometry.frame_mismatch", "/frame",
                           "Frame belongs to a different geometry definition.");
   GeometryDrawing result;
   result.program_ = program_;
+  const auto options = Json::parse(options_json);
+  if (!options.is_object())
+    throw DiagnosticError("geometry.projection", "/options", "Projection options must be an object.");
+  if (program_->s3) {
+    if (projection != "stereographic")
+      throw DiagnosticError("geometry.projection", "/projection", "S3 requires stereographic projection.");
+    result.mesh_ = project_s3(*program_, frame.isometries_, options);
+    result.transforms_.resize(frame.isometries_.size(), 0);
+    for (std::size_t i = 0; i < result.transforms_.size(); i += 16)
+      for (int j = 0; j < 4; ++j)
+        result.transforms_[i + j * 5] = 1;
+    return result;
+  }
+  if (projection != "embedding" || !options.empty())
+    throw DiagnosticError("geometry.projection", "/projection",
+                          "This definition supports only the embedding projection without options.");
   result.transforms_.resize(frame.isometries_.size());
   for (std::size_t part = 0; part < program_->parts.size(); ++part)
     for (int i = 0; i < 16; ++i)
@@ -166,7 +199,7 @@ GeometryFrame GeometryAnimation::evaluate(double progress) const {
     if (t > 0 && t < 1 && motion_->moving[part.piece]) {
       const auto &path = table.tracks[motion_->piece_operations[part.piece]].at(from);
       for (const auto &step : path) {
-        const auto r = rotation(step, t);
+        const auto r = geometry_rotation(step, t);
         pose = step.local ? multiply(pose, r) : multiply(r, pose);
       }
       if (table.linear_translation)
@@ -184,16 +217,16 @@ std::string GeometryFrame::space_json() const {
   return program_->space.dump();
 }
 std::string GeometryDrawing::scene_json() const {
-  return program_->scene.dump();
+  return (mesh_ ? mesh_->scene : program_->scene).dump();
 }
 const std::vector<float> &GeometryDrawing::positions() const {
-  return program_->positions;
+  return mesh_ ? mesh_->positions : program_->positions;
 }
 const std::vector<float> &GeometryDrawing::normals() const {
-  return program_->normals;
+  return mesh_ ? mesh_->normals : program_->normals;
 }
 const std::vector<std::uint32_t> &GeometryDrawing::indices() const {
-  return program_->indices;
+  return mesh_ ? mesh_->indices : program_->indices;
 }
 
 GeometryInstance::GeometryInstance(const std::string &definition, const std::string &realization)
@@ -209,7 +242,7 @@ GeometryInstance::GeometryInstance(std::shared_ptr<const GeometryDefinition> def
 }
 void GeometryInstance::set_state_json(const std::string &state) {
   auto frame = definition_->frame(state);
-  auto drawing = definition_->project(frame);
+  auto drawing = definition_->project(frame, definition_->program_->s3 ? "stereographic" : "embedding");
   auto decoded = definition_->program_->execution->decode(Json::parse(state));
   displayed_ = before_ = after_ = std::move(decoded);
   animation_.reset();
@@ -218,7 +251,8 @@ void GeometryInstance::set_state_json(const std::string &state) {
 std::string GeometryInstance::prepare_animation_json(const std::string &input) {
   try {
     auto animation = definition_->animate(input);
-    auto drawing = definition_->project(animation.evaluate(0));
+    auto drawing = definition_->project(animation.evaluate(0),
+                                        definition_->program_->s3 ? "stereographic" : "embedding");
     const auto &motion = *animation.motion_;
     before_ = motion.before;
     after_ = motion.after;
@@ -236,7 +270,8 @@ std::string GeometryInstance::prepare_animation_json(const std::string &input) {
 void GeometryInstance::sample(double progress) {
   const double t = progress_value(progress);
   if (animation_)
-    drawing_ = definition_->project(animation_->evaluate(t * t * (3 - 2 * t)));
+    drawing_ = definition_->project(animation_->evaluate(t * t * (3 - 2 * t)),
+                                    definition_->program_->s3 ? "stereographic" : "embedding");
   displayed_ = animation_ && t == 1 ? after_ : before_;
 }
 std::string GeometryInstance::bind_hit_json(const std::string &id) const {

@@ -1,7 +1,7 @@
 {
   "formatVersion": 1,
   "inputs": {
-    "CMakeLists.txt": "136a2e5711610b72bd9d4e6d8e38631671dee7128a89020dfda2ef0280ae1354",
+    "CMakeLists.txt": "6337c0553407c6ab8de82f9e3a4bb1fc87489fabc411d77d8aca7151f539c52a",
     "CMakePresets.json": "45b75ad4d14ab005445c9b1b3cea86e3d0581533955b73b9f6ac893be3c90c63",
     "examples/language/main.cpp": "f88f6e58fedd24552082e1a57b8ee0a2f4182327d30afc4760053e162df8ea74",
     "include/twisty/authoring/compiler.hpp": "dfea5efe006422a0af139414ce1e13730891b5cfdc2413ee86bc6558db516583",
@@ -66,7 +66,10 @@
     "scripts/orbifold333_packages.py": "dd913419e4ad8b7086c169fc6fcee83204dd6269c27cbefe4cd7c5e5d4165998",
     "scripts/pillowcase_packages.py": "c6f1297ec3362a0d90f6b2ba70f67938b5c0e8d9ddbea05d9fc833b917e843de",
     "scripts/puzzle-data.mjs": "935404448689fbaedabcf0fb26b9ddca96835e05504f3076595b2269c0665e79",
-    "scripts/puzzle-inventory.json": "cabd0a63f8c8739d1e6248e614fc67a379bd918c793e679a8889f87fa2c18135",
+    "scripts/puzzle-inventory.json": "9251cc962fc5447edbd392e1600dcc3c8ca1f63407a5fe9c28805894dc558e8d",
+    "scripts/tesseract_meshes.py": "5febea6ba647034314a5a8c16a8e867bb043ab826e2884c859485c58e587c47c",
+    "scripts/tesseract_model.py": "ba0605b242c2ff64d5f215f9baca6a672be5672139e909825a20a65078a57473",
+    "scripts/tesseract_packages.py": "2163bd76f8a9dc289e59ca8945e0836923034bba2b6599a348457512bb919a98",
     "src/authoring/compact.cpp": "91e309f883a52a93a32ed4d8832f958ebc2704695b9f1b404db0753e4f725e87",
     "src/authoring/compact.hpp": "65ecb80b223a159b3e8bdefd5f2089f1d0b3a3d3ce003935b16e1b880a88e944",
     "src/authoring/compact_cube.cpp": "cb5b71b7fef0e75d4afdbe14e12784f838c23d09cd94710ad34ef2053bf7963d",
@@ -219,6 +222,11 @@
     "packages/melty-d/melty-d-port-diagram.json": "20ee2c051d43b3fb170d73e9a24094b21cf4f02771eba6de7c0ca53d149c2581",
     "packages/melty-d/melty-d-spherical.json": "8ea584ec4357cd07b2861986cb71668acd769d104e6aca70066583b145abdbde",
     "packages/melty-d/package.json": "dccc386dc69989756d6594515015fb32134f81ed0df6a81fdcb0441ff769ebd0",
-    "packages/melty-d/puzzle.pzl.json": "4519d2c2f7022deb495883a6bce46b96187364471a0c50b1a2a63164039ac3c3"
+    "packages/melty-d/puzzle.pzl.json": "4519d2c2f7022deb495883a6bce46b96187364471a0c50b1a2a63164039ac3c3",
+    "packages/tesseract3/bindings.json": "24773dddce7844ba31eec94657ca543c2802c8fa50c60a5ce8119457baa1d9a5",
+    "packages/tesseract3/manifest.json": "c2924a3839849b1e405ced9e329e6c14b75484a87cc1b641a3ef8acec45d5ef7",
+    "packages/tesseract3/package.json": "18ef864c0b0e518145b2539f2222702c9617043d8b213f1ab2c81b4ac0c82563",
+    "packages/tesseract3/puzzle.pzl.json": "43cb465b101c255d00330311492c0dadbaf805bcac06013531dfccdde859ff75",
+    "packages/tesseract3/tesseract3-s3.json": "dcb8cb7942791d4da29d78ab1505f878568f8cbb41db5beecc5d6f883f64069e"
   }
 }

@@ -32,6 +32,7 @@ import gearManifest from '../../packages/gear/manifest.json';
 import gearExtremeManifest from '../../packages/gear-extreme/manifest.json';
 import gearPlainManifest from '../../packages/gear-plain/manifest.json';
 import { KernelController, KernelSession, loadRuntime, type Realization, type Result, type Snapshot, type Transition, type TurnIntent } from './kernel';
+import { CellControls } from './controls/CellControls';
 import { FamilyControls } from './controls/FamilyControls';
 import { RelativeControls, relativeTurnAngle } from './controls/RelativeControls';
 import { RenderView } from './renderer';
@@ -55,7 +56,7 @@ import orbifold333SixRealization from '../../packages/flat-333-6/flat-quotient.j
 import { pieceDestinations, type PieceDestination } from './destinations';
 import { defaultViews, moveView, restoreViews, viewLabels, type ViewId, type ViewSelection } from './viewSelection';
 
-type Preset = { id: string; label: string; source: string; realizations: Realization[]; spherical?: Realization; surface?: boolean; turnAnglesDegrees?: Record<string, number>; cameraScale?: number; euclideanLabel?: string; deferred?: boolean };
+type Preset = { id: string; label: string; source: string; realizations: Realization[]; spherical?: Realization; surface?: boolean; turnAnglesDegrees?: Record<string, number>; cameraScale?: number; euclideanLabel?: string; deferred?: boolean; stereographic?: boolean };
 type PuzzleView = RenderView | SurfaceView;
 type ViewDefinition = { id: ViewId; realization: Realization; surfaceMode?: 'square' | 'tiles' };
 type MountedView = { view: PuzzleView; realizationId: string; generation: number; cameras: Map<ViewId, unknown> };
@@ -86,6 +87,8 @@ const prebuiltFiles = import.meta.glob<string>([
   '../../packages/melty-*/melty-*-euclidean.json',
   '../../packages/melty-*/melty-*-port-diagram.json',
   '../../packages/melty-*/melty-*-spherical.json',
+  '../../packages/tesseract3/package.json',
+  '../../packages/tesseract3/tesseract3-s3.json',
   '../../packages/icosahedron-*/package.json',
   '../../packages/icosahedron-*/icosahedron-*-*.json',
 ], { query: '?url', import: 'default', eager: true });
@@ -94,7 +97,8 @@ function loadPreset(preset: Preset): Promise<void> {
   if ((!preset.turnAnglesDegrees && !preset.deferred) || preset.source) return Promise.resolve();
   const previous = meltyLoading.get(preset.id);
   if (previous) return previous;
-  const loading = Promise.all(['package', `${preset.id}-euclidean`, `${preset.id}-spherical`, ...(!preset.deferred ? [`${preset.id}-port-diagram`] : [])]
+  const files = preset.stereographic ? ['package', 'tesseract3-s3'] : ['package', `${preset.id}-euclidean`, `${preset.id}-spherical`, ...(!preset.deferred ? [`${preset.id}-port-diagram`] : [])];
+  const loading = Promise.all(files
     .map(async name => {
       const response = await fetch(prebuiltFiles[`../../packages/${preset.id}/${name}.json`]);
       if (!response.ok) throw new Error(`Could not load ${preset.label} (${response.status}).`);
@@ -102,7 +106,7 @@ function loadPreset(preset: Preset): Promise<void> {
     }))
     .then(([source, cube, sphere, diagram]) => {
       preset.realizations = [JSON.parse(cube), ...(diagram ? [JSON.parse(diagram)] : [])];
-      preset.spherical = JSON.parse(sphere);
+      preset.spherical = sphere ? JSON.parse(sphere) : undefined;
       preset.source = source;
     }).catch(error => { meltyLoading.delete(preset.id); throw error; });
   meltyLoading.set(preset.id, loading);
@@ -114,6 +118,7 @@ const presets = [
   { id: 'helicopter', label: 'Helicopter Cube · jumbling', source: helicopterSource, realizations: [helicopterRealization, helicopterDiagram], spherical: helicopterSphere },
   { id: 'bagua', label: 'Bagua Cube', source: baguaSource, realizations: [baguaRealization, baguaDiagram], spherical: baguaSphere },
   ...meltyPresets,
+  { id: 'tesseract3', label: 'S³ 8-cell · 3 × 3 × 3 × 3', source: '', realizations: [], deferred: true, stereographic: true },
   { id: 'icosahedron-110', label: `Face-turning icosahedron · ${icosahedronManifest.pieces} pieces`, source: '', realizations: [], deferred: true, euclideanLabel: 'Icosahedron' },
   { id: 'icosahedron-152', label: 'Face-turning icosahedron · 152 pieces', source: '', realizations: [], deferred: true, euclideanLabel: 'Icosahedron' },
   gearPreset('gear', 'Gear Cube', gearSource, gearManifest.definitionDigest),
@@ -131,6 +136,7 @@ const presets = [
 type Inspector = 'pieces' | 'history' | 'definition';
 
 function availableViews(preset: Preset): ViewDefinition[] {
+  if (preset.stereographic) return [{ id: 'stereographic', realization: preset.realizations[0] }];
   if (preset.surface) return [
     { id: 'fundamental-domain', realization: preset.realizations[0], surfaceMode: 'square' },
     { id: 'tiled-plane', realization: preset.realizations[1], surfaceMode: 'tiles' },
@@ -194,7 +200,7 @@ export function App() {
   const displayedViews = orderedViews.filter(view => viewSelection.visible.includes(view.id));
   const rhombus = ['rhombus-60','orbifold-333-rhombus'].includes(activePreset?.realizations[0].flatSurface?.chart??'');
 
-  function relativeSession(session: KernelSession): boolean { return session.definition.puzzleId === 'icosahedron-152-v1'; }
+  function relativeSession(session: KernelSession): boolean { return ['icosahedron-152-v1', 'tesseract3-v1'].includes(session.definition.puzzleId); }
   function readSnapshot(session: KernelSession): Snapshot {
     return (controller.current || relativeSession(session)) && !advanced.current ? { ...session.stateSnapshot(), legalRequests: [], candidateRequests: [] } : session.snapshot();
   }
@@ -235,7 +241,7 @@ export function App() {
     setViewSelection(current => current.order.length === available.length && current.order.every(id => available.includes(id)) ? current : defaultViews(available));
     setSourceId(id); setSnapshot(initial); setVisualDigest(initial.stateDigest);
     setSelected([]); setEvidence(undefined); setLastScramble(''); setVisualError('');
-    setAlgorithm(initial.puzzleId === 'flat-333-6-v1' ? "A D A' D'" : initial.puzzleId.startsWith('flat-') ? "A B A' B'" : initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' :
+    setAlgorithm(initial.puzzleId === 'tesseract3-v1' ? "Xp_fY Yp_fZ (Xp_fY Yp_fZ)'" : initial.puzzleId === 'flat-333-6-v1' ? "A D A' D'" : initial.puzzleId.startsWith('flat-') ? "A B A' B'" : initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' :
       initial.puzzleId === 'bagua-experimental-v1' ? "U+ R' L' D2 R L U-" : initial.puzzleId.startsWith('icosahedron-') ? "A_j O_j (A_j O_j)'" : initial.puzzleId.startsWith('melty-') ? "U U'" :
       parsedSource.kind === 'relational-gear-prototypes' ? (parsedSource.gearedEdges.length === 0 ? "Rq Uq Rq' Uq'" :
         initial.legalRequests.some((request) => request.operation === 'R') ? "R R'" : "Rq Rq'") : "R U R' U'");
@@ -503,7 +509,9 @@ export function App() {
   const candidates = snapshot?.candidateRequests && new Set(snapshot.candidateRequests.map((request) => request.operation));
   const melty = activePreset?.turnAnglesDegrees;
   const icosahedron = activePreset?.id.startsWith('icosahedron-');
-  const relative = activePreset?.id === 'icosahedron-152';
+  const cellLayout = activePreset?.realizations[0]?.controlLayout;
+  const s3 = cellLayout?.version === 2;
+  const relative = activePreset?.id === 'icosahedron-152' || s3;
   const phaseRequests = definition?.operations.filter((operation) => candidates?.has(operation.id));
   const families = Array.from(new Set(definition?.operations.map((operation) => operation.family) ?? []));
   const faceOrder = activePreset?.surface ? ['A', 'B', 'C', 'D'] : icosahedron ? Array.from({ length: 20 }, (_, i) => String.fromCharCode(65+i)) : ['U', 'R', 'F', 'D', 'L', 'B'];
@@ -572,7 +580,7 @@ export function App() {
             {displayedViews.map(({ id }, index) => <article key={id} className={`view-panel ${id === 'diagram' ? 'diagram-panel' : ''}`} data-view={id}>
               <div className="view-title"><span>{String(index + 1).padStart(2, '0')} / {labels[id]}</span><span className="subtle">{
                 id === 'fundamental-domain' ? 'Drag to pan' : id === 'tiled-plane' ? 'Drag to pan · scroll to zoom' :
-                id === 'sphere' ? 'Drag to rotate freely · scroll to zoom' : id === 'cube' ? 'Drag to orbit · scroll to zoom' : (controller.current || relative) ? 'Click pieces to choose a twist family' : 'Click a piece, then a translucent destination'
+                id === 'sphere' ? 'Drag to rotate freely · scroll to zoom' : id === 'cube' || id === 'stereographic' ? 'Drag to orbit · scroll to zoom' : (controller.current || relative) ? 'Click pieces to choose a twist family' : 'Click a piece, then a translucent destination'
               }</span></div>
               <div ref={host => { if (host) viewHosts.current.set(id, host); else viewHosts.current.delete(id); }} className="canvas-host"
                 data-testid={index === 0 ? 'cube-view' : index === 1 ? 'diagram-view' : 'extra-view'} data-view-id={id} data-state-digest={visualDigest} />
@@ -589,17 +597,24 @@ export function App() {
           </div>
 
           <section className="commands">
-            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{activePreset?.surface ? `Face keys ${Object.keys(activePreset.realizations[0].flatSurface?.diskCenters??{}).join(' ')} · ${rhombus ? 60 : 90}° turns · Shift for inverse` : icosahedron ? '20 face axes · ordinary turns: 120° · select pieces to choose an axis' : snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : snapshot?.puzzleId === 'bagua-experimental-v1' ? '+ / −: 45° · face keys: 90° · Shift for inverse' : melty ? 'Face keys U R F D L B · choose each cap independently · hover for angles' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
+            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{s3 ? '8 cubic cells · face, edge and vertex axes' : activePreset?.surface ? `Face keys ${Object.keys(activePreset.realizations[0].flatSurface?.diskCenters??{}).join(' ')} · ${rhombus ? 60 : 90}° turns · Shift for inverse` : icosahedron ? '20 face axes · ordinary turns: 120° · select pieces to choose an axis' : snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : snapshot?.puzzleId === 'bagua-experimental-v1' ? '+ / −: 45° · face keys: 90° · Shift for inverse' : melty ? 'Face keys U R F D L B · choose each cap independently · hover for angles' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
             {controller.current && snapshot && <FamilyControls key={generation} controller={controller.current} revision={snapshot.revision}
-              layout={activePreset?.realizations[0].controlLayout} busy={busy} onTurn={turnTo}
+              layout={cellLayout?.version === 1 ? cellLayout : undefined} busy={busy} onTurn={turnTo}
               selectedPieces={selected} onClearSelection={() => setSelected([])} onRemovePiece={choosePiece} />}
-            {relative && kernel.current && snapshot && <RelativeControls key={generation} session={kernel.current} revision={snapshot.revision}
+            {relative && !s3 && kernel.current && snapshot && <RelativeControls key={generation} session={kernel.current} revision={snapshot.revision}
               history={snapshot.history} cursor={snapshot.cursor}
               realization={activePreset?.realizations[0]} busy={busy} selectedPieces={selected} onClearSelection={() => setSelected([])}
               onMove={(operation, revision) => {
                 const session = kernel.current!;
                 enqueue(() => session === kernel.current ? session.move(operation, revision) : { status: 'StaleRevision' });
               }} />}
+            {s3 && kernel.current && snapshot && <CellControls key={generation} session={kernel.current} revision={snapshot.revision}
+              layout={cellLayout} busy={busy} selectedPieces={selected} onClearSelection={() => setSelected([])}
+              onFocus={cell => views.current.forEach(view => { if (view instanceof RenderView) view.focusCell(cell); })}
+              onGuide={(cell, axis) => views.current.forEach(view => { if (view instanceof RenderView) view.setCellGuide(cell, axis); })}
+              onShell={() => views.current.forEach(view => { if (view instanceof RenderView) view.toggleOuterShell(); })}
+              onMove={(operation, revision) => { const session = kernel.current!;
+                enqueue(() => session === kernel.current ? session.move(operation, revision) : { status: 'StaleRevision' }); }} />}
             <details key={`advanced-${generation}`} className="advanced-moves" open={(controller.current || relative) ? undefined : true} onToggle={event => {
               advanced.current = event.currentTarget.open;
               if (kernel.current) setSnapshot(readSnapshot(kernel.current));
@@ -638,7 +653,7 @@ export function App() {
           <div className="definition-footer"><span className="eyebrow">PINNED SEMANTICS</span><code title={snapshot?.definitionDigest}>{snapshot?.definitionDigest ?? '—'}</code></div>
         </aside>
       </main>
-      <footer><span>Geometry interprets. The abstract core decides.</span><span>{busy ? 'Views follow the recorded transition.' : 'Two views · one authoritative state'}</span></footer>
+      <footer><span>Geometry interprets. The abstract core decides.</span><span>{busy ? 'Views follow the recorded transition.' : 'One authoritative puzzle state'}</span></footer>
     </div>
   );
 }

@@ -68,7 +68,10 @@ export type SceneDescriptor = {
   sceneId: string; realizationId: string; definitionDigest: string; requiredCapabilities: string[];
   meshAssets: MeshAsset[]; visualParts: VisualPart[]; diagram: boolean;
   space: GeometrySpace; projections: string[]; drawingSpace: string; drawingBufferVersion: number;
-  ambientSpace?: 'R3' | 'S2' | 'E2'; sphereRadius?: number; diskAngleDegrees?: number; fidelity?: string;
+  ambientSpace?: 'R3' | 'S2' | 'S3' | 'E2'; sphereRadius?: number; diskAngleDegrees?: number; fidelity?: string;
+  dynamicMeshes?: boolean;
+  projection?: { viewIsometry: number[]; scale: number; clipRadius: number; outerPieceIds: string[]; pieceDepths: Record<string, number>; clippedTriangles: number };
+  axisGuide?: number[][][]; guidePieces?: string[];
   flatSurface?: FlatSurface;
   diskCenters?: Record<string, [number, number, number]>; surfaceTransportVerified?: boolean; catalogTransportVerified?: boolean;
   controlLayout?: Realization['controlLayout'];
@@ -120,17 +123,32 @@ export type PolyhedralModel = {
   vertices: number[][]; ports: Record<string, number[]>; symmetries: number[][];
   surfaceVertices?: number[][];
 };
+export type CellAxisLayout = { version: 2; kind: 'cell-axes'; groups: {
+  id: string; label: string; center: number[];
+  categories: { kind: 'face' | 'edge' | 'vertex'; axes: {
+    id: string; label: string; direction: number[]; turns: { operation: string; angleDegrees: number }[];
+  }[] }[];
+}[] };
+export type DriverLayout = { version: 1; drivers: Record<string, { angles: number[] }>; paths?: Record<string, Record<string,number>> };
+export type ProjectionOptions = { version?: 1; focusCell?: string; viewIsometry?: number[]; scale?: number; clipRadius?: number; guide?: { group: string; axis: string } };
 export type Realization = {
-  controlLayout?: { version: 1; drivers: Record<string, { angles: number[] }>; paths?: Record<string, Record<string,number>> };
+  controlLayout?: DriverLayout | CellAxisLayout;
+  /** Unit-S3 cut geometry; matrices are SO(4), not homogeneous R3 frames. */
+  cutDepth?: number; pieceInset?: number;
+  domains?: Record<string, { activeCoordinates: number; placementFrames: Record<string, number[]>; ports: Record<string, string> }>;
+  operationTracks?: Record<string, { cell: number; planeU: number[]; planeV: number[]; angle: number }
+    | { axis: number[]; fromStop: number; toStop: number } | FamilyRotationBinding>;
   motionFamilies?: { version: 1; families: Record<string, { axis: [number,number,number]; pivot: [number,number,number];
     space: 'world' | 'local'; coordinates: Record<string,number> }> };
-  schemaVersion: number; id: string; kind: 'cube-euclidean' | 'cube-port-diagram' | 'cube-spherical' | 'polyhedral-euclidean' | 'polyhedral-port-diagram' | 'polyhedral-spherical' | 'articulated-euclidean' | 'articulated-port-diagram' | 'articulated-spherical' | 'flat-quotient';
+  schemaVersion: number; id: string; kind: 'cube-euclidean' | 'cube-port-diagram' | 'cube-spherical' | 'polyhedral-euclidean' | 'polyhedral-port-diagram' | 'polyhedral-spherical' | 'articulated-euclidean' | 'articulated-port-diagram' | 'articulated-spherical' | 'flat-quotient' | 's3-cell-turning';
   flatSurface?: { topology: 'torus' | 'klein-bottle' | 'pillowcase' | 'orbifold-333'; sideLength: number; chart?: 'square' | 'rhombus-60' | 'pillowcase-square' | 'orbifold-333-rhombus'; cutRadius?: number; diskCenters?: Record<string, [number, number]> };
   radius?: number;
   compatibleDefinitionDigest: string; requiredCapabilities: string[];
   models?: Record<string, PolyhedralModel>;
   assets?: Record<string, {
     vertices: number[][]; triangles: number[][];
+    /** For S3, one four-coordinate unit tangent outward normal per vertex. */
+    normals?: number[][];
     /** Smooth signed normals about the local origin, in any articulated kind. */
     radialNormalTriangles?: number[];
   }>;
@@ -386,6 +404,12 @@ export class GeometryInstance {
   private animation?: ReturnType<InstanceType<MainModule['GeometryDefinition']>['animate']>;
   private readonly destinations = new Map<string, Float32Array>();
   private destinationBytes = 0;
+  private frame?: ReturnType<InstanceType<MainModule['GeometryDefinition']>['frame']>;
+  private options: ProjectionOptions = {};
+  positions: Float32Array = new Float32Array();
+  normals: Float32Array = new Float32Array();
+  indices: Uint32Array = new Uint32Array();
+  get projectionOptions(): ProjectionOptions { return structuredClone(this.options); }
 
   constructor(module: MainModule, session: InstanceType<MainModule['Session']>, realization: string) {
     const info = JSON.parse(module.kernelInfoJSON()) as KernelInfo;
@@ -400,23 +424,42 @@ export class GeometryInstance {
     } catch (error) { definition.delete(); throw error; }
   }
 
-  private project(frame: ReturnType<InstanceType<MainModule['GeometryDefinition']>['frame']>): Float32Array {
+  private project(frame: NonNullable<GeometryInstance['frame']>, options = this.options) {
+    const drawing = this.scene.dynamicMeshes
+      ? this.definition.projectWithOptions(frame, 'stereographic', JSON.stringify(options))
+      : this.definition.project(frame, 'embedding');
     try {
-      const drawing = this.definition.project(frame, 'embedding');
-      try { return copyFloatView(drawing.transforms() as Float32Array); }
-      finally { drawing.delete(); }
-    } finally { frame.delete(); }
+      return { matrices: copyFloatView(drawing.transforms() as Float32Array),
+        ...(this.scene.dynamicMeshes ? { scene: JSON.parse(drawing.sceneJSON()) as SceneDescriptor,
+          positions: copyFloatView(drawing.positions() as Float32Array), normals: copyFloatView(drawing.normals() as Float32Array),
+          indices: copyIndexView(drawing.indices() as Uint32Array) } : {}) };
+    } finally { drawing.delete(); }
+  }
+  private accept(frame: NonNullable<GeometryInstance['frame']>, options = this.options): void {
+    let result: ReturnType<GeometryInstance['project']>;
+    try { result = this.project(frame, options); } catch (error) { if (frame !== this.frame) frame.delete(); throw error; }
+    this.matrices.set(result.matrices);
+    if (result.scene) {
+      delete this.scene.axisGuide; delete this.scene.guidePieces;
+      Object.assign(this.scene, result.scene);
+      this.positions = result.positions!; this.normals = result.normals!; this.indices = result.indices!;
+    }
+    if (this.frame !== frame) this.frame?.delete();
+    this.frame = frame;
+  }
+  /** Reprojects the current intrinsic frame; does not edit state or interrupt a prepared animation. */
+  setProjection(options: ProjectionOptions): void {
+    if (!this.scene.dynamicMeshes) throw new Error('This realization has no configurable projection.');
+    this.accept(this.frame!, options); this.options = structuredClone(options);
   }
   setState(stateText: string): void {
-    const matrices = this.project(this.definition.frame(stateText));
-    this.matrices.set(matrices);
+    this.accept(this.definition.frame(stateText));
     this.animation?.delete(); this.animation = undefined;
   }
   prepare(record: string): number {
     const next = this.definition.animate(record);
     try {
-      const matrices = this.project(next.evaluate(0));
-      this.matrices.set(matrices);
+      this.accept(next.evaluate(0));
       const hint = next.durationHint();
       this.animation?.delete(); this.animation = next;
       return hint;
@@ -425,10 +468,11 @@ export class GeometryInstance {
   /** Linear progress; apply easing in the controller before calling. */
   evaluate(progress: number): void {
     if (!Number.isFinite(progress)) throw new Error('Animation progress must be finite.');
-    if (this.animation) this.matrices.set(this.project(this.animation.evaluate(progress)));
+    if (this.animation) this.accept(this.animation.evaluate(progress));
   }
   /** Shares all assets and tables; does not disturb the prepared live motion. */
   destination(record: string): Float32Array {
+    if (this.scene.dynamicMeshes) throw new Error('Dynamic destinations require GeometryDefinition.animate and projectWithOptions.');
     const cached = this.destinations.get(record);
     if (cached) {
       this.destinations.delete(record); this.destinations.set(record, cached);
@@ -436,7 +480,9 @@ export class GeometryInstance {
     }
     const animation = this.definition.animate(record);
     try {
-      const matrices = this.project(animation.evaluate(1));
+      const frame = animation.evaluate(1);
+      let matrices: Float32Array;
+      try { matrices = this.project(frame).matrices; } finally { frame.delete(); }
       // Only owned buffers are cached, never native handles or borrowed views.
       // Bound memory even for large third-party realizations; callers still
       // receive independent arrays and may freely modify their copy.
@@ -459,6 +505,7 @@ export class GeometryInstance {
   resolvePart(id: string): HitBinding { return JSON.parse(this.definition.resolvePartJSON(id)) as HitBinding; }
   dispose(): void {
     this.animation?.delete(); this.animation = undefined;
+    this.frame?.delete(); this.frame = undefined;
     this.destinations.clear(); this.destinationBytes = 0;
     this.definition.delete();
   }

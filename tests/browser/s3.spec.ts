@@ -1,0 +1,47 @@
+import { readFile } from 'node:fs/promises';
+import { expect, test } from '@playwright/test';
+test('S³ uses one view, all cell-axis categories, reversible turns, and presentation-only focus', async ({ page }) => {
+  test.setTimeout(60_000);
+  const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
+  await page.goto('./');
+  await expect(page.getByTestId('goal-status')).toHaveText('Solved');
+  await page.getByLabel('Puzzle', { exact: true }).selectOption('tesseract3');
+  const controls = page.getByRole('region', { name: 'Cell twist controller' });
+  await expect(controls).toBeVisible();
+  await expect(page.locator('canvas')).toHaveCount(1);
+  await expect(page.getByRole('group', { name: 'Eight cells' }).getByRole('button')).toHaveCount(8);
+  await expect(page.getByRole('group', { name: 'Axis kind' }).getByRole('button')).toHaveCount(3);
+  await page.getByLabel('Animation speed').selectOption('0');
+  const digest = await page.getByTestId('state-digest').textContent();
+  for (const [category, count, angle] of [['Face axes', 3, '+90°'], ['Edge axes', 6, '+180°'], ['Vertex axes', 4, '+120°']] as const) {
+    await controls.getByRole('button', { name: category, exact: true }).click();
+    await expect(page.getByLabel('Rotation axis').locator('option')).toHaveCount(count);
+    await controls.getByRole('button', { name: angle, exact: true }).click();
+    await expect(page.getByTestId('state-digest')).not.toHaveText(digest!);
+    await expect(page.getByTestId('app')).toHaveAttribute('data-animating', 'false');
+    await page.getByRole('button', { name: '↶ Undo', exact: true }).click();
+    await expect(page.getByTestId('state-digest')).toHaveText(digest!);
+  }
+  await page.getByRole('group', { name: 'Eight cells' }).getByRole('button', { name: '−W', exact: true }).click();
+  await controls.getByRole('button', { name: 'Focus −W cell' }).click();
+  await expect(page.getByTestId('state-digest')).toHaveText(digest!);
+  await page.getByRole('button', { name: 'Toggle outer layers' }).click();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Select center/Xp', exact: true }).click();
+  await expect(controls).toHaveAttribute('data-matching-cells', 'Xp');
+  await controls.getByRole('button', { name: 'Clear piece selection' }).click();
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save session ↗' }).click();
+  const file = await (await download).path();
+  const saved = JSON.parse(await readFile(file!, 'utf8'));
+  expect(saved.presentation.viewOrder).toEqual(['stereographic']);
+  expect(saved.presentation.cameras[0].projection.focusCell).toBe('Wm');
+  expect(saved.presentation.cameras[0].shellVisible).toBe(false);
+  await page.getByRole('button', { name: '↷ Redo', exact: true }).click();
+  await expect(page.getByTestId('state-digest')).not.toHaveText(digest!);
+  await expect(page.getByTestId('app')).toHaveAttribute('data-animating', 'false');
+  await page.getByLabel('Open session file').setInputFiles(file!);
+  await expect(page.getByTestId('state-digest')).toHaveText(digest!);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});

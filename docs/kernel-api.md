@@ -374,11 +374,11 @@ The primary API compiles a realization once into an immutable `GeometryDefinitio
 
 `animation.evaluate(t)` returns a new owned pose frame and changes neither the definition nor any previous frame or animation. Progress is linear and clamps to `[0,1]`; nonfinite values fail with `animation.progress`. Exact endpoint frames come from the placement catalog. Intermediate quotient motions use continuous covering-space lifts, with exact endpoint representatives as before. Ordered local/world rotation compositions remain ordered and share the supplied progress. Callers choose the clock and easing, for example `t*t*(3-2*t)`. There is no hidden `sample()`/`transforms()` dependency in this API. Multiple animations can be evaluated or sought independently.
 
-The scene's `space` descriptor (also returned by `spaceJSON`) declares intrinsic and embedding dimensions, coordinate model, metric/signature, curvature/radius, mesh coordinates, use of homogeneous coordinates, matrix shape/order and scalar type. Pose buffer version 1 packs one column-major 4×4 **Float64 isometry** per visual part, in scene order. Current models are Euclidean homogeneous R³, planar E² with proper three-dimensional lifts, and S² rotations in R³. Sphere mesh coordinates include radial display shells for stickers and internal parts; those shells are not additional intrinsic dimensions. Local mesh scale is published as `visualParts[i].meshScale` (default `1`), applied before the pose, and never included in an intrinsic isometry. Clients implementing their own projection therefore have the same local scale information as the built-in adapter.
+The scene's `space` descriptor (also returned by `spaceJSON`) declares intrinsic and embedding dimensions, coordinate model, metric/signature, curvature/radius, mesh coordinates, use of homogeneous coordinates, matrix shape/order and scalar type. Pose buffer version 1 packs one column-major 4×4 **Float64 isometry** per visual part, in scene order. Current models are Euclidean homogeneous R³, planar E² with proper three-dimensional lifts, S² rotations in R³, and genuine SO(4) rotations for S³ in R⁴. Sphere mesh coordinates include radial display shells for stickers and internal parts; those shells are not additional intrinsic dimensions. Local mesh scale is published as `visualParts[i].meshScale` (default `1`), applied before the pose, and never included in an intrinsic isometry. Clients implementing their own projection therefore have the same local scale information as the built-in adapter.
 
-The available `projections` currently contain only `"embedding"`. The scene declares `drawingSpace: "R3"` and `drawingBufferVersion: 1`. Its `GeometryDrawing` uses the existing Float32 positions/normals, Uint32 local triangle indices, and Float32 column-major affine model matrices (drawing buffer version 1). Projection applies local mesh scale to the intrinsic poses; drawing matrices already include that scale, so renderers must not apply it a second time. The output includes its own scene and asset accessors so a later projection can supply new vertex/normal data rather than pretending that every projection is an object matrix. It owns matrices and shares today's immutable assets. A frame from another independently compiled definition fails with `geometry.frame_mismatch`; copies of the same native definition share identity. Unknown projections fail with `geometry.projection`.
+The available `projections` are `"embedding"` for the existing R³/S²/E² models and `"stereographic"` for S³. The scene declares `drawingSpace: "R3"` and `drawingBufferVersion: 1`. Its `GeometryDrawing` uses the existing Float32 positions/normals, Uint32 local triangle indices, and Float32 column-major affine model matrices (drawing buffer version 1). Projection applies local mesh scale to the intrinsic poses; drawing matrices already include that scale, so renderers must not apply it a second time. The output includes its own scene and asset accessors so a later projection can supply new vertex/normal data rather than pretending that every projection is an object matrix. It owns matrices and either shares immutable embedding assets or owns deformed stereographic meshes. A frame from another independently compiled definition fails with `geometry.frame_mismatch`; copies of the same native definition share identity. Unknown projections fail with `geometry.projection`.
 
-This boundary leaves room for S³ points in R⁴ and H³ hyperboloid points with a Lorentz metric: their matrices must be interpreted using their declared model, not assumed to be affine Three.js transforms. Their loaders, isometry paths, projections and rendering are **not implemented** by this change. Euclidean affine/orthonormal checks remain specific to the existing authoring formats. Cameras, visible quotient copies, clipping, gestures and move selection belong to clients. Part resolution returns only persistent `pieceId` and optional `portId`, or `NoTarget`.
+S³ support is described below. H³ hyperboloid geometry remains unimplemented. Interpret matrices using their declared model rather than assuming affine Three.js transforms. Euclidean checks remain specific to their authoring formats. Cameras, visible quotient copies, gestures and move selection belong to clients; S³ projection clipping belongs to the portable interpreter. Part resolution returns only persistent `pieceId` and optional `portId`, or `NoTarget`.
 
 Native definitions, animations, frames and drawings share immutable compiled storage through reference counting. Any can outlive the session or the source definition handle. Native buffer references remain valid for the lifetime of their owning object. Each WASM result is a separately owned handle: call `.delete()` on animations, frames, drawings and definitions when finished. Typed arrays returned by WASM are borrowed read-only views and must be copied before another WASM call or deleting their owner; use `new Float64Array(frame.isometries())` for poses and `copyFloatView`/`copyIndexView` for drawing buffers. Never keep a borrowed view across possible WASM memory growth.
 
@@ -560,3 +560,82 @@ The supplied spherical model is packaged as `gear/gear-spherical.json`, `gear-ex
 ## Prebuilt puzzle data and packaging
 
 The SDK packager copies runtime artifacts from the same inventory used for puzzle generation and freshness validation. It rejects stale or modified puzzle artifacts before copying. `npm run build:puzzles` is the explicit offline authoring step; normal web/kernel builds consume the checked-in packages and validate them against the current WASM engine. The repository manifest is build provenance, not a public kernel format or API version, and consumers do not need it to load a supported puzzle package.
+
+### S³ cell turns and stereographic drawings
+
+The `s3-cell-turning` realization requires `triangle-meshes`, `so4-isometries`,
+`stereographic-projection`, and `dynamic-drawing-meshes`. API 7 gains the additive
+`GeometryDefinition.project_with_options(frame, projection, options_json)` method
+(`projectWithOptions` in WASM). Existing `project` remains available. Geometry,
+pose, and drawing buffer versions remain 1; discover capabilities before loading.
+
+`space.id` is `S3`: intrinsic dimension 3, Euclidean embedding dimension 4,
+unit radius, positive curvature, and `homogeneous: false`. Float64 column-major
+4×4 pose matrices are genuine SO(4) matrices, not affine R³ transforms. Authored
+assets contain unit four-coordinate vertices and unit tangent outward normals.
+Domains bind colored prototype meshes to signed-permutation placement frames.
+`cutDepth` lies in (0,0.5); `pieceInset` lies in [0,1). An inset vertex is
+`normalize((1-pieceInset)*p + pieceInset*c)`, where p is on a cut surface and c
+is the normalized sum of the piece’s active positive coordinate axes. Normals
+follow this map. Construction verifies cut membership, outward normals, color
+sectors, and invariance under unmarked endpoint stabilizers.
+Each operation track contains its signed coordinate `cell`, orthonormal
+`planeU` and `planeV`, and directed `angle` in radians. Sampling rotates this
+plane and fixes its orthogonal complement. Exact abstract transports include
+all 27 participants, even the unmarked center and other self-loops.
+
+Use projection `"stereographic"`; `"embedding"` is unsupported for this space.
+Options are a JSON object with optional fields:
+
+- `version: 1` (default).
+- `focusCell`: `Xp`, `Xm`, `Yp`, `Ym`, `Zp`, `Zm`, `Wp`, or `Wm`. The chosen
+  cell is moved to −W by a proper SO(4) view isometry. Default `Wm` is identity.
+- `viewIsometry`: an explicit 16-element column-major SO(4) matrix, mutually
+  exclusive with `focusCell`.
+- `scale`: positive display scale in [0.01,20], default 1.
+- `clipRadius`: radius in unscaled stereographic coordinates in [0.5,32],
+  default 8. The emitted radius is bounded by `scale * clipRadius`.
+- `guide: {group, axis}`: IDs from the realization's cell-axis layout.
+
+After the view isometry, projection is `scale * (x,y,z)/(1-w)`. The kernel
+clips on S³ before dividing; it never clamps the denominator. Conservative
+triangle bounds and bounded subdivision detect pole crossings inside triangles.
+The final clipping boundary is a tessellated approximation. Normals follow the
+projection differential. Drawings contain deformed R³ Float32 positions/normals,
+local Uint32 triangle indices, and identity drawing transforms. Asset IDs and
+visual-part order are stable, but offsets, counts, and topology may change each
+sample. Always read **the drawing's** scene and buffers together. Definition
+buffers describe only the initial default drawing. Each drawing owns its mesh
+storage, survives subsequent projections and deletion of the definition, and
+exposes borrowed native references/WASM views under the existing lifetime rules.
+
+Scene metadata adds `dynamicMeshes: true`, `ambientSpace: "S3"`, and
+`projection: {version, kind, viewIsometry, scale, clipRadius, clippedTriangles,
+outerPieceIds, pieceDepths}`. `outerPieceIds` identifies pieces containing the pole before
+display inset. Renderers may make these transparent or hide them for picking.
+`pieceDepths` maps each piece ID to its normalized intrinsic center’s w coordinate
+after the view isometry. Renderers can fade the outer hemisphere smoothly to
+expose the inner layers. An optional `axisGuide` is an array of R³ polylines; `guidePieces` lists the cap's
+persistent piece IDs. These are presentation data and never alter puzzle state.
+Projection validation failures use `geometry.projection`; malformed JSON or
+incorrect JSON field types may raise JSON parse/type errors. Invalid S³ meshes,
+frames, layout, capabilities or transport agreement produce `realization.s3`.
+Existing frame-ownership and exact-witness diagnostics still apply.
+
+`controlLayout: {version: 2, kind: "cell-axes", groups}` contains eight groups
+with `id`, `label`, four-coordinate `center`, and three `categories`. Each
+category has `kind: "face" | "edge" | "vertex"` and `axes`; each axis has `id`,
+`label`, `direction`, and `turns: [{operation, angleDegrees}]`. These are relative
+turns submitted through revision-checked session requests. There is no absolute
+phase driver or accumulated scalar angle for noncommuting axes. Version-1 driver
+layouts are unchanged.
+
+The TypeScript `GeometryInstance` helper retains the current intrinsic frame.
+For dynamic meshes its `positions`, `normals`, `indices`, `matrices`, and `scene`
+are owned current drawing snapshots, updated by `setState`, `prepare`,
+`evaluate`, or `setProjection(options)`. `projectionOptions` returns a copy.
+Rejected options leave the previous drawing and animation intact. Matrix-only
+`destination(record)` rejects dynamic meshes; use independent `animate` /
+`projectWithOptions` handles to render a deformed destination. Dispose the helper
+to release the retained frame. The Canvas example and installed native example
+consume this path without Three.js or the reference application.

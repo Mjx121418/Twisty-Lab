@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
-import { GeometryInstance, copyFloatView, copyIndexView, type MainModule, type Realization, type SceneDescriptor } from '../../kernel/index';
+import { GeometryInstance, copyFloatView, copyIndexView, type MainModule, type Realization, type SceneDescriptor, type ProjectionOptions } from '../../kernel/index';
 import { DestinationOverlay } from './destinationOverlay';
 import type { PieceDestination } from './destinations';
 const colors: Record<string, number> = {
@@ -26,6 +26,10 @@ export class RenderView {
   private readonly raycaster = new THREE.Raycaster();
   private readonly frameData: Float32Array;
   private readonly destinations: DestinationOverlay;
+  private shellVisible = true;
+  private selected: readonly string[] = [];
+  private blocked: string[] = [];
+  private readonly guide = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xffdf8b, depthTest: false, transparent: true }));
   private frame = 0;
   private frameId = 0;
   private disposed = false;
@@ -43,6 +47,10 @@ export class RenderView {
   ) {
     const geometry = new GeometryInstance(module, session, JSON.stringify(realization));
     this.geometry = geometry;
+    if (realization.controlLayout?.version === 2) {
+      const group = realization.controlLayout.groups[0];
+      geometry.setProjection({ guide: { group: group.id, axis: group.categories[0].axes[0].id } });
+    }
     this.descriptor = this.geometry.scene;
     this.frameData = copyFloatView(this.geometry.matrices);
     try {
@@ -53,10 +61,10 @@ export class RenderView {
     }
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.domElement.setAttribute('aria-label', this.descriptor.diagram ? 'Port diagram' : this.descriptor.ambientSpace === 'S2' ? 'Spherical puzzle' : 'Euclidean puzzle');
+    this.renderer.domElement.setAttribute('aria-label', this.descriptor.diagram ? 'Port diagram' : this.descriptor.ambientSpace === 'S3' ? 'Stereographic S³ puzzle' : this.descriptor.ambientSpace === 'S2' ? 'Spherical puzzle' : 'Euclidean puzzle');
     this.host.dataset.realizationId = this.descriptor.realizationId;
     this.host.append(this.renderer.domElement);
-    const cameraScale = this.descriptor.diagram ? 1 : initialCameraScale;
+    const cameraScale = this.descriptor.diagram ? 1 : this.descriptor.ambientSpace === 'S3' ? 0.62 : initialCameraScale;
     if (this.descriptor.diagram) {
       this.camera = new THREE.OrthographicCamera(-6, 6, 4.5, -4.5, 0.1, 100);
       this.camera.position.set(1.5, 0, 15);
@@ -93,9 +101,9 @@ export class RenderView {
     fill.position.set(-4, -1, -3);
     this.scene.add(fill);
 
-    const positions = copyFloatView(this.geometry.definition.positions() as Float32Array);
-    const normals = copyFloatView(this.geometry.definition.normals() as Float32Array);
-    const indices = copyIndexView(this.geometry.definition.indices() as Uint32Array);
+    const positions = this.descriptor.dynamicMeshes ? this.geometry.positions : copyFloatView(this.geometry.definition.positions() as Float32Array);
+    const normals = this.descriptor.dynamicMeshes ? this.geometry.normals : copyFloatView(this.geometry.definition.normals() as Float32Array);
+    const indices = this.descriptor.dynamicMeshes ? this.geometry.indices : copyIndexView(this.geometry.definition.indices() as Uint32Array);
     for (const asset of this.descriptor.meshAssets) {
       const geometry = new THREE.BufferGeometry();
       const end = asset.positionOffset + asset.vertexCount * 3;
@@ -112,7 +120,7 @@ export class RenderView {
         color: materialColors[part.materialBindingId] ?? 0x999999,
         roughness: 0.55,
         metalness: part.role === 'port' ? 0.0 : 0.1,
-        side: this.descriptor.diagram ? THREE.DoubleSide : THREE.FrontSide,
+        side: this.descriptor.diagram || this.descriptor.dynamicMeshes ? THREE.DoubleSide : THREE.FrontSide,
       });
       const mesh = new THREE.Mesh(this.assets.get(part.meshAssetId)!, material);
       mesh.matrixAutoUpdate = false;
@@ -144,6 +152,7 @@ export class RenderView {
       }
     }
     this.destinations = new DestinationOverlay(this.geometry, host, this.scene, this.descriptor, this.assets, materialColors, onDestination, canPick);
+    this.scene.add(this.guide); this.guide.renderOrder = 25;
     this.updateTransforms();
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(host);
@@ -181,7 +190,7 @@ export class RenderView {
     if (!start || start.id !== event.pointerId || event.button !== 0 || start.dragged || !this.canPick() || Math.hypot(event.clientX - start.x, event.clientY - start.y) > 5) return;
     this.aim(event);
     if (this.destinations.pick(this.raycaster, event.clientX, event.clientY)) return;
-    const hit = this.raycaster.intersectObjects(this.meshes)[0];
+    const hit = this.raycaster.intersectObjects(this.meshes.filter(mesh => (this.descriptor.projection?.pieceDepths[mesh.userData.pieceId] ?? -1) <= 0.1))[0];
     if (!hit) { this.onPick(undefined); return; }
     // Resolve the renderer's picked visual part to its persistent identity.
     const target = this.geometry.resolvePart(hit.object.userData.visualPartId) as { status: string; pieceId?: string };
@@ -216,6 +225,27 @@ export class RenderView {
     this.camera.up.normalize();
   }
   private updateTransforms(): void {
+    if (this.descriptor.dynamicMeshes) {
+      for (const asset of this.descriptor.meshAssets) {
+        const geometry = this.assets.get(asset.id)!;
+        const end = asset.positionOffset + asset.vertexCount * 3;
+        for (const [name, data] of [['position', this.geometry.positions.subarray(asset.positionOffset, end)],
+          ['normal', this.geometry.normals.subarray(asset.positionOffset, end)]] as const) {
+          const attribute = geometry.getAttribute(name) as THREE.BufferAttribute;
+          if (attribute.array.length === data.length) { attribute.array.set(data); attribute.needsUpdate = true; }
+          else geometry.setAttribute(name, new THREE.BufferAttribute(data.slice(), 3));
+        }
+        const data = this.geometry.indices.subarray(asset.indexOffset, asset.indexOffset + asset.indexCount);
+        if (geometry.index?.array.length === data.length) { geometry.index.array.set(data); geometry.index.needsUpdate = true; }
+        else geometry.setIndex(new THREE.BufferAttribute(data.slice(), 1));
+        geometry.computeBoundingSphere();
+      }
+      const segments: number[] = [];
+      for (const path of this.descriptor.axisGuide ?? []) for (let i = 1; i < path.length; i++) segments.push(...path[i-1], ...path[i]);
+      this.guide.geometry.dispose(); this.guide.geometry = new THREE.BufferGeometry();
+      this.guide.geometry.setAttribute('position', new THREE.Float32BufferAttribute(segments, 3));
+      this.highlight(this.selected, this.blocked);
+    }
     // The presentation helper owns this JS snapshot; GPU storage is reused.
     this.frameData.set(this.geometry.matrices);
     for (let i = 0; i < this.meshes.length; i++) this.meshes[i].matrix.fromArray(this.frameData, i * 16);
@@ -241,7 +271,13 @@ export class RenderView {
   }
   sample(progress: number): void { this.geometry.evaluate(progress); this.updateTransforms(); }
   setDestinations(piece: string | undefined, destinations: PieceDestination[]): void { this.destinations.setDestinations(piece, destinations); }
+  setProjection(options: ProjectionOptions): void { this.geometry.setProjection(options); this.updateTransforms(); }
+  focusCell(cell: string): void { this.setProjection({ ...this.geometry.projectionOptions, viewIsometry: undefined, focusCell: cell }); }
+  setCellGuide(group: string, axis: string): void { this.setProjection({ ...this.geometry.projectionOptions, guide: { group, axis } }); }
+  toggleOuterShell(): void { this.showOuterShell(!this.shellVisible); }
+  showOuterShell(visible: boolean): void { this.shellVisible = visible; this.highlight(this.selected, this.blocked); }
   highlight(selected: readonly string[], blocked: string[]): void {
+    this.selected = [...selected]; this.blocked = [...blocked];
     const selection = new Set(selected);
     for (let index = 0; index < this.meshes.length; index++) {
       const mesh = this.meshes[index];
@@ -252,13 +288,22 @@ export class RenderView {
       mesh.material.emissiveIntensity = isBlocked ? 0.5 : isSelected ? 0.45 : 0;
       // Opaque selected surfaces join the transparent pass at full opacity,
       // after the destination ghosts. Depth testing still hides rear faces.
-      if (mesh.material.transparent !== isSelected) {
-        mesh.material.transparent = isSelected;
+      const depth = this.descriptor.projection?.pieceDepths[mesh.userData.pieceId] ?? -1;
+      const fade = Math.max(0, Math.min(1, (depth - 0.1) / 0.35));
+      const outer = fade > 0;
+      mesh.visible = depth <= 0.1 || this.shellVisible;
+      mesh.material.opacity = 1 - 0.92 * fade * fade * (3 - 2 * fade);
+      mesh.material.depthWrite = !outer;
+      if (!isSelected && this.descriptor.guidePieces?.includes(mesh.userData.pieceId)) {
+        mesh.material.emissive.setHex(0x8f7850); mesh.material.emissiveIntensity = 0.15;
+      }
+      if (mesh.material.transparent !== (isSelected || outer)) {
+        mesh.material.transparent = isSelected || outer;
         mesh.material.needsUpdate = true;
       }
       mesh.renderOrder = isSelected ? (mesh.userData.role === 'body' ? 20 : 21) : 0;
       let outline = this.selectionOutlines.get(index);
-      if (isSelected && !outline) {
+      if (isSelected && !outline && !this.descriptor.dynamicMeshes) {
         const asset = mesh.userData.meshAssetId as string;
         let edges = this.selectionEdges.get(asset);
         if (!edges) {
@@ -282,13 +327,15 @@ export class RenderView {
     this.host.dataset.selectedCount = String(selected.length);
     this.host.dataset.blockedPieces = blocked.join(',');
   }
-  cameraState(): unknown { return { position: this.camera.position.toArray(), target: this.controls.target.toArray(), up: this.camera.up.toArray(), zoom: this.camera.zoom }; }
+  cameraState(): unknown { return { position: this.camera.position.toArray(), target: this.controls.target.toArray(), up: this.camera.up.toArray(), zoom: this.camera.zoom, projection: this.geometry.projectionOptions, shellVisible: this.shellVisible }; }
   restoreCamera(value: unknown): void {
-    const data = value as { position?: number[]; target?: number[]; up?: number[]; zoom?: number } | undefined;
+    const data = value as { position?: number[]; target?: number[]; up?: number[]; zoom?: number; projection?: ProjectionOptions; shellVisible?: boolean } | undefined;
     if (!data || !Array.isArray(data.position) || !Array.isArray(data.target) || data.position.length !== 3 || data.target.length !== 3) return;
     if (![...data.position, ...data.target, data.zoom ?? 1].every(Number.isFinite)) return;
     const up = data.up ?? [0, 1, 0];
     if (!Array.isArray(up) || up.length !== 3 || !up.every(Number.isFinite) || Math.hypot(...up) < 1e-12) return;
+    if (this.descriptor.dynamicMeshes && data.projection) this.setProjection(data.projection);
+    if (typeof data.shellVisible === 'boolean') this.showOuterShell(data.shellVisible);
     this.camera.position.fromArray(data.position); this.controls.target.fromArray(data.target);
     this.camera.up.fromArray(up);
     if (this.controls instanceof TrackballControls) this.alignCameraUp();
@@ -307,6 +354,7 @@ export class RenderView {
     this.renderer.domElement.removeEventListener('webglcontextlost', this.contextLost);
     this.renderer.domElement.removeEventListener('webglcontextrestored', this.contextRestored);
     this.destinations.dispose();
+    this.guide.geometry.dispose(); this.guide.material.dispose();
     this.selectionMaterial.dispose();
     for (const edges of this.selectionEdges.values()) edges.dispose();
     for (const mesh of this.meshes) mesh.material.dispose();

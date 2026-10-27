@@ -6,6 +6,7 @@ namespace twisty {
 class GeometryCompiler {
 public:
   GeometryCompiler(std::shared_ptr<const Execution>, const std::string &realization_json);
+  GeometryCompiler(std::shared_ptr<const Execution>, const Json &realization);
   std::shared_ptr<const GeometryProgram> compile();
 
 private:

@@ -222,3 +222,10 @@ footer { border-top: 1px solid #293840; display: flex; justify-content: space-be
 .selected-piece-chips button { padding: .35rem .6rem; border-color: #b99a52; color: #ffdb80; }
 .family-options button[aria-pressed='true'] { border-color: #7cdddf; background: #294342; }
 .piece-detail li { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .5rem; }
+
+.cell-groups, .cell-categories, .cell-turns, .cell-presentation { display: flex; gap: .5rem; flex-wrap: wrap; margin: .75rem 0; align-items: center; }
+.cell-groups button { min-width: 3rem; }
+.cell-controls button[aria-pressed="true"] { background: #285b64; border-color: #7cdddf; color: #e2ffff; }
+.cell-turns button { min-width: 5rem; font-size: 1.1rem; }
+.cell-presentation label { display: flex; align-items: center; gap: .4rem; }
+.cell-presentation input { width: auto; }

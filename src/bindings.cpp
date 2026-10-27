@@ -99,6 +99,7 @@ EMSCRIPTEN_BINDINGS(twisty) {
       .function("frame", &GeometryDefinition::frame)
       .function("animate", &GeometryDefinition::animate)
       .function("project", &GeometryDefinition::project)
+      .function("projectWithOptions", &GeometryDefinition::project_with_options)
       .function("resolvePartJSON", &GeometryDefinition::resolve_part_json)
       .function("positions", &positions<GeometryDefinition>)
       .function("normals", &normals<GeometryDefinition>)

@@ -13,7 +13,7 @@ let session, geometry, descriptor, positions, indices, transforms;
 let busy = false, selected, blocked = [], hits = [];
 let installEpoch = 0;
 const assets = new Map();
-const supported = new Set(['triangle-meshes', 'rigid-transforms', 'quotient-surface', 'quotient-orbifold', 'shared-rotation-tracks', 'family-rotation-generators', 'transport-path-selectors']);
+const supported = new Set(['so4-isometries', 'stereographic-projection', 'dynamic-drawing-meshes', 'triangle-meshes', 'rigid-transforms', 'quotient-surface', 'quotient-orbifold', 'shared-rotation-tracks', 'family-rotation-generators', 'transport-path-selectors']);
 const identity = () => [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 function multiply(a,b) {
   const out=Array(16).fill(0);
@@ -30,6 +30,10 @@ function power(m,n) { let out=identity();if(n<0)m=inverseRigid(m);for(let i=0;i<
 let images=[identity()], clipPixels, clipPolygon;
 
 function draw() {
+  if(descriptor.dynamicMeshes) {
+    positions=geometry.positions; indices=geometry.indices;
+    assets.clear(); descriptor.meshAssets.forEach(asset=>assets.set(asset.id,asset));
+  }
   context.clearRect(0, 0, canvas.width, canvas.height);
   hits = [];
   const bounds=descriptor.flatSurface?.fundamentalBounds;
@@ -48,6 +52,7 @@ function draw() {
   if(bounds)parts.sort((a,b)=>layer(a.part)-layer(b.part));
   function layer(part){return part.materialBindingId==='ink'?2:part.role==='port'?1:0;}
   for(const image of images) parts.forEach(({part,index:partIndex}) => {
+    if((descriptor.projection?.pieceDepths[part.pieceId]??-1)>.1) return; // Open the projected outer layer.
     const asset = assets.get(part.meshAssetId);
     const matrix=multiply(image,transforms.subarray(partIndex*16,partIndex*16+16));
     const point = (index) => {
@@ -126,7 +131,7 @@ async function install(puzzle) {
   document.querySelector('#status').textContent = 'Loading…';
   const [source, realization] = await Promise.all([
     fetch(`./data/${puzzle}/package.json`).then((response) => response.text()),
-    fetch(`./data/${puzzle}/${puzzle.startsWith('icosahedron-')?`${puzzle}-euclidean.json`:puzzle.startsWith('flat-') ? 'flat-quotient.json' : `${puzzle === 'helicopter' || puzzle === 'bagua' || puzzle.startsWith('melty-') || puzzle.startsWith('gear') ? puzzle : 'cube'}-port-diagram.json`}`).then((response) => response.text()),
+    fetch(`./data/${puzzle}/${puzzle==='tesseract3'?'tesseract3-s3.json':puzzle.startsWith('icosahedron-')?`${puzzle}-euclidean.json`:puzzle.startsWith('flat-') ? 'flat-quotient.json' : `${puzzle === 'helicopter' || puzzle === 'bagua' || puzzle.startsWith('melty-') || puzzle.startsWith('gear') ? puzzle : 'cube'}-port-diagram.json`}`).then((response) => response.text()),
   ]);
   if (epoch !== installEpoch) return;
   // A preset selection replaces the old puzzle. Drop its geometry and session
@@ -165,7 +170,7 @@ async function install(puzzle) {
   assets.clear(); descriptor.meshAssets.forEach((asset) => assets.set(asset.id, asset));
   selected = undefined; blocked = [];
   document.querySelector('#selection').textContent = 'No piece selected';
-  document.querySelector('#notation').value = puzzle === 'flat-333-6' ? "A D A' D'" : puzzle.startsWith('flat-') ? "A B A' B'" : puzzle === 'helicopter' ? 'UF_ab UL_af' :
+  document.querySelector('#notation').value = puzzle === 'tesseract3' ? "Xp_fY Yp_fZ (Xp_fY Yp_fZ)'" : puzzle === 'flat-333-6' ? "A D A' D'" : puzzle.startsWith('flat-') ? "A B A' B'" : puzzle === 'helicopter' ? 'UF_ab UL_af' :
     puzzle.startsWith('icosahedron-')?"A_j O_j (A_j O_j)'":puzzle.startsWith('melty-') ? "U U'" : puzzle === 'bagua' ? "U+ R' L' D2 R L U-" : puzzle === 'gear-plain' ? "Rq Uq Rq' Uq'" : puzzle.startsWith('gear') ? "R R'" : "R U R' U'";
   document.querySelector('#status').textContent = 'Ready';
   busy = false;

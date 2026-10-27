@@ -4,6 +4,7 @@
 namespace twisty {
 struct GeometryProgram;
 struct GeometryMotion;
+struct ProjectedMesh;
 class GeometryDefinition;
 
 // An owned, space-qualified pose snapshot. Matrices are intrinsic isometries;
@@ -23,8 +24,8 @@ private:
   std::vector<double> isometries_;
 };
 
-// Renderer-ready output of a named projection. Owns its matrices and shares
-// immutable assets. A future projection may supply different mesh buffers.
+// Renderer-ready snapshot. Owns projected meshes when the projection deforms
+// geometry; otherwise shares immutable assets. All buffer lifetimes are owned.
 class GeometryDrawing {
 public:
   std::string scene_json() const;
@@ -40,6 +41,7 @@ private:
   friend class GeometryDefinition;
   friend class GeometryInstance;
   std::shared_ptr<const GeometryProgram> program_;
+  std::shared_ptr<const ProjectedMesh> mesh_;
   std::vector<float> transforms_;
 };
 
@@ -70,6 +72,8 @@ public:
   GeometryFrame frame(const std::string &state_json) const;
   GeometryAnimation animate(const std::string &transition_record) const;
   GeometryDrawing project(const GeometryFrame &, const std::string &projection = "embedding") const;
+  GeometryDrawing project_with_options(const GeometryFrame &, const std::string &projection,
+                                       const std::string &options_json) const;
   std::string resolve_part_json(const std::string &visual_part_id) const;
 
 private:
@@ -88,20 +92,20 @@ public:
     return definition_;
   }
   std::string scene_json() const {
-    return definition_->scene_json();
+    return drawing_.scene_json();
   }
   void set_state_json(const std::string &);
   std::string prepare_animation_json(const std::string &);
   void sample(double progress);
   std::string bind_hit_json(const std::string &visual_part_id) const;
   const std::vector<float> &positions() const {
-    return definition_->positions();
+    return drawing_.positions();
   }
   const std::vector<float> &normals() const {
-    return definition_->normals();
+    return drawing_.normals();
   }
   const std::vector<std::uint32_t> &indices() const {
-    return definition_->indices();
+    return drawing_.indices();
   }
   const std::vector<float> &transforms() const {
     return drawing_.transforms();

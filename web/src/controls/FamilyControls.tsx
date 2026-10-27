@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { KernelController, type ControlResult, type Realization, type TurnIntent } from '../kernel';
+import { KernelController, type ControlResult, type DriverLayout, type TurnIntent } from '../kernel';
 
-type Props = { selectedPieces: readonly string[]; onClearSelection: () => void; onRemovePiece: (piece: string) => void; controller: KernelController; revision: string; layout?: Realization['controlLayout'];
+type Props = { selectedPieces: readonly string[]; onClearSelection: () => void; onRemovePiece: (piece: string) => void; controller: KernelController; revision: string; layout?: DriverLayout;
   busy: boolean; onTurn: (intent: TurnIntent) => void };
 
 export function FamilyControls(props: Props) {

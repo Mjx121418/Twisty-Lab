@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 // Check every shipped preset without native tools or exhaustive model audits.
 const inventory = [
+  ['tesseract3', 'Xp_fY'],
   ['cube3', 'R'],
   ['bandaged-uf-ufr', 'U'],
   ['helicopter', 'UF_ab'],
@@ -43,13 +44,13 @@ function collectErrors(page: Page): string[] {
 async function resting(page: Page): Promise<void> {
   await expect(page.getByTestId('app')).toHaveAttribute('data-animating', 'false');
   const digest = await page.getByTestId('state-digest').textContent();
-  for (const id of ['cube-view', 'diagram-view'])
-    await expect(page.getByTestId(id)).toHaveAttribute('data-state-digest', digest!);
+  for (const view of await page.locator('[data-realization-id]').all())
+    await expect(view).toHaveAttribute('data-state-digest', digest!);
   await expect(page.getByRole('alert')).toHaveCount(0);
 }
 
 test('published simulator loads every preset and keeps both views working through move and undo', async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   const errors = collectErrors(page);
   await page.goto('./');
   await expect(page.getByTestId('state-digest')).toHaveText(/^[0-9a-f]{64}$/, { timeout: 15_000 });
@@ -57,7 +58,7 @@ test('published simulator loads every preset and keeps both views working throug
   for (const [puzzle, move] of presets) {
     await test.step(puzzle, async () => {
       await page.getByLabel('Puzzle', { exact: true }).selectOption(puzzle);
-      await expect(page.locator('canvas')).toHaveCount(2);
+      await expect(page.locator('canvas')).toHaveCount(puzzle === 'tesseract3' ? 1 : 2);
       await resting(page);
       const initial = await page.getByTestId('state-digest').textContent();
       const movement = page.getByRole('button', { name: `Move ${move}`, exact: true });
@@ -75,7 +76,7 @@ test('published simulator loads every preset and keeps both views working throug
 });
 
 test('published standalone SDK loads its modules and puzzle data and supports move and undo', async ({ page, baseURL }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   const errors = collectErrors(page);
   const modules: string[] = [];
   page.on('request', (request) => {

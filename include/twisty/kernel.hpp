@@ -32,11 +32,11 @@ inline Json kernel_info() {
           {"realizationKinds",
            {"cube-euclidean", "cube-port-diagram", "cube-spherical", "polyhedral-euclidean",
             "polyhedral-port-diagram", "polyhedral-spherical", "articulated-euclidean",
-            "articulated-port-diagram", "articulated-spherical", "flat-quotient"}},
+            "articulated-port-diagram", "articulated-spherical", "flat-quotient", "s3-cell-turning"}},
           {"geometryCapabilities",
            {"triangle-meshes", "rigid-transforms", "quotient-surface", "quotient-orbifold",
             "shared-geometry-definitions", "shared-rotation-tracks", "space-qualified-poses",
             "family-rotation-generators", "transport-path-selectors",
-            "seekable-animations"}}};
+            "seekable-animations", "so4-isometries", "stereographic-projection", "dynamic-drawing-meshes"}}};
 }
 } // namespace twisty
