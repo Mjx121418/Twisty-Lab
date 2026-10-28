@@ -27,6 +27,7 @@ describe('explicit geometric frames', () => {
     expect(() => definition.animate(JSON.stringify(invalid))).toThrow();
     expect(() => first.evaluate(NaN)).toThrow();
     expect(() => definition.project(quarter, 'poincare-ball')).toThrow();
+    expect(() => definition.intrinsicMesh()).toThrow();
     session.dispose(); definition.delete(); source.delete(); second.delete();
     try {
       const frame = first.evaluate(.25);

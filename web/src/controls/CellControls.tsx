@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { KernelSession, type CellAxisLayout } from '../kernel';
+import type { S3FadeSettings } from '../s3Fade';
 
 type Props = { session: KernelSession; revision: string; layout: CellAxisLayout; busy: boolean;
   selectedPieces: readonly string[]; onClearSelection: () => void;
   onMove: (operation: string, revision: string) => void; onFocus: (cell: string) => void;
-  onGuide: (cell: string, axis: string) => void; onShell: () => void };
+  onGuide: (cell: string, axis: string) => void; onShell: () => void;
+  fade?: S3FadeSettings; onFadeRadius: (radius: number, boundary: 'start' | 'end') => void };
 
-export function CellControls({ session, revision, layout, busy, selectedPieces, onClearSelection, onMove, onFocus, onGuide, onShell }: Props) {
-  const [cell, setCell] = useState('Xp');
+export function CellControls({ session, revision, layout, busy, selectedPieces, onClearSelection, onMove, onFocus, onGuide, onShell, fade, onFadeRadius }: Props) {
+  const [cell, setCell] = useState(layout.groups[0].id);
   const [categoryId, setCategory] = useState('face');
   const [axisId, setAxis] = useState('');
   const [matches, setMatches] = useState(layout.groups.map(g => g.id));
@@ -51,7 +53,7 @@ export function CellControls({ session, revision, layout, busy, selectedPieces, 
   return <section className="family-controls cell-controls" aria-label="Cell twist controller" data-matching-cells={matches.join(',')}>
     <p role="status">{matching ? 'Finding cells…' : selectedPieces.length ? `${selectedPieces.length} pieces selected · ${matches.length} matching cells` : 'Choose a cell, an axis, and a relative turn. Click pieces to find their cells.'}</p>
     {selectedPieces.length > 0 && <button onClick={onClearSelection}>Clear piece selection</button>}
-    <div className="cell-groups" role="group" aria-label="Eight cells">{layout.groups.map(g =>
+    <div className="cell-groups" role="group" aria-label={layout.groups.length === 8 ? "Eight cells" : "24 cells"}>{layout.groups.map(g =>
       <button key={g.id} aria-pressed={cell === g.id} disabled={busy || matching || !matches.includes(g.id)} onClick={() => setCell(g.id)}>{g.label}</button>)}</div>
     <div className="cell-categories" role="group" aria-label="Axis kind">{group.categories.map(c =>
       <button key={c.kind} aria-pressed={category.kind === c.kind} disabled={busy} onClick={() => setCategory(c.kind)}>{{ face: 'Face axes', edge: 'Edge axes', vertex: 'Vertex axes' }[c.kind]}</button>)}</div>
@@ -62,6 +64,15 @@ export function CellControls({ session, revision, layout, busy, selectedPieces, 
       {t.angleDegrees > 0 ? '+' : '−'}{Math.abs(t.angleDegrees)}°</button>)}</div>
     <div className="cell-presentation"><button disabled={busy} onClick={() => onFocus(cell)}>Focus {group.label} cell</button>
       <button onClick={onShell}>Toggle outer layers</button></div>
+    {fade && <div className="cell-fade">
+      <label htmlFor="s3-fade-radius">Fade start radius <output htmlFor="s3-fade-radius">{fade.startRadius.toFixed(2)}</output></label>
+      <input id="s3-fade-radius" type="range" min={fade.minRadius} max={fade.maxStartRadius} step="0.01" value={fade.startRadius}
+        onChange={e => onFadeRadius(Number(e.target.value), 'start')} aria-describedby="s3-fade-help" />
+      <label htmlFor="s3-fade-end-radius">Fade end radius <output htmlFor="s3-fade-end-radius">{fade.endRadius.toFixed(2)}</output></label>
+      <input id="s3-fade-end-radius" type="range" min={(fade.minRadius + .01).toFixed(2)} max={fade.maxEndRadius} step="0.01" value={fade.endRadius}
+        onChange={e => onFadeRadius(Number(e.target.value), 'end')} aria-describedby="s3-fade-help" />
+      <p id="s3-fade-help" className="subtle">Focused pieces stay opaque. Pieces beyond the end radius are hidden. Only the focused cell and its face neighbors are shown.</p>
+    </div>}
     <p className="subtle">The gold curve marks the chosen axis. Focus changes the projection; it does not turn the puzzle.</p>
   </section>;
 }

@@ -322,9 +322,9 @@ Call each session and geometric instance sequentially on its owning thread. The 
 
 To create another session for the same definition, use `Session(existing.execution())` in C++, `createSessionFromDefinition(existing)` in raw WASM, or `new KernelSession(module, existingSession)` in TypeScript. This shares immutable compiled tables and starts at the definition's initial state with empty history and revision zero. Mutable state/history remain independent; handles may be disposed in any order. WASM sessions must belong to the same runtime. Discover this additive feature in `sessionFeatures`, which includes `shared-definitions`. Sharing avoids recompiling large catalogs such as Bagua; use `load()` separately when replaying a saved history.
 
-The supplied WASM build starts with a 32 MiB heap and can grow to 384 MiB. Large catalogs such as Melty D require the larger ceiling; the initial allocation stays the same for smaller puzzles. Heap growth can invalidate borrowed typed views, so copy them before another kernel call. Definition hashing reads its input without making a second padded document copy.
+The supplied WASM build starts with a 32 MiB heap and can grow to 512 MiB. The 672-piece 24-cell requires the larger ceiling; the initial allocation stays the same for smaller puzzles. Heap growth can invalidate borrowed typed views, so copy them before another kernel call. Definition hashing reads its input without making a second padded document copy.
 
-Execution source packages and persisted definition inputs are limited to 16 MiB; language source text remains limited to 8 MiB. The CLI emits compact JSON. A large compiled definition can exceed the input bound even when its source package fits: reload the original package or share the already compiled execution context in that case. Reference app and CLI session imports retain their separate 4 MiB limit.
+Execution source packages and persisted definition inputs are limited to 16 MiB; language source text is also limited to 16 MiB. The CLI emits compact JSON. A large compiled definition can exceed the input bound even when its source package fits: reload the original package or share the already compiled execution context in that case. Reference app and CLI session imports retain their separate 4 MiB limit.
 
 The pure plan API accepts a separate source-state document for previews and analysis. Its state digests identify the source; that preview does not grant permission to commit against a newer revision. The session always replans the submitted request against its authoritative state.
 
@@ -361,6 +361,7 @@ The primary API compiles a realization once into an immutable `GeometryDefinitio
 | Compile a realization | `GeometryDefinition(execution, realizationText)` | `createGeometryDefinition(session, realizationText)` |
 | Inspect assets and bindings | `scene_json()`, `positions()`, `normals()`, `indices()` | `sceneJSON()`, same buffer names |
 | Inspect the space model | `space_json()` | `spaceJSON()` |
+| Retain intrinsic prototypes (S³) | `intrinsic_mesh()` | `intrinsicMesh()` |
 | Evaluate a resting state | `definition.frame(stateText)` → `GeometryFrame` | same |
 | Validate and prepare an exact witness | `definition.animate(record)` → `GeometryAnimation` | same |
 | Evaluate motion at explicit progress | `animation.evaluate(progress)` → `GeometryFrame` | same |
@@ -573,7 +574,7 @@ pose, and drawing buffer versions remain 1; discover capabilities before loading
 unit radius, positive curvature, and `homogeneous: false`. Float64 column-major
 4×4 pose matrices are genuine SO(4) matrices, not affine R³ transforms. Authored
 assets contain unit four-coordinate vertices and unit tangent outward normals.
-Domains bind colored prototype meshes to signed-permutation placement frames.
+The default `cellShape: "cube"` binds colored prototype meshes to signed-permutation placement frames.
 `cutDepth` lies in (0,0.5); `pieceInset` lies in [0,1). An inset vertex is
 `normalize((1-pieceInset)*p + pieceInset*c)`, where p is on a cut surface and c
 is the normalized sum of the piece’s active positive coordinate axes. Normals
@@ -584,17 +585,32 @@ Each operation track contains its signed coordinate `cell`, orthonormal
 plane and fixes its orthogonal complement. Exact abstract transports include
 all 27 participants, even the unmarked center and other self-loops.
 
+The additional `s3-octahedral-cells` capability and `cellShape: "octahedron"` select the ordinary 24-cell. Its cut
+normals are the eight signed coordinate vectors and the sixteen vectors
+`(±1,±1,±1,±1)/2`. Supported depths satisfy `1/√3 < cutDepth < 1/√2`;
+the shipped model uses `2/3`. Each domain supplies `cutMembership` (24 booleans,
+coordinate normals first in X/Y/Z/W order, positive before negative, followed
+by half-coordinate sign tuples in lexicographic order with positive first),
+`colorNormals` (ordered visible sector normals), and unit `pieceCenter`, in
+place of `activeCoordinates`. Membership and color counts differ. Frames are
+proper rotations preserving all 24 normals, including half-integral entries.
+Track `cell` is a layout cell ID: the eight coordinate names above or
+`H` followed by four `p`/`m` signs. Every ordinary turn contains 105 pieces.
+The compiler accepts up to 200,000 predicate nodes; the shipped package remains
+inside the 16 MiB execution/source bounds. No jumbling requests are authored.
+
 Use projection `"stereographic"`; `"embedding"` is unsupported for this space.
 Options are a JSON object with optional fields:
 
 - `version: 1` (default).
 - `focusCell`: `Xp`, `Xm`, `Yp`, `Ym`, `Zp`, `Zm`, `Wp`, or `Wm`. The chosen
-  cell is moved to −W by a proper SO(4) view isometry. Default `Wm` is identity.
+  cell is moved to −W by a proper SO(4) view isometry. The 24-cell also accepts
+  its sixteen `Hpppp`–`Hmmmm` layout IDs. Default `Wm` is identity.
 - `viewIsometry`: an explicit 16-element column-major SO(4) matrix, mutually
   exclusive with `focusCell`.
 - `scale`: positive display scale in [0.01,20], default 1.
 - `clipRadius`: radius in unscaled stereographic coordinates in [0.5,32],
-  default 8. The emitted radius is bounded by `scale * clipRadius`.
+  default 8 for the 8-cell and 16 for the 24-cell. The emitted radius is bounded by `scale * clipRadius`.
 - `guide: {group, axis}`: IDs from the realization's cell-axis layout.
 
 After the view isometry, projection is `scale * (x,y,z)/(1-w)`. The kernel
@@ -622,7 +638,7 @@ incorrect JSON field types may raise JSON parse/type errors. Invalid S³ meshes,
 frames, layout, capabilities or transport agreement produce `realization.s3`.
 Existing frame-ownership and exact-witness diagnostics still apply.
 
-`controlLayout: {version: 2, kind: "cell-axes", groups}` contains eight groups
+`controlLayout: {version: 2, kind: "cell-axes", groups}` contains eight cubic or 24 octahedral groups
 with `id`, `label`, four-coordinate `center`, and three `categories`. Each
 category has `kind: "face" | "edge" | "vertex"` and `axes`; each axis has `id`,
 `label`, `direction`, and `turns: [{operation, angleDegrees}]`. These are relative
@@ -639,3 +655,86 @@ Rejected options leave the previous drawing and animation intact. Matrix-only
 `projectWithOptions` handles to render a deformed destination. Dispose the helper
 to release the retained frame. The Canvas example and installed native example
 consume this path without Three.js or the reference application.
+
+The additive `intrinsic-meshes` capability and `intrinsicMeshBufferVersion: 1`
+in `kernelInfoJSON()` expose `GeometryDefinition.intrinsic_mesh()` /
+`intrinsicMesh()`. This returns a `GeometryIntrinsicMesh` snapshot with
+`descriptor_json()` / `descriptorJSON()` and `positions()`, `normals()`,
+`indices()`. It shares immutable storage and survives deletion of its definition,
+session, frames, and other snapshots. Native references and WASM typed views are
+borrowed from that handle; delete WASM handles explicitly, and copy views before
+deleting them or calling allocating WASM code. Treat borrowed buffers as read-only.
+`copyIntrinsicMeshes(definition)`
+returns owned JS arrays. Unsupported realizations throw `geometry.intrinsic_mesh`.
+Existing APIs, pose/drawing buffers, realization schemas and semantic pins are
+unchanged; discover this optional capability before calling the new method.
+
+The intrinsic descriptor contains `version: 1`, `space`, `coordinateSize: 4`,
+`scalar: "float32"`, `normalModel: "unit-sphere-tangent"`, `meshAssets`, and
+`visualParts`. Positions and normals pack four Float32 coordinates per vertex;
+normals are unit outward vectors tangent to S³. Asset fields `positionOffset`,
+`normalOffset`, and `indexOffset` count scalars in their respective packed arrays;
+`vertexCount` counts vertices and `indexCount` counts Uint32 indices. Indices are
+local to the asset. Triangles wind outward after an orientation-preserving
+stereographic projection. Prototypes are shared; intrinsic asset IDs/offsets
+differ from drawing asset IDs/offsets. Intrinsic visual parts retain the drawing's
+order, persistent IDs and material bindings, but reference these prototype IDs.
+Each supplies either the cubic `activeCoordinates` count, or the 24-cell
+`cutHalfspaces: [{normal: [x,y,z,w], minimum}]`. A point lies in the unshrunk
+piece exactly when `dot(normal,p) >= minimum` for all halfspaces; positive
+minimums identify the complete turning-ball membership. This permits pole
+containment and guide selection without inferring cuts from colors. Both supply
+`boundingCap: {center: [x,y,z,w], minDot}`. The unit center is the piece's local
+center; all normalized triangle interiors lie in its positive spherical cap
+`dot(center,p) >= minDot > 0`. Bounds use double precision; allow a numerical
+margin when applying them to Float32 GPU buffers. Positive `cutHalfspaces`
+provide additional convex-cap bounds: the minimum of their W bounds and the
+piece's bounding-cap bound safely rejects projection-pole crossings even during
+half-integral 24-cell rotations. Negative-minimum halfspaces are not convex
+spherical caps and must not be used for this normalized-triangle bound.
+
+A custom renderer uploads these prototypes once and applies
+`q = viewIsometry * partIsometry * intrinsicPosition`. Its projected position is
+`scale*q.xyz/(1-q.w)`. For `n = viewIsometry * partIsometry * intrinsicNormal`,
+the projected normal is `normalize((1-q.w)*n.xyz + q.xyz*n.w)`. The view and pose
+are column-major SO(4) matrices. Do not apply an affine translation or mesh
+inset again. Renderers must avoid dividing across the pole: if the cap center
+has transformed W-coordinate `d` and `c=minDot`, its maximum W is 1 for `d>=c`,
+otherwise `d*c + sqrt((1-d*d)*(1-c*c))`. A cap below
+`(clipRadius²-1)/(clipRadius²+1)` is safe for GPU projection. Otherwise use the
+portable clipped drawing. A cached clipped drawing remains valid up to an R³
+rotation when the combined SO(4) matrix's last row is unchanged; if it changes,
+refresh the drawing. This preserves clipping topology and projected normals.
+
+The helper's owned `isometries: Float64Array` always follows its retained frame.
+`prepare(record, false)` and `evaluatePose(progress)` update only this frame and
+its poses. The previous drawing buffers and `scene` remain available, with
+`drawingIsCurrent: false`; `refreshProjection()` explicitly brings them current
+without cancelling the animation. `drawingRevision` increments after successful
+projection, allowing clients to avoid repeated copies. Default `prepare`,
+`evaluate`, `setState`, and `setProjection` still project immediately. The app
+uses shaders for safe caps, cached clipped meshes at the pole, and fresh CPU
+projection if a changed cap needs clipping. CPU raycasting refreshes the drawing
+on demand; selection stays disabled during animation. Three.js materials,
+shaders, camera state and scheduling remain outside the kernel.
+
+The app shows pieces belonging to the focused cell or any face neighbor, using
+their complete positive cut memberships. At settled poses, more distant pieces
+are hidden; during turns, the membership weight interpolates between alignment
+rings. Vertex opacity is `membership * (1-smoothstep(startRadius,endRadius,r))`,
+where `r = sqrt((1+w)/(1-w))` is projected radius in units of projection scale.
+The slider adjusts the start radius, constrained to keep the focused cutting
+ball opaque. A second slider sets the end radius, initially enclosing all
+neighboring cutting balls. Moving it below the start lowers the start too;
+there is always at least 0.01 unit between the radii. Fragments beyond the end
+are discarded, including on triangles crossing that radius. The pole-containing
+piece remains hidden, using the same containment rule as `outerPieceIds`.
+Cached CPU meshes recover radius directly from their
+positions, so changing the fade needs no new drawing or buffer copies. The
+two radii are saved in the app's camera presentation as `fadeStartRadius` and
+`fadeEndRadius`; neither is a kernel projection option. These optional fields
+remain compatible with older saves. The app's S³ camera can zoom inward to 0.05 units
+with a 0.005 near plane. Fully transparent surfaces are hidden,
+fully opaque ones write depth, and fading surfaces use alpha blending. Picking
+passes through fading surfaces to opaque pieces. This is renderer presentation
+policy, independent of the kernel's geometric buffers and puzzle rules.

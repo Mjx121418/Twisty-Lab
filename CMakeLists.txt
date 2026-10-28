@@ -90,7 +90,7 @@ if(EMSCRIPTEN)
     --no-entry
     -sMODULARIZE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,node
     -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=33554432
-    -sMAXIMUM_MEMORY=402653184 -sSTACK_SIZE=1048576
+    -sMAXIMUM_MEMORY=536870912 -sSTACK_SIZE=1048576
     --emit-tsd "${CMAKE_SOURCE_DIR}/kernel/generated/twisty.d.mts")
 else()
   install(TARGETS puzzle_catalog puzzle_execution puzzle_session puzzle_controller puzzle_geometry puzzle_symmetry puzzle_core puzzle_language puzzle_kernel
@@ -140,6 +140,10 @@ else()
     target_link_libraries(geometry_api_tests PRIVATE puzzle_kernel)
     target_compile_definitions(geometry_api_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
     add_test(NAME geometry_api COMMAND geometry_api_tests)
+    add_executable(cell24_geometry_tests tests/cell24_geometry_tests.cpp)
+    target_link_libraries(cell24_geometry_tests PRIVATE puzzle_kernel)
+    target_compile_definitions(cell24_geometry_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+    add_test(NAME cell24_geometry COMMAND cell24_geometry_tests)
     add_executable(s3_geometry_tests tests/s3_geometry_tests.cpp)
     target_link_libraries(s3_geometry_tests PRIVATE puzzle_kernel)
     target_compile_definitions(s3_geometry_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
@@ -153,6 +157,7 @@ else()
     target_compile_definitions(flat_surface_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
     add_test(NAME flat_surfaces COMMAND flat_surface_tests)
     find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    add_test(NAME cell24_authoring COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/cell24_model_test.py)
     add_test(NAME tesseract_authoring COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/tesseract_model_test.py)
     add_test(NAME reference_transport_parity COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/reference_parity.py
       $<TARGET_FILE:reference_parity> ${CMAKE_SOURCE_DIR}/tests/fixtures/reference-baseline.jsonl.gz)

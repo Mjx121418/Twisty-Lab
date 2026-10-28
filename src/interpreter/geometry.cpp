@@ -87,6 +87,16 @@ const std::vector<float> &GeometryDefinition::normals() const {
 const std::vector<std::uint32_t> &GeometryDefinition::indices() const {
   return program_->indices;
 }
+GeometryIntrinsicMesh GeometryDefinition::intrinsic_mesh() const {
+  if (!program_->intrinsic)
+    throw DiagnosticError("geometry.intrinsic_mesh", "/definition",
+                          "This realization does not expose intrinsic meshes.");
+  return GeometryIntrinsicMesh(program_->intrinsic);
+}
+std::string GeometryIntrinsicMesh::descriptor_json() const { return data_->descriptor.dump(); }
+const std::vector<float> &GeometryIntrinsicMesh::positions() const { return data_->positions; }
+const std::vector<float> &GeometryIntrinsicMesh::normals() const { return data_->normals; }
+const std::vector<std::uint32_t> &GeometryIntrinsicMesh::indices() const { return data_->indices; }
 GeometryFrame GeometryDefinition::frame(const std::string &state_json) const {
   const auto state = program_->execution->decode(Json::parse(state_json));
   GeometryFrame result;

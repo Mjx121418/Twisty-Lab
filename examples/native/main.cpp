@@ -57,6 +57,14 @@ int main(int argc, char **argv) {
                                {"transforms", drawing.transforms()}};
     if (scene.value("dynamicMeshes", false))
       output["projectedSamples"] = projectedSamples;
+    if (scene.at("space").at("id") == "S3") {
+      // An independent GPU renderer can retain this snapshot, upload its 4D
+      // prototypes once, and update only frame.isometries() during animation.
+      const auto intrinsic = geometry.intrinsic_mesh();
+      output["intrinsicMesh"] = {{"descriptor", twisty::Json::parse(intrinsic.descriptor_json())},
+                                  {"positions", intrinsic.positions()}, {"normals", intrinsic.normals()},
+                                  {"indices", intrinsic.indices()}};
+    }
     if (argc == 5)
       output["familySelection"] = selection;
     std::cout << output.dump() << '\n';

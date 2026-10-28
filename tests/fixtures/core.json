@@ -426,6 +426,23 @@
       "operation": "D",
       "expectedStatus": "Committed",
       "definitionDigest": "db3a8d5d39b6f2fc4af59ff6757e7f283f7f05cc2b10f6cf98cb70cf25f85328"
+    },
+    {
+      "name": "24-cell ordinary face-axis turn includes its unmarked center",
+      "source": "packages/cell24/package.json",
+      "prefix": "",
+      "operation": "Xp_fXYZ",
+      "expectedStatus": "Committed",
+      "unchangedParticipant": "center-Xp/0",
+      "definitionDigest": "9e6c16f4dcbac7aea8fbbd9b54756490ab972a4fae1c27545860ee9b25000655"
+    },
+    {
+      "name": "24-cell ordinary vertex turn after mixed cells",
+      "source": "packages/cell24/package.json",
+      "prefix": "Xp_fXYZ Hpppp_eXY Yp_vX",
+      "operation": "Hpmmp_vZ",
+      "expectedStatus": "Committed",
+      "definitionDigest": "9e6c16f4dcbac7aea8fbbd9b54756490ab972a4fae1c27545860ee9b25000655"
     }
   ]
 }

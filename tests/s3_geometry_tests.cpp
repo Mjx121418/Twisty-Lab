@@ -59,6 +59,28 @@ int main() {
     session.lightweight_results(true);
     const auto r = Json::parse(read("packages/tesseract3/tesseract3-s3.json"));
     GeometryDefinition g(session.execution(), r.dump());
+    const auto intrinsic = g.intrinsic_mesh();
+    const auto intrinsic_descriptor = Json::parse(intrinsic.descriptor_json());
+    check(intrinsic_descriptor.at("version") == 1 && intrinsic_descriptor.at("coordinateSize") == 4,
+          "Wrong intrinsic mesh buffer version/layout");
+    check(intrinsic_descriptor.at("visualParts").size() == 216 &&
+              intrinsic_descriptor.at("meshAssets").size() == 10,
+          "Intrinsic prototypes are not shared");
+    check(intrinsic.positions().size() == 4840 * 4 &&
+              intrinsic.positions().size() == intrinsic.normals().size(), "Wrong intrinsic buffer size");
+    for (const auto &part : intrinsic_descriptor.at("visualParts")) {
+      const auto center = part.at("boundingCap").at("center").get<std::vector<double>>();
+      const auto cosine = part.at("boundingCap").at("minDot").get<double>();
+      check(cosine > 0, "Nonconvex cap");
+      for (const auto &asset : intrinsic_descriptor.at("meshAssets")) if (asset.at("id") == part.at("meshAssetId")) {
+        const auto offset = asset.at("positionOffset").get<std::size_t>();
+        for (std::size_t v = 0; v < asset.at("vertexCount"); ++v) {
+          double value = 0;
+          for (int j = 0; j < 4; ++j) value += center[j] * intrinsic.positions()[offset + 4 * v + j];
+          check(value >= cosine - 1e-7, "Intrinsic cap misses a vertex");
+        }
+      }
+    }
     const auto initial = session.state_json();
     auto frame = g.frame(initial);
     orthogonal(frame);

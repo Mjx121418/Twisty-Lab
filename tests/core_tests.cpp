@@ -424,6 +424,7 @@ void bounded_json() {
         "Quoted brackets or escapes changed JSON depth tracking");
   const auto deep = std::string(300, '[') + "0" + std::string(300, ']');
   rejects([&] { compile_text(deep); }, "language.limit");
+  rejects([&] { compile_text(std::string(16 * 1024 * 1024 + 1, ' ')); }, "language.limit");
   rejects([&] { compile_text(R"({"id":"unterminated)"); }, "language.invalid");
   source = toy();
   Json predicate = {{"all", Json::array()}};

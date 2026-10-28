@@ -13,6 +13,13 @@ struct S3Geometry {
   };
   std::vector<Asset> assets;
   std::vector<Index> part_assets, active;
+  struct Domain {
+    std::vector<std::pair<GeometryPoint4, double>> bounds;
+    std::vector<GeometryPoint4> colors, positive;
+    GeometryPoint4 center;
+  };
+  std::vector<Domain> domains;
+  std::map<std::string, GeometryPoint4> centers;
   double depth;
 };
 namespace {
@@ -96,12 +103,13 @@ M matrix(const Json &j) {
   return m;
 }
 P cell(int c) {
-  ensure(c && std::abs(c) <= 4, "/cell", "Expected one of the eight signed coordinate cells.");
+  ensure(c != 0 && c >= -4 && c <= 4, "/cell", "Expected one of the eight signed coordinate cells.");
   P p{};
   p[std::abs(c) - 1] = c > 0 ? 1 : -1;
   return p;
 }
 std::string cell_name(int c) {
+  (void)cell(c);
   return std::string(1, "XYZW"[std::abs(c) - 1]) + (c > 0 ? "p" : "m");
 }
 int cell_number(const std::string &name) {
@@ -148,7 +156,8 @@ double winding(const GeometryPoint &a, const GeometryPoint &b, const GeometryPoi
 }
 // Canonical endpoint frames may differ by an unmarked rotation of the inactive
 // coordinates. Certify the colored triangulation as well as its occupied cell.
-void verify_stabilizer(const S3Geometry::Asset &asset, int active, const std::string &id) {
+void verify_stabilizer(const S3Geometry::Asset &asset, int active, const std::string &id,
+                       const std::set<M> *symmetries = nullptr) {
   using V = std::array<long long, 8>;
   using T = std::array<V, 3>;
   auto triangles = [&](const M &m) {
@@ -171,6 +180,12 @@ void verify_stabilizer(const S3Geometry::Asset &asset, int active, const std::st
     return result;
   };
   const auto original = triangles(identity());
+  if (symmetries) {
+    for (const auto &m : *symmetries)
+      ensure(triangles(m) == original, id,
+             "Colored mesh is not invariant under its unmarked endpoint stabilizer.");
+    return;
+  }
   std::array<int, 4> permutation{0, 1, 2, 3};
   do {
     bool fixes = true;
@@ -195,8 +210,13 @@ std::shared_ptr<const GeometryProgram> compile_s3(std::shared_ptr<const Executio
   const auto definition = execution->definition();
   ensure(r.at("schemaVersion") == 1 && r.at("compatibleDefinitionDigest") == definition->digest,
          "/compatibleDefinitionDigest", "S3 realization does not match this definition.");
-  const std::set<std::string> capabilities{"triangle-meshes", "so4-isometries", "stereographic-projection",
-                                           "dynamic-drawing-meshes"};
+  const bool octahedral = r.value("cellShape", std::string{"cube"}) == "octahedron";
+  ensure(!r.contains("cellShape") || r.at("cellShape") == "cube" || octahedral, "/cellShape",
+         "Unknown spherical cell shape.");
+  std::set<std::string> capabilities{"triangle-meshes", "so4-isometries", "stereographic-projection",
+                                     "dynamic-drawing-meshes"};
+  if (octahedral)
+    capabilities.insert("s3-octahedral-cells");
   ensure(r.at("requiredCapabilities").get<std::set<std::string>>() == capabilities, "/requiredCapabilities",
          "Declare all S3 drawing capabilities.");
   auto program = std::make_shared<GeometryProgram>();
@@ -204,8 +224,41 @@ std::shared_ptr<const GeometryProgram> compile_s3(std::shared_ptr<const Executio
   program->s3 = s3;
   program->execution = std::move(execution);
   s3->depth = r.at("cutDepth").get<double>();
-  ensure(std::isfinite(s3->depth) && s3->depth > 0 && s3->depth < .5, "/cutDepth",
-         "Cut depth must be between zero and one half.");
+  ensure(std::isfinite(s3->depth) &&
+             (octahedral ? s3->depth > 1 / std::sqrt(3.) && s3->depth < 1 / std::sqrt(2.)
+                         : s3->depth > 0 && s3->depth < .5),
+         "/cutDepth", "Cut depth is outside the supported cell topology interval.");
+  for (int c = 1; c <= 4; ++c)
+    for (int sign : {1, -1})
+      s3->centers[cell_name(c * sign)] = cell(c * sign);
+  if (octahedral)
+    for (int bits = 0; bits < 16; ++bits) {
+      P n{};
+      std::string name = "H";
+      for (int i = 0; i < 4; ++i) {
+        n[i] = bits & (1 << (3 - i)) ? -.5 : .5;
+        name += n[i] > 0 ? 'p' : 'm';
+      }
+      s3->centers[name] = n;
+    }
+  auto root = [&](const std::string &name) {
+    ensure(s3->centers.contains(name), "/cell", "Unknown cell label: " + name);
+    return s3->centers.at(name);
+  };
+  auto preserves_cuts = [&](const M &m) {
+    for (const auto &[name, n] : s3->centers) {
+      (void)name;
+      const auto target = transform(m.data(), n);
+      bool found = false;
+      for (const auto &[id, c] : s3->centers) {
+        (void)id;
+        found |= dot(target, c) > 1 - 1e-8;
+      }
+      if (!found)
+        return false;
+    }
+    return true;
+  };
   const double inset = r.at("pieceInset").get<double>();
   ensure(std::isfinite(inset) && inset >= 0 && inset < 1, "/pieceInset", "Invalid intrinsic piece inset.");
   ensure(definition->pieces.size() <= 4096 && definition->domains.size() <= 64 &&
@@ -237,7 +290,7 @@ std::shared_ptr<const GeometryProgram> compile_s3(std::shared_ptr<const Executio
                     {"ambientSpace", "S3"},
                     {"dynamicMeshes", true},
                     {"diagram", false},
-                    {"fidelity", "spherical-eight-cell"},
+                    {"fidelity", octahedral ? "spherical-24-cell" : "spherical-eight-cell"},
                     {"surfaceTransportVerified", true},
                     {"controlLayout", r.at("controlLayout")},
                     {"meshAssets", Json::array()},
@@ -279,14 +332,14 @@ std::shared_ptr<const GeometryProgram> compile_s3(std::shared_ptr<const Executio
     asset_ids.emplace(id, static_cast<Index>(s3->assets.size()));
     s3->assets.push_back(std::move(a));
   }
-  std::vector<int> cells;
+  std::vector<P> cells;
   std::vector<GeometryRotation> paths;
   ensure(r.at("operationTracks").size() == definition->operations.size(), "/operationTracks",
          "Every operation needs a track.");
   for (const auto &op : definition->operations) {
     const auto &j = r.at("operationTracks").at(op.id);
-    const int c = j.at("cell").get<int>();
-    const auto n = cell(c), u = point(j.at("planeU")), v = point(j.at("planeV"));
+    const auto name = octahedral ? j.at("cell").get<std::string>() : cell_name(j.at("cell").get<int>());
+    const auto n = root(name), u = point(j.at("planeU")), v = point(j.at("planeV"));
     const double angle = j.at("angle").get<double>();
     ensure(std::isfinite(angle) && std::abs(angle) > 1e-8 && std::abs(angle) <= std::numbers::pi + 1e-8,
            op.id, "Expected a nonzero directed cell turn of at most pi.");
@@ -294,28 +347,32 @@ std::shared_ptr<const GeometryProgram> compile_s3(std::shared_ptr<const Executio
                    std::abs(dot(n, v)) <
                1e-8,
            op.id, "Rotation plane must be orthonormal and tangent to the selected cell.");
-    ensure(op.family == cell_name(c), op.id, "Operation family must identify its cell.");
+    ensure(op.family == name, op.id, "Operation family must identify its cell.");
     GeometryRotation path{{}, {}, angle, false, std::array<P, 2>{u, v}};
     const auto endpoint = geometry_rotation(path, 1);
-    for (double x : endpoint)
-      ensure(std::abs(x - std::round(x)) < 1e-8, op.id,
-             "Cell turns must preserve the signed-coordinate cuts.");
-    cells.push_back(c);
+    ensure(preserves_cuts(endpoint), op.id, "Cell turn must preserve every cutting ball.");
+    cells.push_back(n);
     paths.push_back(path);
   }
   const auto &layout = r.at("controlLayout");
-  ensure(layout.at("version") == 2 && layout.at("kind") == "cell-axes" && layout.at("groups").size() == 8,
-         "/controlLayout", "Expected eight cell groups.");
+  ensure(layout.at("version") == 2 && layout.at("kind") == "cell-axes" &&
+             layout.at("groups").size() == (octahedral ? 24 : 8),
+         "/controlLayout", "Expected one control group per cell.");
   std::set<std::string> shown, groups;
   for (const auto &group : layout.at("groups")) {
     const auto id = group.at("id").get<std::string>();
-    const auto center = cell(cell_number(id)), actual = point(group.at("center"));
-    ensure(groups.insert(id).second && dot(center, actual) > 1 - 1e-9, id, "Invalid or repeated cell group.");
+    const auto center = root(id), actual = point(group.at("center"));
+    ensure(groups.insert(id).second && std::abs(dot(actual, actual) - 1) < 1e-8 &&
+               dot(center, actual) > 1 - 1e-9,
+           id, "Invalid or repeated cell group.");
     ensure(group.at("categories").size() == 3, id, "Expected three twist categories.");
     std::set<std::string> kinds, axes;
     for (const auto &category : group.at("categories")) {
       const auto kind = category.at("kind").get<std::string>();
-      const int count = kind == "face" ? 3 : kind == "edge" ? 6 : kind == "vertex" ? 4 : 0;
+      const int count = kind == "face"     ? (octahedral ? 4 : 3)
+                        : kind == "edge"   ? 6
+                        : kind == "vertex" ? (octahedral ? 3 : 4)
+                                           : 0;
       ensure(count && kinds.insert(kind).second &&
                  category.at("axes").size() == static_cast<std::size_t>(count),
              id, "Invalid twist category.");
@@ -324,16 +381,28 @@ std::shared_ptr<const GeometryProgram> compile_s3(std::shared_ptr<const Executio
         ensure(axes.insert(axis.at("id").get<std::string>()).second &&
                    std::abs(dot(direction, direction) - 1) + std::abs(dot(center, direction)) < 1e-8,
                id, "Invalid tangent axis.");
-        const int components = kind == "face" ? 1 : kind == "edge" ? 2 : 3;
+        const auto cube_kind = octahedral ? (kind == "face"     ? "vertex"
+                                             : kind == "vertex" ? "face"
+                                                                : "edge")
+                                          : kind;
+        const int components = cube_kind == "face" ? 1 : cube_kind == "edge" ? 2 : 3;
+        P local = direction;
+        if (octahedral) {
+          // Inverse quaternion-left frame identifies the octahedron's axes.
+          const double w = center[0], x = center[1], y = center[2], z = center[3];
+          const std::array<P, 4> basis{center, P{-x, w, z, -y}, P{-y, -z, w, x}, P{-z, y, -x, w}};
+          for (int j = 0; j < 4; ++j)
+            local[j] = dot(direction, basis[j]);
+        }
         int nonzero = 0;
-        for (double x : direction)
+        for (double x : local)
           if (std::abs(x) > 1e-8) {
             ++nonzero;
             ensure(std::abs(std::abs(x) - 1 / std::sqrt(components)) < 1e-8, id,
                    "Axis does not match its category.");
           }
         ensure(nonzero == components, id, "Axis does not match its category.");
-        const int turns = kind == "face" ? 3 : kind == "edge" ? 1 : 2;
+        const int turns = cube_kind == "face" ? 3 : cube_kind == "edge" ? 1 : 2;
         ensure(axis.at("turns").size() == static_cast<std::size_t>(turns), id, "Invalid angle choices.");
         std::set<int> angles;
         for (const auto &turn : axis.at("turns")) {
@@ -353,9 +422,9 @@ std::shared_ptr<const GeometryProgram> compile_s3(std::shared_ptr<const Executio
                          1e-8,
                  name, "Controller axis/angle does not match the motion.");
         }
-        ensure(angles == (kind == "face"   ? std::set<int>{-90, 90, 180}
-                          : kind == "edge" ? std::set<int>{180}
-                                           : std::set<int>{-120, 120}),
+        ensure(angles == (cube_kind == "face"   ? std::set<int>{-90, 90, 180}
+                          : cube_kind == "edge" ? std::set<int>{180}
+                                                : std::set<int>{-120, 120}),
                id, "Invalid category angles.");
       }
     }
@@ -369,40 +438,117 @@ std::shared_ptr<const GeometryProgram> compile_s3(std::shared_ptr<const Executio
   for (Index d = 0; d < definition->domains.size(); ++d) {
     const auto &domain = definition->domains[d];
     const auto &data = r.at("domains").at(domain.id);
-    const int k = data.at("activeCoordinates").get<int>();
-    ensure(k >= 1 && k <= 4, domain.id, "Invalid active coordinates.");
+    S3Geometry::Domain geometry;
+    int k = 0;
+    if (octahedral) {
+      const auto &membership = data.at("cutMembership");
+      ensure(membership.is_array() && membership.size() == 24, domain.id, "Expected 24 cut memberships.");
+      std::vector<P> normals;
+      for (int c = 1; c <= 4; ++c)
+        for (int sign : {1, -1})
+          normals.push_back(cell(c * sign));
+      for (int bits = 0; bits < 16; ++bits) {
+        P n{};
+        for (int i = 0; i < 4; ++i)
+          n[i] = bits & (1 << (3 - i)) ? -.5 : .5;
+        normals.push_back(n);
+      }
+      for (int i = 0; i < 24; ++i) {
+        ensure(membership[i].is_boolean(), domain.id, "Expected boolean cut membership.");
+        const bool positive = membership[i].get<bool>();
+        if (positive)
+          geometry.positive.push_back(normals[i]);
+        P n = normals[i];
+        if (!positive)
+          for (auto &x : n)
+            x = -x;
+        geometry.bounds.emplace_back(n, positive ? s3->depth : -s3->depth);
+      }
+      for (const auto &color : data.at("colorNormals")) {
+        const auto n = point(color);
+        ensure(std::abs(dot(n, n) - 1) < 1e-8, domain.id, "Expected a unit color normal.");
+        ensure(std::any_of(geometry.positive.begin(), geometry.positive.end(),
+                           [&](const P &c) { return dot(n, c) > 1 - 1e-8; }),
+               domain.id, "Color must be an active cut normal.");
+        geometry.colors.push_back(n);
+      }
+      k = static_cast<int>(geometry.colors.size());
+      ensure(k >= 1 && k <= 6 && geometry.positive.size() <= 6, domain.id, "Invalid 24-cell piece.");
+      geometry.center = point(data.at("pieceCenter"));
+      ensure(std::abs(dot(geometry.center, geometry.center) - 1) < 1e-8, domain.id,
+             "Expected unit piece center.");
+    } else {
+      k = data.at("activeCoordinates").get<int>();
+      ensure(k >= 1 && k <= 4, domain.id, "Invalid active coordinates.");
+      for (int j = 0; j < 4; ++j) {
+        if (j < k) {
+          geometry.positive.push_back(cell(j + 1));
+          geometry.colors.push_back(cell(j + 1));
+        }
+        for (int sign : {1, -1}) {
+          if (j < k && sign < 0)
+            continue;
+          geometry.bounds.emplace_back(cell(sign * (j + 1)), j < k ? s3->depth : -s3->depth);
+        }
+      }
+      P c{};
+      for (int j = 0; j < k; ++j)
+        c[j] = 1 / std::sqrt(k);
+      geometry.center = c;
+    }
+    for (const auto &[n, h] : geometry.bounds)
+      ensure(dot(n, geometry.center) > h + 1e-8, domain.id,
+             "Piece center must lie strictly inside all cuts.");
+    s3->domains.push_back(geometry);
     active.push_back(k);
     ensure(data.at("placementFrames").size() == domain.placements.size() && domain.placements.size() <= 1024,
            domain.id, "Frame count differs from placements.");
     GeometryPoseTable table;
     for (const auto &q : domain.placements) {
       const auto m = matrix(data.at("placementFrames").at(q.key));
-      for (double x : m)
-        ensure(std::abs(x - std::round(x)) < 1e-8, domain.id,
-               "Resting frames must be signed coordinate permutations.");
+      ensure(preserves_cuts(m), domain.id, "Resting frame must preserve the cutting balls.");
       ensure(q.ports.size() == static_cast<std::size_t>(k), domain.id,
              "Port count differs from piece colors.");
       for (int j = 0; j < k; ++j)
-        ensure(dot(column(m, j), cell(cell_number(q.ports.at(std::to_string(j)).second))) > 1 - 1e-9,
+        ensure(dot(transform(m.data(), geometry.colors[j]), root(q.ports.at(std::to_string(j)).second)) >
+                   1 - 1e-9,
                domain.id, "S3 frame differs from its colored attachment.");
       table.frames.push_back(m);
     }
+    std::set<M> stabilizers;
     for (Index i = 0; i < definition->operations.size(); ++i) {
       const auto &op = definition->operations[i];
-      const auto n = cell(cells[i]);
+      const auto n = cells[i];
       const auto end = geometry_rotation(paths[i], 1);
       for (Index q = 0; q < domain.placements.size(); ++q) {
         bool participates = false;
-        for (int j = 0; j < k; ++j)
-          participates |= dot(column(table.frames[q], j), n) > 1 - 1e-8;
+        for (const auto &cut : geometry.positive)
+          participates |= dot(transform(table.frames[q].data(), cut), n) > 1 - 1e-8;
         ensure(op.roles[d][q] == (participates ? 1 : 0), op.id,
                "Abstract participation must equal the complete cutting ball.");
         if (!participates)
           continue;
         const auto &target = table.frames.at(op.maps[d][q]);
         for (int j = 0; j < k; ++j)
-          ensure(dot(transform(end.data(), column(table.frames[q], j)), column(target, j)) > 1 - 1e-8, op.id,
-                 "S3 endpoint differs from the colored transport.");
+          ensure(dot(transform(end.data(), transform(table.frames[q].data(), geometry.colors[j])),
+                     transform(target.data(), geometry.colors[j])) > 1 - 1e-8,
+                 op.id, "S3 endpoint differs from the colored transport.");
+        for (const auto &cut : geometry.positive) {
+          const auto moved = transform(end.data(), transform(table.frames[q].data(), cut));
+          ensure(std::any_of(
+                     geometry.positive.begin(), geometry.positive.end(),
+                     [&](const P &other) { return dot(moved, transform(target.data(), other)) > 1 - 1e-8; }),
+                 op.id, "S3 endpoint differs from the complete cut membership.");
+        }
+        if (octahedral) {
+          M residual{};
+          for (int j = 0; j < 4; ++j) {
+            const auto moved = transform(end.data(), column(table.frames[q], j));
+            for (int a = 0; a < 4; ++a)
+              residual[4 * j + a] = std::round(2 * dot(column(target, a), moved)) / 2;
+          }
+          stabilizers.insert(residual);
+        }
       }
       GeometryTrack track;
       track.uniform = {paths[i]};
@@ -415,33 +561,30 @@ std::shared_ptr<const GeometryProgram> compile_s3(std::shared_ptr<const Executio
       const auto port = std::to_string(j), asset = data.at("ports").at(port).get<std::string>();
       ensure(asset_ids.contains(asset), asset, "Unknown S3 mesh.");
       bindings[port] = asset_ids.at(asset);
-      if (verified_assets.emplace(bindings[port], k).second)
+      if (!octahedral && verified_assets.emplace(bindings[port], k).second)
         verify_stabilizer(s3->assets[bindings[port]], k, asset);
       const auto &mesh = s3->assets[bindings[port]];
-      P center{};
-      for (int a = 0; a < k; ++a)
-        center[a] = 1 / std::sqrt(k);
+      if (octahedral)
+        verify_stabilizer(mesh, k, asset, &stabilizers);
+      const auto center = geometry.center;
       for (std::size_t vertex = 0; vertex < mesh.vertices.size(); ++vertex) {
         const auto &p = mesh.vertices[vertex];
-        for (int a = 0; a < 4; ++a)
-          ensure(a < k ? p[a] >= s3->depth - 1e-8 : std::abs(p[a]) <= s3->depth + 1e-8, asset,
-                 "Mesh crosses a piece cut.");
-        for (int a = 0; a < k; ++a)
-          ensure(p[j] >= p[a] - 1e-8, asset, "Mesh crosses its color sector.");
+        for (const auto &[n, h] : geometry.bounds)
+          ensure(dot(p, n) >= h - 1e-8, asset, "Mesh crosses a piece cut.");
+        for (const auto &[name, n] : s3->centers)
+          ensure(dot(p, geometry.colors[j]) >= dot(p, n) - 1e-8, asset, "Mesh crosses its color sector.");
         const double pc = dot(p, center);
         const double t = inset * pc + std::sqrt((1 - inset) * (1 - inset) - inset * inset * (1 - pc * pc));
         P original{};
         for (int a = 0; a < 4; ++a)
           original[a] = (t * p[a] - inset * center[a]) / (1 - inset);
         bool outward = false;
-        for (int a = 0; a < 4; ++a) {
-          const double h = a < k ? s3->depth : -s3->depth;
-          const double direction = a < k ? 1 : original[a] > 0 ? -1 : 1;
-          if (std::abs(direction * original[a] - h) > 1e-8)
+        for (const auto &[normal, h] : geometry.bounds) {
+          if (std::abs(dot(normal, original) - h) > 1e-8)
             continue;
           P n{};
           for (int b = 0; b < 4; ++b)
-            n[b] = h * original[b] - (a == b ? direction : 0);
+            n[b] = h * original[b] - normal[b];
           const double adjustment = dot(n, p) / dot(original, p);
           for (int b = 0; b < 4; ++b)
             n[b] -= adjustment * original[b];
@@ -469,6 +612,64 @@ std::shared_ptr<const GeometryProgram> compile_s3(std::shared_ptr<const Executio
                                                {"role", "port"}});
     }
   }
+  auto intrinsic = std::make_shared<IntrinsicMeshData>();
+  auto &descriptor = intrinsic->descriptor;
+  descriptor = {{"version", 1},
+                {"space", program->space},
+                {"coordinateSize", 4},
+                {"scalar", "float32"},
+                {"normalModel", "unit-sphere-tangent"},
+                {"meshAssets", Json::array()},
+                {"visualParts", Json::array()}};
+  std::vector<std::string> asset_names(s3->assets.size());
+  for (const auto &[name, index] : asset_ids)
+    asset_names[index] = name;
+  for (Index i = 0; i < s3->assets.size(); ++i) {
+    const auto &asset = s3->assets[i];
+    const auto offset = intrinsic->positions.size(), start = intrinsic->indices.size();
+    for (std::size_t j = 0; j < asset.vertices.size(); ++j) {
+      for (double x : asset.vertices[j])
+        intrinsic->positions.push_back(static_cast<float>(x));
+      for (double x : asset.normals[j])
+        intrinsic->normals.push_back(static_cast<float>(x));
+    }
+    for (auto triangle : asset.triangles) {
+      const auto &a = asset.vertices[triangle[0]], &b = asset.vertices[triangle[1]],
+                 &c = asset.vertices[triangle[2]];
+      if (winding(project(a, 1), project(b, 1), project(c, 1),
+                  projected_normal(a, asset.normals[triangle[0]])) < 0)
+        std::swap(triangle[1], triangle[2]);
+      intrinsic->indices.insert(intrinsic->indices.end(), triangle.begin(), triangle.end());
+    }
+    descriptor["meshAssets"].push_back({{"id", asset_names[i]},
+                                        {"positionOffset", offset},
+                                        {"normalOffset", offset},
+                                        {"vertexCount", asset.vertices.size()},
+                                        {"indexOffset", start},
+                                        {"indexCount", intrinsic->indices.size() - start}});
+  }
+  for (Index i = 0; i < program->parts.size(); ++i) {
+    const auto k = s3->active[i];
+    const auto &geometry = s3->domains[program->parts[i].table];
+    const auto center = geometry.center;
+    double cosine = 1;
+    for (const auto &p : s3->assets[s3->part_assets[i]].vertices)
+      cosine = std::min(cosine, dot(center, p));
+    // A positive cap contains the normalized convex hull of every triangle.
+    ensure(cosine > 0, "/assets", "Intrinsic mesh must lie in an open hemisphere.");
+    auto part = program->scene["visualParts"][i];
+    part["meshAssetId"] = asset_names[s3->part_assets[i]];
+    if (!octahedral)
+      part["activeCoordinates"] = k;
+    else {
+      part["cutHalfspaces"] = Json::array();
+      for (const auto &[n, h] : geometry.bounds)
+        part["cutHalfspaces"].push_back({{"normal", n}, {"minimum", h}});
+    }
+    part["boundingCap"] = {{"center", center}, {"minDot", cosine}};
+    descriptor["visualParts"].push_back(std::move(part));
+  }
+  program->intrinsic = std::move(intrinsic);
   std::vector<double> poses;
   for (const auto &part : program->parts) {
     const auto &m = program->tables[part.table].frames[definition->initial.placement_of[part.piece]];
@@ -496,12 +697,27 @@ std::shared_ptr<const ProjectedMesh> project_s3(const GeometryProgram &program,
   try {
     if (options.contains("viewIsometry"))
       view = matrix(options.at("viewIsometry"));
-    else
-      view = focus(cell_number(options.value("focusCell", std::string{"Wm"})));
+    else {
+      const auto name = options.value("focusCell", std::string{"Wm"});
+      projection_ok(program.s3->centers.contains(name), "Unknown focus cell.");
+      const auto center = program.s3->centers.at(name);
+      if (name.size() == 2)
+        view = focus(cell_number(name));
+      else {
+        const P target{0, 0, 0, -1};
+        const double cosine = dot(center, target);
+        P v{};
+        for (int i = 0; i < 4; ++i)
+          v[i] = target[i] - cosine * center[i];
+        GeometryRotation path{{}, {}, std::acos(cosine), false, std::array<P, 2>{center, unit(v)}};
+        view = geometry_rotation(path, 1);
+      }
+    }
   } catch (const std::exception &) {
     throw DiagnosticError("geometry.projection", "/viewIsometry", "Invalid SO(4) view or focus cell.");
   }
-  const double scale = options.value("scale", 1.), radius = options.value("clipRadius", 8.);
+  const double scale = options.value("scale", 1.),
+               radius = options.value("clipRadius", program.s3->centers.size() == 24 ? 16. : 8.);
   projection_ok(std::isfinite(scale) && scale >= .01 && scale <= 20 && std::isfinite(radius) &&
                     radius >= .5 && radius <= 32,
                 "Projection scale or clipping radius is outside its supported range.");
@@ -545,14 +761,11 @@ std::shared_ptr<const ProjectedMesh> project_s3(const GeometryProgram &program,
       P col{pose[j * 4], pose[j * 4 + 1], pose[j * 4 + 2], pose[j * 4 + 3]};
       pole[j] = transform(view.data(), col)[3];
     }
-    double depth = 0;
-    for (Index j = 0; j < s3.active[part]; ++j)
-      depth += pole[j];
-    piece_depths[out->scene["visualParts"][part]["pieceId"].get<std::string>()] =
-        depth / std::sqrt(s3.active[part]);
+    const auto &geometry = s3.domains[program.parts[part].table];
+    piece_depths[out->scene["visualParts"][part]["pieceId"].get<std::string>()] = dot(pole, geometry.center);
     bool encloses = true;
-    for (int j = 0; j < 4; ++j)
-      encloses &= j < static_cast<int>(s3.active[part]) ? pole[j] > s3.depth : std::abs(pole[j]) < s3.depth;
+    for (const auto &[n, h] : geometry.bounds)
+      encloses &= dot(pole, n) > h;
     if (encloses)
       outer.insert(out->scene["visualParts"][part]["pieceId"].get<std::string>());
     auto upper = [](const Vertex &a, const Vertex &b, const Vertex &c) {
@@ -691,11 +904,9 @@ std::shared_ptr<const ProjectedMesh> project_s3(const GeometryProgram &program,
                 lines.push_back(line);
               std::set<std::string> selected;
               for (Index i = 0; i < program.parts.size(); ++i)
-                for (Index j = 0; j < s3.active[i]; ++j) {
-                  const auto m = poses.data() + 16 * i;
-                  if (dot(P{m[j * 4], m[j * 4 + 1], m[j * 4 + 2], m[j * 4 + 3]}, c) > 1 - 1e-8)
+                for (const auto &cut : s3.domains[program.parts[i].table].positive)
+                  if (dot(transform(poses.data() + 16 * i, cut), c) > 1 - 1e-8)
                     selected.insert(program.scene["visualParts"][i]["pieceId"].get<std::string>());
-                }
               out->scene["axisGuide"] = lines;
               out->scene["guidePieces"] = selected;
             }

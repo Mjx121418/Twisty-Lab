@@ -7,6 +7,11 @@ using GeometryMatrix = std::array<double, 16>;
 using GeometryPoint = std::array<double, 3>;
 using GeometryPoint4 = std::array<double, 4>;
 struct S3Geometry;
+struct IntrinsicMeshData {
+  Json descriptor;
+  std::vector<float> positions, normals;
+  std::vector<std::uint32_t> indices;
+};
 struct ProjectedMesh {
   Json scene;
   std::vector<float> positions, normals;
@@ -62,6 +67,7 @@ struct GeometryProgram {
   std::map<std::string, Index> part_ids;
   double minimum_motion_extent = 0;
   std::shared_ptr<const S3Geometry> s3;
+  std::shared_ptr<const IntrinsicMeshData> intrinsic;
 };
 GeometryMatrix geometry_rotation(const GeometryRotation &, double progress);
 std::shared_ptr<const GeometryProgram> compile_s3(std::shared_ptr<const Execution>, const Json &);

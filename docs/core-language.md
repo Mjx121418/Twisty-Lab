@@ -180,7 +180,7 @@ Every query supplies `state: number[]`. The supported operations are:
 
 Placement, piece, and event IDs in results index the companion bindings arrays. Choice names follow `bindings.choiceSlots`. Supplied choices must include every idle slot; the core does not infer omitted values. All returned JSON and JS arrays are owned copies. Call `delete()` on the low-level handle or `dispose()` on the adapter. There are no borrowed memory views or implicit animation clocks in this API.
 
-Source text is limited to 8 MiB and nesting 256; expressions expand to at most 100,000 shared nodes, 1,000,000 child references, and 2,000,000 finite-table entries. Limits reject oversized expansion rather than enumerating full puzzle states. Discovery additionally limits candidates to 1,000,000 and returned tuples to 10,000. Production catalogs may require measured adjustments; these limits are not a guarantee that every finite relation has a small representation.
+Source text is limited to 16 MiB and nesting 256; expressions expand to at most 200,000 shared nodes, 1,000,000 child references, and 2,000,000 finite-table entries. Limits reject oversized expansion rather than enumerating full puzzle states. Discovery additionally limits candidates to 1,000,000 and returned tuples to 10,000. Production catalogs may require measured adjustments; these limits are not a guarantee that every finite relation has a small representation.
 
 ## Verification
 
@@ -242,7 +242,7 @@ Generation compiles the fresh Bagua candidate through the current kernel before 
 
 Imports use a string-aware linear depth scan followed by the normal JSON parser. This avoids quadratic discard scans in the callback parser while preserving its nesting boundary, quoted escapes, and syntax validation. In this container, Bagua first-session construction fell from roughly 17 seconds to 1.4 seconds in WASM; a 30-turn published sequence takes about 0.3 seconds.
 
-The compact AST stays within the existing 8 MiB language limit; the complete package is approximately 9.3 MiB. Session/geometry handles share immutable compiled definitions. Creating a second session from an existing one starts with fresh state/history and avoids recompilation. Execution documents use a separate 16 MiB limit; the WASM heap ceiling remains 256 MiB.
+The compact AST stays within the then-current 8 MiB language limit; the complete package is approximately 9.3 MiB. Session/geometry handles share immutable compiled definitions. Creating a second session from an existing one starts with fresh state/history and avoids recompilation. Execution documents use a separate 16 MiB limit; the WASM heap ceiling is 512 MiB.
 
 All production presets and the independent Canvas client load relational packages. API 3 removed compatibility imports, schema-1 replay, and save conversion from the runtime. The old evaluator and native migration/model-audit executables have now been deleted. Production archives remain checked for retired symbols, and runtime integration tests and independent native/WASM consumers cover the current kernel. Textual syntax and general authoring modules/templates remain follow-ups.
 
@@ -367,3 +367,11 @@ path, predicate, interaction or puzzle rule changes are part of this format.
 
 See [the refactor measurements](reference-anchors.md) for frozen-oracle parity,
 Helicopter factoring and storage/lookup results.
+
+The 24-cell authoring package raises the bounded source-text limit to 16 MiB
+and the predicate-node limit to 200,000. Execution documents remain limited to
+16 MiB. Its occupancy invariant covers 672 pieces and 2,088 shared placements;
+ordinary explicit finite transports avoid a large cubic group-validation cost.
+The WASM heap can grow to 512 MiB for this larger model; it still starts at
+32 MiB. Export arrays move into their final JSON owners to avoid temporary
+copies of the 371,000 action records.

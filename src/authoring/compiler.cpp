@@ -132,7 +132,8 @@ public:
   Ref intern(std::vector<Index> key, Predicate node, const std::vector<Ref> &children = {}) {
     if (const auto it = nodes.find(key); it != nodes.end())
       return it->second;
-    expect(data.predicates.size() < 100000 && data.child_references.size() + children.size() <= 1000000,
+    // The ordinary 24-cell occupancy invariant uses more than 100k nodes.
+    expect(data.predicates.size() < 200000 && data.child_references.size() + children.size() <= 1000000,
            "Predicate expansion exceeds the compiler limit");
     node.first_child = static_cast<Index>(data.child_references.size());
     node.child_count = static_cast<Index>(children.size());
@@ -537,8 +538,8 @@ CompiledPuzzle compile(const Json &source) {
   }
 }
 CompiledPuzzle compile_text(const std::string &source) {
-  if (source.size() > 8 * 1024 * 1024)
-    throw core::Error("language.limit", "Source exceeds 8 MiB");
+  if (source.size() > 16 * 1024 * 1024)
+    throw core::Error("language.limit", "Source exceeds 16 MiB");
   // Bound nesting before constructing the DOM, including unreferenced source data.
   try {
     detail::check_json_depth(source, 256,

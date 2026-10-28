@@ -96,6 +96,7 @@ EMSCRIPTEN_BINDINGS(twisty) {
       .constructor<std::string, std::string>()
       .function("sceneJSON", &GeometryDefinition::scene_json)
       .function("spaceJSON", &GeometryDefinition::space_json)
+      .function("intrinsicMesh", &GeometryDefinition::intrinsic_mesh)
       .function("frame", &GeometryDefinition::frame)
       .function("animate", &GeometryDefinition::animate)
       .function("project", &GeometryDefinition::project)
@@ -104,6 +105,11 @@ EMSCRIPTEN_BINDINGS(twisty) {
       .function("positions", &positions<GeometryDefinition>)
       .function("normals", &normals<GeometryDefinition>)
       .function("indices", &indices<GeometryDefinition>);
+  class_<GeometryIntrinsicMesh>("GeometryIntrinsicMesh")
+      .function("descriptorJSON", &GeometryIntrinsicMesh::descriptor_json)
+      .function("positions", &positions<GeometryIntrinsicMesh>)
+      .function("normals", &normals<GeometryIntrinsicMesh>)
+      .function("indices", &indices<GeometryIntrinsicMesh>);
   class_<GeometryFrame>("GeometryFrame")
       .function("spaceJSON", &GeometryFrame::space_json)
       .function("isometries", &isometries);

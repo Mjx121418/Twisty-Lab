@@ -33,6 +33,7 @@ import gearExtremeManifest from '../../packages/gear-extreme/manifest.json';
 import gearPlainManifest from '../../packages/gear-plain/manifest.json';
 import { KernelController, KernelSession, loadRuntime, type Realization, type Result, type Snapshot, type Transition, type TurnIntent } from './kernel';
 import { CellControls } from './controls/CellControls';
+import type { S3FadeSettings } from './s3Fade';
 import { FamilyControls } from './controls/FamilyControls';
 import { RelativeControls, relativeTurnAngle } from './controls/RelativeControls';
 import { RenderView } from './renderer';
@@ -87,6 +88,8 @@ const prebuiltFiles = import.meta.glob<string>([
   '../../packages/melty-*/melty-*-euclidean.json',
   '../../packages/melty-*/melty-*-port-diagram.json',
   '../../packages/melty-*/melty-*-spherical.json',
+  '../../packages/cell24/package.json',
+  '../../packages/cell24/cell24-s3.json',
   '../../packages/tesseract3/package.json',
   '../../packages/tesseract3/tesseract3-s3.json',
   '../../packages/icosahedron-*/package.json',
@@ -97,7 +100,7 @@ function loadPreset(preset: Preset): Promise<void> {
   if ((!preset.turnAnglesDegrees && !preset.deferred) || preset.source) return Promise.resolve();
   const previous = meltyLoading.get(preset.id);
   if (previous) return previous;
-  const files = preset.stereographic ? ['package', 'tesseract3-s3'] : ['package', `${preset.id}-euclidean`, `${preset.id}-spherical`, ...(!preset.deferred ? [`${preset.id}-port-diagram`] : [])];
+  const files = preset.stereographic ? ['package', `${preset.id}-s3`] : ['package', `${preset.id}-euclidean`, `${preset.id}-spherical`, ...(!preset.deferred ? [`${preset.id}-port-diagram`] : [])];
   const loading = Promise.all(files
     .map(async name => {
       const response = await fetch(prebuiltFiles[`../../packages/${preset.id}/${name}.json`]);
@@ -118,6 +121,7 @@ const presets = [
   { id: 'helicopter', label: 'Helicopter Cube · jumbling', source: helicopterSource, realizations: [helicopterRealization, helicopterDiagram], spherical: helicopterSphere },
   { id: 'bagua', label: 'Bagua Cube', source: baguaSource, realizations: [baguaRealization, baguaDiagram], spherical: baguaSphere },
   ...meltyPresets,
+  { id: 'cell24', label: 'S³ 24-cell · 672 pieces', source: '', realizations: [], deferred: true, stereographic: true },
   { id: 'tesseract3', label: 'S³ 8-cell · 3 × 3 × 3 × 3', source: '', realizations: [], deferred: true, stereographic: true },
   { id: 'icosahedron-110', label: `Face-turning icosahedron · ${icosahedronManifest.pieces} pieces`, source: '', realizations: [], deferred: true, euclideanLabel: 'Icosahedron' },
   { id: 'icosahedron-152', label: 'Face-turning icosahedron · 152 pieces', source: '', realizations: [], deferred: true, euclideanLabel: 'Icosahedron' },
@@ -173,6 +177,7 @@ export function App() {
   const [visualError, setVisualError] = useState('');
   const [fatalError, setFatalError] = useState('');
   const [lastScramble, setLastScramble] = useState('');
+  const [s3Fade, setS3Fade] = useState<S3FadeSettings>();
   const kernel = useRef<KernelSession | undefined>(undefined);
   const controller = useRef<KernelController | undefined>(undefined);
   const advanced = useRef(false);
@@ -200,7 +205,7 @@ export function App() {
   const displayedViews = orderedViews.filter(view => viewSelection.visible.includes(view.id));
   const rhombus = ['rhombus-60','orbifold-333-rhombus'].includes(activePreset?.realizations[0].flatSurface?.chart??'');
 
-  function relativeSession(session: KernelSession): boolean { return ['icosahedron-152-v1', 'tesseract3-v1'].includes(session.definition.puzzleId); }
+  function relativeSession(session: KernelSession): boolean { return ['icosahedron-152-v1', 'tesseract3-v1', 'cell24-v1'].includes(session.definition.puzzleId); }
   function readSnapshot(session: KernelSession): Snapshot {
     return (controller.current || relativeSession(session)) && !advanced.current ? { ...session.stateSnapshot(), legalRequests: [], candidateRequests: [] } : session.snapshot();
   }
@@ -241,7 +246,7 @@ export function App() {
     setViewSelection(current => current.order.length === available.length && current.order.every(id => available.includes(id)) ? current : defaultViews(available));
     setSourceId(id); setSnapshot(initial); setVisualDigest(initial.stateDigest);
     setSelected([]); setEvidence(undefined); setLastScramble(''); setVisualError('');
-    setAlgorithm(initial.puzzleId === 'tesseract3-v1' ? "Xp_fY Yp_fZ (Xp_fY Yp_fZ)'" : initial.puzzleId === 'flat-333-6-v1' ? "A D A' D'" : initial.puzzleId.startsWith('flat-') ? "A B A' B'" : initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' :
+    setAlgorithm(initial.puzzleId === 'cell24-v1' ? "Xp_fXYZ Yp_vX (Xp_fXYZ Yp_vX)'" : initial.puzzleId === 'tesseract3-v1' ? "Xp_fY Yp_fZ (Xp_fY Yp_fZ)'" : initial.puzzleId === 'flat-333-6-v1' ? "A D A' D'" : initial.puzzleId.startsWith('flat-') ? "A B A' B'" : initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' :
       initial.puzzleId === 'bagua-experimental-v1' ? "U+ R' L' D2 R L U-" : initial.puzzleId.startsWith('icosahedron-') ? "A_j O_j (A_j O_j)'" : initial.puzzleId.startsWith('melty-') ? "U U'" :
       parsedSource.kind === 'relational-gear-prototypes' ? (parsedSource.gearedEdges.length === 0 ? "Rq Uq Rq' Uq'" :
         initial.legalRequests.some((request) => request.operation === 'R') ? "R R'" : "Rq Rq'") : "R U R' U'");
@@ -313,6 +318,7 @@ export function App() {
     }
     restoredCameras?.forEach((camera, id) => cameras.set(id, camera));
     views.current = displayedViews.flatMap(({ id }) => { const entry = mountedViews.current.get(id); return entry ? [entry.view] : []; });
+    setS3Fade(views.current.find((view): view is RenderView => view instanceof RenderView && !!view.fadeSettings)?.fadeSettings);
   }, [module, generation, viewSelection, viewDefinitions]);
 
   useEffect(() => { for (const view of views.current) view.highlight(selected, evidence?.implicatedPieces ?? []); }, [selected, evidence, generation, viewSelection, viewDefinitions]);
@@ -597,7 +603,7 @@ export function App() {
           </div>
 
           <section className="commands">
-            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{s3 ? '8 cubic cells · face, edge and vertex axes' : activePreset?.surface ? `Face keys ${Object.keys(activePreset.realizations[0].flatSurface?.diskCenters??{}).join(' ')} · ${rhombus ? 60 : 90}° turns · Shift for inverse` : icosahedron ? '20 face axes · ordinary turns: 120° · select pieces to choose an axis' : snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : snapshot?.puzzleId === 'bagua-experimental-v1' ? '+ / −: 45° · face keys: 90° · Shift for inverse' : melty ? 'Face keys U R F D L B · choose each cap independently · hover for angles' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
+            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{s3 ? `${cellLayout.groups.length} ${activePreset?.id === 'cell24' ? 'octahedral' : 'cubic'} cells · face, edge and vertex axes` : activePreset?.surface ? `Face keys ${Object.keys(activePreset.realizations[0].flatSurface?.diskCenters??{}).join(' ')} · ${rhombus ? 60 : 90}° turns · Shift for inverse` : icosahedron ? '20 face axes · ordinary turns: 120° · select pieces to choose an axis' : snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : snapshot?.puzzleId === 'bagua-experimental-v1' ? '+ / −: 45° · face keys: 90° · Shift for inverse' : melty ? 'Face keys U R F D L B · choose each cap independently · hover for angles' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
             {controller.current && snapshot && <FamilyControls key={generation} controller={controller.current} revision={snapshot.revision}
               layout={cellLayout?.version === 1 ? cellLayout : undefined} busy={busy} onTurn={turnTo}
               selectedPieces={selected} onClearSelection={() => setSelected([])} onRemovePiece={choosePiece} />}
@@ -613,6 +619,12 @@ export function App() {
               onFocus={cell => views.current.forEach(view => { if (view instanceof RenderView) view.focusCell(cell); })}
               onGuide={(cell, axis) => views.current.forEach(view => { if (view instanceof RenderView) view.setCellGuide(cell, axis); })}
               onShell={() => views.current.forEach(view => { if (view instanceof RenderView) view.toggleOuterShell(); })}
+              fade={s3Fade} onFadeRadius={(radius, boundary) => {
+                views.current.forEach(view => { if (view instanceof RenderView && view.fadeSettings) {
+                  if (boundary === 'end') view.setFadeEndRadius(radius); else view.setFadeStartRadius(radius);
+                  setS3Fade(view.fadeSettings);
+                } });
+              }}
               onMove={(operation, revision) => { const session = kernel.current!;
                 enqueue(() => session === kernel.current ? session.move(operation, revision) : { status: 'StaleRevision' }); }} />}
             <details key={`advanced-${generation}`} className="advanced-moves" open={(controller.current || relative) ? undefined : true} onToggle={event => {

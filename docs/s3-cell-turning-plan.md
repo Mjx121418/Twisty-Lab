@@ -78,11 +78,24 @@ the SO(4) view orientation; it changes neither the puzzle state nor history.
 Start with discrete focus choices. Free 4D dragging is optional later work.
 
 The cell containing the projection pole occupies the outer, unbounded region.
-The reference app keeps the inner and middle layers opaque (53 pieces at rest)
-and fades the outer 27 pieces according to their intrinsic centers’ projected
-w coordinates. A **Toggle outer layers** button hides or reveals those pieces.
-Picking passes through the faded layer. Focus cell makes any cell inspectable
-in the central position; the camera frames it and its neighbors.
+The reference app assigns opacity to each transformed vertex using
+`1-smoothstep(startRadius,endRadius,r)`, with projected radius
+`r = sqrt((1+w)/(1-w))` and +W the projection pole. The **Fade start radius**
+slider spans 0.71–5.53 projection units; its minimum encloses the focused
+cutting ball, keeping all 27 focused pieces completely opaque. The **Fade end
+radius** slider spans 0.72–5.83 units, initially enclosing the farthest extent
+`3+2√2` of an adjacent cutting ball. Decreasing it can hide neighbors sooner,
+lowering the start radius if necessary. Fragments beyond the end are invisible.
+Only pieces with an active cut in the focused cell or a face neighbor are shown; during
+turns, membership fades continuously between alignment rings. The opposite
+cell's surrounding 26 pieces also belong to adjacent cutting balls and remain
+visible with increasing transparency, as do the 26 connecting pieces. The
+pole-containing center piece is hidden. A **Toggle outer layers** button hides
+or reveals fading surfaces. Picking passes through them to opaque pieces.
+Focus cell makes any cell inspectable in the central position. Both fade radii
+are saved with the camera and change without rebuilding projected meshes. The
+camera can zoom inward to 0.05 units; its 0.005 near plane supports viewing
+pieces from inside the focused cell.
 
 Pieces contract toward their centers along S³, exposing gaps without leaving
 the unit sphere. The piece inset is 0.5375, giving approximately half the
@@ -92,13 +105,21 @@ extra vertices under clipping.
 
 Stereographic projection is nonlinear. Every evaluated SO(4) pose must be
 applied to the intrinsic mesh before projection; projected positions and normals
-change during a twist. The renderer therefore needs dynamic vertex buffers.
-It cannot animate these pieces solely with the current R³ model matrices.
+change during a twist. The reference renderer uploads the ten shared intrinsic
+prototypes once and evaluates SO(4) transforms and stereographic positions and
+normals in its vertex shader. It cannot animate these pieces solely with R³
+model matrices. The portable interpreter also retains its CPU drawing path for
+independent consumers and on-demand picking.
 The projection pole requires surface-aware clipping/subdivision before division;
 denominator clamping would distort faces and create giant false triangles.
 Expose a finite clip region and report clipped geometry. In the default
 cell-centered charts, the pole lies inside a fixed center piece, keeping the
 piece boundaries away from the singularity during ordinary puzzle turns.
+Conservative spherical caps certify GPU-safe meshes. Pole-clipped meshes are
+cached and rotated in R³ whenever the intrinsic transform fixes the pole;
+otherwise the renderer obtains a fresh clipped CPU drawing. All 184 standard
+turns in each of the eight cell-focus charts can use the cached/GPU path without
+per-frame projection, including from scrambled colored placements.
 
 Implementation order and review gates:
 
@@ -211,3 +232,13 @@ process used about 201 MiB RSS. These include owned drawing-buffer copies but
 exclude GPU rendering; they are measurements rather than frame-rate guarantees.
 Heavy builds and browser checks ran sequentially with one worker; the observed
 workspace peak was below 3.6 GiB.
+
+GPU transformation check: with the half-size pieces, warmed browser
+main-thread preparation measured about 0.06 ms per GPU frame (pose evaluation,
+uniform updates and clipping checks), compared with 20 ms for the portable CPU
+projection/copy path. These timings exclude the GPU draw and are not frame-rate
+guarantees. Render-target comparisons cover intermediate turns in five focus
+charts, opaque and faded layers, outward normals and cached clipping; the worst
+mean RGB error was 0.012 on a 0–255 scale. All 184 turns in all eight charts also
+pass numerical checks without per-frame CPU projection. The browser regression
+checks live in `tests/browser/s3-gpu.spec.ts` and `tests/browser/s3.spec.ts`.

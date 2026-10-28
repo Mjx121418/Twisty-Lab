@@ -50,7 +50,8 @@
           "transport-path-selectors",
           "so4-isometries",
           "stereographic-projection",
-          "dynamic-drawing-meshes"
+          "dynamic-drawing-meshes",
+          "s3-octahedral-cells"
         ]
       }
     },
@@ -420,7 +421,7 @@
     "cutDepth": {
       "type": "number",
       "exclusiveMinimum": 0,
-      "exclusiveMaximum": 0.5
+      "exclusiveMaximum": 1
     },
     "pieceInset": {
       "type": "number",
@@ -434,7 +435,6 @@
       "additionalProperties": {
         "type": "object",
         "required": [
-          "activeCoordinates",
           "placementFrames",
           "ports"
         ],
@@ -455,13 +455,52 @@
           "ports": {
             "type": "object",
             "minProperties": 1,
-            "maxProperties": 4,
+            "maxProperties": 6,
             "additionalProperties": {
               "type": "string"
             }
+          },
+          "cutMembership": {
+            "type": "array",
+            "minItems": 24,
+            "maxItems": 24,
+            "items": {
+              "type": "boolean"
+            }
+          },
+          "colorNormals": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 6,
+            "items": {
+              "$ref": "#/$defs/point4"
+            }
+          },
+          "pieceCenter": {
+            "$ref": "#/$defs/point4"
           }
-        }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "activeCoordinates"
+            ]
+          },
+          {
+            "required": [
+              "cutMembership",
+              "colorNormals",
+              "pieceCenter"
+            ]
+          }
+        ]
       }
+    },
+    "cellShape": {
+      "enum": [
+        "cube",
+        "octahedron"
+      ]
     }
   },
   "$defs": {
@@ -736,16 +775,24 @@
       "additionalProperties": false,
       "properties": {
         "cell": {
-          "type": "integer",
-          "enum": [
-            -4,
-            -3,
-            -2,
-            -1,
-            1,
-            2,
-            3,
-            4
+          "oneOf": [
+            {
+              "type": "integer",
+              "enum": [
+                -4,
+                -3,
+                -2,
+                -1,
+                1,
+                2,
+                3,
+                4
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "^(?:[XYZW][pm]|H[pm]{4})$"
+            }
           ]
         },
         "planeU": {
@@ -779,7 +826,7 @@
         "groups": {
           "type": "array",
           "minItems": 8,
-          "maxItems": 8,
+          "maxItems": 24,
           "items": {
             "type": "object",
             "required": [
@@ -1053,7 +1100,73 @@
           "controlLayout": {
             "$ref": "#/$defs/cellAxes"
           }
-        }
+        },
+        "allOf": [
+          {
+            "if": {
+              "required": [
+                "cellShape"
+              ],
+              "properties": {
+                "cellShape": {
+                  "const": "octahedron"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "cutDepth": {
+                  "exclusiveMinimum": 0.5773502691896258,
+                  "exclusiveMaximum": 0.7071067811865475
+                },
+                "domains": {
+                  "additionalProperties": {
+                    "required": [
+                      "cutMembership",
+                      "colorNormals",
+                      "pieceCenter"
+                    ]
+                  }
+                },
+                "controlLayout": {
+                  "properties": {
+                    "groups": {
+                      "minItems": 24,
+                      "maxItems": 24
+                    }
+                  }
+                },
+                "requiredCapabilities": {
+                  "contains": {
+                    "const": "s3-octahedral-cells"
+                  }
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "cutDepth": {
+                  "exclusiveMaximum": 0.5
+                },
+                "domains": {
+                  "additionalProperties": {
+                    "required": [
+                      "activeCoordinates"
+                    ]
+                  }
+                },
+                "controlLayout": {
+                  "properties": {
+                    "groups": {
+                      "minItems": 8,
+                      "maxItems": 8
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
       },
       "else": {
         "properties": {

@@ -229,3 +229,7 @@ footer { border-top: 1px solid #293840; display: flex; justify-content: space-be
 .cell-turns button { min-width: 5rem; font-size: 1.1rem; }
 .cell-presentation label { display: flex; align-items: center; gap: .4rem; }
 .cell-presentation input { width: auto; }
+.cell-fade { max-width: 28rem; margin: .75rem 0; }
+.cell-fade label { display: flex; justify-content: space-between; gap: 1rem; }
+.cell-fade output { font-variant-numeric: tabular-nums; }
+.cell-fade input { width: 100%; }

@@ -5,7 +5,23 @@ namespace twisty {
 struct GeometryProgram;
 struct GeometryMotion;
 struct ProjectedMesh;
+struct IntrinsicMeshData;
 class GeometryDefinition;
+
+// Immutable, space-qualified prototype meshes for custom (including GPU)
+// projections. Buffer version/layout is described by descriptor_json().
+class GeometryIntrinsicMesh {
+public:
+  std::string descriptor_json() const;
+  const std::vector<float> &positions() const;
+  const std::vector<float> &normals() const;
+  const std::vector<std::uint32_t> &indices() const;
+
+private:
+  friend class GeometryDefinition;
+  explicit GeometryIntrinsicMesh(std::shared_ptr<const IntrinsicMeshData> data) : data_(std::move(data)) {}
+  std::shared_ptr<const IntrinsicMeshData> data_;
+};
 
 // An owned, space-qualified pose snapshot. Matrices are intrinsic isometries;
 // they are not renderer model matrices. Inspect space_json() before using them.
@@ -69,6 +85,7 @@ public:
   const std::vector<float> &positions() const;
   const std::vector<float> &normals() const;
   const std::vector<std::uint32_t> &indices() const;
+  GeometryIntrinsicMesh intrinsic_mesh() const;
   GeometryFrame frame(const std::string &state_json) const;
   GeometryAnimation animate(const std::string &transition_record) const;
   GeometryDrawing project(const GeometryFrame &, const std::string &projection = "embedding") const;

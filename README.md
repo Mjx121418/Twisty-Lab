@@ -63,6 +63,8 @@ The **152-piece variant** uses 54.735610° spherical disks and planar cuts of th
 The [Gear Cube family](docs/gear-model.md) uses the supplied low-poly meshes. Normal Gear Cube has 6 centers, 8 corners, 12 edge bases, 12 six-tooth pinions, and a fixed internal ball. Extreme and custom variants replace each unchecked edge with the supplied rigid [plain edge](packages/gear-extreme/plain-edge-meshes.json) and share the normal cube's remaining parts. Each variant has one cubic model, one spherical model, and one phase diagram. A supplied spherical assembly provides corresponding geared and plain parts for every configuration, opening in **Cube + sphere** with trackball controls. The C++ interpreter animates carriers and the full 300° local pinion spin; Three.js draws its assets and frames. Euclidean, spherical, and diagram views share state, selection, and history. Continuous spherical gear contacts and coverage remain a [verification goal](docs/gear-model.md#verification).
 
 
+The [S³ 24-cell](docs/cell24-model.md) has 672 pieces, 24 octahedral cell groups, and 552 ordinary turns at cut depth 2/3. It uses the same stereographic view and GPU transformations; jumbling is not included.
+
 The [S³ 8-cell](docs/s3-cell-turning-plan.md) has 80 pieces and 184 cell turns. Its single stereographic view projects genuine SO(4) motion through the portable kernel. Eight cell groups offer face-, edge-, and vertex-axis turns; focus changes the projection without changing the puzzle.
 
 ## Run locally

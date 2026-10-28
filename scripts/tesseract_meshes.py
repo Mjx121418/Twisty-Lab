@@ -10,7 +10,7 @@ RINGS = 3
 INSET = .5375
 
 
-def polygon(bounds):
+def polygon(bounds, edge_steps=EDGE_STEPS, rings=RINGS):
     vertices = []
     for (a, ah), (b, bh) in combinations(bounds, 2):
         aa, bb, ab = dot(a, a), dot(b, b), dot(a, b)
@@ -34,20 +34,20 @@ def polygon(bounds):
         n, h = next((n, h) for n, h in bounds if abs(dot(a, n)-h) < 1e-8 and abs(dot(b, n)-h) < 1e-8)
         o = scale(h/dot(n, n), n); u, v = sub(a, o), sub(b, o)
         angle = math.acos(max(-1., min(1., dot(unit(u), unit(v)))))
-        for step in range(EDGE_STEPS):
-            t = step/EDGE_STEPS
+        for step in range(edge_steps):
+            t = step/edge_steps
             q = add(o, add(scale(math.sin((1-t)*angle)/math.sin(angle), u), scale(math.sin(t*angle)/math.sin(angle), v)))
             boundary.append(q)
     points = [center]
-    for ring in range(1, RINGS+1):
-        t = ring/RINGS
+    for ring in range(1, rings+1):
+        t = ring/rings
         points += [unit(add(scale(1-t, center), scale(t, p))) for p in boundary]
     assert all(dot(p, n) >= h-1e-8 for p in points for n, h in bounds)
     triangles = []; count = len(boundary)
     for i in range(count):
         j = (i+1) % count
         triangles.append([0, 1+i, 1+j])
-        for ring in range(1, RINGS):
+        for ring in range(1, rings):
             a, b = 1+(ring-1)*count+i, 1+(ring-1)*count+j
             c, d = 1+ring*count+i, 1+ring*count+j
             middle = unit(tuple(points[a][k]+points[b][k]+points[c][k]+points[d][k] for k in range(3)))

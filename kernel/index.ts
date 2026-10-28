@@ -6,6 +6,7 @@ export type KernelInfo = {
   languageAPIVersion: number;
   controllerAPIVersion: number; controllerCapabilities: string[];
   geometryAPIVersion: number; poseBufferVersion: number;
+  intrinsicMeshBufferVersion?: number;
   authoringLibraries?: string[];
   catalogKinds?: string[];
   definitionFormatVersion?: number; sessionSchemaVersions?: number[]; sessionFeatures?: string[];
@@ -64,6 +65,21 @@ export type VisualPart = {
   /** Local display scale, applied before the intrinsic isometry; defaults to 1. */
   meshScale?: number;
 };
+/** Immutable prototype meshes in intrinsic coordinates; offsets count scalars. */
+export type IntrinsicMeshDescriptor = {
+  version: 1; space: GeometrySpace; coordinateSize: 4; scalar: 'float32'; normalModel: 'unit-sphere-tangent';
+  meshAssets: (MeshAsset & { normalOffset: number })[];
+  visualParts: (VisualPart & { activeCoordinates?: number; cutHalfspaces?: { normal: number[]; minimum: number }[]; boundingCap: { center: number[]; minDot: number } })[];
+};
+export type IntrinsicMeshes = { descriptor: IntrinsicMeshDescriptor; positions: Float32Array; normals: Float32Array; indices: Uint32Array };
+/** Copies borrowed WASM buffers. The returned arrays survive all native handles. */
+export function copyIntrinsicMeshes(definition: InstanceType<MainModule['GeometryDefinition']>): IntrinsicMeshes {
+  const mesh = definition.intrinsicMesh();
+  try { return { descriptor: JSON.parse(mesh.descriptorJSON()) as IntrinsicMeshDescriptor,
+    positions: copyFloatView(mesh.positions() as Float32Array), normals: copyFloatView(mesh.normals() as Float32Array),
+    indices: copyIndexView(mesh.indices() as Uint32Array) }; }
+  finally { mesh.delete(); }
+}
 export type SceneDescriptor = {
   sceneId: string; realizationId: string; definitionDigest: string; requiredCapabilities: string[];
   meshAssets: MeshAsset[]; visualParts: VisualPart[]; diagram: boolean;
@@ -134,9 +150,9 @@ export type ProjectionOptions = { version?: 1; focusCell?: string; viewIsometry?
 export type Realization = {
   controlLayout?: DriverLayout | CellAxisLayout;
   /** Unit-S3 cut geometry; matrices are SO(4), not homogeneous R3 frames. */
-  cutDepth?: number; pieceInset?: number;
-  domains?: Record<string, { activeCoordinates: number; placementFrames: Record<string, number[]>; ports: Record<string, string> }>;
-  operationTracks?: Record<string, { cell: number; planeU: number[]; planeV: number[]; angle: number }
+  cellShape?: 'cube' | 'octahedron'; cutDepth?: number; pieceInset?: number;
+  domains?: Record<string, { activeCoordinates?: number; cutMembership?: boolean[]; colorNormals?: number[][]; pieceCenter?: number[]; placementFrames: Record<string, number[]>; ports: Record<string, string> }>;
+  operationTracks?: Record<string, { cell: number | string; planeU: number[]; planeV: number[]; angle: number }
     | { axis: number[]; fromStop: number; toStop: number } | FamilyRotationBinding>;
   motionFamilies?: { version: 1; families: Record<string, { axis: [number,number,number]; pivot: [number,number,number];
     space: 'world' | 'local'; coordinates: Record<string,number> }> };
@@ -401,6 +417,10 @@ export class GeometryInstance {
   readonly definition: NonNullable<ReturnType<MainModule['createGeometryDefinition']>>;
   readonly scene: SceneDescriptor;
   readonly matrices: Float32Array;
+  /** Owned intrinsic poses, updated even when projection is deferred. */
+  readonly isometries: Float64Array;
+  drawingIsCurrent = false;
+  drawingRevision = 0;
   private animation?: ReturnType<InstanceType<MainModule['GeometryDefinition']>['animate']>;
   private readonly destinations = new Map<string, Float32Array>();
   private destinationBytes = 0;
@@ -420,6 +440,7 @@ export class GeometryInstance {
     try {
       this.scene = JSON.parse(definition.sceneJSON()) as SceneDescriptor;
       this.matrices = new Float32Array(this.scene.visualParts.length * 16);
+      this.isometries = new Float64Array(this.matrices.length);
       this.setState(session.stateJSON());
     } catch (error) { definition.delete(); throw error; }
   }
@@ -435,10 +456,18 @@ export class GeometryInstance {
           indices: copyIndexView(drawing.indices() as Uint32Array) } : {}) };
     } finally { drawing.delete(); }
   }
-  private accept(frame: NonNullable<GeometryInstance['frame']>, options = this.options): void {
+  private accept(frame: NonNullable<GeometryInstance['frame']>, options = this.options, project = true): void {
+    if (!project) {
+      this.isometries.set(frame.isometries() as Float64Array);
+      if (this.frame !== frame) this.frame?.delete();
+      this.frame = frame;
+      this.drawingIsCurrent = false;
+      return;
+    }
     let result: ReturnType<GeometryInstance['project']>;
     try { result = this.project(frame, options); } catch (error) { if (frame !== this.frame) frame.delete(); throw error; }
     this.matrices.set(result.matrices);
+    this.isometries.set(frame.isometries() as Float64Array);
     if (result.scene) {
       delete this.scene.axisGuide; delete this.scene.guidePieces;
       Object.assign(this.scene, result.scene);
@@ -446,6 +475,8 @@ export class GeometryInstance {
     }
     if (this.frame !== frame) this.frame?.delete();
     this.frame = frame;
+    this.drawingIsCurrent = true;
+    this.drawingRevision++;
   }
   /** Reprojects the current intrinsic frame; does not edit state or interrupt a prepared animation. */
   setProjection(options: ProjectionOptions): void {
@@ -456,10 +487,10 @@ export class GeometryInstance {
     this.accept(this.definition.frame(stateText));
     this.animation?.delete(); this.animation = undefined;
   }
-  prepare(record: string): number {
+  prepare(record: string, project = true): number {
     const next = this.definition.animate(record);
     try {
-      this.accept(next.evaluate(0));
+      this.accept(next.evaluate(0), this.options, project);
       const hint = next.durationHint();
       this.animation?.delete(); this.animation = next;
       return hint;
@@ -470,6 +501,13 @@ export class GeometryInstance {
     if (!Number.isFinite(progress)) throw new Error('Animation progress must be finite.');
     if (this.animation) this.accept(this.animation.evaluate(progress));
   }
+  /** Advances poses only. Drawing buffers/scene retain their last projected snapshot. */
+  evaluatePose(progress: number): void {
+    if (!Number.isFinite(progress)) throw new Error('Animation progress must be finite.');
+    if (this.animation) this.accept(this.animation.evaluate(progress), this.options, false);
+  }
+  /** Projects the retained frame, preserving the animation and abstract state. */
+  refreshProjection(): void { if (!this.drawingIsCurrent) this.accept(this.frame!); }
   /** Shares all assets and tables; does not disturb the prepared live motion. */
   destination(record: string): Float32Array {
     if (this.scene.dynamicMeshes) throw new Error('Dynamic destinations require GeometryDefinition.animate and projectWithOptions.');

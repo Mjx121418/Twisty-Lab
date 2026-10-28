@@ -23,6 +23,7 @@ inline Json kernel_info() {
           {"controllerAPIVersion", 1},
           {"controllerCapabilities", {"state-backed-phases", "destination-intents", "scoped-previews", "piece-family-selection"}},
           {"poseBufferVersion", 1},
+          {"intrinsicMeshBufferVersion", 1},
           {"languageAPIVersion", 3},
           {"abstractCapabilities", {"placement-actions", "reference-twist-families", "compact-transports", "rectangular-position-maps"}},
           {"authoringLibraries", {"cube3", "bandaged-uf-ufr", "gear-family"}},
@@ -37,6 +38,7 @@ inline Json kernel_info() {
            {"triangle-meshes", "rigid-transforms", "quotient-surface", "quotient-orbifold",
             "shared-geometry-definitions", "shared-rotation-tracks", "space-qualified-poses",
             "family-rotation-generators", "transport-path-selectors",
-            "seekable-animations", "so4-isometries", "stereographic-projection", "dynamic-drawing-meshes"}}};
+            "seekable-animations", "so4-isometries", "stereographic-projection", "dynamic-drawing-meshes",
+            "intrinsic-meshes", "s3-octahedral-cells"}}};
 }
 } // namespace twisty

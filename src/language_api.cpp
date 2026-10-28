@@ -53,9 +53,9 @@ Json query(const CompiledPuzzle &p, const Json &q) {
   if (!q.is_object())
     throw core::Error("core.input", "Expected a query object");
   for (auto it = q.begin(); it != q.end(); ++it) {
-    const std::vector<std::string> allowed{"op",      "state",          "request",     "choices",
-                                           "profile", "candidateLimit", "resultLimit", "collection",
-                                           "element", "placement",      "map", "point", "inverse"};
+    const std::vector<std::string> allowed{
+        "op",         "state",   "request",   "choices", "profile", "candidateLimit", "resultLimit",
+        "collection", "element", "placement", "map",     "point",   "inverse"};
     if (std::find(allowed.begin(), allowed.end(), it.key()) == allowed.end())
       throw core::Error("core.input", "Unknown query field: " + it.key());
   }
@@ -64,7 +64,9 @@ Json query(const CompiledPuzzle &p, const Json &q) {
     const auto value = [&](const char *key) { return numbers(Json::array({q.at(key)})).at(0); };
     if (op == "positionMap") {
       const auto target = p.program.position_map(value("map"), value("point"), q.value("inverse", false));
-      return {{"status", "Evaluated"}, {"point", target ? Json(*target) : Json(nullptr)}, {"defined", target.has_value()}};
+      return {{"status", "Evaluated"},
+              {"point", target ? Json(*target) : Json(nullptr)},
+              {"defined", target.has_value()}};
     }
     if (op == "act")
       return {{"status", "Evaluated"},
@@ -175,23 +177,26 @@ Json inspect(const CompiledPuzzle &p) {
          {"profiles", profiles},
          {"defaultProfile", b.default_profile ? Json(b.profiles[*b.default_profile].id) : Json(nullptr)}});
   }
-  bindings["requests"] = request_bindings;
+  bindings["requests"] = std::move(request_bindings);
   Json result = {{"kind", "relational-preview"},
                  {"experimentalVersion", 1},
                  {"predicateVersion", 1},
-                 {"bindings", bindings},
                  {"program",
                   {{"pieceCount", d.piece_count},
                    {"placementCount", d.placement_count},
                    {"initialPlacements", d.initial},
                    {"finiteSets", d.finite_sets},
-                   {"predicateNodes", predicates},
                    {"childReferences", d.child_references},
-                   {"transportMaps", maps},
-                   {"actionRecords", actions},
-                   {"requestPrograms", requests},
                    {"invariantRoot", d.invariant},
                    {"goalRoot", d.goal}}}};
+  // Move the large export arrays into their final owners. Initializer lists
+  // otherwise retain multiple copies of every action and predicate at once.
+  result["bindings"] = std::move(bindings);
+  auto &program = result["program"];
+  program["predicateNodes"] = std::move(predicates);
+  program["transportMaps"] = std::move(maps);
+  program["actionRecords"] = std::move(actions);
+  program["requestPrograms"] = std::move(requests);
   if (p.source_version >= 2) {
     result["experimentalVersion"] = p.source_version;
     result["program"].erase("transportMaps");

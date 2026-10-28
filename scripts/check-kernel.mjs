@@ -45,12 +45,14 @@ try {
     schemaIDs.push(schema.$id);
   }
   for (const id of schemaIDs) assert.ok(schemas.getSchema(id), `Packaged schema cannot resolve: ${id}`);
-  const { createKernel, KernelSession, KernelController, GeometryInstance, Puzzle, createCubeSource, createGearSource } = await import(pathToFileURL(join(javascript, 'index.js')).href);
+  const { createKernel, KernelSession, KernelController, GeometryInstance, copyIntrinsicMeshes, Puzzle, createCubeSource, createGearSource } = await import(pathToFileURL(join(javascript, 'index.js')).href);
   const module = await createKernel();
   const info = JSON.parse(module.kernelInfoJSON());
   const manifest = JSON.parse(await readFile(join(javascript, 'package.json'), 'utf8'));
   assert.equal(info.apiVersion, 7); assert.equal(info.frameBufferVersion, 1);
   assert.equal(info.geometryAPIVersion, 1); assert.equal(info.poseBufferVersion, 1);
+  assert.equal(info.intrinsicMeshBufferVersion, 1);
+  assert.ok(info.geometryCapabilities.includes('intrinsic-meshes'));
   assert.equal(info.controllerAPIVersion, 1);
   assert.ok(exported.includes('Twisty::controller'));
   assert.equal(info.version, manifest.version);
@@ -201,6 +203,7 @@ try {
     return `${path} (${path})'`;
   };
   for (const [puzzle, algorithm, firstMove, kind] of [
+    ['cell24', "Xp_fXYZ Yp_vX (Xp_fXYZ Yp_vX)'", 'Xp_fXYZ', 'cell24-s3'],
     ['tesseract3', "Xp_fY Yp_fZ (Xp_fY Yp_fZ)'", 'Xp_fY', 'tesseract3-s3'],
     ['cube3', "R U R' U'", 'U', 'cube-port-diagram'],
     ['bandaged', 'U R', 'U', 'cube-port-diagram'],
@@ -253,7 +256,7 @@ try {
     const realizationPath = join(directory, kind === 'flat-quotient' ? 'flat-quotient.json' : `${kind}.json`);
     // Run the native oracle before allocating this case's WASM definition and
     // view, so the two large compiler/geometry graphs do not overlap.
-    const reference = JSON.parse(execFileSync(join(consumer, 'build/custom_kernel_consumer'), [sourcePath, realizationPath, algorithm], { encoding: 'utf8' }));
+    const reference = JSON.parse(execFileSync(join(consumer, 'build/custom_kernel_consumer'), [sourcePath, realizationPath, algorithm], { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 }));
     const source = await readFile(sourcePath, 'utf8');
     const realization = await readFile(realizationPath, 'utf8');
     const session = new KernelSession(module, source);
@@ -305,6 +308,12 @@ try {
         assert.deepEqual(session.snapshot(), origin, 'Planning a different source state remains pure.');
       }
       const result = session.run(algorithm, 'transactional', origin.revision);
+      if (reference.intrinsicMesh) {
+        const intrinsic = copyIntrinsicMeshes(geometry.definition);
+        assert.deepEqual(intrinsic.descriptor, reference.intrinsicMesh.descriptor);
+        for (const buffer of ['positions', 'normals', 'indices'])
+          assert.deepEqual(Array.from(intrinsic[buffer]), reference.intrinsicMesh[buffer]);
+      }
       assert.equal(result.status, 'Committed');
       let sampleIndex = 0;
       for (const record of result.transitionRecords) {
