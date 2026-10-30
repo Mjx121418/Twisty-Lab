@@ -124,7 +124,7 @@ int main() {
     std::size_t views = 0;
     for (const auto &puzzle : inventory.at("puzzles")) {
       const auto dir = "packages/" + puzzle.at("id").get<std::string>() + "/";
-      if (puzzle.at("id") == "tesseract3" || puzzle.at("id") == "cell24") continue; // Non-affine projection has separate S3 coverage.
+      if (puzzle.at("id") == "tesseract3" || puzzle.at("id").get<std::string>().starts_with("cell24")) continue; // Non-affine projection has separate S3 coverage.
       Session session(read(dir + "package.json"));
       const auto operation = session.snapshot().at("legalRequests").at(0).at("operation").get<std::string>();
       const auto result = session.execute(operation, session.revision());

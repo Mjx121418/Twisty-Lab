@@ -1,8 +1,18 @@
 import { readFileSync } from 'node:fs';
+import Ajv from 'ajv';
 import * as THREE from 'three';
 import { expect, it } from 'vitest';
 import { createKernel, GeometryInstance, KernelSession, type CellAxisLayout } from '../../kernel/index';
 import { S3GpuProjection } from '../../web/src/s3Gpu';
+
+it('requires the contact-cut capability for the exact 45-degree realization', () => {
+  const validate = new Ajv({strict:false,allErrors:true}).compile(JSON.parse(readFileSync('schemas/realization.schema.json','utf8')));
+  const realization = JSON.parse(readFileSync('packages/cell24-192/cell24-192-s3.json','utf8'));
+  expect(validate(realization),JSON.stringify(validate.errors)).toBe(true);
+  expect(validate({...realization,requiredCapabilities:realization.requiredCapabilities.filter((c:string)=>c!=='s3-octahedral-tangent-cuts')})).toBe(false);
+  expect(validate({...realization,cutDepth:2/3})).toBe(false);
+  expect(validate({...realization,cutDepth:.72})).toBe(false);
+});
 
 it('loads the large authoring source through the independent portable language API', async () => {
   const module = await createKernel();
@@ -23,28 +33,30 @@ it('loads the large authoring source through the independent portable language A
   } finally {puzzle.delete();}
 });
 
-it('24-cell GPU transforms preserve complete cut membership in every chart and ordinary turn', async () => {
+for (const [id, pieces, participants, depth] of [
+  ['cell24',672,105,2/3], ['cell24-192',216,21,Math.SQRT1_2],
+] as const) it(`${id} GPU transforms preserve complete cut membership in every chart and ordinary turn`, async () => {
   const module = await createKernel();
-  const session = new KernelSession(module, readFileSync('packages/cell24/package.json','utf8'));
+  const session = new KernelSession(module, readFileSync(`packages/${id}/package.json`,'utf8'));
   session.lightweightResults();
-  const geometry = new GeometryInstance(module,session.native,readFileSync('packages/cell24/cell24-s3.json','utf8'));
+  const geometry = new GeometryInstance(module,session.native,readFileSync(`packages/${id}/${id}-s3.json`,'utf8'));
   const assets = new Map(geometry.scene.meshAssets.map(a=>[a.id,new THREE.BufferGeometry()]));
   const meshes = geometry.scene.visualParts.map(p=>{
     const mesh=new THREE.Mesh(assets.get(p.meshAssetId),new THREE.MeshStandardMaterial());
     mesh.userData={meshAssetId:p.meshAssetId};return mesh;
   });
-  const gpu=new S3GpuProjection(geometry,meshes,assets,2/3);
+  const gpu=new S3GpuProjection(geometry,meshes,assets,depth);
   try {
     const layout=geometry.scene.controlLayout as CellAxisLayout;
     for (const group of layout.groups) {
       geometry.setProjection({focusCell:group.id,guide:{group:group.id,axis:group.categories[0].axes[0].id}});
       gpu.captureDrawing();expect(gpu.update()).toBe(true);
-      expect(gpu.guidePieces.size).toBe(105);
+      expect(gpu.guidePieces.size).toBe(participants);
       const neighbors = layout.groups.filter(g => g.center.reduce((dot,v,j) => dot + v * group.center[j],0) >= .5 - 1e-8);
       expect(neighbors).toHaveLength(9);
-      const participants = (g: typeof group) => session.plan({operation:g.categories[0].axes[0].turns[0].operation,parameters:{}}).transition!.pieceActions.map(a=>a.pieceId);
-      const focused = new Set(participants(group));
-      const allowed = new Set(neighbors.flatMap(participants));
+      const members = (g: typeof group) => session.plan({operation:g.categories[0].axes[0].turns[0].operation,parameters:{}}).transition!.pieceActions.map(a=>a.pieceId);
+      const focused = new Set(members(group));
+      const allowed = new Set(neighbors.flatMap(members));
       const revision = geometry.drawingRevision;
       for (const radius of [gpu.fadeRange.minRadius, .8, gpu.fadeRange.maxStartRadius]) {
         gpu.setFadeStartRadius(radius);expect(gpu.update()).toBe(true);
@@ -57,8 +69,8 @@ it('24-cell GPU transforms preserve complete cut membership in every chart and o
           if (!allowed.has(id)) expect(opacity,`${group.id}/${id}/${radius}`).toEqual({min:0,max:0});
           else expect(opacity.max,`${group.id}/${id}/${radius}`).toBeGreaterThan(0);
         }
-        expect(hidden.size).toBe(672-allowed.size);
-        if (radius===gpu.fadeRange.minRadius) expect(opaque.size).toBe(105);
+        expect(hidden.size).toBe(pieces-allowed.size);
+        if (radius===gpu.fadeRange.minRadius) expect(opaque.size).toBe(participants);
       }
       const visible = gpu.opacityRanges.filter(o=>o.max>0).length;
       gpu.setFadeEndRadius(gpu.fadeRange.minRadius+.01);expect(gpu.update()).toBe(true);
@@ -76,7 +88,7 @@ it('24-cell GPU transforms preserve complete cut membership in every chart and o
     const revision=geometry.drawingRevision;
     for (const op of session.definition.operations) {
       const result=session.plan({operation:op.id,parameters:{}});
-      expect(result.transition?.pieceActions).toHaveLength(105);
+      expect(result.transition?.pieceActions).toHaveLength(participants);
       geometry.prepare(result.transitionRecord??JSON.stringify(result.transition),false);
       for (const t of [.23,.5,.77]) {
         geometry.evaluatePose(t);

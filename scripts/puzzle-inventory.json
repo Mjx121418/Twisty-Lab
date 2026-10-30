@@ -16,7 +16,8 @@
     "gear_spherical.py",
     "gear_packages.py",
     "tesseract_packages.py",
-    "cell24_packages.py"
+    "cell24_packages.py",
+    "cell24_192_packages.py"
   ],
   "inputs": [
     "scripts/puzzle-inventory.json",
@@ -293,6 +294,15 @@
       "id": "cell24",
       "realizations": [
         "cell24-s3.json"
+      ],
+      "files": [
+        "manifest.json"
+      ]
+    },
+    {
+      "id": "cell24-192",
+      "realizations": [
+        "cell24-192-s3.json"
       ],
       "files": [
         "manifest.json"

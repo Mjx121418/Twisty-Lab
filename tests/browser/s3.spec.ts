@@ -89,8 +89,8 @@ test('S³ animates on the GPU without per-frame drawing rebuilds in every cell f
       expect(middle.equals(before)).toBe(false);
     }
     await expect(page.getByTestId('app')).toHaveAttribute('data-animating', 'false');
-    // The app synchronizes its final session once, after the animation.
-    expect(Number(await host.getAttribute('data-drawing-revision'))).toBe(revision + 1);
+    // The exact committed pose is installed without rebuilding the CPU drawing.
+    expect(Number(await host.getAttribute('data-drawing-revision'))).toBe(revision);
   }
   expect(errors).toEqual([]);
 });

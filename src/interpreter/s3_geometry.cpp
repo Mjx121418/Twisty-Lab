@@ -211,13 +211,17 @@ std::shared_ptr<const GeometryProgram> compile_s3(std::shared_ptr<const Executio
   ensure(r.at("schemaVersion") == 1 && r.at("compatibleDefinitionDigest") == definition->digest,
          "/compatibleDefinitionDigest", "S3 realization does not match this definition.");
   const bool octahedral = r.value("cellShape", std::string{"cube"}) == "octahedron";
+  const auto requested = r.at("requiredCapabilities").get<std::set<std::string>>();
+  const bool tangent = requested.contains("s3-octahedral-tangent-cuts");
   ensure(!r.contains("cellShape") || r.at("cellShape") == "cube" || octahedral, "/cellShape",
          "Unknown spherical cell shape.");
   std::set<std::string> capabilities{"triangle-meshes", "so4-isometries", "stereographic-projection",
                                      "dynamic-drawing-meshes"};
   if (octahedral)
     capabilities.insert("s3-octahedral-cells");
-  ensure(r.at("requiredCapabilities").get<std::set<std::string>>() == capabilities, "/requiredCapabilities",
+  if (octahedral && tangent)
+    capabilities.insert("s3-octahedral-tangent-cuts");
+  ensure(requested == capabilities, "/requiredCapabilities",
          "Declare all S3 drawing capabilities.");
   auto program = std::make_shared<GeometryProgram>();
   auto s3 = std::make_shared<S3Geometry>();
@@ -225,7 +229,8 @@ std::shared_ptr<const GeometryProgram> compile_s3(std::shared_ptr<const Executio
   program->execution = std::move(execution);
   s3->depth = r.at("cutDepth").get<double>();
   ensure(std::isfinite(s3->depth) &&
-             (octahedral ? s3->depth > 1 / std::sqrt(3.) && s3->depth < 1 / std::sqrt(2.)
+             (octahedral ? (tangent ? std::abs(s3->depth - std::sqrt(.5)) < 1e-12
+                                   : s3->depth > 1 / std::sqrt(3.) && s3->depth < 1 / std::sqrt(2.))
                          : s3->depth > 0 && s3->depth < .5),
          "/cutDepth", "Cut depth is outside the supported cell topology interval.");
   for (int c = 1; c <= 4; ++c)

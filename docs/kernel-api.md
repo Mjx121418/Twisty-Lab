@@ -588,14 +588,21 @@ all 27 participants, even the unmarked center and other self-loops.
 The additional `s3-octahedral-cells` capability and `cellShape: "octahedron"` select the ordinary 24-cell. Its cut
 normals are the eight signed coordinate vectors and the sixteen vectors
 `(±1,±1,±1,±1)/2`. Supported depths satisfy `1/√3 < cutDepth < 1/√2`;
-the shipped model uses `2/3`. Each domain supplies `cutMembership` (24 booleans,
+the 672-piece model uses `2/3`. The additional required capability
+`s3-octahedral-tangent-cuts` permits the endpoint `cutDepth: 0.7071067811865476`
+(45° radius), used by `cell24-192`: 192 movable pieces plus 24 fixed unmarked
+centers. This capability is valid only at that endpoint and must accompany
+`s3-octahedral-cells`; older runtimes reject the unsupported capability.
+It adds no fields, buffers, or native symbols; API version 7, kernel version
+0.7.0, and buffer versions remain unchanged. Each domain supplies `cutMembership` (24 booleans,
 coordinate normals first in X/Y/Z/W order, positive before negative, followed
 by half-coordinate sign tuples in lexicographic order with positive first),
 `colorNormals` (ordered visible sector normals), and unit `pieceCenter`, in
 place of `activeCoordinates`. Membership and color counts differ. Frames are
 proper rotations preserving all 24 normals, including half-integral entries.
 Track `cell` is a layout cell ID: the eight coordinate names above or
-`H` followed by four `p`/`m` signs. Every ordinary turn contains 105 pieces.
+`H` followed by four `p`/`m` signs. Every ordinary turn contains 105 pieces in
+the 672-piece model or 21 in the 45° variant.
 The compiler accepts up to 200,000 predicate nodes; the shipped package remains
 inside the 16 MiB execution/source bounds. No jumbling requests are authored.
 
@@ -648,7 +655,7 @@ layouts are unchanged.
 
 The TypeScript `GeometryInstance` helper retains the current intrinsic frame.
 For dynamic meshes its `positions`, `normals`, `indices`, `matrices`, and `scene`
-are owned current drawing snapshots, updated by `setState`, `prepare`,
+are owned drawing snapshots, updated by default `setState`, `prepare`,
 `evaluate`, or `setProjection(options)`. `projectionOptions` returns a copy.
 Rejected options leave the previous drawing and animation intact. Matrix-only
 `destination(record)` rejects dynamic meshes; use independent `animate` /
@@ -707,16 +714,32 @@ rotation when the combined SO(4) matrix's last row is unchanged; if it changes,
 refresh the drawing. This preserves clipping topology and projected normals.
 
 The helper's owned `isometries: Float64Array` always follows its retained frame.
-`prepare(record, false)` and `evaluatePose(progress)` update only this frame and
-its poses. The previous drawing buffers and `scene` remain available, with
+`prepare(record, false)`, `setState(stateText, false)`, and
+`evaluatePose(progress)` update only this frame and its poses. The previous
+drawing buffers and `scene` remain available, with
 `drawingIsCurrent: false`; `refreshProjection()` explicitly brings them current
-without cancelling the animation. `drawingRevision` increments after successful
-projection, allowing clients to avoid repeated copies. Default `prepare`,
-`evaluate`, `setState`, and `setProjection` still project immediately. The app
+without cancelling the animation. Deferred `setState` installs the exact validated
+state and cancels the previous animation; an invalid state preserves both the
+current frame and animation. Drawing arrays and scene remain owned snapshots
+of the last projection, rather than describing the new poses. `drawingRevision`
+increments after successful projection, allowing clients to avoid repeated
+copies. Default `prepare`, `evaluate`, `setState(stateText)`, and `setProjection`
+still project immediately. The app
 uses shaders for safe caps, cached clipped meshes at the pole, and fresh CPU
 projection if a changed cap needs clipping. CPU raycasting refreshes the drawing
 on demand; selection stays disabled during animation. Three.js materials,
 shaders, camera state and scheduling remain outside the kernel.
+
+The reference renderer installs final S³ states with deferred projection and
+refreshes the CPU drawing only for picking, changed projection options, or a
+clipping fallback. Transparent S³ surfaces use cached BackSide/FrontSide
+materials on two full-range groups of the same sortable mesh, preserving the
+original back/front order. Both materials share that part's shader uniforms;
+selection colors, emissive intensity, opacity and depth settings stay in sync.
+Their side configurations stay fixed across frames. Opaque surfaces retain a
+single material and draw. These renderer policies do not change native/WASM
+contracts or buffer layouts. The optional TypeScript helper argument is backward compatible;
+API and buffer versions are unchanged.
 
 The app shows pieces belonging to the focused cell or any face neighbor, using
 their complete positive cut memberships. At settled poses, more distant pieces

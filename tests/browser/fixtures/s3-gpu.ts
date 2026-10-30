@@ -4,7 +4,9 @@ import * as THREE from 'three';
 import { createKernel, copyIntrinsicMeshes, GeometryInstance, KernelSession } from '../../../kernel/index';
 import { patchS3Material, S3GpuProjection } from '../../../web/src/s3Gpu';
 import { s3FadeRange } from '../../../web/src/s3Fade';
+import { S3MaterialPasses, type S3Mesh } from '../../../web/src/s3Materials';
 import type { CellAxisLayout } from '../../../kernel/index';
+import { RenderView } from '../../../web/src/renderer';
 
 export async function compareS3Projection(base: string) {
   const module = await createKernel({ wasmURL: new URL('kernel/generated/twisty.wasm', base) });
@@ -56,14 +58,19 @@ export async function compareS3Projection(base: string) {
     scene.add(mesh); return mesh;
   });
   const cpuMeshes = makeMeshes(cpu, true), gpuMeshes = makeMeshes(gpuScene);
+  const cpuMaterials = cpuMeshes.map(m=>m.material), gpuMaterials = gpuMeshes.map(m=>m.material);
+  const passes = new S3MaterialPasses();
   const gpu = new S3GpuProjection(geometry, gpuMeshes, assets);
-  function pixels(scene: THREE.Scene, meshes: typeof cpuMeshes, opaqueOnly: boolean) {
+  function pixels(scene: THREE.Scene, meshes: S3Mesh[], opaqueOnly: boolean, cached = true) {
     for (let i = 0; i < meshes.length; i++) {
       const mesh = meshes[i], range = gpu.opacityRanges[i], faded = range.min < 1;
+      const material = (meshes === gpuMeshes ? gpuMaterials : cpuMaterials)[i];
       mesh.visible = range.max > 0 && (!opaqueOnly || !faded);
-      mesh.material.opacity = 1;
-      mesh.material.depthWrite = !faded;
-      if (mesh.material.transparent !== faded) { mesh.material.transparent = faded; mesh.material.needsUpdate = true; }
+      material.opacity = 1;
+      material.depthWrite = !faded;
+      if (material.transparent !== faded) { material.transparent = faded; material.needsUpdate = true; }
+      mesh.material = material;
+      if (cached && meshes === gpuMeshes) passes.sync(mesh,material);
     }
     renderer.setRenderTarget(target); renderer.render(scene, camera);
     const pixels = new Uint8Array(400 * 400 * 4);
@@ -71,6 +78,7 @@ export async function compareS3Projection(base: string) {
     return pixels;
   }
   const reports: { focusCell: string; operation: string; opaqueOnly: boolean; meanError: number; differentPixels: number }[] = [];
+  let materialPassMaxError = 0;
   try {
     for (const [index, focusCell] of ['Wm', 'Xp', 'Ym', 'Zp', 'Wp'].entries()) {
       startRadius = index % 2 ? fade.maxStartRadius : fade.minRadius;
@@ -83,6 +91,8 @@ export async function compareS3Projection(base: string) {
         if (!gpu.update()) throw new Error(`Unexpected clipping fallback: ${focusCell}/${operation}`);
         // Draw GPU before updating its cached CPU clipping buffers.
         const all = pixels(gpuScene, gpuMeshes, false), opaque = pixels(gpuScene, gpuMeshes, true);
+        const uncached = pixels(gpuScene,gpuMeshes,false,false);
+        for (let i=0;i<all.length;i++) materialPassMaxError=Math.max(materialPassMaxError,Math.abs(all[i]-uncached[i]));
         geometry.refreshProjection(); upload();
         for (const opaqueOnly of [true, false]) {
           const reference = pixels(cpu, cpuMeshes, opaqueOnly), actual = opaqueOnly ? opaque : all;
@@ -106,13 +116,91 @@ export async function compareS3Projection(base: string) {
     for (let i = 0; i < 12; i++) geometry.evaluate(i / 12);
     const cpuFrameMs = (performance.now() - start) / 12;
     const opacityProbes = probeOpacity(renderer, target);
-    return { reports, gpuFrameMs, cpuFrameMs, opacityProbes };
+    return { reports, gpuFrameMs, cpuFrameMs, opacityProbes, materialPassMaxError };
   } finally {
     gpu.dispose(); geometry.dispose(); session.dispose();
-    for (const mesh of [...cpuMeshes, ...gpuMeshes]) mesh.material.dispose();
+    passes.dispose();
+    for (const material of [...cpuMaterials, ...gpuMaterials]) material.dispose();
     for (const a of assets.values()) a.dispose();
     target.dispose(); renderer.dispose(); renderer.forceContextLoss();
   }
+}
+
+/** Exercise the production pass cache with both puzzle families, including
+ * selected opaque surfaces and CPU meshes whose clipping topology changes. */
+export async function compareS3MaterialViews(base: string, puzzle: 'cell24' | 'cell24-192' | 'tesseract3') {
+  const module=await createKernel({wasmURL:new URL('kernel/generated/twisty.wasm',base)});
+  const data=new URL(`kernel/examples/canvas/data/${puzzle}/`,base);
+  const session=new KernelSession(module,await (await fetch(new URL('package.json',data))).text());
+  session.lightweightResults();
+  // Exercise transported colors without enumerating all 552 requests at each
+  // step of the 24-cell's general-purpose random scrambler.
+  if(puzzle.startsWith('cell24')){
+    if(session.run('Xp_fXYZ Hpppp_eXY Yp_vX Hpmmp_vZ','transactional').status!=='Committed')throw new Error('Cannot prepare mixed 24-cell state.');
+  }
+  else session.scramble(41,7);
+  const realization=await (await fetch(new URL(`${puzzle}-s3.json`,data))).json();
+  const host=document.createElement('div');host.style.cssText='width:400px;height:300px';document.body.append(host);
+  const view=new RenderView(module,host,session.native,realization,()=>{},()=>false,()=>{});
+  // Private access is confined to this browser fixture: compare the same
+  // production objects with the previous automatic DoubleSide draw path.
+  const internals=view as unknown as {
+    frame:number;resizeObserver:ResizeObserver;renderer:THREE.WebGLRenderer;meshes:S3Mesh[];
+    materials:THREE.MeshStandardMaterial[];materialPasses:S3MaterialPasses;gpu:S3GpuProjection;
+    assets:Map<string,THREE.BufferGeometry>;updateTransforms:()=>void;
+  };
+  cancelAnimationFrame(internals.frame);internals.resizeObserver.disconnect();
+  const target=new THREE.WebGLRenderTarget(400,300);
+  const renderer=internals.renderer;
+  const reports:{focus:string;operation:string;style:string;maxError:number;calls:number}[]=[];
+  const pixels=(cached:boolean)=>{
+    internals.meshes.forEach((mesh,i)=>{
+      const material=internals.materials[i];mesh.material=material;
+      if(cached)internals.materialPasses.sync(mesh,material);
+    });
+    renderer.setRenderTarget(target);renderer.render(view.scene,view.camera);
+    const pixels=new Uint8Array(400*300*4);renderer.readRenderTargetPixels(target,0,0,400,300,pixels);
+    return pixels;
+  };
+  const compare=(focus:string,operation:string,style:string)=>{
+    const actual=pixels(true),calls=renderer.info.render.calls,expected=pixels(false);
+    let maxError=0;for(let i=0;i<actual.length;i++)maxError=Math.max(maxError,Math.abs(actual[i]-expected[i]));
+    reports.push({focus,operation,style,maxError,calls});
+  };
+  try {
+    view.setState(session.stateText());
+    const layout=realization.controlLayout as CellAxisLayout;
+    const operations=['Xp','Wp','Ym'].map((id,i)=>layout.groups.find(g=>g.id===id)!.categories[i].axes[0].turns[0].operation);
+    for(const [index,focus] of (puzzle.startsWith('cell24')?['Wm','Xp','Hpppp']:['Wm','Xp','Ym']).entries()){
+      view.focusCell(focus);
+      const operation=operations[index], plan=session.plan({operation,parameters:{}});
+      view.prepare(plan.transitionRecord??JSON.stringify(plan.transition));view.sample(.37);
+      const piece=view.geometry.scene.visualParts.find((_,i)=>internals.gpu.opacityRanges[i].min===1)!.pieceId;
+      view.highlight([],[]);compare(focus,operation,'ordinary');
+      view.highlight([piece],[]);compare(focus,operation,'selected');
+      view.highlight([],[piece]);compare(focus,operation,'blocked');
+    }
+    view.highlight([],[]);
+    if(puzzle==='tesseract3'){
+      view.setProjection({...view.geometry.projectionOptions,clipRadius:1.1});
+      view.sample(.61);compare('clipped',operations.at(-1)!,'changed topology');
+      view.sample(.23);compare('clipped',operations.at(-1)!,'changed topology again');
+    }else{
+      // Exercise the same cached-CPU shader branch with the portable 24-cell
+      // drawing. Deep geometric clipping is an expensive separate kernel task;
+      // its changing index counts are already covered above and in unit tests.
+      view.geometry.refreshProjection();internals.updateTransforms();
+      const uniforms=(internals.gpu as unknown as {uniforms:{s3Enabled:{value:boolean}}[]}).uniforms;
+      internals.meshes.forEach((mesh,i)=>{
+        mesh.geometry=internals.assets.get(mesh.userData.meshAssetId)!;
+        mesh.matrix.identity();mesh.matrixWorldNeedsUpdate=true;uniforms[i].s3Enabled.value=false;
+      });
+      compare('portable CPU drawing',operations.at(-1)!,'ordinary');
+      const piece=view.geometry.scene.visualParts.find((_,i)=>internals.gpu.opacityRanges[i].min===1)!.pieceId;
+      view.highlight([piece],[]);compare('portable CPU drawing',operations.at(-1)!,'selected');
+    }
+    return {puzzle,reports};
+  } finally {target.dispose();view.dispose();session.dispose();host.remove();}
 }
 
 function probeOpacity(renderer: THREE.WebGLRenderer, target: THREE.WebGLRenderTarget) {

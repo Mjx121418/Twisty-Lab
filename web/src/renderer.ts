@@ -5,6 +5,7 @@ import { GeometryInstance, copyFloatView, copyIndexView, type MainModule, type R
 import { DestinationOverlay } from './destinationOverlay';
 import type { PieceDestination } from './destinations';
 import { S3GpuProjection } from './s3Gpu';
+import { S3MaterialPasses, type S3Mesh } from './s3Materials';
 const colors: Record<string, number> = {
   U: 0xf1eee3, R: 0xe76561, F: 0x66c7a0, D: 0xf1cf67, L: 0xeea76d, B: 0x7fa5ed, body: 0x202a35, mechanism: 0x17212a, hardware: 0xaeb8c3,
 };
@@ -16,7 +17,9 @@ export class RenderView {
   readonly controls: OrbitControls | TrackballControls;
   private readonly renderer: THREE.WebGLRenderer;
   private readonly descriptor: SceneDescriptor;
-  private readonly meshes: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>[] = [];
+  private readonly meshes: S3Mesh[] = [];
+  private readonly materials: THREE.MeshStandardMaterial[] = [];
+  private readonly materialPasses?: S3MaterialPasses;
   private readonly assets = new Map<string, THREE.BufferGeometry>();
   private readonly gpu?: S3GpuProjection;
   private readonly pickingMeshes: THREE.Mesh[] = [];
@@ -133,6 +136,7 @@ export class RenderView {
       mesh.matrixAutoUpdate = false;
       mesh.userData = { visualPartId: part.visualPartId, pieceId: part.pieceId, baseColor: material.color.getHex(), role: part.role, meshAssetId: part.meshAssetId };
       this.meshes.push(mesh);
+      this.materials.push(material);
       this.scene.add(mesh);
       if (part.label) {
         const canvas = document.createElement('canvas');
@@ -160,8 +164,9 @@ export class RenderView {
     }
     if (this.descriptor.ambientSpace === 'S3') {
       this.gpu = new S3GpuProjection(this.geometry, this.meshes, this.assets, realization.cutDepth);
-      for (const mesh of this.meshes) {
-        const picking = new THREE.Mesh(this.assets.get(mesh.userData.meshAssetId)!, mesh.material);
+      this.materialPasses = new S3MaterialPasses();
+      for (const [index, mesh] of this.meshes.entries()) {
+        const picking = new THREE.Mesh(this.assets.get(mesh.userData.meshAssetId)!, this.materials[index]);
         picking.userData = mesh.userData;
         picking.userData.meshIndex = this.pickingMeshes.length;
         picking.matrixAutoUpdate = false;
@@ -312,7 +317,7 @@ export class RenderView {
     this.frame = requestAnimationFrame(this.draw);
   };
 
-  setState(state: string): void { this.destinations.clear(); this.geometry.setState(state); this.updateTransforms(); }
+  setState(state: string): void { this.destinations.clear(); this.geometry.setState(state, !this.gpu); this.updateTransforms(); }
   prepare(transition: string): void {
     this.destinations.clear();
     this.geometry.prepare(transition, !this.gpu);
@@ -348,11 +353,12 @@ export class RenderView {
     const selection = new Set(selected);
     for (let index = 0; index < this.meshes.length; index++) {
       const mesh = this.meshes[index];
+      const material = this.materials[index];
       const isBlocked = blocked.includes(mesh.userData.pieceId);
       const isSelected = selection.has(mesh.userData.pieceId);
-      mesh.material.color.setHex(mesh.userData.baseColor).multiplyScalar(selected.length > 0 && !isSelected && !isBlocked ? 0.65 : 1);
-      mesh.material.emissive.setHex(isBlocked ? 0xff553e : isSelected ? 0xffc75f : 0x000000);
-      mesh.material.emissiveIntensity = isBlocked ? 0.5 : isSelected ? 0.45 : 0;
+      material.color.setHex(mesh.userData.baseColor).multiplyScalar(selected.length > 0 && !isSelected && !isBlocked ? 0.65 : 1);
+      material.emissive.setHex(isBlocked ? 0xff553e : isSelected ? 0xffc75f : 0x000000);
+      material.emissiveIntensity = isBlocked ? 0.5 : isSelected ? 0.45 : 0;
       // Opaque selected surfaces join the transparent pass at full opacity,
       // after the destination ghosts. Depth testing still hides rear faces.
       const depth = (this.gpu?.pieceDepths ?? this.descriptor.projection?.pieceDepths)?.[mesh.userData.pieceId] ?? -1;
@@ -360,15 +366,16 @@ export class RenderView {
       const opacity = this.gpu?.opacityRanges[index];
       const outer = opacity ? opacity.min < 1 : fade > 0;
       mesh.visible = opacity ? opacity.max > 0 && (!outer || this.shellVisible) : depth <= 0.1 || this.shellVisible;
-      mesh.material.opacity = opacity ? 1 : 1 - 0.92 * fade * fade * (3 - 2 * fade);
-      mesh.material.depthWrite = !outer;
+      material.opacity = opacity ? 1 : 1 - 0.92 * fade * fade * (3 - 2 * fade);
+      material.depthWrite = !outer;
       if (!isSelected && (this.gpu ? this.gpu.guidePieces.has(mesh.userData.pieceId) : this.descriptor.guidePieces?.includes(mesh.userData.pieceId))) {
-        mesh.material.emissive.setHex(0x8f7850); mesh.material.emissiveIntensity = 0.15;
+        material.emissive.setHex(0x8f7850); material.emissiveIntensity = 0.15;
       }
-      if (mesh.material.transparent !== (isSelected || outer)) {
-        mesh.material.transparent = isSelected || outer;
-        mesh.material.needsUpdate = true;
+      if (material.transparent !== (isSelected || outer)) {
+        material.transparent = isSelected || outer;
+        material.needsUpdate = true;
       }
+      this.materialPasses?.sync(mesh, material);
       mesh.renderOrder = isSelected ? (mesh.userData.role === 'body' ? 20 : 21) : 0;
       let outline = this.selectionOutlines.get(index);
       if (isSelected && !outline && !this.descriptor.dynamicMeshes) {
@@ -429,10 +436,11 @@ export class RenderView {
     this.renderer.domElement.removeEventListener('webglcontextrestored', this.contextRestored);
     this.destinations.dispose();
     this.gpu?.dispose();
+    this.materialPasses?.dispose();
     this.guide.geometry.dispose(); this.guide.material.dispose();
     this.selectionMaterial.dispose();
     for (const edges of this.selectionEdges.values()) edges.dispose();
-    for (const mesh of this.meshes) mesh.material.dispose();
+    for (const material of this.materials) material.dispose();
     for (const sprite of this.labelSprites) sprite.material.dispose();
     for (const texture of this.textures) texture.dispose();
     for (const geometry of this.assets.values()) geometry.dispose();

@@ -1,13 +1,16 @@
 import { expect, test } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 
-test('24-cell offers ordinary octahedral turns and all 24 presentation focus cells', async ({ page }) => {
+for (const [id,minRadius,maxStart,endRadius,minEnd] of [
+  ['cell24','0.45','1.31','1.39','0.46'],
+  ['cell24-192','0.42','1.23','1.31','0.43'],
+] as const) test(`${id} offers ordinary octahedral turns and all 24 presentation focus cells`, async ({ page }) => {
   test.setTimeout(180_000);
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.goto('./');
   await expect(page.getByTestId('goal-status')).toHaveText('Solved');
-  await page.getByLabel('Puzzle', { exact: true }).selectOption('cell24');
+  await page.getByLabel('Puzzle', { exact: true }).selectOption(id);
   const controls = page.getByRole('region', { name: 'Cell twist controller' });
   await expect(controls).toBeVisible({ timeout: 30_000 });
   await expect(page.locator('canvas')).toHaveCount(1);
@@ -18,34 +21,34 @@ test('24-cell offers ordinary octahedral turns and all 24 presentation focus cel
   await page.getByLabel('Animation speed').selectOption('0');
   const digest = await page.getByTestId('state-digest').textContent();
   const slider = controls.getByRole('slider', {name:'Fade start radius'});
-  await expect(slider).toHaveValue('0.45');
+  await expect(slider).toHaveValue(minRadius);
   const drawingRevision = await host.getAttribute('data-drawing-revision');
-  const original = await host.locator('canvas').screenshot({path:'test-results/cell24-neighbors.png'});
+  const original = await host.locator('canvas').screenshot({path:`test-results/${id}-neighbors.png`});
   await slider.press('End');
-  await expect(slider).toHaveValue('1.31');
-  await expect(host).toHaveAttribute('data-fade-start-radius','1.31');
+  await expect(slider).toHaveValue(maxStart);
+  await expect(host).toHaveAttribute('data-fade-start-radius',maxStart);
   expect(await host.getAttribute('data-drawing-revision')).toBe(drawingRevision);
   await expect(page.getByTestId('state-digest')).toHaveText(digest!);
-  const expanded = await host.locator('canvas').screenshot({path:'test-results/cell24-neighbors-wide-fade.png'});
+  const expanded = await host.locator('canvas').screenshot({path:`test-results/${id}-neighbors-wide-fade.png`});
   expect(expanded.equals(original)).toBe(false);
   const endSlider = controls.getByRole('slider', {name:'Fade end radius'});
-  await expect(endSlider).toHaveValue('1.39');
+  await expect(endSlider).toHaveValue(endRadius);
   await endSlider.press('Home');
-  await expect(endSlider).toHaveValue('0.46');
-  await expect(slider).toHaveValue('0.45');
-  await expect(host).toHaveAttribute('data-fade-end-radius','0.46');
+  await expect(endSlider).toHaveValue(minEnd);
+  await expect(slider).toHaveValue(minRadius);
+  await expect(host).toHaveAttribute('data-fade-end-radius',minEnd);
   expect(await host.getAttribute('data-drawing-revision')).toBe(drawingRevision);
-  const cropped = await host.locator('canvas').screenshot({path:'test-results/cell24-neighbors-short-fade.png'});
+  const cropped = await host.locator('canvas').screenshot({path:`test-results/${id}-neighbors-short-fade.png`});
   expect(cropped.equals(original)).toBe(false);
   const savedDownload = page.waitForEvent('download');
   await page.getByRole('button', {name:'Save session ↗'}).click();
   const savedFile = await (await savedDownload).path();
-  expect(JSON.parse(await readFile(savedFile!,'utf8')).presentation.cameras[0].fadeEndRadius).toBe(.46);
+  expect(JSON.parse(await readFile(savedFile!,'utf8')).presentation.cameras[0].fadeEndRadius).toBe(Number(minEnd));
   await endSlider.press('End');
   await slider.press('End');
   await page.getByLabel('Open session file').setInputFiles(savedFile!);
-  await expect(endSlider).toHaveValue('0.46');
-  await expect(slider).toHaveValue('0.45');
+  await expect(endSlider).toHaveValue(minEnd);
+  await expect(slider).toHaveValue(minRadius);
   await endSlider.press('End');
   await slider.press('Home');
   for (const [kind, count, angle] of [['Face axes',4,'+120°'],['Edge axes',6,'+180°'],['Vertex axes',3,'+90°']] as const) {
@@ -61,12 +64,12 @@ test('24-cell offers ordinary octahedral turns and all 24 presentation focus cel
     await button.click();
     await controls.getByRole('button', { name: `Focus ${label} cell`, exact: true }).click();
     await expect(host).toHaveAttribute('data-vertex-transform', 'gpu');
-    await expect(slider).toHaveValue('0.45');
+    await expect(slider).toHaveValue(minRadius);
     await expect(page.getByTestId('state-digest')).toHaveText(digest!);
   }
   await cells.getByRole('button', { name: 'Hpppp', exact: true }).click();
   await controls.getByRole('button', { name: 'Focus Hpppp cell', exact: true }).click();
-  await page.locator('canvas').screenshot({path:'test-results/cell24-focused.png'});
+  await page.locator('canvas').screenshot({path:`test-results/${id}-focused.png`});
   await page.getByLabel('Animation speed').selectOption('3000');
   const revision = Number(await host.getAttribute('data-drawing-revision'));
   const frame = Number(await host.getAttribute('data-frame-id'));
@@ -75,11 +78,12 @@ test('24-cell offers ordinary octahedral turns and all 24 presentation focus cel
   await expect.poll(async () => Number(await host.getAttribute('data-frame-id'))).toBeGreaterThan(frame+2);
   expect(Number(await host.getAttribute('data-drawing-revision'))).toBe(revision);
   await expect(page.getByTestId('app')).toHaveAttribute('data-animating','false');
+  expect(Number(await host.getAttribute('data-drawing-revision'))).toBe(revision);
   const zoomRevision = await host.getAttribute('data-drawing-revision');
   const zoomDigest = await page.getByTestId('state-digest').textContent();
   await host.locator('canvas').hover();
   await page.mouse.wheel(0,-6000);
-  await host.locator('canvas').screenshot({path:'test-results/cell24-close-focus.png'});
+  await host.locator('canvas').screenshot({path:`test-results/${id}-close-focus.png`});
   const closeDownload = page.waitForEvent('download');
   await page.getByRole('button', {name:'Save session ↗'}).click();
   const closeFile = await (await closeDownload).path();

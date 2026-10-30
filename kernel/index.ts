@@ -483,8 +483,9 @@ export class GeometryInstance {
     if (!this.scene.dynamicMeshes) throw new Error('This realization has no configurable projection.');
     this.accept(this.frame!, options); this.options = structuredClone(options);
   }
-  setState(stateText: string): void {
-    this.accept(this.definition.frame(stateText));
+  /** Install the exact state; false retains the previous drawing until explicitly refreshed. */
+  setState(stateText: string, project = true): void {
+    this.accept(this.definition.frame(stateText), this.options, project);
     this.animation?.delete(); this.animation = undefined;
   }
   prepare(record: string, project = true): number {

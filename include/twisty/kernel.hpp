@@ -39,6 +39,6 @@ inline Json kernel_info() {
             "shared-geometry-definitions", "shared-rotation-tracks", "space-qualified-poses",
             "family-rotation-generators", "transport-path-selectors",
             "seekable-animations", "so4-isometries", "stereographic-projection", "dynamic-drawing-meshes",
-            "intrinsic-meshes", "s3-octahedral-cells"}}};
+            "intrinsic-meshes", "s3-octahedral-cells", "s3-octahedral-tangent-cuts"}}};
 }
 } // namespace twisty

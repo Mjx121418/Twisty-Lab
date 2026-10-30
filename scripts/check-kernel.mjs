@@ -53,6 +53,7 @@ try {
   assert.equal(info.geometryAPIVersion, 1); assert.equal(info.poseBufferVersion, 1);
   assert.equal(info.intrinsicMeshBufferVersion, 1);
   assert.ok(info.geometryCapabilities.includes('intrinsic-meshes'));
+  assert.ok(info.geometryCapabilities.includes('s3-octahedral-tangent-cuts'));
   assert.equal(info.controllerAPIVersion, 1);
   assert.ok(exported.includes('Twisty::controller'));
   assert.equal(info.version, manifest.version);
@@ -204,6 +205,7 @@ try {
   };
   for (const [puzzle, algorithm, firstMove, kind] of [
     ['cell24', "Xp_fXYZ Yp_vX (Xp_fXYZ Yp_vX)'", 'Xp_fXYZ', 'cell24-s3'],
+    ['cell24-192', "Xp_fXYZ Yp_vX (Xp_fXYZ Yp_vX)'", 'Xp_fXYZ', 'cell24-192-s3'],
     ['tesseract3', "Xp_fY Yp_fZ (Xp_fY Yp_fZ)'", 'Xp_fY', 'tesseract3-s3'],
     ['cube3', "R U R' U'", 'U', 'cube-port-diagram'],
     ['bandaged', 'U R', 'U', 'cube-port-diagram'],
@@ -336,6 +338,20 @@ try {
       const matrices = Array.from(geometry.matrices);
       assert.equal(matrices.length, reference.transforms.length);
       matrices.forEach((value, i) => assert.ok(Math.abs(value - reference.transforms[i]) < 1e-6));
+      if (geometry.scene.dynamicMeshes) {
+        const revision = geometry.drawingRevision, positions = geometry.positions, normals = geometry.normals;
+        const isometries = geometry.isometries.slice();
+        geometry.setState(session.stateText(), false);
+        assert.equal(geometry.drawingRevision, revision);
+        assert.equal(geometry.drawingIsCurrent, false);
+        assert.equal(geometry.positions, positions);
+        assert.deepEqual(geometry.isometries, isometries);
+        geometry.refreshProjection();
+        assert.equal(geometry.drawingRevision, revision + 1);
+        assert.equal(geometry.drawingIsCurrent, true);
+        assert.deepEqual(geometry.positions, positions);
+        assert.deepEqual(geometry.normals, normals);
+      }
       assert.equal(session.move(firstMove, origin.revision).status, 'StaleRevision');
       const saved = session.save({ frontend: 'external-node-consumer' });
       const restored = new KernelSession(module, session);

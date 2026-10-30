@@ -1,11 +1,11 @@
 # Ordinary 3-cell-turning 24-cell
 
-The `cell24` preset represents the regular `{3,4,3}` on unit S³, displayed by
-stereographic projection into R³. It uses the same GPU SO(4) transform and
+The `cell24` and `cell24-192` presets represent the regular `{3,4,3}` on unit S³, displayed by
+stereographic projection into R³. Both use the same GPU SO(4) transform and
 projection adapter as the 8-cell. There is one view and no port diagram.
 
-The 24 unit cell centers are `±e_i` and `(±1,±1,±1,±1)/2`. Cutting balls satisfy
-`c·p ≥ 2/3`, giving geodesic radius `acos(2/3) ≈ 48.189685°`. Cuts are in the
+The 24 unit cell centers are `±e_i` and `(±1,±1,±1,±1)/2`. In `cell24`, cutting
+balls satisfy `c·p ≥ 2/3`, giving geodesic radius `acos(2/3) ≈ 48.189685°`. Cuts are in the
 stable interval `1/√3 < d < 1/√2`. Colors follow nearest cell centers and are
 carried with the pieces. Intrinsic meshes use a 56% inset toward their piece
 centers, approximately halving their previous linear extent.
@@ -26,9 +26,24 @@ proper symmetries generate the catalogs; ordinary-turn graph searches reach
 every listed placement. Unmarked center, face-center, and subcorner stabilizers
 are quotiented without creating visible endpoint jumps.
 
+The smaller `cell24-192` preset uses `d = 1/√2`, exactly 45°. It has 192 movable
+pieces plus the same 24 unmarked centers, for 216 identities in total. Only the
+first three families in the table have positive volume at this radius: 96
+two-color face pieces and 96 three-color edge pieces. The remaining families
+collapse onto cut boundaries and are omitted. The cutting balls cover S³;
+uncovered vertex regions collapse to isolated boundary points at this limit
+and do not form additional pieces.
+This preset has 792 shared placements, 504 colored surface parts, and six shared
+mesh assets. Its cut surfaces include curved digons, so the mesher joins feasible
+small-circle arcs rather than requiring three distinct corner vertices per face.
+Zero-area faces are omitted while retaining closed, symmetric piece boundaries.
+Its larger patches use six samples per arc and four interior rings, matching
+the approximate vertex spacing of the 672-piece model's smaller patches.
+
 There are 24 cell groups. Each exposes four face axes with ±120° turns, six
 edge axes with 180° turns, and three vertex axes with ±90° and 180° turns:
-552 directed requests altogether. Axis labels use each cell’s local quaternion frame. Each turns 105 pieces, including self-loops.
+552 directed requests altogether. Axis labels use each cell’s local quaternion
+frame. Each turns 105 pieces in `cell24` or 21 in `cell24-192`, including self-loops.
 All these ordinary turns preserve the complete cut arrangement. Jumbling is
 not implemented.
 
@@ -36,8 +51,12 @@ not implemented.
 abstract catalogs, spherical cut surfaces, and five checked-in package files.
 They use only repository modules and Python's standard library. Regenerate with
 `npm run build:puzzles`; ordinary app builds consume the prebuilt package.
+The corresponding `cell24_192_model.py`, `cell24_192_meshes.py`, and
+`cell24_192_packages.py` reuse the exact catalogs and common packaging code for
+the smaller variant. Its semantic digest is pinned independently.
 The native and WASM APIs advertise `s3-octahedral-cells` and use the additive octahedral S³ realization fields in
-[kernel-api.md](kernel-api.md). No application-specific rules enter the core.
+[kernel-api.md](kernel-api.md). The 45° variant additionally requires
+`s3-octahedral-tangent-cuts`. No application-specific rules enter the core.
 
 Authoring tests check complete participation, reachable catalogs, closed
 surfaces, tangent normals, and colored mesh stabilizers. Native geometry tests
@@ -56,6 +75,12 @@ pass, including half-integral placements. Idle S³ views render again on camera,
 selection, projection, or animation changes rather than continuously redrawing
 all transparent layers.
 
+Transparent surfaces retain the back/front pass order using cached materials
+with fixed sides on the same sortable mesh. Completing a turn installs its
+exact committed pose without rebuilding CPU drawing buffers. Picking or a
+clipping change refreshes those buffers when needed; ordinary animation and
+state synchronization keep using the intrinsic GPU geometry.
+
 The reference view shows the focused cell and its eight face neighbors. A
 piece is included when any of its active cuts belongs to one of those cells;
 uncolored memberships count too. More distant pieces are fully transparent.
@@ -70,3 +95,7 @@ end radius are discarded even on triangles crossing the boundary. Both radii
 are saved with the camera; changing them updates GPU uniforms without rebuilding
 projected geometry. The camera can approach to 0.05 units, with a 0.005 near
 clipping plane, allowing inspection from inside the focused cell.
+
+The smaller preset uses the same focus, fading, and camera controls. All 21
+focused pieces remain opaque. Its fade-start range is 0.42–1.23 and its
+fade-end range is 0.43–1.31 projection units, scaled to the 45° cutting balls.

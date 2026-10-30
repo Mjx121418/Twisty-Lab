@@ -16,8 +16,8 @@ def slot(pose): return 'slot/'+'.'.join(label(c) for c in pose[0])
 def at(piece, domain, qs): return {'at':dict(piece=piece,placements=[domain+'/p'+str(q) for q in qs])}
 
 
-def documents(model):
-    source = dict(kind='relational-puzzle', languageVersion=1, id=ID+'-v1', domains=[], predicates={}, requests=[])
+def documents(model, puzzle_id=ID, depth=DEPTH, mesh_assets=None, extra_capabilities=()):
+    source = dict(kind='relational-puzzle', languageVersion=1, id=puzzle_id+'-v1', domains=[], predicates={}, requests=[])
     catalog = dict(kind='relational-port-bindings', version=1, puzzleId=source['id'], resources=[], domains=[], pieces={}, placements={}, requests={})
     invariant, goal = [], []
     for d in model.domains:
@@ -50,9 +50,9 @@ def documents(model):
             profiles=[dict(id='turn',choices=choices)],defaultProfile='turn'))
         catalog['requests'][name] = dict(inverse=move['inverse'],family=move['group'],event=name,profile='turn')
     stats = compress(source,catalog,{})
-    realization = dict(schemaVersion=1,id=ID+'-s3-v1',kind='s3-cell-turning',compatibleDefinitionDigest='0'*64,
-        requiredCapabilities=['triangle-meshes','so4-isometries','stereographic-projection','dynamic-drawing-meshes','s3-octahedral-cells'],
-        cellShape='octahedron',cutDepth=DEPTH,pieceInset=INSET,assets=assets(),domains={},
+    realization = dict(schemaVersion=1,id=puzzle_id+'-s3-v1',kind='s3-cell-turning',compatibleDefinitionDigest='0'*64,
+        requiredCapabilities=['triangle-meshes','so4-isometries','stereographic-projection','dynamic-drawing-meshes','s3-octahedral-cells',*extra_capabilities],
+        cellShape='octahedron',cutDepth=depth,pieceInset=INSET,assets=assets() if mesh_assets is None else mesh_assets,domains={},
         operationTracks={m['id']:{key:m[key] for key in ('cell','planeU','planeV','angle')} for m in model.moves},
         controlLayout=dict(version=2,kind='cell-axes',groups=model.groups))
     for d in model.domains:
@@ -65,24 +65,31 @@ def documents(model):
     return package,realization,stats
 
 
-def main():
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--write',action='store_true');args=parser.parse_args()
-    model=Model(); package,realization,stats=documents(model)
+def generate(model, write=False, puzzle_id=ID, depth=DEPTH, mesh_assets=None, extra_capabilities=(), metadata=None):
+    package,realization,stats=documents(model,puzzle_id,depth,mesh_assets,extra_capabilities)
     with tempfile.TemporaryDirectory(prefix='twisty-cell24-') as tmp:
         path=Path(tmp)/'package.json';path.write_text(json.dumps(package,separators=(',',':')))
         result=json.loads(subprocess.check_output([str(ROOT/'build/native/twisty'),'validate','--definition',str(path),'--json'],text=True))
         assert result['status']=='Valid',result
     digest=result['definitionDigest'];realization['compatibleDefinitionDigest']=digest
+    pieces=sum(len(d['pieces']) for d in model.domains)
+    sectors=sum(len(d['pieces'])*d['k'] for d in model.domains)
+    placements=sum(len(d['poses']) for d in model.domains)
     files={'puzzle.pzl.json':package['source'],'bindings.json':package['catalog'],'package.json':package,
-           'cell24-s3.json':realization,'manifest.json':dict(puzzleId=ID+'-v1',definitionDigest=digest,pieces=672,
-           coloredSectors=1368,cells=24,requests=552,placements=2088,transportCompression=stats)}
-    directory=ROOT/'packages'/ID
-    if args.write:directory.mkdir(parents=True,exist_ok=True)
+           puzzle_id+'-s3.json':realization,'manifest.json':dict(puzzleId=puzzle_id+'-v1',definitionDigest=digest,pieces=pieces,
+           coloredSectors=sectors,cells=24,requests=552,placements=placements,transportCompression=stats,**(metadata or {}))}
+    directory=ROOT/'packages'/puzzle_id
+    if write:directory.mkdir(parents=True,exist_ok=True)
     for name,data in files.items():
         path=directory/name;text=json.dumps(data,separators=(',',':'),sort_keys=True)+'\n'
-        if args.write:path.write_text(text)
+        if write:path.write_text(text)
         elif not path.exists() or path.read_text()!=text:raise SystemExit(f'{path} is stale; run npm run build:puzzles.')
-    print('S³ 24-cell: 672 pieces, 1368 colored sectors, 2088 shared placements, 552 ordinary turns',flush=True)
+    print(f'S³ {puzzle_id}: {pieces} pieces, {sectors} colored sectors, {placements} shared placements, 552 ordinary turns',flush=True)
+
+
+def main():
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--write',action='store_true');args=parser.parse_args()
+    generate(Model(),write=args.write)
 
 
 if __name__=='__main__':main()

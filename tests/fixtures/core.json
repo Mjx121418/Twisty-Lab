@@ -443,6 +443,23 @@
       "operation": "Hpmmp_vZ",
       "expectedStatus": "Committed",
       "definitionDigest": "9e6c16f4dcbac7aea8fbbd9b54756490ab972a4fae1c27545860ee9b25000655"
+    },
+    {
+      "name": "45-degree 24-cell face turn includes its unmarked center",
+      "source": "packages/cell24-192/package.json",
+      "prefix": "",
+      "operation": "Xp_fXYZ",
+      "expectedStatus": "Committed",
+      "unchangedParticipant": "center-Xp/0",
+      "definitionDigest": "977d1c81e3a27aa6657932155744672a7612545f2ab1fc91277564062d0731e5"
+    },
+    {
+      "name": "45-degree 24-cell vertex turn after mixed cells",
+      "source": "packages/cell24-192/package.json",
+      "prefix": "Xp_fXYZ Hpppp_eXY Yp_vX",
+      "operation": "Hpmmp_vZ",
+      "expectedStatus": "Committed",
+      "definitionDigest": "977d1c81e3a27aa6657932155744672a7612545f2ab1fc91277564062d0731e5"
     }
   ]
 }

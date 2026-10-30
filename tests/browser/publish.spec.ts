@@ -3,6 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 // Check every shipped preset without native tools or exhaustive model audits.
 const inventory = [
   ['cell24', 'Xp_fXYZ'],
+  ['cell24-192', 'Xp_fXYZ'],
   ['tesseract3', 'Xp_fY'],
   ['cube3', 'R'],
   ['bandaged-uf-ufr', 'U'],
@@ -65,7 +66,7 @@ test('published simulator loads every preset and keeps both views working throug
   for (const [puzzle, move] of presets) {
     await test.step(puzzle, async () => {
       await page.getByLabel('Puzzle', { exact: true }).selectOption(puzzle);
-      await expect(page.locator('canvas')).toHaveCount(['tesseract3', 'cell24'].includes(puzzle) ? 1 : 2, { timeout: loadTimeout });
+      await expect(page.locator('canvas')).toHaveCount(puzzle==='tesseract3'||puzzle.startsWith('cell24') ? 1 : 2, { timeout: loadTimeout });
       await resting(page);
       const initial = await page.getByTestId('state-digest').textContent();
       const movement = page.getByRole('button', { name: `Move ${move}`, exact: true });

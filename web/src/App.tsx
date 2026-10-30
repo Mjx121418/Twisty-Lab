@@ -90,6 +90,8 @@ const prebuiltFiles = import.meta.glob<string>([
   '../../packages/melty-*/melty-*-spherical.json',
   '../../packages/cell24/package.json',
   '../../packages/cell24/cell24-s3.json',
+  '../../packages/cell24-192/package.json',
+  '../../packages/cell24-192/cell24-192-s3.json',
   '../../packages/tesseract3/package.json',
   '../../packages/tesseract3/tesseract3-s3.json',
   '../../packages/icosahedron-*/package.json',
@@ -122,6 +124,7 @@ const presets = [
   { id: 'bagua', label: 'Bagua Cube', source: baguaSource, realizations: [baguaRealization, baguaDiagram], spherical: baguaSphere },
   ...meltyPresets,
   { id: 'cell24', label: 'S³ 24-cell · 672 pieces', source: '', realizations: [], deferred: true, stereographic: true },
+  { id: 'cell24-192', label: 'S³ 24-cell · 192 movable pieces · 45°', source: '', realizations: [], deferred: true, stereographic: true },
   { id: 'tesseract3', label: 'S³ 8-cell · 3 × 3 × 3 × 3', source: '', realizations: [], deferred: true, stereographic: true },
   { id: 'icosahedron-110', label: `Face-turning icosahedron · ${icosahedronManifest.pieces} pieces`, source: '', realizations: [], deferred: true, euclideanLabel: 'Icosahedron' },
   { id: 'icosahedron-152', label: 'Face-turning icosahedron · 152 pieces', source: '', realizations: [], deferred: true, euclideanLabel: 'Icosahedron' },
@@ -205,7 +208,7 @@ export function App() {
   const displayedViews = orderedViews.filter(view => viewSelection.visible.includes(view.id));
   const rhombus = ['rhombus-60','orbifold-333-rhombus'].includes(activePreset?.realizations[0].flatSurface?.chart??'');
 
-  function relativeSession(session: KernelSession): boolean { return ['icosahedron-152-v1', 'tesseract3-v1', 'cell24-v1'].includes(session.definition.puzzleId); }
+  function relativeSession(session: KernelSession): boolean { return ['icosahedron-152-v1', 'tesseract3-v1', 'cell24-v1', 'cell24-192-v1'].includes(session.definition.puzzleId); }
   function readSnapshot(session: KernelSession): Snapshot {
     return (controller.current || relativeSession(session)) && !advanced.current ? { ...session.stateSnapshot(), legalRequests: [], candidateRequests: [] } : session.snapshot();
   }
@@ -246,7 +249,7 @@ export function App() {
     setViewSelection(current => current.order.length === available.length && current.order.every(id => available.includes(id)) ? current : defaultViews(available));
     setSourceId(id); setSnapshot(initial); setVisualDigest(initial.stateDigest);
     setSelected([]); setEvidence(undefined); setLastScramble(''); setVisualError('');
-    setAlgorithm(initial.puzzleId === 'cell24-v1' ? "Xp_fXYZ Yp_vX (Xp_fXYZ Yp_vX)'" : initial.puzzleId === 'tesseract3-v1' ? "Xp_fY Yp_fZ (Xp_fY Yp_fZ)'" : initial.puzzleId === 'flat-333-6-v1' ? "A D A' D'" : initial.puzzleId.startsWith('flat-') ? "A B A' B'" : initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' :
+    setAlgorithm(initial.puzzleId.startsWith('cell24') ? "Xp_fXYZ Yp_vX (Xp_fXYZ Yp_vX)'" : initial.puzzleId === 'tesseract3-v1' ? "Xp_fY Yp_fZ (Xp_fY Yp_fZ)'" : initial.puzzleId === 'flat-333-6-v1' ? "A D A' D'" : initial.puzzleId.startsWith('flat-') ? "A B A' B'" : initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' :
       initial.puzzleId === 'bagua-experimental-v1' ? "U+ R' L' D2 R L U-" : initial.puzzleId.startsWith('icosahedron-') ? "A_j O_j (A_j O_j)'" : initial.puzzleId.startsWith('melty-') ? "U U'" :
       parsedSource.kind === 'relational-gear-prototypes' ? (parsedSource.gearedEdges.length === 0 ? "Rq Uq Rq' Uq'" :
         initial.legalRequests.some((request) => request.operation === 'R') ? "R R'" : "Rq Rq'") : "R U R' U'");
@@ -603,7 +606,7 @@ export function App() {
           </div>
 
           <section className="commands">
-            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{s3 ? `${cellLayout.groups.length} ${activePreset?.id === 'cell24' ? 'octahedral' : 'cubic'} cells · face, edge and vertex axes` : activePreset?.surface ? `Face keys ${Object.keys(activePreset.realizations[0].flatSurface?.diskCenters??{}).join(' ')} · ${rhombus ? 60 : 90}° turns · Shift for inverse` : icosahedron ? '20 face axes · ordinary turns: 120° · select pieces to choose an axis' : snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : snapshot?.puzzleId === 'bagua-experimental-v1' ? '+ / −: 45° · face keys: 90° · Shift for inverse' : melty ? 'Face keys U R F D L B · choose each cap independently · hover for angles' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
+            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{s3 ? `${cellLayout.groups.length} ${cellLayout.groups.length === 24 ? 'octahedral' : 'cubic'} cells · face, edge and vertex axes` : activePreset?.surface ? `Face keys ${Object.keys(activePreset.realizations[0].flatSurface?.diskCenters??{}).join(' ')} · ${rhombus ? 60 : 90}° turns · Shift for inverse` : icosahedron ? '20 face axes · ordinary turns: 120° · select pieces to choose an axis' : snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : snapshot?.puzzleId === 'bagua-experimental-v1' ? '+ / −: 45° · face keys: 90° · Shift for inverse' : melty ? 'Face keys U R F D L B · choose each cap independently · hover for angles' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
             {controller.current && snapshot && <FamilyControls key={generation} controller={controller.current} revision={snapshot.revision}
               layout={cellLayout?.version === 1 ? cellLayout : undefined} busy={busy} onTurn={turnTo}
               selectedPieces={selected} onClearSelection={() => setSelected([])} onRemovePiece={choosePiece} />}

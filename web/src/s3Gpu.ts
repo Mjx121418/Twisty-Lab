@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { copyIntrinsicMeshes, type GeometryInstance } from '../../kernel/index';
 import { s3CellVisibility, s3FadeRange, s3Opacity, type S3FadeSettings } from './s3Fade';
+import type { S3Mesh } from './s3Materials';
 
 // Keep Three.js's lighting and color management; compute projection, normals
 // and opacity in the vertex shader, then interpolate alpha across the surface.
@@ -72,8 +73,6 @@ export function clippedMeshRotation(current: ArrayLike<number>, base: ArrayLike<
   return true;
 }
 
-type PuzzleMesh = THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>;
-
 /** Static prototype buffers and small per-part uniforms. CPU-clipped meshes are
  * reusable under rotations fixing the pole; other clipping changes ask the
  * caller for a fresh portable drawing before the frame can be displayed. */
@@ -100,7 +99,7 @@ export class S3GpuProjection {
   private readonly pose = new THREE.Matrix4();
   private readonly center = new THREE.Vector4();
 
-  constructor(private readonly geometry: GeometryInstance, private readonly meshes: PuzzleMesh[], private readonly cpuAssets: Map<string, THREE.BufferGeometry>, readonly cutDepth = 1 / 3) {
+  constructor(private readonly geometry: GeometryInstance, private readonly meshes: S3Mesh[], private readonly cpuAssets: Map<string, THREE.BufferGeometry>, readonly cutDepth = 1 / 3) {
     const layout = geometry.scene.controlLayout;
     if (layout?.version !== 2) throw new Error('S³ projection requires cell centers.');
     this.fadeRange = s3FadeRange(cutDepth, layout.groups.map(g => g.center));
@@ -148,7 +147,11 @@ export class S3GpuProjection {
       mesh.setIndex(new THREE.BufferAttribute(indices.slice(asset.indexOffset, asset.indexOffset + asset.indexCount), 1));
       this.assets.set(asset.id, mesh);
     }
-    this.uniforms = meshes.map(mesh => { mesh.frustumCulled = false; return patchS3Material(mesh.material, this.startRadius, this.endRadius); });
+    this.uniforms = meshes.map(mesh => {
+      mesh.frustumCulled = false;
+      if (Array.isArray(mesh.material)) throw new Error('S³ projection requires one source material per part.');
+      return patchS3Material(mesh.material, this.startRadius, this.endRadius);
+    });
     this.combined = meshes.map(() => new THREE.Matrix4());
     this.bases = meshes.map(() => new THREE.Matrix4());
     this.rotations = meshes.map(() => new THREE.Matrix4());

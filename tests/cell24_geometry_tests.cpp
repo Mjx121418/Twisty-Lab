@@ -31,26 +31,30 @@ void finite(const GeometryDrawing &drawing) {
     check(std::isfinite(x), "Nonfinite normal");
 }
 } // namespace
-int main() {
+int main(int argc, char **argv) {
   try {
-    Session session(read("packages/cell24/package.json"));
+    const std::string id = argc > 1 ? argv[1] : "cell24";
+    const bool small = id == "cell24-192";
+    const std::size_t pieces = small ? 216 : 672, parts = small ? 504 : 1368,
+                      assets = small ? 6 : 15, participants = small ? 21 : 105;
+    Session session(read("packages/" + id + "/package.json"));
     session.lightweight_results(true);
     const auto initial = session.state_json();
-    const auto r = Json::parse(read("packages/cell24/cell24-s3.json"));
+    const auto r = Json::parse(read("packages/" + id + "/" + id + "-s3.json"));
     GeometryDefinition geometry(session.execution(), r.dump());
     const auto intrinsic = geometry.intrinsic_mesh();
     const auto descriptor = Json::parse(intrinsic.descriptor_json());
-    check(descriptor.at("visualParts").size() == 1368 && descriptor.at("meshAssets").size() == 15,
+    check(descriptor.at("visualParts").size() == parts && descriptor.at("meshAssets").size() == assets,
           "Unshared or missing colored meshes");
     for (const auto &part : descriptor.at("visualParts"))
       check(part.at("cutHalfspaces").size() == 24, "Missing complete cut membership");
     const auto &definition = *session.execution()->definition();
-    check(definition.pieces.size() == 672 && definition.operations.size() == 552, "Wrong 24-cell inventory");
+    check(definition.pieces.size() == pieces && definition.operations.size() == 552, "Wrong 24-cell inventory");
     for (const auto &op : definition.operations) {
       const auto result = session.execute(op.id, session.revision());
       check(result.at("status") == "Committed", op.id + " unavailable");
       const auto &transition = result.at("transitions")[0];
-      check(transition.at("pieceActions").size() == 105, "Incomplete 105-piece cap");
+      check(transition.at("pieceActions").size() == participants, "Incomplete turning cap");
       auto animation = geometry.animate(transition.dump());
       const auto middle = animation.evaluate(.37);
       for (const auto x : middle.isometries())
@@ -70,7 +74,7 @@ int main() {
       const auto id = group.at("id").get<std::string>();
       const auto operation = group.at("categories")[0]["axes"][0]["turns"][0]["operation"].get<std::string>();
       const auto result = session.execute(operation, session.revision());
-      check(result.at("status") == "Committed" && result.at("transitions")[0]["pieceActions"].size() == 105,
+      check(result.at("status") == "Committed" && result.at("transitions")[0]["pieceActions"].size() == participants,
             "Scrambled cap unavailable");
       session.execute(definition.operations[definition.operation_ids.at(operation)].inverse,
                       session.revision());
@@ -81,13 +85,13 @@ int main() {
                {"guide", {{"group", id}, {"axis", group.at("categories")[0]["axes"][0]["id"]}}}}
               .dump());
       finite(drawing);
-      check(Json::parse(drawing.scene_json()).at("guidePieces").size() == 105, "Incorrect guide membership");
+      check(Json::parse(drawing.scene_json()).at("guidePieces").size() == participants, "Incorrect guide membership");
     }
     auto invalid = r;
     invalid["requiredCapabilities"].erase(invalid["requiredCapabilities"].end()-1);
     reject([&] { GeometryDefinition g(session.execution(), invalid.dump()); });
     invalid = r;
-    invalid["domains"]["s"]["cutMembership"][0] = false;
+    invalid["domains"]["f"]["cutMembership"][0] = false;
     reject([&] { GeometryDefinition g(session.execution(), invalid.dump()); });
     invalid = r;
     invalid["operationTracks"]["Xp_fXYZ"]["angle"] = .5;
@@ -96,8 +100,13 @@ int main() {
     invalid["cutDepth"] = .5;
     reject([&] { GeometryDefinition g(session.execution(), invalid.dump()); });
     invalid = r;
-    invalid["domains"]["s"]["placementFrames"]["p0"][0] = .3;
+    invalid["domains"]["f"]["placementFrames"]["p0"][0] = .3;
     reject([&] { GeometryDefinition g(session.execution(), invalid.dump()); });
+    if (small) {
+      invalid = r;
+      invalid["cutDepth"] = 2. / 3.;
+      reject([&] { GeometryDefinition g(session.execution(), invalid.dump()); });
+    }
     std::cout << "24-cell native: all 552 turns, endpoints/inverses, scrambled caps, 24 focus charts, and "
                  "invalid geometry passed\n";
   } catch (const std::exception &e) {

@@ -51,7 +51,8 @@
           "so4-isometries",
           "stereographic-projection",
           "dynamic-drawing-meshes",
-          "s3-octahedral-cells"
+          "s3-octahedral-cells",
+          "s3-octahedral-tangent-cuts"
         ]
       }
     },
@@ -1117,7 +1118,7 @@
               "properties": {
                 "cutDepth": {
                   "exclusiveMinimum": 0.5773502691896258,
-                  "exclusiveMaximum": 0.7071067811865475
+                  "maximum": 0.7071067811865476
                 },
                 "domains": {
                   "additionalProperties": {
@@ -1141,7 +1142,18 @@
                     "const": "s3-octahedral-cells"
                   }
                 }
-              }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "requiredCapabilities": {"contains": {"const": "s3-octahedral-tangent-cuts"}}
+                    }
+                  },
+                  "then": {"properties": {"cutDepth": {"const": 0.7071067811865476}}},
+                  "else": {"properties": {"cutDepth": {"exclusiveMaximum": 0.7071067811865475}}}
+                }
+              ]
             },
             "else": {
               "properties": {

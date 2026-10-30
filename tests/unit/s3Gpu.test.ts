@@ -57,6 +57,42 @@ function setup() {
   } };
 }
 
+it('installs committed states without projecting and refreshes exact drawing buffers on demand', () => {
+  const {session,geometry,gpu,dispose} = setup();
+  try {
+    const positions=geometry.positions, normals=geometry.normals, revision=geometry.drawingRevision;
+    const operations=['Xp_fY','Wp_fX','Ym_fX'];
+    for (const operation of operations) {
+      const record=session.move(operation).transitionRecords![0];
+      geometry.prepare(record,false);geometry.evaluatePose(1);expect(gpu.update()).toBe(true);
+      geometry.setState(session.stateText(),false);expect(gpu.update()).toBe(true);
+      expect(geometry.positions).toBe(positions);expect(geometry.normals).toBe(normals);
+      expect(geometry.drawingRevision).toBe(revision);expect(geometry.drawingIsCurrent).toBe(false);
+      const frame=geometry.definition.frame(session.stateText());
+      try {expect(Array.from(geometry.isometries)).toEqual(Array.from(frame.isometries() as Float64Array));}
+      finally {frame.delete();}
+      const endpoint=geometry.isometries.slice();geometry.evaluatePose(.2);
+      expect(geometry.isometries).toEqual(endpoint); // State installation cancelled the old animation.
+    }
+    const frame=geometry.definition.frame(session.stateText());
+    const expected=geometry.definition.projectWithOptions(frame,'stereographic',JSON.stringify(geometry.projectionOptions));
+    try {
+      geometry.refreshProjection();
+      expect(geometry.drawingRevision).toBe(revision+1);expect(geometry.drawingIsCurrent).toBe(true);
+      expect(geometry.positions).toEqual(new Float32Array(expected.positions() as Float32Array));
+      expect(geometry.normals).toEqual(new Float32Array(expected.normals() as Float32Array));
+      geometry.refreshProjection();expect(geometry.drawingRevision).toBe(revision+1);
+    } finally {expected.delete();frame.delete();}
+    // Rejected deferred state installs leave the current animation seekable.
+    const record=session.move('Zp_fX').transitionRecords![0];
+    geometry.prepare(record,false);geometry.evaluatePose(.25);
+    const before=geometry.isometries.slice();
+    expect(()=>geometry.setState('{}',false)).toThrow();
+    expect(geometry.isometries).toEqual(before);
+    geometry.evaluatePose(.75);expect(geometry.isometries).not.toEqual(before);
+  } finally {dispose();}
+});
+
 it('runs all 184 turns in all eight focus charts without per-frame CPU projection', () => {
   const { session, geometry, gpu, dispose } = setup();
   try {
