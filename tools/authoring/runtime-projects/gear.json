@@ -1,0 +1,25 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "gear",
+  "producer": {
+    "type": "source",
+    "package": "../../../packages/gear/package.json",
+    "realizations": [
+      {
+        "id": "gear-normal-euclidean",
+        "path": "../../../packages/gear/gear-normal-euclidean.json"
+      },
+      {
+        "id": "gear-port-diagram",
+        "path": "../../../packages/gear/gear-port-diagram.json"
+      },
+      {
+        "id": "gear-spherical",
+        "path": "../../../packages/gear/gear-spherical.json"
+      }
+    ]
+  },
+  "includeLegacy": false,
+  "output": "../../../runtime-puzzles/gear"
+}

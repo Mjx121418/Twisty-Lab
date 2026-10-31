@@ -243,3 +243,10 @@ Independent review of the Helicopter and Bagua models, symbolic placement domain
 ## Acknowledgments
 
 Most of this project's code, tests, and documentation were written by ChatGPT (OpenAI), working through Codex, with direction, requirements, and feedback from the project owner.
+
+The compiler-free [runtime SDK](docs/runtime-sdk.md) is packaged with
+`npm run package:runtime` and installed natively with `TWISTY_BUILD_AUTHORING=OFF`.
+Reference presets load from `runtime-puzzles/`; rebuild that compiled inventory
+explicitly with `npm run build:runtime-puzzles` after `npm run build:puzzles`.
+Source imports and custom Gear authoring load a separate optional compiler module.
+The complete SDK remains available for existing consumers.

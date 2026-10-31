@@ -1,6 +1,6 @@
+import {runtimeReference} from './runtime-reference';
 import { expectViews } from './view-controls';
 import { expect, test, type Page } from '@playwright/test';
-import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
 async function resting(page:Page):Promise<void>{
@@ -44,7 +44,7 @@ for(const name of ['torus','klein-bottle','hex-torus','hex-klein-bottle'])test(`
   await page.screenshot({path:`test-results/flat-${name}-selected.png`,fullPage:true});
   const host=page.getByTestId('cube-view');
   await host.getByText(hex?'5 twists':'3 twists',{exact:true}).click();await host.getByRole('button',{name:'Twist A',exact:true}).click();await resting(page);
-  const reference=JSON.parse(execFileSync('build/native/twisty',['run','--definition',`packages/flat-${name}/package.json`,'--algorithm','A','--json'],{encoding:'utf8'}));
+  const reference=runtimeReference(['run','--definition',`packages/flat-${name}/package.json`,'--algorithm','A','--json']);
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
   await page.getByRole('button',{name:'↶ Undo'}).click();await resting(page);
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);

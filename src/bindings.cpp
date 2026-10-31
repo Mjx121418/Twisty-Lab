@@ -1,8 +1,11 @@
 #include "twisty/artifact.hpp"
 #include "twisty/session.hpp"
 #include "twisty/geometry.hpp"
+#include "twisty/controller.hpp"
+#include "twisty/runtime_api.hpp"
 #ifndef TWISTY_ARTIFACT_ONLY
 #include "twisty/authoring/artifact.hpp"
+#include "twisty/authoring/runtime.hpp"
 #include "twisty/kernel.hpp"
 #endif
 #include <emscripten/bind.h>
@@ -35,6 +38,7 @@ std::string kernel_info_json() {
 #endif
 std::string artifact_info_json() { return artifact::info().dump(); }
 Session *create_artifact_session(const std::string &text) { return new Session(Execution::from_artifact(text)); }
+Session *create_runtime_session(const std::string &text, const std::string &controls) { return new Session(runtime_execution(text, controls)); }
 GeometryDefinition *create_artifact_geometry(const Session &session, const std::string &manifest, const std::string &realization) {
   return new GeometryDefinition(session.execution(), manifest, realization);
 }
@@ -54,14 +58,14 @@ Geometry *create_geometry_instance(const GeometryDefinition &definition) {
 Session *create_session_from_definition(const Session &session) {
   return new Session(session.execution());
 }
-#ifndef TWISTY_ARTIFACT_ONLY
 Controller *create_controller(const Session &session) { return new Controller(session.execution()); }
-#endif
 } // namespace
 EMSCRIPTEN_BINDINGS(twisty) {
   function("artifactInfoJSON", &artifact_info_json);
   function("validateArtifactJSON", &artifact::validate_json);
   function("createArtifactSession", &create_artifact_session, return_value_policy::take_ownership());
+  function("createRuntimeSession", &create_runtime_session, return_value_policy::take_ownership());
+  function("validateRuntimeJSON", &validate_runtime_json);
   function("createArtifactGeometryDefinition", &create_artifact_geometry, return_value_policy::take_ownership());
   function("createArtifactGeometryWithPayload", &create_artifact_geometry_with_payload, return_value_policy::take_ownership());
 #ifndef TWISTY_ARTIFACT_ONLY
@@ -71,13 +75,14 @@ EMSCRIPTEN_BINDINGS(twisty) {
   function("gearModuleJSON", &twisty::language::gear_module_json);
   function("kernelInfoJSON", &kernel_info_json);
   function("cubeArtifactBundleJSON", &language::cube_artifacts_json);
+  function("runtimeArtifactsJSON", &language::runtime_artifacts_json);
+  function("migrateSourceSessionJSON", &language::migrate_runtime_session_json);
 #endif
   function("createGeometry", &create_geometry, return_value_policy::take_ownership());
   function("createGeometryDefinition", &create_geometry_definition, return_value_policy::take_ownership());
   function("createGeometryInstance", &create_geometry_instance, return_value_policy::take_ownership());
   function("createSessionFromDefinition", &create_session_from_definition,
            return_value_policy::take_ownership());
-#ifndef TWISTY_ARTIFACT_ONLY
   function("createController", &create_controller, return_value_policy::take_ownership());
   class_<Controller>("Controller")
       .function("catalogJSON", &Controller::catalog_json)
@@ -86,6 +91,7 @@ EMSCRIPTEN_BINDINGS(twisty) {
       .function("destinationsJSON", &Controller::destinations_json)
       .function("planToJSON", &Controller::plan_to_json)
       .function("turnToJSON", &Controller::turn_to_json);
+#ifndef TWISTY_ARTIFACT_ONLY
   class_<twisty::language::Puzzle>("Puzzle")
       .constructor<std::string>()
       .function("inspectJSON", &twisty::language::Puzzle::inspect_json)

@@ -1,5 +1,5 @@
+import {runtimeReference} from './runtime-reference';
 import { expect, test } from '@playwright/test';
-import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
 test('Helicopter destinations track six phases, queued intents, undo and saved state', async ({ page }) => {
@@ -44,8 +44,8 @@ test('Melty destination controls allow independent opposite caps and separate hi
   const fixtures = JSON.parse(readFileSync('tests/fixtures/core.json', 'utf8')).cases;
   const fixture = fixtures.find((f: { name: string }) => f.name === 'Melty B opposite caps execute separately');
   const pkg = JSON.parse(readFileSync(fixture.source, 'utf8'));
-  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', fixture.source,
-    '--algorithm', `${fixture.prefix} ${fixture.operation}`, '--policy', 'transactional', '--json'], { encoding: 'utf8' }));
+  const reference = runtimeReference(['run', '--definition', fixture.source,
+    '--algorithm', `${fixture.prefix} ${fixture.operation}`, '--policy', 'transactional', '--json']);
   const prefix = fixture.prefix.split(' ');
   const first = prefix.pop()!;
   const steps = [first, fixture.operation];
@@ -53,7 +53,8 @@ test('Melty destination controls allow independent opposite caps and separate hi
   const targets = steps.map((op: string, index: number) => {
     const id = pkg.catalog.requests[op].family;
     const driver = pkg.catalog.controls.drivers.find((d: { id: string }) => d.id === id);
-    return { id, stop: driver.placements[transitions[index].afterState.placementOf[driver.piece]] };
+    const prefix = pkg.catalog.pieces[driver.piece].domain + '/';
+    return { id, stop: driver.placements[transitions[index].afterState.placementOf[driver.piece].slice(prefix.length)] };
   });
   expect(pkg.catalog.controls.families).toHaveLength(6);
   await page.goto('./');

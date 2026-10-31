@@ -1,0 +1,17 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "flat-torus",
+  "producer": {
+    "type": "source",
+    "package": "../../../packages/flat-torus/package.json",
+    "realizations": [
+      {
+        "id": "flat-quotient",
+        "path": "../../../packages/flat-torus/flat-quotient.json"
+      }
+    ]
+  },
+  "includeLegacy": false,
+  "output": "../../../runtime-puzzles/flat-torus"
+}

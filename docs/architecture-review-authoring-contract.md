@@ -83,6 +83,40 @@ oracle and production puzzle data remain unchanged. The previously failing test
 now passes all 11 originals; eight policy checks reject undeclared rule changes,
 altered legacy/current pins, changed frozen signatures and transport drift.
 
+Phase 6 adds `TWISTY_BUILD_AUTHORING=OFF`, `Twisty::runtime_kernel`, the separate
+`@twisty/runtime` WASM/TypeScript distribution, and optional `./authoring` and
+`./execution` entries in the complete compatibility SDK. Resolved controller
+contract 1 pins numeric phase readers and explicit route profiles to an execution;
+presentation contract 1 supplies inspector and view hints separately from rules.
+The reference application loads the compiled `runtime-puzzles/` inventory.
+Browser Gear edits, source imports and verified schema-2 save conversion load
+the authoring module explicitly. New runtime sessions save schema 3 while the
+legacy source API continues to save schema 2. Independent installed native, Node
+and Canvas examples consume the same execution/controller/interpreter contracts.
+Runtime API 1 is additive; artifact API 1, legacy API 7 and buffer versions remain
+separate. See [runtime distribution and ownership](kernel-api.md#runtime-distribution-api-1).
+Backend registration and remaining capability/presentation cleanup are Phase 7.
+
+Phase 6 verification passes 149 unit tests, 83 browser tests across all 20
+specifications (fresh single-worker batches), seven targeted native checks,
+184 source-free artifact checks, seven frozen architecture scenarios, seven
+detached authoring-tool checks, the complete installed compatibility SDK check,
+and all 48 interpreter conformance cases with opaque identifier variants.
+The new runtime-only installation, isolated Node/TypeScript consumer and Canvas
+client work without source/compiler inputs; archive symbols, WASM link inputs
+and exported factories enforce the distribution boundary. All 24 presets pass
+move/undo smoke checks in the reference app and both standalone clients.
+Save conversion checks cover exact definition pins, forged history rejection,
+undo/redo, view metadata and opaque 64-bit presentation integers. Relative-angle
+hints and asynchronous client replacement are covered by browser regressions.
+All 146 legacy artifacts remain byte-identical. The runtime corpus contains
+192 execution/control/correspondence/common-presentation/geometry documents and
+48 view hints; the final hint correction adds only authored rotation tracks to
+16 hints, with every other output unchanged apart from build provenance.
+[Distribution observations](contracts/baseline-measurements.md#phase-6-distribution-check)
+record sizes and the measurement method without claiming a cold-start gain.
+GitHub Pages remains manually triggered through `workflow_dispatch`.
+
 The recommended direction is to introduce a dedicated authoring CLI, backed by
 reusable compiler libraries, that emits validated runtime artifacts. Preserve
 the numeric abstract executor and the geometric interpreters as separate
@@ -454,4 +488,4 @@ checks and the full independent-consumer packaging check were inspected but were
 not executed for this documentation change.
 The review does not establish physical correctness of every puzzle or a measured
 startup/size regression. The original review did not implement a runtime loader
-or migrate puzzle artifacts; the current Phase 1–3 status is recorded at the top.
+or migrate puzzle artifacts; the current Phase 1–6 status is recorded at the top.

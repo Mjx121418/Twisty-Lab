@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
     std::map<std::string, std::string> options;
     for (int i = 2; i < argc; ++i) {
       const std::string option = argv[i];
-      if (option == "--json")
+      if (option == "--json" || option == "--artifact")
         options[option] = "true";
       else if (option.starts_with("--") && i + 1 < argc)
         options[option] = argv[++i];
@@ -51,7 +51,8 @@ int main(int argc, char **argv) {
           << "Twisty Lab — exact headless puzzle engine\n"
           << "Commands: compile, validate, inspect, run, scramble, replay, verify-fixtures\n"
           << "Options: --definition FILE --algorithm TEXT --policy interactive|transactional\n"
-          << "         --seed N --length N --session FILE --state FILE --save FILE --output FILE --json\n";
+          << "         --seed N --length N --session FILE --state FILE --save FILE --output FILE --json\n"
+          << "         --artifact: execute a source-free artifact, compiling source input first if supplied\n";
       return 0;
     }
     Json result;
@@ -98,7 +99,11 @@ int main(int argc, char **argv) {
       if (command == "compile")
         result = compile_execution_json(source);
       else {
-        Session session(source);
+        auto execution = options.contains("--artifact") && Json::parse(source).value("kind", std::string{}) == "twisty-abstract-artifact"
+          ? Execution::from_artifact(source) : Execution::from_source(source);
+        if (options.contains("--artifact") && !execution->source_free())
+          execution = Execution::from_artifact(execution->artifact_json().dump());
+        Session session(execution);
         if (!option("--session").empty())
           session.load(Json::parse(read(option("--session"))));
         if (command == "inspect")
@@ -109,7 +114,7 @@ int main(int argc, char **argv) {
           if (!option("--state").empty())
             session.execution()->decode(Json::parse(read(option("--state"))));
           result = {{"status", "Valid"},
-                    {"definitionDigest", session.definition()->digest},
+                    {session.definition()->source_free ? "executionDigest" : "definitionDigest", session.definition()->digest},
                     {"reachability", "not-certified-for-imported-assignments"}};
         } else if (command == "run")
           result = session.run(option("--algorithm"), option("--policy", "interactive"), session.revision());

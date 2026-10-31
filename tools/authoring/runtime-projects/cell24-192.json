@@ -1,0 +1,17 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "cell24-192",
+  "producer": {
+    "type": "source",
+    "package": "../../../packages/cell24-192/package.json",
+    "realizations": [
+      {
+        "id": "cell24-192-s3",
+        "path": "../../../packages/cell24-192/cell24-192-s3.json"
+      }
+    ]
+  },
+  "includeLegacy": false,
+  "output": "../../../runtime-puzzles/cell24-192"
+}

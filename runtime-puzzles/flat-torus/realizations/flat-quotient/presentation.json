@@ -1,0 +1,1 @@
+{"compatibleDefinitionDigest":"6f72bcfdc74badd67ca1736ac49f2b12b95afb00e5a72c319f7c078f5e3c319f","flatSurface":{"cutRadius":0.8,"diskCenters":{"A":[0.5,0.5],"B":[1.5,0.5],"C":[0.5,1.5],"D":[1.5,1.5]},"sideLength":2,"topology":"torus"},"id":"flat-torus-v1","kind":"flat-quotient","requiredCapabilities":["triangle-meshes","rigid-transforms","quotient-surface"],"schemaVersion":1}

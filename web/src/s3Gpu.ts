@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { copyIntrinsicMeshes, type GeometryInstance } from '../../kernel/index';
+import { copyIntrinsicMeshes, type GeometryInstance, type GeometryScene } from '../../kernel/shared';
 import { s3CellVisibility, s3FadeRange, s3Opacity, type S3FadeSettings } from './s3Fade';
 import type { S3Mesh } from './s3Materials';
 
@@ -99,7 +99,7 @@ export class S3GpuProjection {
   private readonly pose = new THREE.Matrix4();
   private readonly center = new THREE.Vector4();
 
-  constructor(private readonly geometry: GeometryInstance, private readonly meshes: S3Mesh[], private readonly cpuAssets: Map<string, THREE.BufferGeometry>, readonly cutDepth = 1 / 3) {
+  constructor(private readonly geometry: GeometryInstance<GeometryScene>, private readonly meshes: S3Mesh[], private readonly cpuAssets: Map<string, THREE.BufferGeometry>, readonly cutDepth = 1 / 3) {
     const layout = geometry.scene.controlLayout;
     if (layout?.version !== 2) throw new Error('S³ projection requires cell centers.');
     this.fadeRange = s3FadeRange(cutDepth, layout.groups.map(g => g.center));

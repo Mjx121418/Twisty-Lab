@@ -1,0 +1,25 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "bandaged",
+  "producer": {
+    "type": "source",
+    "package": "../../../packages/bandaged/package.json",
+    "realizations": [
+      {
+        "id": "cube-euclidean",
+        "path": "../../../packages/bandaged/cube-euclidean.json"
+      },
+      {
+        "id": "cube-port-diagram",
+        "path": "../../../packages/bandaged/cube-port-diagram.json"
+      },
+      {
+        "id": "cube-spherical",
+        "path": "../../../packages/bandaged/cube-spherical.json"
+      }
+    ]
+  },
+  "includeLegacy": false,
+  "output": "../../../runtime-puzzles/bandaged"
+}

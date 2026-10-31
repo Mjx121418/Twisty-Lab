@@ -73,10 +73,14 @@ A successful build publishes a dedicated directory:
 
 - `abstract.json`: geometry-free, source-free execution artifact.
 - `interpretation.json`: version 2 correspondence manifest.
+- `controls.json`: resolved controller contract 1, pinned to the executable.
+- `presentation.json`: inspector metadata contract 1, without source rules.
 - `realizations/<id>/realization.json`: version 1 backend envelope.
 - `realizations/<id>/geometry.json`: the exact UTF-8 payload bytes emitted by the
   C++ authoring library. Reformatting changes its digest.
-- `legacy/`: compatible source package, catalogs, and generated geometry.
+- `realizations/<id>/presentation.json`: view/control hints without duplicate mesh data.
+- `legacy/`: compatible source package, catalogs, and generated geometry; omitted
+  when the project specifies `"includeLegacy": false`.
 - `build-manifest.json`: authoring receipt version 1, with project identity,
   SHA-256 input, selected producer, native binary and output hashes, semantic
   identities, and realization inventory. No timestamps or absolute host paths
@@ -85,7 +89,8 @@ A successful build publishes a dedicated directory:
 Generation, export, geometry certification, semantic identity checks, and an
 initial runtime frame all succeed before publication. The C++ exporter owns
 geometry construction; `twisty_artifact_validate` links the source-free kernel
-and consumes only the four exported documents. No public kernel API or buffer
+and consumes the exported execution, control, correspondence, envelope and exact
+geometry payload documents. No public kernel API or buffer
 version is changed by the authoring project/receipt versions.
 
 `build` reuses an unchanged valid receipt. `--rebuild` regenerates and yields the
@@ -122,3 +127,12 @@ paths to preserve existing provenance and semantic identities. The compatibility
 commands remain supported, but a project build provides bounded dependencies
 and transactional output ownership. Normal web/kernel builds consume prebuilt
 packages without invoking generators.
+
+The reference application consumes source-free outputs in `runtime-puzzles/`.
+After rebuilding legacy authoring inputs, run `npm run build:runtime-puzzles` to
+export all 24 runtime projects and validate all 48 views. This separate command
+stages the complete runtime inventory and publishes the global receipt last.
+`npm run check:runtime-puzzles` only checks inputs, exact inventory and hashes.
+Normal web and SDK builds check freshness and never regenerate puzzle data.
+The application fetches only compiled preset data; source import, old-save
+conversion and custom Gear authoring load the optional authoring WASM module.

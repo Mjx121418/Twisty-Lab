@@ -1,0 +1,17 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "flat-pillowcase-6",
+  "producer": {
+    "type": "source",
+    "package": "../../../packages/flat-pillowcase-6/package.json",
+    "realizations": [
+      {
+        "id": "flat-quotient",
+        "path": "../../../packages/flat-pillowcase-6/flat-quotient.json"
+      }
+    ]
+  },
+  "includeLegacy": false,
+  "output": "../../../runtime-puzzles/flat-pillowcase-6"
+}

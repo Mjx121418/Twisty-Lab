@@ -20,6 +20,7 @@ public:
   static std::shared_ptr<const Execution> from_source(const std::string &);
   static std::shared_ptr<const Execution> from_artifact(const std::string &);
   std::shared_ptr<const Execution> with_interpretation(const std::string &) const;
+  std::shared_ptr<const Execution> with_controls(const std::string &) const;
   bool source_free() const { return static_cast<bool>(artifact_); }
   std::shared_ptr<const runtime::CompiledPuzzle> compiled_puzzle() const { return puzzle_; }
   const std::string &interpretation_digest() const { return interpretation_digest_; }

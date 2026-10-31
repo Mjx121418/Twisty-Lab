@@ -1,6 +1,6 @@
+import {runtimeReference} from './runtime-reference';
 import { setViews, expectViews } from './view-controls';
 import { test, expect, type Page } from '@playwright/test';
-import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 
 async function resting(page: Page): Promise<void> {
@@ -27,7 +27,7 @@ test('animates coupled gears in synchronized views with shared selection and his
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
   await page.getByRole('button', { name: 'Move R', exact: true }).click();
   await resting(page);
-  const native = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/gear/source.json', '--algorithm', 'R', '--json'], { encoding: 'utf8' }));
+  const native = runtimeReference(['run', '--definition', 'packages/gear/source.json', '--algorithm', 'R', '--json']);
   await expect(page.getByTestId('state-digest')).toHaveText(native.snapshot.stateDigest);
   for (const id of ['cube-view', 'diagram-view']) await expect(page.getByTestId(id)).toHaveAttribute('data-selected-piece', 'edge/UF');
   await page.getByRole('button', { name: '↶ Undo' }).click(); await resting(page);
@@ -46,10 +46,10 @@ test('normal F advances UR in the outward cog direction and undo restores it', a
   await expect(page.getByLabel('Spherical puzzle', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Select edge/UR', exact: true }).click();
   const placement = page.locator('.piece-detail code');
-  await expect(placement).toHaveText('gear-edge:U-R/p0');
+  await expect(placement).toHaveText('gear-edge/gear-edge:U-R/p0');
   const initial = await page.getByTestId('state-digest').textContent();
   await page.getByRole('button', { name: 'Move F', exact: true }).click(); await resting(page);
-  await expect(placement).toHaveText('gear-edge:U-R/p1');
+  await expect(placement).toHaveText('gear-edge/gear-edge:U-R/p1');
   for (const edge of ['UR', 'UL', 'DR', 'DL']) {
     await page.getByRole('button', { name: `Select edge/${edge}`, exact: true }).click();
     await expect(placement).toHaveText(/\/p1$/);
@@ -57,10 +57,10 @@ test('normal F advances UR in the outward cog direction and undo restores it', a
   await page.getByRole('button', { name: 'Select edge/UR', exact: true }).click();
   await page.screenshot({ path: 'test-results/gear-normal-F-UR.png', fullPage: true });
   await page.getByRole('button', { name: '↶ Undo' }).click(); await resting(page);
-  await expect(placement).toHaveText('gear-edge:U-R/p0');
+  await expect(placement).toHaveText('gear-edge/gear-edge:U-R/p0');
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
   await page.getByRole('button', { name: 'Move F inverse', exact: true }).click(); await resting(page);
-  await expect(placement).toHaveText('gear-edge:U-R/p5');
+  await expect(placement).toHaveText('gear-edge/gear-edge:U-R/p5');
   await page.getByRole('button', { name: '↶ Undo' }).click(); await resting(page);
   await expect(page.getByTestId('state-digest')).toHaveText(initial!);
   await expect(page.getByRole('alert')).toHaveCount(0);
@@ -84,13 +84,14 @@ test('configures arbitrary edge masks and enables ordinary turns on the plain sl
   await page.screenshot({ path: 'test-results/gear-extreme-supplied.png', fullPage: true });
   await page.getByTestId('cube-view').click({ position: { x: 4, y: 4 } });
   await page.keyboard.press('u'); await resting(page);
-  const native = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/gear-extreme/source.json', '--algorithm', 'Uq', '--json'], { encoding: 'utf8' }));
+  const native = runtimeReference(['run', '--definition', 'packages/gear-extreme/source.json', '--algorithm', 'Uq', '--json']);
   await expect(page.getByTestId('state-digest')).toHaveText(native.snapshot.stateDigest);
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
 
 test('allows all axes with only UF and UR geared and chooses coupling from current placements', async ({ page }, testInfo) => {
   await page.getByLabel('Puzzle', { exact: true }).selectOption('gear-plain');
+  await expect(page.getByLabel('Gear edge UF')).not.toBeChecked();
   await page.getByLabel('Gear edge UF').check();
   await page.getByLabel('Gear edge UR').check();
   await page.getByLabel('Animation speed').selectOption('0');
@@ -117,7 +118,7 @@ test('allows all axes with only UF and UR geared and chooses coupling from curre
     requests.push(legal[0].operation);
     await page.getByTestId('cube-view').click({ position: { x: 4, y: 4 } });
     await page.keyboard.press(face.toLowerCase()); await resting(page);
-    const native = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', sourcePath, '--algorithm', requests.join(' '), '--json'], { encoding: 'utf8' }));
+    const native = runtimeReference(['run', '--definition', sourcePath, '--algorithm', requests.join(' '), '--json']);
     await expect(page.getByTestId('state-digest')).toHaveText(native.snapshot.stateDigest);
   }
   await expect(page.getByTestId('state-digest')).not.toHaveText(initial!);
@@ -164,6 +165,7 @@ test('uses the supplied rigid edge in custom masks and restores saved views and 
 
 test('R and L spin the single UF gear identically', async ({ page }) => {
   await page.getByLabel('Puzzle', { exact: true }).selectOption('gear-plain');
+  await expect(page.getByLabel('Gear edge UF')).not.toBeChecked();
   await page.getByLabel('Gear edge UF').check();
   await page.getByLabel('Animation speed').selectOption('0');
   await page.getByRole('button', { name: 'Select edge/UF', exact: true }).click();
@@ -199,9 +201,9 @@ test('uses spherical geared and plain parts across presets, custom masks and sav
   await page.getByLabel('Gear edge FR').check();
   await expect(page.getByTestId('cube-view')).toHaveAttribute('data-realization-id', 'gear-custom-spherical-v1');
   await page.getByRole('button', { name: 'Select edge/FR', exact: true }).click();
-  await expect(page.locator('.piece-detail code')).toHaveText('gear-edge:F-R/p0');
+  await expect(page.locator('.piece-detail code')).toHaveText('gear-edge/gear-edge:F-R/p0');
   await page.getByRole('button', { name: 'Move U', exact: true }).click(); await resting(page);
-  await expect(page.locator('.piece-detail code')).toHaveText('gear-edge:F-R/p1');
+  await expect(page.locator('.piece-detail code')).toHaveText('gear-edge/gear-edge:F-R/p1');
   const turned = await page.getByTestId('state-digest').textContent();
   const downloading = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save session ↗' }).click();

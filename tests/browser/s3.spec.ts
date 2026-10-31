@@ -98,7 +98,7 @@ test('S³ animates on the GPU without per-frame drawing rebuilds in every cell f
 test('S³ canvas picking agrees with the CPU drawing after a GPU turn and focus change', async ({ page }) => {
   const { readFileSync } = await import('node:fs');
   const THREE = await import('three');
-  const { createKernel, KernelSession, GeometryInstance } = await import('../../kernel/index');
+  const { createRuntime, RuntimeSession, GeometryInstance } = await import('../../kernel/runtime');
   await page.goto('./');
   await expect(page.getByTestId('goal-status')).toHaveText('Solved');
   await page.getByLabel('Puzzle', { exact: true }).selectOption('tesseract3');
@@ -112,11 +112,12 @@ test('S³ canvas picking agrees with the CPU drawing after a GPU turn and focus 
   const host = page.locator('[data-view-id="stereographic"]');
   await host.scrollIntoViewIfNeeded();
   const bounds = (await host.locator('canvas').boundingBox())!;
-  const runtime = await createKernel();
-  const session = new KernelSession(runtime, readFileSync('packages/tesseract3/package.json', 'utf8'));
+  const runtime = await createRuntime();
+  const read=(name:string)=>readFileSync(`runtime-puzzles/tesseract3/${name}.json`,'utf8');
+  const session = new RuntimeSession(runtime,{abstract:read('abstract'),controls:read('controls'),presentation:read('presentation')});
   session.lightweightResults(); session.move('Xp_fY');
   await expect(page.getByTestId('state-digest')).toHaveText(session.stateSnapshot().stateDigest);
-  const geometry = new GeometryInstance(runtime, session.native, readFileSync('packages/tesseract3/tesseract3-s3.json', 'utf8'));
+  const geometry = new GeometryInstance(runtime, session.native,{interpretation:read('interpretation'),envelope:read('realizations/tesseract3-s3/realization'),payload:read('realizations/tesseract3-s3/geometry')});
   const material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
   const assets = new Map<string, InstanceType<typeof THREE.BufferGeometry>>();
   try {

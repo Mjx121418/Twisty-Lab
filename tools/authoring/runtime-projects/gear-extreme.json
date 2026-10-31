@@ -1,0 +1,25 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "gear-extreme",
+  "producer": {
+    "type": "source",
+    "package": "../../../packages/gear-extreme/package.json",
+    "realizations": [
+      {
+        "id": "gear-extreme-supplied-euclidean",
+        "path": "../../../packages/gear-extreme/gear-extreme-supplied-euclidean.json"
+      },
+      {
+        "id": "gear-extreme-port-diagram",
+        "path": "../../../packages/gear-extreme/gear-extreme-port-diagram.json"
+      },
+      {
+        "id": "gear-extreme-spherical",
+        "path": "../../../packages/gear-extreme/gear-extreme-spherical.json"
+      }
+    ]
+  },
+  "includeLegacy": false,
+  "output": "../../../runtime-puzzles/gear-extreme"
+}

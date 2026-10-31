@@ -1,5 +1,6 @@
 #include <twisty/authoring/realization.hpp>
 #include <twisty/geometry.hpp>
+#include <twisty/authoring/runtime.hpp>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -10,6 +11,10 @@ std::string read(const char *path) {
 }
 int main(int argc, char **argv) {
   try {
+    if (argc == 4 && std::string(argv[1]) == "--runtime-bundle") {
+      std::cout << twisty::language::runtime_artifacts(read(argv[2]), read(argv[3])).dump() << '\n';
+      return 0;
+    }
     if (argc == 4 && std::string(argv[1]) == "--validate-source") {
       auto execution = twisty::Execution::from_source(read(argv[2]));
       execution->validate(execution->definition()->initial);

@@ -109,3 +109,21 @@ test('published standalone SDK loads its modules and puzzle data and supports mo
   expect(modules.every((url) => new URL(url).pathname.startsWith(kernelPath))).toBe(true);
   expect(errors).toEqual([]);
 });
+
+test('published compiler-free SDK loads every preset and supports move and undo',async({page,baseURL})=>{
+  const errors=collectErrors(page),modules:string[]=[];
+  page.on('request',request=>{if(/\.(?:js|mjs|wasm)(?:\?|$)/.test(request.url()))modules.push(request.url());});
+  await page.goto('runtime/examples/canvas/');await expect(page.getByRole('status')).toHaveText('Ready',{timeout:loadTimeout});
+  for(const [puzzle,move] of presets)await test.step(puzzle,async()=>{
+    await page.getByLabel('Puzzle',{exact:true}).selectOption(puzzle==='bandaged-uf-ufr'?'bandaged':puzzle);
+    await expect(page.getByRole('button',{name:move,exact:true})).toBeVisible({timeout:loadTimeout});
+    await expect(page.getByRole('status')).toHaveText('Ready',{timeout:loadTimeout});
+    const initial=await page.locator('#digest').textContent();
+    await page.getByRole('button',{name:move,exact:true}).click();await expect(page.locator('#digest')).not.toHaveText(initial!);
+    await page.getByRole('button',{name:'Undo',exact:true}).click();await expect(page.locator('#digest')).toHaveText(initial!);
+  },{timeout:presetTimeout});
+  const prefix=new URL('runtime/',baseURL!).pathname;
+  expect(modules.every(url=>new URL(url).pathname.startsWith(prefix))).toBe(true);
+  expect(modules.filter(url=>url.endsWith('.wasm'))).toHaveLength(1);
+  expect(errors).toEqual([]);
+});

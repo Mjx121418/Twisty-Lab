@@ -2,9 +2,109 @@
 
 The C++ abstract core, compiler, session, and geometric interpreter form the reusable kernel. Native C++ applications and JavaScript/TypeScript applications using WebAssembly consume the same implementation. Renderers and controllers are clients: Three.js, React, Vite, Canvas, camera controls, input gestures, and animation clocks stay outside the kernel.
 
-The current kernel version is `0.7.0`, public API version `7`, and frame-buffer version `1`. Geometry API and pose-buffer versions remain `1`. The runtime accepts package/definition formats 1, 2 and 3, the version-1 Gear factory wrapper, and session schema 2. Version-1 and version-2 definitions retain their original fingerprints; migrated compact packages receive new pins, so old saves require their matching old definitions. Native consumers rebuild against the new headers; the SDK and WASM runtime must be updated together.
+The current kernel version is `0.7.0`, public API version `7`, and frame-buffer version `1`. Geometry API and pose-buffer versions remain `1`. The full compatibility API accepts package/definition formats 1, 2 and 3, the version-1 Gear factory wrapper, and session schema 2. The runtime-only entry accepts compiled artifacts and schema-3 saves as documented below. Version-1 and version-2 definitions retain their original fingerprints; migrated compact packages receive new pins, so old saves require their matching old definitions. Native consumers rebuild against the new headers; the SDK and WASM runtime must be updated together.
 
 The [puzzle language API](core-language.md), advertised as `languageAPIVersion = 3`, exposes the JSON language and domain-free executor through `Twisty::core`, `Twisty::language`, WASM `Puzzle`, and the TypeScript `Puzzle` adapter. Completion selection and bounded discovery are separate from permission checking. The cube/bandage authoring library is exposed as C++ `language::cube_module()`, WASM `cubeModuleJSON()`, and TypeScript `createCubeSource()`; `authoringLibraries` lists the supported models. `Twisty::symmetry` provides the shared standard-C++ finite-group utilities. Every shipped preset, including Bagua and custom Gear masks, uses the same core through an explicit package adapter. The pure program preview remains separate from the persisted definition format. Current session schemas refer to the standalone state schema; the retired finite-definition schema is not shipped.
+
+## Runtime distribution API 1
+
+The compiler-free distribution adds `runtimeAPIVersion: 1` and
+`controlContractVersions: [1]` to `artifactInfoJSON()` / `artifact::info()`.
+Legacy API 7 and artifact API 1 remain separate compatibility contracts. The full
+`@twisty/kernel` root, raw `./runtime` export and source constructors remain
+supported throughout the seven-phase migration; no removal is scheduled. A later
+removal requires a separately documented breaking API change.
+`./execution` exports the new high-level runtime and `./authoring`
+exports explicitly loaded source helpers. The independent `@twisty/runtime`
+package contains only runtime/shared adapters and compiler-free WASM/declarations.
+See [runtime usage and installation](runtime-sdk.md).
+
+Configure a native runtime-only installation with:
+
+```sh
+cmake -S . -B build/runtime-native -G Ninja -DTWISTY_BUILD_AUTHORING=OFF -DBUILD_TESTING=OFF
+cmake --build build/runtime-native --parallel 1
+cmake --install build/runtime-native --prefix /your/runtime-install
+```
+
+`Twisty::runtime_kernel` combines numeric execution, sessions, family controllers
+and geometric interpreters. `Twisty::artifact_kernel` remains compatible and now
+also includes controllers. The runtime-only installation excludes all authoring
+libraries/headers, source constructors' implementations and puzzle factories.
+Common class headers still declare optional source overloads; calling one
+requires the full authoring installation and its adapter target. Component consumers
+linking `Twisty::controller` now explicitly add `Twisty::session` when constructing
+sessions from source, or retain the complete `Twisty::kernel` aggregate.
+`Twisty::controller` itself depends only on `Twisty::session_runtime`.
+`npm run check:runtime` installs this
+profile, checks archive symbols and builds an independent native consumer, then
+compares it with an isolated Node consumer across 24 puzzles and 48 views.
+
+Include `twisty/runtime_api.hpp` and call
+`runtime_execution(artifact_text, controls_text)` to obtain a shared immutable
+execution context. WASM `createRuntimeSession(artifactText, controlsText)` returns
+an owning session; `validateRuntimeJSON(artifactText, controlsText)` returns
+`Valid` plus `executionDigest`, or `Invalid` with structured diagnostics.
+Controllers created with `createController(session)` expose the existing
+controller API 1 methods. Family state/selection/planning results carry
+`executionDigest`; dispatch checks the exact decimal-string revision. No native
+controller chooses a camera, handles gestures or schedules animation.
+
+The [controller document schema](../schemas/control-artifact.schema.json) has
+kind `twisty-controls`, `contractVersion: 1`, `executionDigest`, `controlDigest`,
+and `catalog`. Its JSON uses the integer-only artifact parser/canonical hashing
+rules. `controlDigest` is SHA-256 of canonical JSON after removing that field;
+`executionDigest` must match the already validated executable. Unknown fields,
+versions, duplicate IDs/readers, out-of-range references, unknown completions,
+missing inverse routes and wrong hashes are rejected before any live session is
+changed. Errors include `controls.unsupported`, `controls.digest_mismatch`,
+`controls.reference`, `controls.invalid` and the existing artifact diagnostics.
+
+`catalog.version` is 1. Drivers contain `id`, global core `piece` index, ordered
+`stops`, and `reader` records `{placement, stop}` using global core placement
+indices and stop-array indices. Families contain `id`, optional `label`, driver
+IDs and finite routes `{from, to, request, profile, pathId, preferred?}`. Route
+stop tuples follow the family's driver order. Authoring resolves every profile
+and path explicitly. Runtime controller support derives contiguous direct-choice
+action slices from the numeric program; general artifacts lacking that shape
+remain executable through the lower-level artifact API, while attachment of this
+controller contract fails with `controls.unsupported`. Participation includes
+self-loops and explicit piece scopes; choice index zero has no inferred idle
+meaning in source-free support queries. `catalogJSON()` returns the existing
+resolved public driver catalog, whose piece/placement references are symbolic
+strings rather than the numeric wire representation.
+
+`RuntimeSession` consumes serialized `abstract`, `controls`, and `presentation`
+documents. Presentation contract 1 has kind `twisty-presentation`, execution pin,
+legacy definition pin, puzzle/piece/domain/operation metadata and optional cell
+or symmetry hints. It carries no compiler AST or numeric program. It serves the
+inspector and labels; native execution remains authoritative. The TypeScript
+adapter checks its kind/version/execution pin. Geometry uses independent
+interpretation/envelope documents and the **exact payload text**, consumed by
+`GeometryInstance(module, session.native, {interpretation, envelope, payload})`.
+View presentation hints travel separately and cannot change numeric rules.
+API, artifact, presentation and controller versions do not version buffer layouts;
+all existing column-major pose, drawing, mesh and intrinsic-mesh layouts remain
+unchanged. Borrowed views must be copied before further native calls; geometry
+adapters own copies. Dispose geometry/controllers before sessions, and never
+share handles across modules. A new runtime session may share an existing
+session's immutable context; its history and revision are independent.
+
+The optional authoring module exposes
+`runtimeArtifactsJSON(sourceText, realizationsArrayText)` and the TypeScript
+`compileRuntimeBundle()`. Its result is `{abstract, controls, presentation,
+interpretation, views:[{realization, payload, presentation}]}`; each `payload` is
+an exact UTF-8 string matching its envelope hash. Errors return the established
+structured `Invalid` diagnostic result, converted to exceptions by the adapter.
+`migrateSourceSessionJSON(exactSourceText, schema2SaveText)` / TypeScript
+`migrateSourceSession()` validates the original definition pin, state, complete
+history and checkpoints, then replays under the runtime identity, qualifies
+placement keys and verifies the resulting schema-3 save. It preserves cursor,
+redo tail and presentation. The native success envelope is
+`{status:"Converted", sessionJSON:"<exact schema-3 JSON text>"}`; the TypeScript
+helper returns that text directly, preserving opaque 64-bit presentation integers
+without a JavaScript parse/stringify round trip. Incorrect pins or forged histories fail; no save is
+accepted merely because its visible state resembles a runtime state.
 
 ## Compiler-independent runtime descriptors
 
@@ -26,8 +126,8 @@ functions remain available through using declarations. Include
 when updating libraries and headers together.
 
 `Bindings::movements[slot][choice]` is a `MovementBinding` naming an action slice
-through `first_action` and `action_count`. It includes an empty idle slice at
-choice zero and preserves the exact per-move piece scope. It is not a dense
+through `first_action` and `action_count`. Compiler-produced source bindings include an empty idle slice at
+choice zero and preserve the exact per-move piece scope. It is not a dense
 placement table. `runtime::movement_participates(puzzle, slot, choice, piece,
 placement)` takes global core piece/placement indices and checks that scope and
 the exact transport support. A defined self-loop participates. The query is
@@ -62,8 +162,8 @@ Native consumers rebuild with matching headers/libraries; WASM declarations and
 the matching module ship together.
 
 The [installed native example](../examples/artifact/main.cpp) links only
-`Twisty::artifact_kernel`, which combines `Twisty::session_runtime` and
-`Twisty::geometry_runtime`. These depend on `Twisty::execution_runtime`,
+`Twisty::artifact_kernel`, which combines `Twisty::session_runtime`,
+`Twisty::geometry_runtime` and `Twisty::controller`. These depend on `Twisty::execution_runtime`,
 `Twisty::artifact`, the catalog, and the numeric runtime/core. Source constructors
 and exporters live in the separately linked `Twisty::execution`, `Twisty::session`,
 `Twisty::geometry`, and `Twisty::language` adapters. The aggregate `Twisty::kernel`
@@ -263,8 +363,8 @@ existing declarative model, component, mesh, frame, path and space payloads. Fix
 coordinate/attachment tokens belong to these geometric formats, rather than to
 movement identifiers or display labels. Driver controller-layout hints are omitted
 from these payloads; S³ cell-axis geometry remains validated for its projection
-and guide data. Source-facing application controls continue through the legacy
-entry until resolved controller artifacts are introduced.
+and guide data. Reference application controls now consume the separate resolved
+controller contract 1; view layout hints remain presentation data.
 
 `Twisty::authoring_geometry`, declared in `twisty/authoring/realization.hpp`, exports
 `language::realization_artifacts(sourceText, realizationText)`. It returns

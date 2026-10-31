@@ -16,7 +16,7 @@ Json stale(const Session &s) {
 }
 Json stamp(Json j, const Session &s) {
   j["revision"] = s.revision();
-  j["definitionDigest"] = s.definition()->digest;
+  j[s.definition()->source_free ? "executionDigest" : "definitionDigest"] = s.definition()->digest;
   return j;
 }
 } // namespace
@@ -55,8 +55,10 @@ Json Controller::read_families_for_pieces(const State &s, const std::vector<std:
   if (ids.size() > 4096)
     throw DiagnosticError("controls.pieces", "/pieces", "Select at most 4096 pieces.");
   const auto &definition = *execution_->definition();
-  struct Selection { Index domain; std::set<std::string> moves; };
+  struct Selection { std::vector<std::set<std::string>> moves; };
   std::vector<Selection> selected;
+  const auto &puzzle = *execution_->compiled_puzzle();
+  const auto core_state = execution_->flatten(s);
   std::set<std::string> seen;
   Json pieces = Json::array();
   for (const auto &id : ids) {
@@ -68,8 +70,18 @@ Json Controller::read_families_for_pieces(const State &s, const std::vector<std:
     const auto p = static_cast<Index>(found - definition.pieces.begin());
     // Compiled action scopes preserve explicit piece subsets and self-loops.
     // Structural matching remains independent of each route's permission.
-    const auto moves = execution_->participating_moves(s, p);
-    Selection selection{found->domain, {moves.begin(), moves.end()}};
+    Selection selection;
+    selection.moves.resize(puzzle.bindings.choice_slots.size());
+    if (execution_->source_free()) {
+      for (Index slot = 0; slot < selection.moves.size(); ++slot)
+        for (Index choice = 0; choice < puzzle.bindings.choice_values[slot].size(); ++choice)
+          if (runtime::movement_participates(puzzle, slot, choice, execution_->core_piece_of_display_[p],
+                                            core_state[execution_->core_piece_of_display_[p]]))
+            selection.moves[slot].insert(puzzle.bindings.choice_values[slot][choice]);
+    } else {
+      const auto moves = execution_->participating_moves(s, p);
+      selection.moves[found->domain].insert(moves.begin(), moves.end());
+    }
     selected.push_back(std::move(selection));
     pieces.push_back(id);
   }
@@ -84,7 +96,9 @@ Json Controller::read_families_for_pieces(const State &s, const std::vector<std:
     if (routes == family.routes.end()) continue;
     if (std::any_of(routes->second.begin(), routes->second.end(), [&](const auto &route) {
           return std::all_of(selected.begin(), selected.end(), [&](const auto &piece) {
-            return piece.moves.contains(route.choices->at(piece.domain));
+            for (Index slot = 0; slot < piece.moves.size(); ++slot)
+              if (piece.moves[slot].contains(route.choices->at(slot))) return true;
+            return false;
           });
         })) families.push_back(id);
   }

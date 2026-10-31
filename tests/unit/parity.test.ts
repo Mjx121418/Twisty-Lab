@@ -291,20 +291,22 @@ describe('native / WebAssembly parity', () => {
     },
   );
 
-  it('runs the same version-pinned portable fixtures', () => {
-    const fixtures = JSON.parse(read('tests/fixtures/core.json'));
-    for (const fixture of fixtures.cases) {
-      const value = new runtime.Session(read(fixture.source));
-      try {
-        expect(snapshot(value).definitionDigest).toBe(fixture.definitionDigest);
-        expect(JSON.parse(value.runJSON(fixture.prefix, 'transactional', snapshot(value).revision)).status).toBe('Committed');
-        const result = JSON.parse(value.executeJSON(JSON.stringify({ operation: fixture.operation, parameters: {}, choices: fixture.choices }), snapshot(value).revision));
-        expect(result.status, fixture.name).toBe(fixture.expectedStatus);
-        if (fixture.reasonCode) expect(result.reasonCode).toBe(fixture.reasonCode);
-        if (fixture.implicatedPiece) expect(result.implicatedPieces).toContain(fixture.implicatedPiece);
-        if (fixture.unchangedParticipant) expect(result.transitions[0].pieceActions).toContainEqual(expect.objectContaining({ pieceId: fixture.unchangedParticipant, from: 'center:U', to: 'center:U' }));
-      } finally { value.delete(); }
-    }
+  it.each(JSON.parse(read('tests/fixtures/core.json')).cases)('runs portable fixture: $name', (fixture) => {
+    const value = new runtime.Session(read(fixture.source));
+    try {
+      expect(snapshot(value).definitionDigest).toBe(fixture.definitionDigest);
+      expect(JSON.parse(value.runJSON(fixture.prefix, 'transactional', snapshot(value).revision)).status).toBe('Committed');
+      const result = JSON.parse(value.executeJSON(JSON.stringify({ operation: fixture.operation, parameters: {}, choices: fixture.choices }), snapshot(value).revision));
+      expect(result.status, fixture.name).toBe(fixture.expectedStatus);
+      if (fixture.reasonCode) expect(result.reasonCode).toBe(fixture.reasonCode);
+      if (fixture.implicatedPiece) expect(result.implicatedPieces).toContain(fixture.implicatedPiece);
+      if (fixture.unchangedParticipant) {
+        const placement = result.transitions[0].beforeState.placementOf[fixture.unchangedParticipant];
+        expect(result.transitions[0].pieceActions).toContainEqual(expect.objectContaining({
+          pieceId: fixture.unchangedParticipant, from: placement, to: placement,
+        }));
+      }
+    } finally { value.delete(); }
   });
 
   it('preserves exact presentation integers and completed animation records', () => {

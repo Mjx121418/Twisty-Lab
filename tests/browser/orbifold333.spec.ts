@@ -1,6 +1,6 @@
+import {runtimeReference} from './runtime-reference';
 import { expect, test, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
 
 async function resting(page:Page):Promise<void>{
   await expect.poll(async()=>{
@@ -67,7 +67,7 @@ for(const six of [false,true])test(`333 ${six?6:3} disks: repeated images, turn 
   await page.waitForTimeout(150);
   await page.screenshot({path:`test-results/${puzzle}-motion.png`,fullPage:true});
   await resting(page);
-  const native=JSON.parse(execFileSync('build/native/twisty',['run','--definition',`packages/${puzzle}/package.json`,'--algorithm',word,'--json'],{encoding:'utf8'}));
+  const native=runtimeReference(['run','--definition',`packages/${puzzle}/package.json`,'--algorithm',word,'--json']);
   await expect(page.getByTestId('state-digest')).toHaveText(native.snapshot.stateDigest);
   await page.getByLabel('Animation speed').selectOption('0');
   const download=page.waitForEvent('download');await page.getByRole('button',{name:'Save session ↗'}).click();

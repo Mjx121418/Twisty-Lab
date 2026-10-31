@@ -1,4 +1,5 @@
 #include <twisty/geometry.hpp>
+#include <twisty/runtime_api.hpp>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -11,8 +12,9 @@ std::string read(const char *path) {
 }
 int main(int argc, char **argv) {
   try {
-    if (argc != 5) throw std::runtime_error("Expected abstract artifact, interpretation, realization envelope and payload paths.");
-    const auto execution = twisty::Execution::from_artifact(read(argv[1]));
+    if (argc != 5 && argc != 6) throw std::runtime_error("Expected abstract artifact, interpretation, realization envelope, payload and optional controls paths.");
+    const auto execution = argc == 6 ? twisty::runtime_execution(read(argv[1]), read(argv[5]))
+      : twisty::Execution::from_artifact(read(argv[1]));
     twisty::GeometryDefinition geometry(execution, read(argv[2]), read(argv[3]), read(argv[4]));
     auto frame = geometry.frame(twisty::encode_state(*execution->definition(), execution->definition()->initial).dump());
     const auto scene = twisty::Json::parse(geometry.scene_json());

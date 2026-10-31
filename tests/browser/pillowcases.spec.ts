@@ -1,6 +1,6 @@
+import {runtimeReference} from './runtime-reference';
 import { expect, test, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
 
 async function resting(page:Page):Promise<void>{
   await expect(page.getByTestId('app')).toHaveAttribute('data-animating','false',{timeout:15000});
@@ -85,7 +85,7 @@ for(const six of [false,true])test(`pillowcase ${six?6:4}: shared copies, cone t
   await page.waitForTimeout(150);
   await page.screenshot({path:`test-results/${puzzle}-motion.png`,fullPage:true});
   await resting(page);
-  const reference=JSON.parse(execFileSync('build/native/twisty',['run','--definition',`packages/${puzzle}/package.json`,'--algorithm',word,'--json'],{encoding:'utf8'}));
+  const reference=runtimeReference(['run','--definition',`packages/${puzzle}/package.json`,'--algorithm',word,'--json']);
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
   await page.getByLabel('Animation speed').selectOption('0');
   await page.getByRole('button',{name:'↶ Undo',exact:true}).click();await resting(page);

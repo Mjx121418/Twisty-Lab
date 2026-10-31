@@ -1,145 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { MainModule } from '../../kernel/index';
-import cubeSource from '../../packages/cube3/package.json?raw';
-import bandageSource from '../../packages/bandaged/package.json?raw';
-import cubeRealization from '../../packages/cube3/cube-euclidean.json';
-import cubeDiagram from '../../packages/cube3/cube-port-diagram.json';
-import cubeSphere from '../../packages/cube3/cube-spherical.json';
-import bandageRealization from '../../packages/bandaged/cube-euclidean.json';
-import bandageDiagram from '../../packages/bandaged/cube-port-diagram.json';
-import bandageSphere from '../../packages/bandaged/cube-spherical.json';
-import helicopterSource from '../../packages/helicopter/package.json?raw';
-import helicopterRealization from '../../packages/helicopter/helicopter-euclidean.json';
-import helicopterDiagram from '../../packages/helicopter/helicopter-port-diagram.json';
-import helicopterSphere from '../../packages/helicopter/helicopter-spherical.json';
-import baguaSource from '../../packages/bagua/package.json?raw';
-import baguaRealization from '../../packages/bagua/bagua-euclidean.json';
-import baguaDiagram from '../../packages/bagua/bagua-port-diagram.json';
-import baguaSphere from '../../packages/bagua/bagua-spherical.json';
-import meltyAManifest from '../../packages/melty-a/manifest.json';
-import meltyBManifest from '../../packages/melty-b/manifest.json';
-import meltyCManifest from '../../packages/melty-c/manifest.json';
-import meltyDManifest from '../../packages/melty-d/manifest.json';
-import icosahedronManifest from '../../packages/icosahedron-110/manifest.json';
-import gearSource from '../../packages/gear/source.json?raw';
-import gearExtremeSource from '../../packages/gear-extreme/source.json?raw';
-import gearPlainSource from '../../packages/gear-plain/source.json?raw';
-import gearDiagramText from '../../packages/gear/gear-port-diagram.json?raw';
-import gearNormalText from '../../packages/gear/gear-normal-euclidean.json?raw';
-import gearSuppliedText from '../../packages/gear-extreme/gear-extreme-supplied-euclidean.json?raw';
-import gearSphericalText from '../../packages/gear/gear-spherical.json?raw';
-import gearManifest from '../../packages/gear/manifest.json';
-import gearExtremeManifest from '../../packages/gear-extreme/manifest.json';
-import gearPlainManifest from '../../packages/gear-plain/manifest.json';
-import { KernelController, KernelSession, loadRuntime, type Realization, type Result, type Snapshot, type Transition, type TurnIntent } from './kernel';
+import { KernelController, KernelSession, runtimeDocuments, type MainModule, type RuntimeDocuments, type RuntimeBundle,
+  type Realization, type Result, type Snapshot, type Transition, type TurnIntent } from './kernel';
+import { loadRuntime } from './runtimeLoader';
+import { presets, loadPreset, installBundle, gearEdges, type Preset } from './runtimePresets';
 import { CellControls } from './controls/CellControls';
 import type { S3FadeSettings } from './s3Fade';
 import { FamilyControls } from './controls/FamilyControls';
 import { RelativeControls, relativeTurnAngle } from './controls/RelativeControls';
 import { RenderView } from './renderer';
 import { SurfaceView } from './surfaceRenderer';
-import torusSource from '../../packages/flat-torus/package.json?raw';
-import torusRealization from '../../packages/flat-torus/flat-quotient.json';
-import kleinSource from '../../packages/flat-klein-bottle/package.json?raw';
-import kleinRealization from '../../packages/flat-klein-bottle/flat-quotient.json';
-import hexTorusSource from '../../packages/flat-hex-torus/package.json?raw';
-import hexTorusRealization from '../../packages/flat-hex-torus/flat-quotient.json';
-import hexKleinSource from '../../packages/flat-hex-klein-bottle/package.json?raw';
-import hexKleinRealization from '../../packages/flat-hex-klein-bottle/flat-quotient.json';
-import pillowcaseSource from '../../packages/flat-pillowcase/package.json?raw';
-import pillowcaseRealization from '../../packages/flat-pillowcase/flat-quotient.json';
-import pillowcaseSixSource from '../../packages/flat-pillowcase-6/package.json?raw';
-import pillowcaseSixRealization from '../../packages/flat-pillowcase-6/flat-quotient.json';
-import orbifold333Source from '../../packages/flat-333/package.json?raw';
-import orbifold333Realization from '../../packages/flat-333/flat-quotient.json';
-import orbifold333SixSource from '../../packages/flat-333-6/package.json?raw';
-import orbifold333SixRealization from '../../packages/flat-333-6/flat-quotient.json';
 import { pieceDestinations, type PieceDestination } from './destinations';
 import { defaultViews, moveView, restoreViews, viewLabels, type ViewId, type ViewSelection } from './viewSelection';
-
-type Preset = { id: string; label: string; source: string; realizations: Realization[]; spherical?: Realization; surface?: boolean; turnAnglesDegrees?: Record<string, number>; cameraScale?: number; euclideanLabel?: string; deferred?: boolean; stereographic?: boolean };
 type PuzzleView = RenderView | SurfaceView;
 type ViewDefinition = { id: ViewId; realization: Realization; surfaceMode?: 'square' | 'tiles' };
 type MountedView = { view: PuzzleView; realizationId: string; generation: number; cameras: Map<ViewId, unknown> };
-function surfacePreset(id: string, label: string, source: string, realization: unknown): Preset {
-  const model = realization as Realization;
-  return { id, label, source, surface: true, realizations: ['square', 'tiles'].map((mode) => ({ ...model, id: `${model.id}-${mode}` })) };
-}
-const gearDiagram = JSON.parse(gearDiagramText) as Realization;
-const gearNormal = JSON.parse(gearNormalText) as Realization;
-const gearSupplied = JSON.parse(gearSuppliedText) as Realization;
-const gearSpherical = JSON.parse(gearSphericalText) as Realization;
-function gearPreset(id: string, label: string, source: string, digest: string): Preset {
-  const cube = id === 'gear' ? gearNormal : { ...gearSupplied, id: `${id}-supplied-articulated-euclidean-v1`, compatibleDefinitionDigest: digest };
-  const diagram = { ...gearDiagram, id: `${id}-diagram-v1`, compatibleDefinitionDigest: digest };
-  const spherical = { ...gearSpherical, id: `${id}-spherical-v1`, compatibleDefinitionDigest: digest };
-  return { id, label, source, realizations: [cube, diagram], spherical };
-}
-const gearEdges = ['UF', 'UR', 'UB', 'UL', 'DF', 'DR', 'DB', 'DL', 'FR', 'FL', 'BR', 'BL'];
-const meltyPresets: Preset[] = Object.entries({
-  'melty-a': meltyAManifest, 'melty-b': meltyBManifest, 'melty-c': meltyCManifest, 'melty-d': meltyDManifest,
-}).map(([id, manifest]) => ({ id, label: `Melty ${id.at(-1)!.toUpperCase()} · 85° axes`,
-  // Melty uses a side-2 cube; the reference cubic camera is framed for side 3.
-  source: '', realizations: [], turnAnglesDegrees: manifest.turnAnglesDegrees, cameraScale: 2/3 }));
-// Fetch prebuilt JSON on selection; URL imports keep large datasets out of
-// JavaScript parsing and minification while retaining Vite's subpath handling.
-const prebuiltFiles = import.meta.glob<string>([
-  '../../packages/melty-*/package.json',
-  '../../packages/melty-*/melty-*-euclidean.json',
-  '../../packages/melty-*/melty-*-port-diagram.json',
-  '../../packages/melty-*/melty-*-spherical.json',
-  '../../packages/cell24/package.json',
-  '../../packages/cell24/cell24-s3.json',
-  '../../packages/cell24-192/package.json',
-  '../../packages/cell24-192/cell24-192-s3.json',
-  '../../packages/tesseract3/package.json',
-  '../../packages/tesseract3/tesseract3-s3.json',
-  '../../packages/icosahedron-*/package.json',
-  '../../packages/icosahedron-*/icosahedron-*-*.json',
-], { query: '?url', import: 'default', eager: true });
-const meltyLoading = new Map<string, Promise<void>>();
-function loadPreset(preset: Preset): Promise<void> {
-  if ((!preset.turnAnglesDegrees && !preset.deferred) || preset.source) return Promise.resolve();
-  const previous = meltyLoading.get(preset.id);
-  if (previous) return previous;
-  const files = preset.stereographic ? ['package', `${preset.id}-s3`] : ['package', `${preset.id}-euclidean`, `${preset.id}-spherical`, ...(!preset.deferred ? [`${preset.id}-port-diagram`] : [])];
-  const loading = Promise.all(files
-    .map(async name => {
-      const response = await fetch(prebuiltFiles[`../../packages/${preset.id}/${name}.json`]);
-      if (!response.ok) throw new Error(`Could not load ${preset.label} (${response.status}).`);
-      return response.text();
-    }))
-    .then(([source, cube, sphere, diagram]) => {
-      preset.realizations = [JSON.parse(cube), ...(diagram ? [JSON.parse(diagram)] : [])];
-      preset.spherical = sphere ? JSON.parse(sphere) : undefined;
-      preset.source = source;
-    }).catch(error => { meltyLoading.delete(preset.id); throw error; });
-  meltyLoading.set(preset.id, loading);
-  return loading;
-}
-const presets = [
-  { id: 'cube3', label: '3 × 3 cube', source: cubeSource, realizations: [cubeRealization, cubeDiagram], spherical: cubeSphere },
-  { id: 'bandaged-uf-ufr', label: 'Bandaged cube · UF + UFR', source: bandageSource, realizations: [bandageRealization, bandageDiagram], spherical: bandageSphere },
-  { id: 'helicopter', label: 'Helicopter Cube · jumbling', source: helicopterSource, realizations: [helicopterRealization, helicopterDiagram], spherical: helicopterSphere },
-  { id: 'bagua', label: 'Bagua Cube', source: baguaSource, realizations: [baguaRealization, baguaDiagram], spherical: baguaSphere },
-  ...meltyPresets,
-  { id: 'cell24', label: 'S³ 24-cell · 672 pieces', source: '', realizations: [], deferred: true, stereographic: true },
-  { id: 'cell24-192', label: 'S³ 24-cell · 192 movable pieces · 45°', source: '', realizations: [], deferred: true, stereographic: true },
-  { id: 'tesseract3', label: 'S³ 8-cell · 3 × 3 × 3 × 3', source: '', realizations: [], deferred: true, stereographic: true },
-  { id: 'icosahedron-110', label: `Face-turning icosahedron · ${icosahedronManifest.pieces} pieces`, source: '', realizations: [], deferred: true, euclideanLabel: 'Icosahedron' },
-  { id: 'icosahedron-152', label: 'Face-turning icosahedron · 152 pieces', source: '', realizations: [], deferred: true, euclideanLabel: 'Icosahedron' },
-  gearPreset('gear', 'Gear Cube', gearSource, gearManifest.definitionDigest),
-  gearPreset('gear-extreme', 'Gear Cube Extreme', gearExtremeSource, gearExtremeManifest.definitionDigest),
-  gearPreset('gear-plain', 'Gear family · all plain', gearPlainSource, gearPlainManifest.definitionDigest),
-  surfacePreset('flat-torus', 'Flat torus · face turning', torusSource, torusRealization),
-  surfacePreset('flat-klein-bottle', 'Klein bottle · face turning', kleinSource, kleinRealization),
-  surfacePreset('flat-hex-torus', 'Hexagonal torus · face turning', hexTorusSource, hexTorusRealization),
-  surfacePreset('flat-hex-klein-bottle', 'Hexagonal Klein bottle · face turning', hexKleinSource, hexKleinRealization),
-  surfacePreset('flat-pillowcase', 'Pillowcase · 4 disks · radius 0.846', pillowcaseSource, pillowcaseRealization),
-  surfacePreset('flat-pillowcase-6', 'Pillowcase · 6 disks · radius 0.6', pillowcaseSixSource, pillowcaseSixRealization),
-  surfacePreset('flat-333', '333 orbifold · 3 disks · radius 0.72', orbifold333Source, orbifold333Realization),
-  surfacePreset('flat-333-6', '333 orbifold · 6 disks · radius 0.36', orbifold333SixSource, orbifold333SixRealization),
-] as unknown as Preset[];
 type Inspector = 'pieces' | 'history' | 'definition';
 
 function availableViews(preset: Preset): ViewDefinition[] {
@@ -165,6 +39,7 @@ export function App() {
   const [generation, setGeneration] = useState(0);
   const [sourceId, setSourceId] = useState('cube3');
   const [customGear, setCustomGear] = useState<Preset>();
+  const [pendingGear, setPendingGear] = useState<readonly string[]>();
   const [viewSelection, setViewSelection] = useState<ViewSelection>(() => defaultViews(['cube', 'sphere', 'diagram']));
   const [inspector, setInspector] = useState<Inspector>('pieces');
   const [algorithm, setAlgorithm] = useState("R U R' U'");
@@ -201,7 +76,7 @@ export function App() {
   const epoch = useRef(0);
   speedRef.current = duration;
   const availablePresets = customGear ? [...presets, customGear] : presets;
-  const activePreset = snapshot && availablePresets.find((item) => item.realizations[0]?.compatibleDefinitionDigest === snapshot.definitionDigest);
+  const activePreset = snapshot && availablePresets.find((item) => item.realizations[0]?.compatibleDefinitionDigest === snapshot.executionDigest);
   const labels = { ...viewLabels, cube: activePreset?.euclideanLabel ?? viewLabels.cube };
   const viewDefinitions = useMemo(() => activePreset ? availableViews(activePreset) : [], [activePreset]);
   const orderedViews = viewSelection.order.flatMap(id => viewDefinitions.filter(view => view.id === id));
@@ -220,10 +95,10 @@ export function App() {
     advanced.current = false;
   }
 
-  function install(runtime: MainModule, source: string, id: string): void {
+  function install(runtime: MainModule, source: RuntimeDocuments, id: string, authored?: Preset): void {
     // Shipped presets replace the current puzzle. Release every old owner
-    // before compiling, so large catalogs do not overlap in the bounded WASM
-    // heap. Unknown imports retain the previous session until compilation passes.
+    // before loading, so large catalogs do not overlap in the bounded WASM
+    // heap. Unknown imports retain the previous session until loading passes.
     if (presets.some(preset => preset.source && preset.source === source)) {
       for (const { view } of mountedViews.current.values()) view.dispose();
       mountedViews.current.clear(); views.current = [];
@@ -236,23 +111,21 @@ export function App() {
     busyRef.current = false; setBusy(false); setPlaying('');
     replaceController(runtime, next);
     const initial = readSnapshot(next);
-    const parsedSource = JSON.parse(source);
-    if (parsedSource.kind === 'relational-gear-prototypes') {
-      setCustomGear(gearPreset(id, id === 'gear-custom' ? 'Gear family · custom' : 'Gear family', source, initial.definitionDigest));
-    }
+    if (authored) setCustomGear(authored);
+    const selectedPreset = authored ?? presets.find(preset => preset.source === source);
     kernel.current?.dispose(); kernel.current = next;
     commands.current = [];
     cameraCache.current = new Map();
     pendingCameras.current = undefined;
-    const preset = presets.find(item => item.realizations[0]?.compatibleDefinitionDigest === initial.definitionDigest);
+    const preset = presets.find(item => item.realizations[0]?.compatibleDefinitionDigest === initial.executionDigest);
     const available: ViewId[] = preset ? availableViews(preset).map(view => view.id) : ['cube', 'sphere', 'diagram'];
     setViewSelection(current => current.order.length === available.length && current.order.every(id => available.includes(id)) ? current : defaultViews(available));
     setSourceId(id); setSnapshot(initial); setVisualDigest(initial.stateDigest);
     setSelected([]); setEvidence(undefined); setLastScramble(''); setVisualError('');
     setAlgorithm(initial.puzzleId.startsWith('cell24') ? "Xp_fXYZ Yp_vX (Xp_fXYZ Yp_vX)'" : initial.puzzleId === 'tesseract3-v1' ? "Xp_fY Yp_fZ (Xp_fY Yp_fZ)'" : initial.puzzleId === 'flat-333-6-v1' ? "A D A' D'" : initial.puzzleId.startsWith('flat-') ? "A B A' B'" : initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' :
       initial.puzzleId === 'bagua-experimental-v1' ? "U+ R' L' D2 R L U-" : initial.puzzleId.startsWith('icosahedron-') ? "A_j O_j (A_j O_j)'" : initial.puzzleId.startsWith('melty-') ? "U U'" :
-      parsedSource.kind === 'relational-gear-prototypes' ? (parsedSource.gearedEdges.length === 0 ? "Rq Uq Rq' Uq'" :
-        initial.legalRequests.some((request) => request.operation === 'R') ? "R R'" : "Rq Rq'") : "R U R' U'");
+      selectedPreset?.gearedEdges ? (selectedPreset.gearedEdges.length === 0 ? "Rq Uq Rq' Uq'" :
+        next.plan({operation:'R',parameters:{}}).status === 'Legal' ? "R R'" : "Rq Rq'") : "R U R' U'");
     setGeneration((value) => value + 1);
   }
 
@@ -261,7 +134,7 @@ export function App() {
     busyRef.current = true; setBusy(true);
     try {
       await loadPreset(preset);
-      install(module, preset.source, preset.id);
+      install(module, preset.source!, preset.id);
     }
     catch (error: unknown) {
       setEvidence({ status: 'Invalid', diagnostics: [{ reasonCode: 'source.invalid', source: preset.id, message: String(error) }] });
@@ -270,8 +143,8 @@ export function App() {
 
   useEffect(() => {
     let alive = true;
-    loadRuntime().then((runtime) => {
-      if (alive) { setModule(runtime); install(runtime, cubeSource, 'cube3'); }
+    Promise.all([loadRuntime(), loadPreset(presets[0])]).then(([runtime]) => {
+      if (alive) { setModule(runtime); install(runtime, presets[0].source!, 'cube3'); }
     }).catch((error: unknown) => { if (alive) setFatalError(String(error)); });
     return () => {
       alive = false; epoch.current++; cancelAnimationFrame(animationFrame.current);
@@ -356,7 +229,7 @@ export function App() {
 
   function chooseDestination(destination: PieceDestination): void {
     const session = kernel.current;
-    if (!session || busyRef.current || session.definition.definitionDigest !== destination.definitionDigest) return;
+    if (!session || busyRef.current || session.definition.executionDigest !== destination.executionDigest) return;
     enqueue(() => session.execute(destination.request, destination.revision));
   }
 
@@ -469,15 +342,41 @@ export function App() {
     return () => { window.removeEventListener('keydown', keydown); document.removeEventListener('pointerdown', dismissViews); };
   }, []);
 
+  async function configureGear(edges: string[]): Promise<void> {
+    if (!module || busyRef.current) return;
+    busyRef.current = true; setBusy(true); setPendingGear(edges);
+    try {
+      const authoring = await import('./authoring');
+      const { bundle, source } = await authoring.compileGear(edges);
+      const preset: Preset = { id:'gear-custom', label:'Gear family · custom', source:undefined, realizations:[], gearedEdges:edges, legacySource:source };
+      installBundle(preset,bundle); install(module,preset.source!,'gear-custom',preset);
+    } catch(error) { setEvidence({status:'Invalid',diagnostics:[{reasonCode:'authoring.invalid',source:'gear-custom',message:String(error)}]}); }
+    finally { busyRef.current=false;setBusy(false);setPendingGear(undefined); }
+  }
   async function importSource(file?: File): Promise<void> {
     if (!file || !module) return;
     try {
       if (file.size > 16 * 1024 * 1024) throw new Error('Definition import is limited to 16 MiB.');
-      const text = await file.text();
-      const parsed = JSON.parse(text);
-      const meltyPreset = presets.find(preset => `${preset.id}-v1` === (parsed.source?.id ?? parsed.puzzleId));
-      if (meltyPreset) await loadPreset(meltyPreset);
-      install(module, text, 'imported');
+      const text=await file.text(), parsed=JSON.parse(text);
+      if (parsed.abstract && parsed.controls && parsed.presentation) {
+        const preset:Preset={id:'imported',label:'Imported definition',source:undefined,realizations:[]};
+        installBundle(preset,parsed as RuntimeBundle);install(module,preset.source!,'imported',preset);return;
+      }
+      const authoring=await import('./authoring');
+      if (parsed.kind==='relational-gear-prototypes') {
+        const {bundle,source}=await authoring.compileGear(parsed.gearedEdges,parsed.puzzleId,'imported');
+        const preset:Preset={id:'imported',label:'Imported Gear family',source:undefined,realizations:[],gearedEdges:parsed.gearedEdges,legacySource:source};
+        installBundle(preset,bundle);install(module,preset.source!,'imported',preset);return;
+      }
+      const bundle=await authoring.compileSource(text);
+      const puzzleId=bundle.presentation.puzzleId;
+      const matching=presets.find(p=>[p.id,p.id+'-v1',p.id+'-experimental-v1'].includes(puzzleId));
+      if(matching)await loadPreset(matching);
+      if(matching?.source && JSON.parse(matching.source.presentation).legacyDefinitionDigest===bundle.presentation.legacyDefinitionDigest) {
+        install(module,matching.source,'imported');return;
+      }
+      const preset:Preset={id:'imported',label:'Imported definition',source:runtimeDocuments(bundle),realizations:[],legacySource:text};
+      install(module,preset.source!,'imported',preset);
     } catch (error: unknown) {
       setEvidence({ status: 'Invalid', diagnostics: [{ reasonCode: 'source.invalid', source: file.name, message: String(error) }] });
     }
@@ -485,7 +384,15 @@ export function App() {
   async function importSession(file?: File): Promise<void> {
     if (!file || !kernel.current) return;
     if (file.size > 4 * 1024 * 1024) { setEvidence({ status: 'Invalid', diagnostics: [{ reasonCode: 'document.limit', source: file.name, message: 'Session import is limited to 4 MiB.' }] }); return; }
-    const text = await file.text(); const result = kernel.current.load(text);
+    let text = await file.text();
+    try {
+      if (JSON.parse(text).schemaVersion===2) {
+        const authoring=await import('./authoring');
+        const source=activePreset?.legacySource ?? await authoring.presetSource(activePreset?.dataId??activePreset?.id??'');
+        text=await authoring.migrateSave(source,text);
+      }
+    } catch(error) { setEvidence({status:'Invalid',diagnostics:[{reasonCode:'session.migration',source:file.name,message:String(error)}]});return; }
+    const result = kernel.current.load(text);
     if (result.status !== 'Loaded') { setEvidence(result); return; }
     setSnapshot(readSnapshot(kernel.current)); setVisualDigest(kernel.current.stateSnapshot().stateDigest); setEvidence(undefined);
     for (const view of views.current) view.setState(kernel.current.stateText());
@@ -570,16 +477,15 @@ export function App() {
               </details>}
             </div>
           </div>
-          {activePreset && JSON.parse(activePreset.source).kind === 'relational-gear-prototypes' && <fieldset className="gear-configuration" disabled={busy}>
+          {activePreset?.gearedEdges && <fieldset className="gear-configuration" disabled={busy}>
             <legend>Geared edges · changing these starts a solved puzzle</legend>
             {gearEdges.map((edge) => {
-              const source = JSON.parse(activePreset.source);
-              const checked = source.gearedEdges.includes(edge);
+              const checked = (pendingGear ?? activePreset.gearedEdges!).includes(edge);
               return <label key={edge}><input type="checkbox" aria-label={`Gear edge ${edge}`} checked={checked} onChange={() => {
                 if (!module) return;
-                const geared = new Set<string>(source.gearedEdges);
+                const geared = new Set<string>(pendingGear ?? activePreset.gearedEdges);
                 if (checked) geared.delete(edge); else geared.add(edge);
-                install(module, JSON.stringify({ ...source, puzzleId: 'gear-custom-experimental-v1', gearedEdges: gearEdges.filter((id) => geared.has(id)) }), 'gear-custom');
+                void configureGear(gearEdges.filter(id=>geared.has(id)));
               }} />{edge}</label>;
             })}
             <small>Face keys choose coupled turns when any middle-layer edge is geared, otherwise ordinary quarter-turns. F = coupled turn; Fq = ordinary turn.</small>
@@ -665,7 +571,7 @@ export function App() {
           </>}
           {inspector === 'history' && <section className="history-list"><p>{snapshot?.cursor ?? 0} committed primitives at the cursor.</p>{snapshot?.history.length ? snapshot.history.map((move, index) => <div key={index} className={index >= snapshot.cursor ? 'future' : ''}><span>{String(index + 1).padStart(3, '0')}</span><strong>{move}</strong><small>{index >= snapshot.cursor ? 'redo' : 'committed'}</small></div>) : <p className="empty-state">Your first move starts a history.</p>}</section>}
           {inspector === 'definition' && <section className="definition-detail"><dl>{definition?.placementDomains.map((domain) => <div key={domain.id}><dt>{domain.id} domain</dt><dd>{domain.placements.length} exact placements</dd></div>)}</dl><h3>Position orbits & stabilizers</h3><dl>{Object.entries(definition?.symmetry?.positionOrbits ?? {}).map(([type, orbit]) => <div key={type}><dt>{type}</dt><dd>{orbit.positions.length} positions · |H| = {orbit.stabilizer.length}</dd></div>)}</dl><h3>Directed operations</h3><div className="operation-list">{definition?.operations.map((operation) => <details key={operation.id}><summary>{operation.id} <span>inverse {operation.inverse}</span></summary><pre>{JSON.stringify(operation, null, 2)}</pre></details>)}</div><details><summary>Compiled definition</summary><pre>{definitionText}</pre></details></section>}
-          <div className="definition-footer"><span className="eyebrow">PINNED SEMANTICS</span><code title={snapshot?.definitionDigest}>{snapshot?.definitionDigest ?? '—'}</code></div>
+          <div className="definition-footer"><span className="eyebrow">PINNED SEMANTICS</span><code title={snapshot?.executionDigest}>{snapshot?.executionDigest ?? '—'}</code></div>
         </aside>
       </main>
       <footer><span>Geometry interprets. The abstract core decides.</span><span>{busy ? 'Views follow the recorded transition.' : 'One authoritative puzzle state'}</span></footer>

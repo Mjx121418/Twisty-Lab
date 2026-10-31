@@ -2,7 +2,7 @@
 
 Twisty Lab is a static site. GitHub Pages serves the JavaScript, WebAssembly, meshes, and puzzle data; simulation and rendering run in the visitor's browser. Publishing needs only the WASM build; the native CLI is used by the full development checks.
 
-The workflow in [`.github/workflows/pages.yml`](../.github/workflows/pages.yml) supports manual runs and a daily schedule at 00:13 UTC. Push source from macOS; a push alone does not start deployment. Scheduled runs publish the default branch and may start later than the scheduled time.
+The workflow in [`.github/workflows/pages.yml`](../.github/workflows/pages.yml) runs only through `workflow_dispatch`. Push source from macOS; run the workflow manually when you decide to publish. A push alone does not start deployment.
 
 ## First upload from macOS
 
@@ -25,7 +25,8 @@ The workflow in [`.github/workflows/pages.yml`](../.github/workflows/pages.yml) 
 For a project repository named `twisty-lab`, the usual URLs are:
 
 - Simulator: `https://YOUR_USERNAME.github.io/twisty-lab/`
-- Independent Canvas renderer/controller: `https://YOUR_USERNAME.github.io/twisty-lab/kernel/examples/canvas/`
+- Full SDK Canvas renderer/controller: `https://YOUR_USERNAME.github.io/twisty-lab/kernel/examples/canvas/`
+- Compiler-free Canvas renderer/controller: `https://YOUR_USERNAME.github.io/twisty-lab/runtime/examples/canvas/`
 
 A repository named `YOUR_USERNAME.github.io` serves at `/`. The workflow reads the actual Pages base path, so the build also handles that root site or a configured custom domain without hardcoding a repository name. Custom-domain DNS setup is separate.
 
@@ -37,9 +38,9 @@ Commit the changes you want to upload, then push from macOS:
 git push origin main
 ```
 
-To update the live site immediately, manually run **Deploy GitHub Pages** on `main` again; otherwise, wait for the next scheduled run. Each run builds the checked-out commit. The deployment replaces the whole static site, including the WASM SDK and example data. To republish an earlier version, revert the relevant source commits, push, and run the workflow again.
+To update the live site immediately, manually run **Deploy GitHub Pages** on `main` again. Each run builds the checked-out commit. The deployment replaces the whole static site, including the WASM SDK and example data. To republish an earlier version, revert the relevant source commits, push, and run the workflow again.
 
-The build uses Node 24.21.0, Emscripten 6.0.11, and the checked-in npm lockfile. `npm run check:puzzles -- --files-only` first verifies the checked-in manifest before build tools are installed. `npm run build:web` checks freshness again, compiles WASM, validates all 13 prebuilt packages and their 27 realizations with that engine, packages the independent SDK, checks TypeScript, and builds `dist/`. Validation checks JSON schemas, package/source/catalog agreement, realization and fixture semantic pins, and construction of every declared realization. `npm run test:publish` then runs two browser smoke checks: every preset must load, move, and undo in both the simulator and the standalone Canvas client, without missing assets or uncaught browser errors. Failures prevent deployment. Compilation uses one job, browser checks use one worker, and heavy workloads run sequentially. The workflow installs its tools directly and does not build or modify the development Dockerfile.
+The build uses Node 24.21.0, Emscripten 6.0.11, and the checked-in npm lockfile. `npm run check:puzzles -- --files-only` first verifies the checked-in manifest before build tools are installed. `npm run build:web` checks freshness again, compiles WASM, validates all 24 prebuilt packages and their 48 realizations with that engine, checks the compiled runtime inventory, packages the full and compiler-free SDKs, checks TypeScript, and builds `dist/`. Validation checks JSON schemas, package/source/catalog agreement, realization and fixture semantic pins, and construction of every declared realization. `npm run test:publish` then runs three browser smoke checks: every preset must load, move, and undo in the simulator and both standalone Canvas clients, without missing assets or uncaught browser errors. Failures prevent deployment. Compilation uses one job, browser checks use one worker, and heavy workloads run sequentially. The workflow installs its tools directly and does not build or modify the development Dockerfile.
 
 Publishing skips native compilation, package regeneration audits, native/WASM parity tests, and the detailed browser regression suite. Run `npm run check` during development before publishing changes to rules, geometry, or generated packages. That command explicitly includes the native build and full reproducibility audit; the shorter publishing check verifies that the built site and SDK work at the Pages URL.
 
@@ -49,10 +50,12 @@ App code and documentation changes can use the committed puzzle packages directl
 
 ```sh
 npm run build:puzzles
+npm run build:runtime-puzzles
 npm run check:packages
+npm run check:runtime-puzzles
 ```
 
-Review and commit the generated data and `packages/build-manifest.json` together. Use `npm run build:puzzles -- --update-fixtures` only when deliberately accepting new semantic identities. The action never regenerates puzzles or updates their hashes. The WASM engine continues to build from source, independently of the puzzle authoring process.
+Review and commit the generated data and both inventories’ manifests together. Use `npm run build:puzzles -- --update-fixtures` only when deliberately accepting new semantic identities. The action never regenerates puzzles or updates their hashes. The WASM engine continues to build from source, independently of the puzzle authoring process.
 
 ## Check the repository path locally
 

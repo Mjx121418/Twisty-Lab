@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { GeometryInstance, copyFloatView, copyIndexView, type FlatSurface, type MainModule, type Realization, type SceneDescriptor } from '../../kernel/index';
+import { GeometryInstance, copyFloatView, copyIndexView, type FlatSurface, type MainModule, type NativeSession, type Realization, type SceneDescriptor } from './kernel';
 import { destinationTransforms, type PieceDestination } from './destinations';
 import { cameraWindowPolygon, insidePolygon, surfaceBounds, surfaceImageOrigin, surfaceImages, surfacePolygon, type Polygon, type Bounds, type SurfaceImage, type SurfaceMode } from './flatSurface';
 
@@ -63,10 +63,10 @@ export class SurfaceView {
   private disposed = false;
 
   constructor(module: MainModule, private readonly host: HTMLElement,
-    session: InstanceType<MainModule['Session']>, realization: Realization,
+    session: NativeSession, realization: Realization,
     private readonly onPick: (piece:string|undefined)=>void, private readonly canPick: ()=>boolean,
     private readonly onDestination: (destination:PieceDestination)=>void, private readonly mode: SurfaceMode) {
-    const geometry = new GeometryInstance(module, session, JSON.stringify(realization));
+    const geometry = new GeometryInstance(module, session, realization.runtime ?? JSON.stringify(realization));
     this.geometry = geometry;
     this.descriptor = geometry.scene;
     if (!this.descriptor.flatSurface) { geometry.dispose(); throw new Error('Missing quotient surface metadata.'); }

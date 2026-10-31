@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
-import { GeometryInstance, copyFloatView, copyIndexView, type MainModule, type Realization, type SceneDescriptor, type ProjectionOptions } from '../../kernel/index';
+import { GeometryInstance, copyFloatView, copyIndexView, type MainModule, type NativeSession, type Realization, type SceneDescriptor, type ProjectionOptions } from './kernel';
 import { DestinationOverlay } from './destinationOverlay';
 import type { PieceDestination } from './destinations';
 import { S3GpuProjection } from './s3Gpu';
@@ -47,14 +47,14 @@ export class RenderView {
   constructor(
     module: MainModule,
     private readonly host: HTMLElement,
-    session: InstanceType<MainModule['Session']>,
+    session: NativeSession,
     realization: Realization,
     private readonly onPick: (piece: string | undefined) => void,
     private readonly canPick: () => boolean,
     onDestination: (destination: PieceDestination) => void,
     initialCameraScale = 1,
   ) {
-    const geometry = new GeometryInstance(module, session, JSON.stringify(realization));
+    const geometry = new GeometryInstance(module, session, realization.runtime ?? JSON.stringify(realization));
     this.geometry = geometry;
     if (realization.controlLayout?.version === 2) {
       const group = realization.controlLayout.groups[0];

@@ -1,5 +1,5 @@
 import { Matrix4 } from 'three';
-import type { FlatSurface } from '../../kernel/index';
+import type { FlatSurface } from '../../kernel/shared';
 
 export type SurfaceMode = 'square' | 'tiles';
 export type Bounds = [number, number, number, number];

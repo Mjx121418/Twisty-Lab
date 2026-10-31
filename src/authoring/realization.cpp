@@ -20,7 +20,10 @@ Json rename_keys(Json value, const std::map<std::string, std::string> &names) {
 }
 }
 Json realization_artifacts(const std::string &source, const std::string &realization) {
-  const auto execution = Execution::from_source(source);
+  return realization_artifacts(Execution::from_source(source), realization);
+}
+Json realization_artifacts(std::shared_ptr<const Execution> execution, const std::string &realization) {
+  if (!execution || execution->source_free()) throw DiagnosticError("authoring.execution", "/", "A source-compiled authoring context is required.");
   const auto &def = *execution->definition(); const auto puzzle = execution->compiled_puzzle();
   const auto &b = puzzle->bindings;
   auto abstract = execution->artifact_json(); auto manifest = interpretation_artifact(*execution, abstract);

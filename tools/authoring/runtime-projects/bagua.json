@@ -1,0 +1,25 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "bagua",
+  "producer": {
+    "type": "source",
+    "package": "../../../packages/bagua/package.json",
+    "realizations": [
+      {
+        "id": "bagua-euclidean",
+        "path": "../../../packages/bagua/bagua-euclidean.json"
+      },
+      {
+        "id": "bagua-port-diagram",
+        "path": "../../../packages/bagua/bagua-port-diagram.json"
+      },
+      {
+        "id": "bagua-spherical",
+        "path": "../../../packages/bagua/bagua-spherical.json"
+      }
+    ]
+  },
+  "includeLegacy": false,
+  "output": "../../../runtime-puzzles/bagua"
+}

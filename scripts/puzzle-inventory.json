@@ -63,7 +63,10 @@
     "examples/artifact/export.cpp",
     "tools/__init__.py",
     "tools/authoring",
-    "examples/artifact/validate.cpp"
+    "examples/artifact/validate.cpp",
+    "src/runtime_api.cpp",
+    "src/controller/controller.cpp",
+    "include/twisty/runtime_api.hpp"
   ],
   "puzzles": [
     {

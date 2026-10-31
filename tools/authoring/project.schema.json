@@ -9,6 +9,7 @@
     "projectVersion": {"const": 1},
     "id": {"$ref": "#/definitions/id"},
     "output": {"$ref": "#/definitions/path"},
+    "includeLegacy": {"type": "boolean", "default": true},
     "producer": {
       "oneOf": [
         {

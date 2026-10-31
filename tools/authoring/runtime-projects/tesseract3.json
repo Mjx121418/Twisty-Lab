@@ -1,0 +1,17 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "tesseract3",
+  "producer": {
+    "type": "source",
+    "package": "../../../packages/tesseract3/package.json",
+    "realizations": [
+      {
+        "id": "tesseract3-s3",
+        "path": "../../../packages/tesseract3/tesseract3-s3.json"
+      }
+    ]
+  },
+  "includeLegacy": false,
+  "output": "../../../runtime-puzzles/tesseract3"
+}

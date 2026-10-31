@@ -84,7 +84,9 @@ def validate_output(directory, tools, recorded=None):
         identifier=view['id']
         require(isinstance(identifier,str) and identifier and Path(identifier).name==identifier and identifier not in ('.','..'),'Invalid receipt realization ID.')
         folder=directory/'realizations'/identifier
-        result=run_json([tools['twisty_artifact_validate'],directory/'abstract.json',directory/'interpretation.json',folder/'realization.json',folder/'geometry.json'])
+        command=[tools['twisty_artifact_validate'],directory/'abstract.json',directory/'interpretation.json',folder/'realization.json',folder/'geometry.json']
+        if (directory/'controls.json').is_file(): command.append(directory/'controls.json')
+        result=run_json(command)
         require(result.get('status')=='Valid' and result.get('executionDigest')==recorded['executionDigest'] and
                 result.get('interpretationDigest')==recorded['interpretationDigest'] and result.get('realizationDigest')==view['realizationDigest'],
                 'Native realization identity differs from the receipt.','authoring.native')
@@ -160,24 +162,26 @@ def build(project, output, configured, rebuild=False):
             stage=Path(temporary);working=stage/'work';working.mkdir()
             candidate=stage/'candidate';candidate.mkdir()
             legacy,views=legacy_inputs(project,working,tools)
-            shutil.copytree(legacy,candidate/'legacy')
-            common=None;realizations=[]
-            for key,path in views:
-                bundle=run_json([tools['twisty_artifact_export'],legacy/'package.json',path])
-                fields(bundle,['abstract','interpretation','realization','payload'])
-                require(isinstance(bundle['payload'],str),'Exporter must return exact payload text.')
-                current=(bundle['abstract'],bundle['interpretation'])
-                if common is None:
-                    common=current;write_json(candidate/'abstract.json',common[0]);write_json(candidate/'interpretation.json',common[1])
-                else: require(current==common,'Realizations disagree on their shared execution/correspondence.','authoring.native')
-                directory=candidate/'realizations'/key;write_json(directory/'realization.json',bundle['realization'])
-                (directory/'geometry.json').write_bytes(bundle['payload'].encode('utf-8'))
-                verified=run_json([tools['twisty_artifact_validate'],candidate/'abstract.json',candidate/'interpretation.json',directory/'realization.json',directory/'geometry.json'])
+            if project.document.get('includeLegacy',True): shutil.copytree(legacy,candidate/'legacy')
+            views_file=working/'runtime-views.json'
+            write_json(views_file,[read_json(path) for _,path in views])
+            bundle=run_json([tools['twisty_artifact_export'],'--runtime-bundle',legacy/'package.json',views_file])
+            fields(bundle,['abstract','interpretation','controls','presentation','views'])
+            require(len(bundle['views'])==len(views),'Runtime exporter changed the view inventory.','authoring.native')
+            common=(bundle['abstract'],bundle['interpretation']);realizations=[]
+            for name in ('abstract','interpretation','controls','presentation'): write_json(candidate/(name+'.json'),bundle[name])
+            for (key,_),view in zip(views,bundle['views']):
+                fields(view,['realization','payload','presentation'])
+                require(isinstance(view['payload'],str),'Exporter must return exact payload text.')
+                directory=candidate/'realizations'/key;write_json(directory/'realization.json',view['realization'])
+                write_json(directory/'presentation.json',view['presentation'])
+                (directory/'geometry.json').write_bytes(view['payload'].encode('utf-8'))
+                verified=run_json([tools['twisty_artifact_validate'],candidate/'abstract.json',candidate/'interpretation.json',directory/'realization.json',directory/'geometry.json',candidate/'controls.json'])
                 require(verified.get('status')=='Valid' and verified.get('executionDigest')==common[0]['executionDigest'] and
                         verified.get('interpretationDigest')==common[1]['interpretationDigest'] and
-                        verified.get('realizationDigest')==bundle['realization']['realizationDigest'],
+                        verified.get('realizationDigest')==view['realization']['realizationDigest'],
                         'Native artifact validation or identity check failed.','authoring.native')
-                realizations.append({'id':key,'backend':bundle['realization']['backend'],'realizationDigest':verified['realizationDigest'],
+                realizations.append({'id':key,'backend':view['realization']['backend'],'realizationDigest':verified['realizationDigest'],
                                      'parts':verified['parts'],'space':verified['space']})
             require(common is not None,'A project needs at least one realization.')
             require(project.hashes()==before and tool_hashes(tools)==binaries,'Authoring inputs or native tools changed during generation.','authoring.changed')

@@ -1,6 +1,6 @@
 # Authoring and interpreter contracts
 
-Status: Phases 1–5, 2026-10-31. Abstract artifact 1 and interpretation 1 remain
+Status: Phases 1–6, 2026-10-31. Abstract artifact 1 and interpretation 1 remain
 supported. [Interpretation 2](../../schemas/interpretation-v2.schema.json),
 [realization envelope 1](../../schemas/realization-envelope.schema.json), and
 [backend payload 1](../../schemas/backend-payload.schema.json) extend the
@@ -9,8 +9,10 @@ source-free path to the existing geometric backends. The
 required `grouped-action-records-v1` extension for large numeric programs.
 Artifact API 1 is separate from legacy kernel API 7; see the exact
 [API/ownership/error contract](../kernel-api.md#interpretation-2-and-realization-envelope-1).
-The original drafts below retain design context. Resolved controller artifacts
-and `controlDigest` remain proposals and are not accepted by the runtime.
+The original drafts below retain design context. Phase 6 implements the
+[resolved controller contract 1](../../schemas/control-artifact.schema.json)
+and `controlDigest`; its numeric reader records and explicit profiles supersede
+the draft controller wire shape below. See [runtime distribution API 1](../kernel-api.md#runtime-distribution-api-1).
 The [architecture review](../architecture-review-authoring-contract.md) records
 the remaining migration sequence.
 
@@ -19,8 +21,8 @@ receipt 1, with explicit native hosts, staged generation, source-free export and
 native realization validation. Its separate tool package and detached consumer
 checks exercise reproducibility, bounded dependencies, read-only checks and
 publication failure handling. These host-side versions do not change any kernel
-API, puzzle schema or buffer contract. Reference application/distribution
-migration and presentation cleanup remain Phases 6–7.
+API, puzzle schema or buffer contract. Phase 6 adds runtime-only distributions, optional authoring SDK entry points
+and compiled reference presets. Backend/presentation cleanup remains Phase 7.
 
 The compiler produces immutable executable data. The abstract runtime validates
 and executes that data. Geometric interpreters validate a separate correspondence

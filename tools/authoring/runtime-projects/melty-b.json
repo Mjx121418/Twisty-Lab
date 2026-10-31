@@ -1,0 +1,25 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "melty-b",
+  "producer": {
+    "type": "source",
+    "package": "../../../packages/melty-b/package.json",
+    "realizations": [
+      {
+        "id": "melty-b-euclidean",
+        "path": "../../../packages/melty-b/melty-b-euclidean.json"
+      },
+      {
+        "id": "melty-b-port-diagram",
+        "path": "../../../packages/melty-b/melty-b-port-diagram.json"
+      },
+      {
+        "id": "melty-b-spherical",
+        "path": "../../../packages/melty-b/melty-b-spherical.json"
+      }
+    ]
+  },
+  "includeLegacy": false,
+  "output": "../../../runtime-puzzles/melty-b"
+}

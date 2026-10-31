@@ -54,7 +54,11 @@ class AuthoringConsumer(unittest.TestCase):
         return json.loads(result.stdout if success else result.stderr)
 
     def test_detached_reproducible_read_only_and_native_validation(self):
+        self.document['includeLegacy']=False;self.save()
         self.assertTrue(self.command('build')['built'])
+        self.assertFalse((self.output/'legacy').exists())
+        self.assertTrue((self.output/'controls.json').is_file())
+        self.assertTrue((self.output/'presentation.json').is_file())
         before=file_hashes(self.output);receipt=(self.output/'build-manifest.json').read_bytes()
         snapshot={str(path):path.stat().st_mtime_ns for path in self.host.rglob('*')}
         for command in ('inspect','check','validate'): self.command(command)

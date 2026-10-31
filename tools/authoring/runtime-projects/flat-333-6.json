@@ -1,0 +1,17 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "flat-333-6",
+  "producer": {
+    "type": "source",
+    "package": "../../../packages/flat-333-6/package.json",
+    "realizations": [
+      {
+        "id": "flat-quotient",
+        "path": "../../../packages/flat-333-6/flat-quotient.json"
+      }
+    ]
+  },
+  "includeLegacy": false,
+  "output": "../../../runtime-puzzles/flat-333-6"
+}

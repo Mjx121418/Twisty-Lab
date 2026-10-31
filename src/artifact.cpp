@@ -118,6 +118,26 @@ runtime::Bindings decode_bindings(const Json &b, const core::Program &program) {
     }
     out.requests.push_back(std::move(request));
   }
+  // Optional runtime-controller index. The general executor also accepts
+  // arbitrary selectors; those programs simply do not advertise these scopes.
+  out.movements.resize(out.choice_values.size());
+  for (std::size_t slot = 0; slot < out.movements.size(); ++slot)
+    out.movements[slot].resize(out.choice_values[slot].size());
+  bool scoped = true;
+  for (core::Index i = 0; i < d.actions.size(); ++i) {
+    const auto root = d.actions[i].selection;
+    if (root < 2) { scoped = false; break; }
+    const auto &selector = d.predicates[root - 2];
+    if (selector.opcode != core::Opcode::in || selector.bank != core::Bank::choice ||
+        selector.input >= out.movements.size() || d.finite_sets[selector.set].size() != 1) { scoped = false; break; }
+    const auto choice = d.finite_sets[selector.set][0];
+    if (choice >= out.movements[selector.input].size()) { scoped = false; break; }
+    auto &range = out.movements[selector.input][choice];
+    if (range.action_count && range.first_action + range.action_count != i) { scoped = false; break; }
+    if (!range.action_count) range.first_action = i;
+    ++range.action_count;
+  }
+  if (!scoped) out.movements.clear();
   return out;
 }
 } // namespace
@@ -243,7 +263,7 @@ Artifact::Artifact(const std::string &text) {
   catch (const Json::exception &error) { throw DiagnosticError("artifact.invalid", "/", error.what()); }
 }
 Json info() {
-  return {{"artifactAPIVersion", 1}, {"artifactVersions", {1}}, {"interpretationVersions", {1, 2}},
+  return {{"artifactAPIVersion", 1}, {"runtimeAPIVersion", 1}, {"controlContractVersions", {1}}, {"artifactVersions", {1}}, {"interpretationVersions", {1, 2}},
     {"realizationEnvelopeVersions", {1}}, {"backendPayloadVersions", {1}},
     {"abstractCapabilities", {"grouped-action-records-v1"}},
     {"sessionSchemaVersions", {3}}, {"witnessVersions", {2}}, {"frameBufferVersion", 1},

@@ -1,0 +1,25 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "cube3",
+  "producer": {
+    "type": "source",
+    "package": "../../../packages/cube3/package.json",
+    "realizations": [
+      {
+        "id": "cube-euclidean",
+        "path": "../../../packages/cube3/cube-euclidean.json"
+      },
+      {
+        "id": "cube-port-diagram",
+        "path": "../../../packages/cube3/cube-port-diagram.json"
+      },
+      {
+        "id": "cube-spherical",
+        "path": "../../../packages/cube3/cube-spherical.json"
+      }
+    ]
+  },
+  "includeLegacy": false,
+  "output": "../../../runtime-puzzles/cube3"
+}

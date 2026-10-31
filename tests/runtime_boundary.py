@@ -30,7 +30,7 @@ for archive in sys.argv[1:]:
         for dependency in ['twisty::language::', 'nlohmann::', 'twisty::Geometry', 'twisty::Execution']:
             assert dependency not in symbols, f'Runtime descriptors depend on {dependency}'
     if Path(archive).stem in ['libpuzzle_artifact', 'libpuzzle_execution_runtime',
-                              'libpuzzle_session_runtime', 'libpuzzle_geometry_runtime']:
+                              'libpuzzle_session_runtime', 'libpuzzle_geometry_runtime', 'libpuzzle_controller']:
         for dependency in ['twisty::language::', 'twisty::Execution::from_source(',
                            'twisty::Session::Session(std::__cxx11::basic_string']:
             assert dependency not in symbols, f'Artifact runtime depends on {dependency}'

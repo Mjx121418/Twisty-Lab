@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.25)
+project(runtime_distribution_consumer LANGUAGES CXX)
+find_package(TwistyKernel 0.7 CONFIG REQUIRED)
+add_executable(runtime_distribution main.cpp)
+target_link_libraries(runtime_distribution PRIVATE Twisty::runtime_kernel)

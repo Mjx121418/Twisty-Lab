@@ -70,7 +70,8 @@ class Project:
         self.path = Path(filename).resolve()
         require(self.path.stat().st_size <= 1024*1024, 'Project manifest exceeds 1 MiB.')
         self.document = read_json(self.path)
-        fields(self.document, ['kind','projectVersion','id','producer'], ['output'])
+        fields(self.document, ['kind','projectVersion','id','producer'], ['output','includeLegacy'])
+        require(type(self.document.get('includeLegacy',True)) is bool,'includeLegacy must be a boolean.')
         require(self.document['kind']=='twisty-authoring-project' and type(self.document['projectVersion']) is int and self.document['projectVersion']==1, 'Unsupported authoring project kind/version.')
         self.id = identifier(self.document['id'])
         self.producer = self.document['producer']

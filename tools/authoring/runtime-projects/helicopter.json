@@ -1,0 +1,25 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "helicopter",
+  "producer": {
+    "type": "source",
+    "package": "../../../packages/helicopter/package.json",
+    "realizations": [
+      {
+        "id": "helicopter-euclidean",
+        "path": "../../../packages/helicopter/helicopter-euclidean.json"
+      },
+      {
+        "id": "helicopter-port-diagram",
+        "path": "../../../packages/helicopter/helicopter-port-diagram.json"
+      },
+      {
+        "id": "helicopter-spherical",
+        "path": "../../../packages/helicopter/helicopter-spherical.json"
+      }
+    ]
+  },
+  "includeLegacy": false,
+  "output": "../../../runtime-puzzles/helicopter"
+}

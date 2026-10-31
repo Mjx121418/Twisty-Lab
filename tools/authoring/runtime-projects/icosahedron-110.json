@@ -1,0 +1,21 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "icosahedron-110",
+  "producer": {
+    "type": "source",
+    "package": "../../../packages/icosahedron-110/package.json",
+    "realizations": [
+      {
+        "id": "icosahedron-110-euclidean",
+        "path": "../../../packages/icosahedron-110/icosahedron-110-euclidean.json"
+      },
+      {
+        "id": "icosahedron-110-spherical",
+        "path": "../../../packages/icosahedron-110/icosahedron-110-spherical.json"
+      }
+    ]
+  },
+  "includeLegacy": false,
+  "output": "../../../runtime-puzzles/icosahedron-110"
+}

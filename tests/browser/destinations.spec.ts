@@ -1,13 +1,13 @@
+import {runtimeReference} from './runtime-reference';
 import { setViews, expectViews } from './view-controls';
 import { test, expect, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
 import { BufferAttribute, BufferGeometry, DoubleSide, Matrix4, Mesh, MeshBasicMaterial, OrthographicCamera, PerspectiveCamera, Raycaster, Vector2, Vector3 } from 'three';
-import { createKernel, KernelSession, type MainModule, type SceneDescriptor } from '../../kernel/index';
+import { createRuntime, RuntimeSession as KernelSession, GeometryInstance, type MainModule, type SceneDescriptor } from '../../kernel/runtime';
 import { pieceDestinations } from '../../web/src/destinations';
 
 let runtime: MainModule;
-test.beforeAll(async () => { runtime = await createKernel(); });
+test.beforeAll(async () => { runtime = await createRuntime(); });
 test.beforeEach(async ({ page }) => {
   await page.goto('./');
   // A cold browser compiles WASM after page load under the container CPU budget.
@@ -27,8 +27,11 @@ async function clickDestination(page: Page, viewId: string, puzzle: string, real
   const host = page.getByTestId(viewId);
   await host.scrollIntoViewIfNeeded();
   const bounds = (await host.boundingBox())!;
-  const session = new KernelSession(runtime, readFileSync(`packages/${puzzle}/package.json`, 'utf8'));
-  const geometry = runtime.createGeometry(session.native, readFileSync(`packages/${puzzle}/${realization}.json`, 'utf8'))!;
+  const read = (name: string) => readFileSync(`runtime-puzzles/${puzzle}/${name}.json`, 'utf8');
+  const session = new KernelSession(runtime, {abstract:read('abstract'),controls:read('controls'),presentation:read('presentation')});
+  const adapter = new GeometryInstance(runtime,session.native,{interpretation:read('interpretation'),
+    envelope:read(`realizations/${realization}/realization`),payload:read(`realizations/${realization}/geometry`)});
+  const geometry=adapter.definition;
   const assets: BufferGeometry[] = [];
   const material = new MeshBasicMaterial();
   try {
@@ -51,8 +54,8 @@ async function clickDestination(page: Page, viewId: string, puzzle: string, real
     material.side = DoubleSide;
     const ghosts: Mesh[] = [];
     for (const option of pieceDestinations(session, session.snapshot(), pieceId)) {
-      geometry.prepareAnimationJSON(option.transitionRecord); geometry.sample(1);
-      const transforms = new Float32Array(geometry.transforms());
+      adapter.prepare(option.transitionRecord); adapter.evaluate(1);
+      const transforms = new Float32Array(adapter.matrices);
       scene.visualParts.forEach((part, index) => {
         if (part.pieceId !== pieceId) return;
         const mesh = new Mesh(assetMap.get(part.meshAssetId)!, material);
@@ -87,7 +90,7 @@ async function clickDestination(page: Page, viewId: string, puzzle: string, real
       if (touch) await button.tap(); else await button.click();
     }
     await resting(page);
-  } finally { for (const asset of assets) asset.dispose(); material.dispose(); geometry.delete(); session.dispose(); }
+  } finally { for (const asset of assets) asset.dispose(); material.dispose(); adapter.dispose(); session.dispose(); }
 }
 
 for (const [label, viewId, realization, pair] of [
@@ -115,7 +118,7 @@ for (const [label, viewId, realization, pair] of [
   const saved = readFileSync((await (await downloading).path())!, 'utf8');
   await page.screenshot({ path: `test-results/destinations-${label}.png`, fullPage: true });
   await clickDestination(page, viewId, 'cube3', realization, 'corner/UFR', 'F');
-  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--algorithm', 'F', '--json'], { encoding: 'utf8' }));
+  const reference = runtimeReference(['run', '--algorithm', 'F', '--json']);
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
   await expect(page.getByTestId(viewId)).toHaveAttribute('data-selected-piece', 'corner/UFR');
   await expect(page.getByTestId(viewId)).toHaveAttribute('data-destination-operations', "D,D',F,F',R,R'");
@@ -138,7 +141,7 @@ test('offers a choice for a center destination shared by both twists', async ({ 
   await expect(host).toHaveAttribute('data-destination-count', '2');
   await expect(host).toHaveAttribute('data-destination-groups', '1');
   await clickDestination(page, 'diagram-view', 'cube3', 'cube-spherical', 'center/U', "U'");
-  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--algorithm', "U'", '--json'], { encoding: 'utf8' }));
+  const reference = runtimeReference(['run', '--algorithm', "U'", '--json']);
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
 });
 
@@ -184,7 +187,7 @@ test('Helicopter selection chooses a twist family without destination ghosts', a
   await page.getByRole('button', { name: 'Choose BL family', exact: true }).click();
   await page.getByRole('button', { name: /^BL destination b(?:,|$)/ }).click();
   await resting(page);
-  const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/helicopter/package.json', '--algorithm', 'BL_ab', '--json'], { encoding: 'utf8' }));
+  const reference = runtimeReference(['run', '--definition', 'packages/helicopter/package.json', '--algorithm', 'BL_ab', '--json']);
   await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
   await expect(page.getByTestId('cube-view')).toHaveAttribute('data-selected-piece', 'corner/BDL');
   await page.getByLabel('Animation speed').selectOption('450');
@@ -206,7 +209,7 @@ test.describe('Bagua destination', () => {
   test.beforeAll(() => {
     // Compile the native oracle before page/browser fixtures are started. Keeping
     // it out of the live two-view check avoids overlapping their memory peaks.
-    const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--definition', 'packages/bagua/package.json', '--algorithm', 'U+', '--json'], { encoding: 'utf8' }));
+    const reference = runtimeReference(['run', '--definition', 'packages/bagua/package.json', '--algorithm', 'U+', '--json']);
     referenceDigest = reference.snapshot.stateDigest;
   });
 
@@ -232,7 +235,7 @@ test.describe('touch destinations', () => {
     await page.getByRole('button', { name: 'Select corner/UFR', exact: true }).tap();
     await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-destination-count', '6');
     await clickDestination(page, 'diagram-view', 'cube3', 'cube-spherical', 'corner/UFR', 'F', true);
-    const reference = JSON.parse(execFileSync('build/native/twisty', ['run', '--algorithm', 'F', '--json'], { encoding: 'utf8' }));
+    const reference = runtimeReference(['run', '--algorithm', 'F', '--json']);
     await expect(page.getByTestId('state-digest')).toHaveText(reference.snapshot.stateDigest);
     await expect(page.getByTestId('diagram-view')).toHaveAttribute('data-selected-piece', 'corner/UFR');
   });

@@ -56,3 +56,19 @@ Ordinary checks do not update frozen expectations. The explicit recording comman
 is `npm run check:architecture -- --record`; it requires native/WASM agreement for
 every case before writing any fixture changes. Review changed inputs, definition
 hashes, witnesses, saves, and poses before accepting a newly recorded baseline.
+
+## Phase 6 distribution check
+
+The final runtime-only consumer check on 2026-10-31 records its observations in
+`build/runtime-check/measurements.json`. It uses one sequential Node process,
+installed Debug native libraries and Release WASM with `-O1`. The compiler-free
+WASM is 1,584,119 bytes; the full compatibility WASM is 2,296,287 bytes.
+Module import/initialization took 35.15 ms in this run. Node peak RSS was
+683.2 MiB across symbol inspection, all 24 runtime cases, 48 views and the
+optional authoring/save-conversion check. It is not isolated kernel memory.
+
+Per-puzzle `loadMs` measures construction after an independent validation pass;
+it is a warm observation, with filesystem caches uncleared. The process also
+holds copied native/WASM comparison results. These observations do not establish
+a cold-start or throughput improvement over the original baseline. Run
+`npm run check:runtime` to reproduce the method with matching packages.

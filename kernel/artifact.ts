@@ -4,7 +4,7 @@ export type { MainModule as ArtifactModule, Session as ArtifactSession,
   GeometryDefinition as ArtifactGeometryDefinition } from './generated/twisty-artifact.mjs';
 
 export type ArtifactInfo = {
-  artifactAPIVersion: 1; artifactVersions: number[]; interpretationVersions: number[];
+  artifactAPIVersion: 1; runtimeAPIVersion: 1; controlContractVersions: number[]; artifactVersions: number[]; interpretationVersions: number[];
   sessionSchemaVersions: number[]; witnessVersions: number[]; frameBufferVersion: number;
   realizationEnvelopeVersions: number[]; backendPayloadVersions: number[];
   abstractCapabilities: string[];

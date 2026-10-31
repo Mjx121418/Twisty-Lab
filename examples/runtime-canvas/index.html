@@ -1,0 +1,17 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Portable runtime Canvas consumer</title>
+<style>
+body{font:16px system-ui;max-width:920px;margin:24px auto;padding:0 16px;background:#f4f6f5;color:#18242b}
+canvas{width:100%;height:440px;background:white;border:1px solid #bccac7}
+button,input,select{font:inherit;padding:8px;margin:4px}code{overflow-wrap:anywhere}
+</style>
+<h1>Portable runtime Canvas consumer</h1>
+<p>This renderer and controller consume compiled puzzle data through the public runtime SDK.</p>
+<label for="puzzle">Puzzle</label> <select id="puzzle"></select><button id="undo">Undo</button><button id="redo">Redo</button>
+<canvas id="view" width="920" height="440" aria-label="Runtime Canvas puzzle"></canvas>
+<div id="moves"></div>
+<fieldset id="families" hidden><legend>Family destinations</legend><label for="family">Family</label> <select id="family"></select><div id="destinations"></div></fieldset>
+<form id="algorithm"><input id="notation" aria-label="Algorithm" value="R U R' U'"><button>Play algorithm</button></form>
+<p id="status" role="status">Loading…</p><p>State digest: <code id="digest"></code></p>
+<script type="module" src="./app.js"></script>
