@@ -1,0 +1,10 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "flat-torus",
+  "producer": {
+    "type": "preset",
+    "model": "flat-torus"
+  },
+  "output": "../../../build/authoring/flat-torus"
+}

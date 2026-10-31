@@ -1,0 +1,10 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "melty-a",
+  "producer": {
+    "type": "preset",
+    "model": "melty-a"
+  },
+  "output": "../../../build/authoring/melty-a"
+}

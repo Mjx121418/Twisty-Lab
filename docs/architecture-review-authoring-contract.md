@@ -48,6 +48,36 @@ frozen architecture scenarios, installed SDK consumers, and TypeScript checks.
 All 146 legacy package artifacts reproduce unchanged; only their input provenance
 is refreshed. The current WASM still accepts all 24 presets and 48 realizations.
 
+Phase 5 introduces the [dedicated authoring tool](authoring-tool.md), version 1
+project manifests and receipts, build/check/inspect/validate commands, explicit
+native tool paths and a separate portable tool package. Model/mesh producers and
+bundled authoring inputs now live in `tools/authoring`, with former script paths
+retained as compatibility wrappers. Project builds stage legacy inputs, export
+the execution/interpretation/backend documents, and validate them through the
+source-free runtime before publishing. Reference builds stage the complete
+inventory and validate every realization before replacing declared generated files;
+publication rolls back on exceptions and records the global manifest last.
+Detached consumer checks cover deterministic bytes, read-only checks, selected
+model dependencies, stale/corrupt inputs and preserved outputs after injected
+generator, exporter, validator or publication failures. C++ libraries retain
+compilation and geometric certification; kernel public APIs and buffer versions
+are unchanged. Phases 6–7 remain for reference-app/distribution migration and
+backend/presentation cleanup.
+
+Phase 5 verification passes seven authoring-tool checks, 14 package-validation
+unit tests, all seven frozen architecture scenarios, current WASM validation of
+24 presets and 48 realizations, independently installed native/WASM SDK and
+artifact consumers, 184 artifact checks, TypeScript checks, and both packaging
+commands. All 146 runtime artifact hashes remain unchanged, and reference
+publication preserves package documentation.
+
+The full native suite passes 36 of 37 tests. The pre-existing
+`reference_transport_parity` failure starts at Melty A: the immutable language-2
+oracle and current language-3 package have identical effective transport maps and
+lookup checksums, but different predicate signatures. All current package bytes
+match the preceding commit. The oracle is retained unchanged; resolving that
+older structural comparison is separate from this tool migration.
+
 The recommended direction is to introduce a dedicated authoring CLI, backed by
 reusable compiler libraries, that emits validated runtime artifacts. Preserve
 the numeric abstract executor and the geometric interpreters as separate

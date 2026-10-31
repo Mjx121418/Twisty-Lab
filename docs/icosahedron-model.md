@@ -161,7 +161,7 @@ neighborhoods share repeated memberships without adding kernel instructions.
 All 280 operations retain explicit, verified partial transports.
 
 `scripts/icosahedron_152_model.py` derives the catalogs from a checked geometric
-witness walk in `scripts/data/icosahedron-152-witness.json`, expanded by the
+witness walk in `tools/authoring/data/icosahedron-152-witness.json`, expanded by the
 sixty proper icosahedral rotations. `icosahedron_152_meshes.py` constructs both
 realizations, and `icosahedron_152_packages.py` authors and validates the package.
 The witness data is a required authoring input; no build reads the separate

@@ -1,0 +1,10 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "flat-pillowcase",
+  "producer": {
+    "type": "preset",
+    "model": "flat-pillowcase"
+  },
+  "output": "../../../build/authoring/flat-pillowcase"
+}

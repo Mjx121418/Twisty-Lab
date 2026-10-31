@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "twisty-authoring-project-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "projectVersion", "id", "producer"],
+  "properties": {
+    "kind": {"const": "twisty-authoring-project"},
+    "projectVersion": {"const": 1},
+    "id": {"$ref": "#/definitions/id"},
+    "output": {"$ref": "#/definitions/path"},
+    "producer": {
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["type", "package", "realizations"],
+          "properties": {
+            "type": {"const": "source"},
+            "package": {"$ref": "#/definitions/path"},
+            "realizations": {
+              "type": "array", "minItems": 1, "maxItems": 64,
+              "items": {
+                "type": "object", "additionalProperties": false,
+                "required": ["id", "path"],
+                "properties": {"id": {"$ref": "#/definitions/id"}, "path": {"$ref": "#/definitions/path"}}
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["type", "model"],
+          "properties": {
+            "type": {"const": "preset"}, "model": {"$ref": "#/definitions/id"},
+            "inputs": {"type": "object", "additionalProperties": {"$ref": "#/definitions/path"}}
+          }
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "id": {"type": "string", "maxLength": 128, "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+    "path": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*[\\\\:]).+$"}
+  }
+}

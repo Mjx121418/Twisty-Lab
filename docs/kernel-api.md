@@ -835,6 +835,16 @@ The supplied spherical model is packaged as `gear/gear-spherical.json`, `gear-ex
 
 ## Prebuilt puzzle data and packaging
 
+The [dedicated authoring tool](authoring-tool.md) owns project manifests, model and
+mesh generation, staging and reproducible export. Its project/receipt versions
+are independent of kernel APIs, buffer layouts and puzzle schemas. The
+`twisty_artifact_export` host uses `Twisty::authoring_geometry`;
+`twisty_artifact_validate` uses `Twisty::artifact_kernel` and validates the
+execution artifact, interpretation, realization envelope and exact payload bytes
+before publication. Runtime consumers retain the same native and WASM contracts
+without depending on the tool. `npm run package:authoring` assembles a separate
+portable Python/native tool package with external-consumer examples.
+
 The SDK packager copies runtime artifacts from the same inventory used for puzzle generation and freshness validation. It rejects stale or modified puzzle artifacts before copying. `npm run build:puzzles` is the explicit offline authoring step; normal web/kernel builds consume the checked-in packages and validate them against the current WASM engine. The repository manifest is build provenance, not a public kernel format or API version, and consumers do not need it to load a supported puzzle package.
 
 ### S³ cell turns and stereographic drawings

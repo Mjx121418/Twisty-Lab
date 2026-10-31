@@ -179,13 +179,15 @@ Regression fixtures pin a definition digest and specify a replay prefix, request
 Puzzle authoring is separate from app builds:
 
 ```sh
-npm run build:puzzles                # Build native authoring tools and regenerate all 19 packages
+npm run build:puzzles                # Stage, validate and publish all 24 packages and 48 realizations
 npm run check:puzzles -- --files-only # Check recorded input and artifact hashes; no compiler needed
 npm run check:puzzles                # Also validate schemas, semantic pins, and all WASM realizations
-npm run check:packages               # Expensive regeneration-based reproducibility audit
+npm run check:packages               # Read-only freshness and native realization validation
+npm run author -- build tools/authoring/projects/cube3.json --tools-dir build/native
+npm run package:authoring            # Assemble a standalone tool with native hosts and example projects
 ```
 
-`build:puzzles` records `packages/build-manifest.json` only after every generator and semantic-pin check succeeds. The shared inventory in `scripts/puzzle-inventory.json` defines the generation order, authoring dependencies, and runtime artifacts copied into the SDK. Transitive local Python imports and C++ authoring/compiler inputs are hashed along with source meshes and templates. Reference web app code, documentation, and build outputs are excluded. The manifest uses format version 1 with `inputs` and `artifacts` maps from repository-relative paths to lowercase SHA-256 hashes; it contains no timestamps or machine-specific paths. Normal builds and publishing reject stale inputs or altered artifacts and never refresh the manifest automatically.
+`build:puzzles` records `packages/build-manifest.json` only after staged generation, native geometry validation, schema and semantic-pin checks succeed. Failed generation preserves published outputs. The shared inventory in `scripts/puzzle-inventory.json` defines generation order, authoring dependencies, and runtime artifacts copied into the SDK. Python producer files and C++ authoring/compiler inputs are hashed along with source meshes and templates. Reference web app code, documentation, bytecode caches, and build outputs are excluded. The manifest uses format version 1 with `inputs` and `artifacts` maps from repository-relative paths to lowercase SHA-256 hashes; it contains no timestamps or machine-specific paths. Normal builds and publishing reject stale inputs or altered artifacts and never refresh the manifest automatically. The [dedicated authoring tool](docs/authoring-tool.md) also builds individual projects with bounded dependencies, reproducible source-free exports, and read-only checks outside the checkout.
 
 After changing authoring code or data, run `npm run build:puzzles` and review both the generated packages and manifest before committing. To deliberately accept new fixture identities, run `npm run build:puzzles -- --update-fixtures`; ordinary generation rejects changed fixture pins. Individual Python exporters remain useful during authoring, but finish with `build:puzzles` to validate all packages and record provenance. The shared engine still compiles and validates rules when a puzzle is loaded; offline catalog and mesh generation happens only in the authoring command.
 
@@ -193,6 +195,8 @@ After changing authoring code or data, run `npm run build:puzzles` and review bo
 ## Build boundaries and memory ownership
 
 Authoring sources live in [`src/authoring`](src/authoring): the language compiler, Cube/Gear generators, and finite-group utilities. Geometric interpreter sources live in [`src/interpreter`](src/interpreter). The minimal executor (`core.cpp`), completion helpers, session and execution adapters, serialization, and native/WASM entry points remain directly in `src`. Public authoring headers live under `include/twisty/authoring`; `include/twisty/core.hpp` exposes the executor. API 4 uses the core/language names throughout C++, WASM, and the SDK; see [the naming migration](docs/kernel-api.md#api-4-naming).
+
+Offline Python models, meshes, project manifests and bundled authoring data live in [`tools/authoring`](tools/authoring); former `scripts/` model entry points forward there for compatibility. The CLI calls reusable C++ authoring and runtime libraries through explicit native hosts; those libraries remain independently linkable.
 
 - `puzzle_core`: domain-free state, predicates, sparse transports, and explicit-tuple execution.
 - `puzzle_runtime`: compiler-independent descriptors, completion, discovery, and structural movement participation; links only the numeric core.

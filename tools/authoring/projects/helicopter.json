@@ -1,0 +1,10 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "helicopter",
+  "producer": {
+    "type": "preset",
+    "model": "helicopter"
+  },
+  "output": "../../../build/authoring/helicopter"
+}

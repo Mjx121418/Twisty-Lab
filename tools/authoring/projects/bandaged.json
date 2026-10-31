@@ -1,0 +1,10 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "bandaged",
+  "producer": {
+    "type": "preset",
+    "model": "bandaged"
+  },
+  "output": "../../../build/authoring/bandaged"
+}

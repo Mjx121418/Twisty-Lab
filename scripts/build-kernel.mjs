@@ -19,12 +19,12 @@ if (process.argv.includes('--stage-web')) {
   await writeFile(new URL('package.json', output), JSON.stringify({
     name: '@twisty/kernel', version, type: 'module',
     exports: { '.': { types: './index.d.ts', import: './index.js' }, './artifact': { types: './artifact.d.ts', import: './artifact.js' }, './runtime': './generated/twisty.mjs', './wasm': './generated/twisty.wasm', './artifact-wasm': './generated/twisty-artifact.wasm' },
-    files: ['index.js', 'index.d.ts', 'artifact.js', 'artifact.d.ts', 'generated', 'examples', 'schemas', 'README.md', 'core-language.md', 'reference-anchors.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'gear-model.md', 'icosahedron-model.md', 'flat-surfaces.md'],
+    files: ['index.js', 'index.d.ts', 'artifact.js', 'artifact.d.ts', 'generated', 'examples', 'schemas', 'README.md', 'core-language.md', 'reference-anchors.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'gear-model.md', 'icosahedron-model.md', 'flat-surfaces.md', 'authoring-tool.md'],
   }, null, 2) + '\n');
   const readme = (await readFile(new URL('../docs/kernel-api.md', import.meta.url), 'utf8'))
     .replaceAll('../schemas/', 'schemas/').replaceAll('../examples/', 'examples/');
   await writeFile(new URL('README.md', output), readme);
-  for (const file of ['core-language.md', 'reference-anchors.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'gear-model.md', 'icosahedron-model.md', 'flat-surfaces.md']) {
+  for (const file of ['core-language.md', 'reference-anchors.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'gear-model.md', 'icosahedron-model.md', 'flat-surfaces.md', 'authoring-tool.md']) {
     const guide = (await readFile(new URL(`../docs/${file}`, import.meta.url), 'utf8'))
       .replaceAll('../packages/', 'examples/canvas/data/').replaceAll('../examples/', 'examples/')
       .replaceAll('../schemas/', 'schemas/').replaceAll('[language roadmap](abstract-language-core-plan.md)', 'language roadmap')

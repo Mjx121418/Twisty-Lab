@@ -1,0 +1,10 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "flat-hex-torus",
+  "producer": {
+    "type": "preset",
+    "model": "flat-hex-torus"
+  },
+  "output": "../../../build/authoring/flat-hex-torus"
+}

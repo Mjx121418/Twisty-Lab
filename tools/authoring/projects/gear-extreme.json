@@ -1,0 +1,16 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "gear-extreme",
+  "producer": {
+    "type": "preset",
+    "model": "gear-extreme",
+    "inputs": {
+      "packages/gear-extreme/source.json": "../../../packages/gear-extreme/source.json",
+      "packages/gear/normal-meshes.json": "../../../packages/gear/normal-meshes.json",
+      "packages/gear/spherical-meshes.json": "../../../packages/gear/spherical-meshes.json",
+      "packages/gear-extreme/plain-edge-meshes.json": "../../../packages/gear-extreme/plain-edge-meshes.json"
+    }
+  },
+  "output": "../../../build/authoring/gear-extreme"
+}

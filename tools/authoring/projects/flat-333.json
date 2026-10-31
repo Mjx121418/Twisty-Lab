@@ -1,0 +1,10 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "flat-333",
+  "producer": {
+    "type": "preset",
+    "model": "flat-333"
+  },
+  "output": "../../../build/authoring/flat-333"
+}

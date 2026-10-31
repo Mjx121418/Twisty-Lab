@@ -1,0 +1,10 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "cell24",
+  "producer": {
+    "type": "preset",
+    "model": "cell24"
+  },
+  "output": "../../../build/authoring/cell24"
+}

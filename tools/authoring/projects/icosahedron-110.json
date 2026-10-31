@@ -1,0 +1,10 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "icosahedron-110",
+  "producer": {
+    "type": "preset",
+    "model": "icosahedron-110"
+  },
+  "output": "../../../build/authoring/icosahedron-110"
+}

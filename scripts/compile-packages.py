@@ -1,38 +1,19 @@
 #!/usr/bin/env python3
-"""Check reference packages; rewrite packages and semantic pins only when requested."""
+"""Compatibility command for staged reference builds and read-only validation."""
 import argparse
-import json
 from pathlib import Path
 import subprocess
+import sys
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--write', action='store_true')
-parser.add_argument('--update-fixtures', action='store_true')
-args = parser.parse_args()
-if args.update_fixtures and not args.write:
-    parser.error('--update-fixtures requires --write')
-root = Path(__file__).resolve().parent.parent
-# Reproduce current packages and geometry without the retired compiler.
-# Geometry generators consume current authoring factories and bindings.
-inventory = json.loads((root / 'scripts/puzzle-inventory.json').read_text())
-for script in inventory['generators']:
-    subprocess.run(['python3', str(root / 'scripts' / script)] + (['--write'] if args.write else []), check=True)
-fixture_path = root / 'tests/fixtures/core.json'
-fixtures = json.loads(fixture_path.read_text())
-current_pins = {}
-for case in fixtures['cases']:
-    name = Path(case['source']).parent.name
-    if name not in current_pins:
-        # Validation returns the same semantic pin without exporting another
-        # full copy of a large compiled definition just to read its digest.
-        result = json.loads(subprocess.check_output([str(root / 'build/native/twisty'), 'validate', '--definition', str(root / case['source']), '--json'], text=True))
-        if result['status'] != 'Valid':
-            raise SystemExit(result)
-        current_pins[name] = result['definitionDigest']
-    current = current_pins[name]
-    if args.update_fixtures:
-        case['definitionDigest'] = current
-    elif case['definitionDigest'] != current:
-        raise SystemExit(f'Fixture {case["name"]!r} has a different semantic pin; review it before updating.')
-if args.update_fixtures:
-    fixture_path.write_text(json.dumps(fixtures, indent=2) + '\n')
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--write',action='store_true')
+parser.add_argument('--update-fixtures',action='store_true')
+args=parser.parse_args()
+if args.update_fixtures and not args.write: parser.error('--update-fixtures requires --write')
+root=Path(__file__).resolve().parents[1]
+if args.write:
+    command=['node','scripts/build-puzzles.mjs']+(['--update-fixtures'] if args.update_fixtures else [])
+else:
+    subprocess.run(['node','scripts/check-puzzles.mjs','--files-only'],cwd=root,check=True)
+    command=[sys.executable,'-B','-m','tools.authoring.legacy','validate','--workspace',str(root),'--tools-dir',str(root/'build/native')]
+raise SystemExit(subprocess.call(command,cwd=root))

@@ -1,6 +1,6 @@
 # Authoring and interpreter contracts
 
-Status: Phases 1–4, 2026-10-31. Abstract artifact 1 and interpretation 1 remain
+Status: Phases 1–5, 2026-10-31. Abstract artifact 1 and interpretation 1 remain
 supported. [Interpretation 2](../../schemas/interpretation-v2.schema.json),
 [realization envelope 1](../../schemas/realization-envelope.schema.json), and
 [backend payload 1](../../schemas/backend-payload.schema.json) extend the
@@ -13,6 +13,14 @@ The original drafts below retain design context. Resolved controller artifacts
 and `controlDigest` remain proposals and are not accepted by the runtime.
 The [architecture review](../architecture-review-authoring-contract.md) records
 the remaining migration sequence.
+
+The [authoring CLI](../authoring-tool.md) implements project contract 1 and build
+receipt 1, with explicit native hosts, staged generation, source-free export and
+native realization validation. Its separate tool package and detached consumer
+checks exercise reproducibility, bounded dependencies, read-only checks and
+publication failure handling. These host-side versions do not change any kernel
+API, puzzle schema or buffer contract. Reference application/distribution
+migration and presentation cleanup remain Phases 6–7.
 
 The compiler produces immutable executable data. The abstract runtime validates
 and executes that data. Geometric interpreters validate a separate correspondence

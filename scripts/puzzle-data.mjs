@@ -49,7 +49,10 @@ export async function inputPaths(base, inventory) {
     try { info = await stat(join(base, path)); }
     catch { fail(path, 'missing authoring input'); }
     if (info.isDirectory()) {
-      for (const child of (await readdir(join(base, path))).sort()) await collect(`${path}/${child}`);
+      for (const child of (await readdir(join(base, path))).sort()) {
+        if (child === '__pycache__' || child.endsWith('.pyc')) continue;
+        await collect(`${path}/${child}`);
+      }
     } else if (info.isFile()) paths.add(path);
     else fail(path, 'expected an authoring file');
   }

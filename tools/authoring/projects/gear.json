@@ -1,0 +1,15 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "gear",
+  "producer": {
+    "type": "preset",
+    "model": "gear",
+    "inputs": {
+      "packages/gear/source.json": "../../../packages/gear/source.json",
+      "packages/gear/normal-meshes.json": "../../../packages/gear/normal-meshes.json",
+      "packages/gear/spherical-meshes.json": "../../../packages/gear/spherical-meshes.json"
+    }
+  },
+  "output": "../../../build/authoring/gear"
+}

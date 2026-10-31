@@ -140,24 +140,38 @@ it('checks geometry with the kernel after schema validation', async () => {
   await expect(compatible()).rejects.toThrow(/cube-spherical.json: kernel rejected the realization/);
 });
 
-it('requires explicit fixture updates in the authoring driver', async () => {
-  await cp(join(root, 'scripts/compile-packages.py'), join(base, 'scripts/compile-packages.py'));
-  await save('scripts/puzzle-inventory.json', { generators: [] });
+it('requires explicit fixture updates in the staged authoring host', async () => {
+  await save('scripts/puzzle-inventory.json', inventory);
   await mkdir(join(base, 'build/native'), { recursive: true });
   const digest = (await readJSON(base, folder + model)).compatibleDefinitionDigest;
-  // Isolate the fixture-update policy from expensive model generation. The
-  // stand-in compiler returns the real cube's current semantic identity.
-  await writeFile(join(base, 'build/native/twisty'),
+  // Isolate fixture policy from model generation and geometry certification.
+  await writeFile(join(base, 'build/native/twisty_artifact_export'),
     `#!/usr/bin/env node\nprocess.stdout.write(${JSON.stringify(JSON.stringify({ status: 'Valid', definitionDigest: digest }))});\n`,
     { mode: 0o755 });
   const fixtures = await readJSON(base, 'tests/fixtures/core.json');
   fixtures.cases[0].definitionDigest = '0'.repeat(64);
   await save('tests/fixtures/core.json', fixtures);
   const before = await readFile(join(base, 'tests/fixtures/core.json'), 'utf8');
-  const driver = join(base, 'scripts/compile-packages.py');
-  expect(() => execFileSync('python3', [driver, '--write'], { stdio: 'pipe' })).toThrow(/different semantic pin/);
+  const args = ['-B', '-m', 'tools.authoring.legacy', 'validate', '--workspace', base, '--tools-dir', join(base, 'build/native')];
+  expect(() => execFileSync('python3', args, { cwd: root, stdio: 'pipe' })).toThrow(/changed semantic pin/);
+  expect(() => execFileSync('python3', [...args, '--update-fixtures'], { cwd: root, stdio: 'pipe' })).toThrow(/read-only/);
   expect(await readFile(join(base, 'tests/fixtures/core.json'), 'utf8')).toBe(before);
-  execFileSync('python3', [driver, '--write', '--update-fixtures'], { stdio: 'pipe' });
+  // Only staged generation calls this policy with update_fixtures=True.
+  execFileSync('python3', ['-B', '-c',
+    'from pathlib import Path; import sys; from tools.authoring.legacy import validate; validate(Path(sys.argv[1]), {"twisty_artifact_export":Path(sys.argv[2])}, update_fixtures=True)',
+    base, join(base, 'build/native/twisty_artifact_export')], { cwd: root, stdio: 'pipe' });
   expect((await readJSON(base, 'tests/fixtures/core.json')).cases[0].definitionDigest).toBe(digest);
   expect(await compatible()).toEqual({ puzzles: 1, realizations: 1 });
+});
+
+it('ignores Python bytecode while tracking relocated authoring modules', async () => {
+  await mkdir(join(base, 'tools/authoring/models'), { recursive: true });
+  await writeFile(join(base, 'tools/authoring/models/model.py'), 'value = 1\n');
+  const expanded = { ...inventory, inputs: [...inventory.inputs, 'tools/authoring'] };
+  await save(manifestPath, await makeManifest(base, expanded));
+  await mkdir(join(base, 'tools/authoring/models/__pycache__'));
+  await writeFile(join(base, 'tools/authoring/models/__pycache__/model.pyc'), 'cached bytecode');
+  await checkFreshness(base, expanded);
+  await writeFile(join(base, 'tools/authoring/models/model.py'), 'value = 2\n');
+  await expect(checkFreshness(base, expanded)).rejects.toThrow(/model.py: authoring input changed/);
 });

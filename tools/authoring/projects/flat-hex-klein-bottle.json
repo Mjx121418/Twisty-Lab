@@ -1,0 +1,10 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "flat-hex-klein-bottle",
+  "producer": {
+    "type": "preset",
+    "model": "flat-hex-klein-bottle"
+  },
+  "output": "../../../build/authoring/flat-hex-klein-bottle"
+}

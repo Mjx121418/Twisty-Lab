@@ -1,0 +1,10 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "flat-klein-bottle",
+  "producer": {
+    "type": "preset",
+    "model": "flat-klein-bottle"
+  },
+  "output": "../../../build/authoring/flat-klein-bottle"
+}

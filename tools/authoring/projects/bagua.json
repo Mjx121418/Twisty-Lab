@@ -1,0 +1,10 @@
+{
+  "kind": "twisty-authoring-project",
+  "projectVersion": 1,
+  "id": "bagua",
+  "producer": {
+    "type": "preset",
+    "model": "bagua"
+  },
+  "output": "../../../build/authoring/bagua"
+}

@@ -1,0 +1,578 @@
+{
+  "cube3": {
+    "generators": [
+      "cube_packages"
+    ],
+    "data": [],
+    "inputs": [],
+    "tools": [
+      "twisty",
+      "twisty_language"
+    ],
+    "realizations": [
+      "cube-euclidean.json",
+      "cube-port-diagram.json",
+      "cube-spherical.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "cube-euclidean.json",
+      "cube-port-diagram.json",
+      "cube-spherical.json"
+    ]
+  },
+  "bandaged": {
+    "generators": [
+      "cube_packages"
+    ],
+    "data": [],
+    "inputs": [],
+    "tools": [
+      "twisty",
+      "twisty_language"
+    ],
+    "realizations": [
+      "cube-euclidean.json",
+      "cube-port-diagram.json",
+      "cube-spherical.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "cube-euclidean.json",
+      "cube-port-diagram.json",
+      "cube-spherical.json"
+    ]
+  },
+  "helicopter": {
+    "generators": [
+      "helicopter_packages"
+    ],
+    "data": [],
+    "inputs": [],
+    "tools": [
+      "twisty"
+    ],
+    "realizations": [
+      "helicopter-euclidean.json",
+      "helicopter-port-diagram.json",
+      "helicopter-spherical.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "helicopter-euclidean.json",
+      "helicopter-port-diagram.json",
+      "helicopter-spherical.json"
+    ]
+  },
+  "bagua": {
+    "generators": [
+      "bagua_packages"
+    ],
+    "data": [],
+    "inputs": [],
+    "tools": [
+      "twisty"
+    ],
+    "realizations": [
+      "bagua-euclidean.json",
+      "bagua-port-diagram.json",
+      "bagua-spherical.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "bagua-euclidean.json",
+      "bagua-port-diagram.json",
+      "bagua-spherical.json"
+    ]
+  },
+  "melty-a": {
+    "generators": [
+      "melty_packages"
+    ],
+    "data": [
+      "melty-a-middle-catalog.json",
+      "melty-a-witnesses.json"
+    ],
+    "inputs": [],
+    "tools": [
+      "twisty",
+      "melty_solids"
+    ],
+    "realizations": [
+      "melty-a-euclidean.json",
+      "melty-a-port-diagram.json",
+      "melty-a-spherical.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "melty-a-euclidean.json",
+      "melty-a-port-diagram.json",
+      "melty-a-spherical.json",
+      "manifest.json"
+    ]
+  },
+  "melty-b": {
+    "generators": [
+      "melty_packages"
+    ],
+    "data": [
+      "melty-b-middle-catalog.json",
+      "melty-b-witnesses.json"
+    ],
+    "inputs": [],
+    "tools": [
+      "twisty",
+      "melty_solids"
+    ],
+    "realizations": [
+      "melty-b-euclidean.json",
+      "melty-b-port-diagram.json",
+      "melty-b-spherical.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "melty-b-euclidean.json",
+      "melty-b-port-diagram.json",
+      "melty-b-spherical.json",
+      "manifest.json"
+    ]
+  },
+  "melty-c": {
+    "generators": [
+      "melty_packages"
+    ],
+    "data": [
+      "melty-c-middle-catalog.json",
+      "melty-c-witnesses.json"
+    ],
+    "inputs": [],
+    "tools": [
+      "twisty",
+      "melty_solids"
+    ],
+    "realizations": [
+      "melty-c-euclidean.json",
+      "melty-c-port-diagram.json",
+      "melty-c-spherical.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "melty-c-euclidean.json",
+      "melty-c-port-diagram.json",
+      "melty-c-spherical.json",
+      "manifest.json"
+    ]
+  },
+  "melty-d": {
+    "generators": [
+      "melty_packages"
+    ],
+    "data": [
+      "melty-d-middle-catalog.json",
+      "melty-d-witnesses.json"
+    ],
+    "inputs": [],
+    "tools": [
+      "twisty",
+      "melty_solids"
+    ],
+    "realizations": [
+      "melty-d-euclidean.json",
+      "melty-d-port-diagram.json",
+      "melty-d-spherical.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "melty-d-euclidean.json",
+      "melty-d-port-diagram.json",
+      "melty-d-spherical.json",
+      "manifest.json"
+    ]
+  },
+  "icosahedron-110": {
+    "generators": [
+      "icosahedron_packages"
+    ],
+    "data": [],
+    "inputs": [],
+    "tools": [
+      "twisty"
+    ],
+    "realizations": [
+      "icosahedron-110-euclidean.json",
+      "icosahedron-110-spherical.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "icosahedron-110-euclidean.json",
+      "icosahedron-110-spherical.json",
+      "manifest.json"
+    ]
+  },
+  "icosahedron-152": {
+    "generators": [
+      "icosahedron_152_packages"
+    ],
+    "data": [
+      "icosahedron-152-witness.json"
+    ],
+    "inputs": [],
+    "tools": [
+      "twisty"
+    ],
+    "realizations": [
+      "icosahedron-152-euclidean.json",
+      "icosahedron-152-spherical.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "icosahedron-152-euclidean.json",
+      "icosahedron-152-spherical.json",
+      "manifest.json"
+    ]
+  },
+  "gear": {
+    "generators": [
+      "gear_model",
+      "gear_normal",
+      "gear_spherical",
+      "gear_packages"
+    ],
+    "data": [],
+    "inputs": [
+      "packages/gear/source.json",
+      "packages/gear/normal-meshes.json",
+      "packages/gear/spherical-meshes.json"
+    ],
+    "tools": [
+      "twisty",
+      "twisty_language"
+    ],
+    "realizations": [
+      "gear-normal-euclidean.json",
+      "gear-port-diagram.json",
+      "gear-spherical.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "gear-normal-euclidean.json",
+      "gear-port-diagram.json",
+      "gear-spherical.json",
+      "source.json",
+      "manifest.json",
+      "normal-meshes.json",
+      "spherical-meshes.json"
+    ]
+  },
+  "gear-extreme": {
+    "generators": [
+      "gear_model",
+      "gear_normal",
+      "gear_spherical",
+      "gear_packages"
+    ],
+    "data": [],
+    "inputs": [
+      "packages/gear-extreme/source.json",
+      "packages/gear/normal-meshes.json",
+      "packages/gear/spherical-meshes.json",
+      "packages/gear-extreme/plain-edge-meshes.json"
+    ],
+    "tools": [
+      "twisty",
+      "twisty_language"
+    ],
+    "realizations": [
+      "gear-extreme-supplied-euclidean.json",
+      "gear-extreme-port-diagram.json",
+      "gear-extreme-spherical.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "gear-extreme-supplied-euclidean.json",
+      "gear-extreme-port-diagram.json",
+      "gear-extreme-spherical.json",
+      "source.json",
+      "manifest.json",
+      "plain-edge-meshes.json"
+    ]
+  },
+  "gear-plain": {
+    "generators": [
+      "gear_model",
+      "gear_normal",
+      "gear_spherical",
+      "gear_packages"
+    ],
+    "data": [],
+    "inputs": [
+      "packages/gear-plain/source.json",
+      "packages/gear/normal-meshes.json",
+      "packages/gear/spherical-meshes.json",
+      "packages/gear-extreme/plain-edge-meshes.json"
+    ],
+    "tools": [
+      "twisty",
+      "twisty_language"
+    ],
+    "realizations": [
+      "gear-plain-supplied-euclidean.json",
+      "gear-plain-port-diagram.json",
+      "gear-plain-spherical.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "gear-plain-supplied-euclidean.json",
+      "gear-plain-port-diagram.json",
+      "gear-plain-spherical.json",
+      "source.json",
+      "manifest.json"
+    ]
+  },
+  "flat-torus": {
+    "generators": [
+      "flat_surface_packages"
+    ],
+    "data": [],
+    "inputs": [],
+    "tools": [
+      "twisty"
+    ],
+    "realizations": [
+      "flat-quotient.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "flat-quotient.json",
+      "manifest.json"
+    ]
+  },
+  "flat-klein-bottle": {
+    "generators": [
+      "flat_surface_packages"
+    ],
+    "data": [],
+    "inputs": [],
+    "tools": [
+      "twisty"
+    ],
+    "realizations": [
+      "flat-quotient.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "flat-quotient.json",
+      "manifest.json"
+    ]
+  },
+  "flat-hex-torus": {
+    "generators": [
+      "hex_surface_packages"
+    ],
+    "data": [],
+    "inputs": [],
+    "tools": [
+      "twisty"
+    ],
+    "realizations": [
+      "flat-quotient.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "flat-quotient.json",
+      "manifest.json"
+    ]
+  },
+  "flat-hex-klein-bottle": {
+    "generators": [
+      "hex_surface_packages"
+    ],
+    "data": [],
+    "inputs": [],
+    "tools": [
+      "twisty"
+    ],
+    "realizations": [
+      "flat-quotient.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "flat-quotient.json",
+      "manifest.json"
+    ]
+  },
+  "flat-pillowcase": {
+    "generators": [
+      "pillowcase_packages"
+    ],
+    "data": [],
+    "inputs": [],
+    "tools": [
+      "twisty"
+    ],
+    "realizations": [
+      "flat-quotient.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "flat-quotient.json",
+      "manifest.json"
+    ]
+  },
+  "flat-pillowcase-6": {
+    "generators": [
+      "pillowcase_packages"
+    ],
+    "data": [],
+    "inputs": [],
+    "tools": [
+      "twisty"
+    ],
+    "realizations": [
+      "flat-quotient.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "flat-quotient.json",
+      "manifest.json"
+    ]
+  },
+  "flat-333": {
+    "generators": [
+      "orbifold333_packages"
+    ],
+    "data": [],
+    "inputs": [],
+    "tools": [
+      "twisty"
+    ],
+    "realizations": [
+      "flat-quotient.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "flat-quotient.json",
+      "manifest.json"
+    ]
+  },
+  "flat-333-6": {
+    "generators": [
+      "orbifold333_packages"
+    ],
+    "data": [],
+    "inputs": [],
+    "tools": [
+      "twisty"
+    ],
+    "realizations": [
+      "flat-quotient.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "flat-quotient.json",
+      "manifest.json"
+    ]
+  },
+  "tesseract3": {
+    "generators": [
+      "tesseract_packages"
+    ],
+    "data": [],
+    "inputs": [],
+    "tools": [
+      "twisty"
+    ],
+    "realizations": [
+      "tesseract3-s3.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "tesseract3-s3.json",
+      "manifest.json"
+    ]
+  },
+  "cell24": {
+    "generators": [
+      "cell24_packages"
+    ],
+    "data": [],
+    "inputs": [],
+    "tools": [
+      "twisty"
+    ],
+    "realizations": [
+      "cell24-s3.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "cell24-s3.json",
+      "manifest.json"
+    ]
+  },
+  "cell24-192": {
+    "generators": [
+      "cell24_192_packages"
+    ],
+    "data": [],
+    "inputs": [],
+    "tools": [
+      "twisty"
+    ],
+    "realizations": [
+      "cell24-192-s3.json"
+    ],
+    "files": [
+      "puzzle.pzl.json",
+      "bindings.json",
+      "package.json",
+      "cell24-192-s3.json",
+      "manifest.json"
+    ]
+  }
+}

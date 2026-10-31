@@ -3,7 +3,7 @@
 Status: Melty A–D are implemented for the declared 85°, d=1/3 cube models.
 `scripts/melty_model.py` reconstructs the analytic rays and reviewed placement
 recipes; `scripts/melty_packages.py` generates the prebuilt package and all three
-rigid realizations. The checked-in authoring inputs live in `scripts/data/`;
+rigid realizations. The checked-in authoring inputs live in `tools/authoring/data/`;
 generation and runtime have no dependency on the ignored research directory.
 Each package has 27 piece-specific domains, including the fixed internal core.
 

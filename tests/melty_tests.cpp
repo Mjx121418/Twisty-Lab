@@ -42,8 +42,8 @@ int main(int argc, char **argv) {
     const auto execution = Execution::from_source(read(directory + "package.json"));
     const auto definition = execution->definition();
     const auto manifest = Json::parse(read(directory + "manifest.json"));
-    const auto seed = Json::parse(read("scripts/data/" + id + "-middle-catalog.json"));
-    const auto witnesses = Json::parse(read("scripts/data/" + id + "-witnesses.json"));
+    const auto seed = Json::parse(read("tools/authoring/data/" + id + "-middle-catalog.json"));
+    const auto witnesses = Json::parse(read("tools/authoring/data/" + id + "-witnesses.json"));
     const std::string labels = "URFLBD";
     std::map<std::string, std::vector<std::string>> tuples;
     const auto &source = definition->canonical.at("source");
