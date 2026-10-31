@@ -2,6 +2,12 @@
 
 A portable twisty-puzzle kernel with exact C++ rules and interchangeable C++ geometric realizations. Custom native and browser renderers/controllers use its public APIs. The bundled Three.js application displays synchronized Euclidean, spherical, and labeled port views of the same session.
 
+The [architecture review and authoring-tool plan](docs/architecture-review-authoring-contract.md)
+proposes source-free runtime artifacts and explicit contracts between authoring,
+abstract execution, and geometric interpreters.
+Phase 1 provides [draft contracts](docs/contracts/authoring-runtime.md) and a frozen
+native/WASM compatibility baseline, checked with `npm run check:architecture`.
+
 The [abstract core](docs/core-language.md#compact-format-version-3) supports finite
 group actions on placement collections and shared reference-based twist families.
 Correspondence anchors and bound placement references are separate finite sets;

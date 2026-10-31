@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:twisty:draft:controller:1",
+  "description": "Draft resolved controller routes. Source AST profiles and angular geometry are absent.",
+  "type": "object", "additionalProperties": false,
+  "required": ["kind", "contractVersion", "executionDigest", "controlDigest", "movements", "drivers", "families"],
+  "properties": {
+    "kind": { "const": "twisty-controller" }, "contractVersion": { "const": 1 },
+    "executionDigest": { "$ref": "#/definitions/digest" }, "controlDigest": { "$ref": "#/definitions/digest" },
+    "movements": { "type": "array", "maxItems": 1000000, "items": {
+      "type": "object", "additionalProperties": false, "required": ["slot", "value", "actions"],
+      "properties": { "slot": { "$ref": "#/definitions/index" }, "value": { "$ref": "#/definitions/index" },
+        "actions": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/indices" } }
+    } },
+    "drivers": { "type": "array", "maxItems": 128, "items": {
+      "type": "object", "additionalProperties": false, "required": ["id", "piece", "stops", "reader"],
+      "properties": { "id": { "$ref": "#/definitions/id" }, "piece": { "$ref": "#/definitions/index" },
+        "stops": { "allOf": [{ "$ref": "urn:twisty:draft:contract-common:1#/definitions/ids" }, { "minItems": 2, "maxItems": 128 }] },
+        "reader": { "type": "array", "maxItems": 1000000, "items": {
+          "type": "object", "additionalProperties": false, "required": ["placement", "stop"],
+          "properties": { "placement": { "$ref": "#/definitions/index" }, "stop": { "$ref": "#/definitions/index" } }
+        } }
+      }
+    } },
+    "families": { "type": "array", "maxItems": 256, "items": {
+      "type": "object", "additionalProperties": false, "required": ["id", "drivers", "routes"],
+      "properties": { "id": { "$ref": "#/definitions/id" },
+        "drivers": { "type": "array", "minItems": 1, "maxItems": 2, "uniqueItems": true, "items": { "$ref": "#/definitions/index" } },
+        "routes": { "type": "array", "maxItems": 131072, "items": {
+          "type": "object", "additionalProperties": false, "required": ["from", "to", "request", "choices", "pathId", "preferred"],
+          "properties": { "from": { "$ref": "#/definitions/stops" }, "to": { "$ref": "#/definitions/stops" },
+            "request": { "$ref": "#/definitions/index" }, "choices": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/indices" },
+            "pathId": { "$ref": "#/definitions/id" }, "preferred": { "type": "boolean" } }
+        } }
+      }
+    } }
+  },
+  "definitions": {
+    "index": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/index" },
+    "id": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/id" },
+    "digest": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/digest" },
+    "stops": { "type": "array", "minItems": 1, "maxItems": 2, "items": { "$ref": "#/definitions/index" } }
+  }
+}

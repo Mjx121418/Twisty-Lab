@@ -12,6 +12,7 @@
     "package:kernel": "node scripts/build-kernel.mjs",
     "check:kernel": "node scripts/check-kernel.mjs",
     "check:language": "node scripts/check-language.mjs",
+    "check:architecture": "node scripts/check-architecture.mjs",
     "check:packages": "npm run check:puzzles -- --files-only && python3 scripts/compile-packages.py",
     "dev": "npm run check:puzzles -- --files-only && npm run build:wasm && vite --host 0.0.0.0",
     "preview": "vite preview --host 0.0.0.0",
@@ -19,7 +20,7 @@
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
     "test:publish": "playwright test publish.spec.ts",
-    "check": "npm run build:native && npm run check:packages && npm run build && npm run test:native && npm run test:unit && npm run check:kernel && npm run test:e2e",
+    "check": "npm run build:native && npm run check:packages && npm run build && npm run test:native && npm run test:unit && npm run check:kernel && npm run check:architecture && npm run test:e2e",
     "build:puzzles": "node scripts/build-puzzles.mjs",
     "check:puzzles": "node scripts/check-puzzles.mjs"
   },

@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:twisty:draft:abstract-artifact:1",
+  "description": "Draft source-free executable format. No current runtime loader accepts this kind.",
+  "type": "object", "additionalProperties": false,
+  "required": ["kind", "artifactVersion", "requiredCapabilities", "executionDigest", "program"],
+  "properties": {
+    "kind": { "const": "twisty-abstract-artifact" },
+    "artifactVersion": { "const": 1 },
+    "requiredCapabilities": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/capabilities" },
+    "executionDigest": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/digest" },
+    "program": {
+      "type": "object", "additionalProperties": false,
+      "required": ["predicateVersion", "transportVersion", "pieceCount", "placementCount", "initialPlacements", "finiteSets", "predicateNodes", "childReferences", "invariantRoot", "goalRoot", "actionRecords", "requestPrograms", "compact"],
+      "properties": {
+        "predicateVersion": { "const": 1 }, "transportVersion": { "const": 1 },
+        "pieceCount": { "type": "integer", "minimum": 0, "maximum": 4096 },
+        "placementCount": { "type": "integer", "minimum": 1, "maximum": 1000000 },
+        "initialPlacements": { "type": "array", "maxItems": 4096, "items": { "$ref": "#/definitions/index" } },
+        "finiteSets": { "type": "array", "maxItems": 1000000, "items": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/indices" } },
+        "childReferences": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/indices" },
+        "invariantRoot": { "$ref": "#/definitions/index" }, "goalRoot": { "$ref": "#/definitions/index" },
+        "predicateNodes": { "type": "array", "maxItems": 1000000, "items": { "oneOf": [
+          { "type": "object", "additionalProperties": false, "required": ["op", "bank", "input", "set"],
+            "properties": { "op": { "const": "IN" }, "bank": { "enum": ["state", "choice"] }, "input": { "$ref": "#/definitions/index" }, "set": { "$ref": "#/definitions/index" } } },
+          { "type": "object", "additionalProperties": false, "required": ["op", "min", "max", "firstChild", "childCount"],
+            "properties": { "op": { "const": "RANGE" }, "min": { "$ref": "#/definitions/index" }, "max": { "$ref": "#/definitions/index" }, "firstChild": { "$ref": "#/definitions/index" }, "childCount": { "$ref": "#/definitions/index" } } }
+        ] } },
+        "actionRecords": { "type": "array", "maxItems": 1000000, "items": {
+          "type": "object", "additionalProperties": false, "required": ["piece", "map", "selectionRoot", "event"],
+          "properties": { "piece": { "$ref": "#/definitions/index" }, "map": { "$ref": "#/definitions/index" }, "selectionRoot": { "$ref": "#/definitions/index" }, "event": { "$ref": "#/definitions/index" } }
+        } },
+        "requestPrograms": { "type": "array", "maxItems": 4096, "items": {
+          "type": "object", "additionalProperties": false, "required": ["choiceSizes", "firstAction", "actionCount", "relationRoot"],
+          "properties": { "choiceSizes": { "type": "array", "maxItems": 4096, "items": { "type": "integer", "minimum": 1, "maximum": 1000000 } }, "firstAction": { "$ref": "#/definitions/index" }, "actionCount": { "$ref": "#/definitions/index" }, "relationRoot": { "$ref": "#/definitions/index" } }
+        } },
+        "compact": { "allOf": [
+          { "$ref": "urn:twisty:schema:compact:2" },
+          { "required": ["groups", "actions", "collections", "spaces", "positionMaps", "bindings", "families", "maps"],
+            "properties": { "collections": { "items": { "not": { "required": ["id"] } } } } }
+        ] }
+      }
+    },
+    "bindings": {
+      "type": "object", "additionalProperties": false,
+      "required": ["puzzleId", "pieces", "placements", "events", "choiceSlots", "choiceValues", "requests"],
+      "properties": {
+        "puzzleId": { "$ref": "#/definitions/id" },
+        "pieces": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/ids" },
+        "placements": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/ids" },
+        "events": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/ids" },
+        "choiceSlots": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/ids" },
+        "choiceValues": { "type": "array", "maxItems": 4096, "items": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/ids" } },
+        "requests": { "type": "array", "maxItems": 4096, "items": {
+          "type": "object", "additionalProperties": false, "required": ["id", "profiles", "defaultProfile"],
+          "properties": {
+            "id": { "$ref": "#/definitions/id" }, "defaultProfile": { "anyOf": [{ "$ref": "#/definitions/index" }, { "type": "null" }] },
+            "profiles": { "type": "array", "maxItems": 4096, "items": {
+              "type": "object", "additionalProperties": false, "required": ["id", "choices", "whenRoot"],
+              "properties": { "id": { "$ref": "#/definitions/id" }, "choices": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/indices" }, "whenRoot": { "$ref": "#/definitions/index" } }
+            } }
+          }
+        } }
+      }
+    },
+    "session": {
+      "type": "object", "additionalProperties": false, "required": ["requestInverses", "choiceInverses"],
+      "properties": {
+        "requestInverses": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/indices" },
+        "choiceInverses": { "type": "array", "maxItems": 4096, "items": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/indices" } }
+      }
+    }
+  },
+  "dependencies": { "session": ["bindings"] },
+  "definitions": {
+    "index": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/index" },
+    "id": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/id" }
+  }
+}

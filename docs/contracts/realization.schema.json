@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:twisty:draft:realization:1",
+  "description": "Draft backend envelope. Payload bytes have their own backend schema and geometric validation.",
+  "type": "object", "additionalProperties": false,
+  "required": ["kind", "contractVersion", "id", "interpretationDigest", "realizationDigest", "requiredCapabilities", "backend", "payload", "eventTracks"],
+  "properties": {
+    "kind": { "const": "twisty-realization" }, "contractVersion": { "const": 1 },
+    "id": { "$ref": "#/definitions/id" },
+    "interpretationDigest": { "$ref": "#/definitions/digest" }, "realizationDigest": { "$ref": "#/definitions/digest" },
+    "controlDigest": { "$ref": "#/definitions/digest" },
+    "requiredCapabilities": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/capabilities" },
+    "backend": {
+      "type": "object", "additionalProperties": false, "required": ["id", "version"],
+      "properties": { "id": { "$ref": "#/definitions/id" }, "version": { "type": "integer", "minimum": 1, "maximum": 1000000 } }
+    },
+    "payload": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/resource" },
+    "eventTracks": { "type": "array", "maxItems": 1000000, "items": {
+      "type": "object", "additionalProperties": false, "required": ["certificate", "pathId"],
+      "properties": { "certificate": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/index" }, "pathId": { "$ref": "#/definitions/id" } }
+    } }
+  },
+  "definitions": {
+    "id": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/id" },
+    "digest": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/digest" }
+  }
+}

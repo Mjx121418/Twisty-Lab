@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.25)
+project(architecture_contract_consumer LANGUAGES CXX)
+find_package(TwistyKernel 0.7 CONFIG REQUIRED)
+add_executable(architecture_probe main.cpp)
+target_link_libraries(architecture_probe PRIVATE Twisty::kernel)
