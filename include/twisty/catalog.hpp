@@ -50,11 +50,12 @@ struct OperationTransport {
   Index map = 0;
   std::vector<Index> unavailable;
   Index target(Index q) const {
+    if (map == core::no_index) return q;
     const auto image = program->transport(map, placements->at(q));
     return image ? local->at(*image) : q;
   }
   std::uint8_t role(Index q) const {
-    if (program->transport(map, placements->at(q)))
+    if (map != core::no_index && program->transport(map, placements->at(q)))
       return 1;
     return std::binary_search(unavailable.begin(), unavailable.end(), q) ? 2 : 0;
   }
@@ -93,6 +94,7 @@ struct State {
   bool operator==(const State &) const = default;
 };
 struct Definition {
+  bool source_free = false;
   std::string id;
   std::string digest;
   Json canonical;

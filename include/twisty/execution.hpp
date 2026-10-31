@@ -3,6 +3,7 @@
 #include "twisty/completion.hpp"
 
 namespace twisty {
+namespace artifact { class Artifact; }
 class ControlCatalog;
 class Controller;
 // Grouped State/Definition are symbolic presentation and interpreter catalogs.
@@ -17,6 +18,11 @@ struct ExecutionPlan {
 class Execution {
 public:
   static std::shared_ptr<const Execution> from_source(const std::string &);
+  static std::shared_ptr<const Execution> from_artifact(const std::string &);
+  std::shared_ptr<const Execution> with_interpretation(const std::string &) const;
+  bool source_free() const { return static_cast<bool>(artifact_); }
+  std::shared_ptr<const runtime::CompiledPuzzle> compiled_puzzle() const { return puzzle_; }
+  const std::string &interpretation_digest() const { return interpretation_digest_; }
   std::shared_ptr<const Definition> definition() const {
     return definition_;
   }
@@ -40,6 +46,10 @@ public:
 private:
   friend class Controller;
   Execution(Json source, Json catalog);
+  explicit Execution(std::shared_ptr<const artifact::Artifact>);
+  void bind_interpretation(const Json &);
+  std::shared_ptr<const artifact::Artifact> artifact_;
+  std::string interpretation_digest_;
   std::shared_ptr<const Definition> definition_;
   std::shared_ptr<const runtime::CompiledPuzzle> puzzle_;
   std::shared_ptr<const ControlCatalog> controls_;

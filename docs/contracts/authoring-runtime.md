@@ -1,9 +1,18 @@
-# Authoring and interpreter contract draft 1
+# Authoring and interpreter contracts
 
-Status: Phase 1 design, 2026-10-31. These draft schemas are not accepted runtime
-formats, do not change kernel API 7, and are not included in the public SDK. The
-source-free loader is Phase 3 work. The [architecture review](../architecture-review-authoring-contract.md)
-records the full migration sequence.
+Status: Phases 1–3, 2026-10-31. Abstract artifact 1 and interpretation 1 are now
+implemented for the source-free Cube/Bandage Euclidean slice. Their public SDK
+schemas are [abstract-artifact](../../schemas/abstract-artifact.schema.json) and
+[interpretation](../../schemas/interpretation.schema.json). The narrow backend
+payload is [artifact-realization](../../schemas/artifact-realization.schema.json),
+with [session schema 3](../../schemas/session-v3.schema.json) and
+[witness 2](../../schemas/artifact-witness.schema.json). Artifact API 1 is separate
+from unchanged legacy kernel API 7; see the exact implemented
+[API/ownership/error contract](../kernel-api.md#source-free-artifact-api-1).
+The resolved controller and general realization envelope below remain proposals;
+their draft schemas are not runtime inputs or SDK exports. The
+[architecture review](../architecture-review-authoring-contract.md) records the
+remaining migration sequence.
 
 The compiler produces immutable executable data. The abstract runtime validates
 and executes that data. Geometric interpreters validate a separate correspondence
@@ -63,7 +72,8 @@ plan the recorded inverse tuple and verify restoration of the exact previous
 state. Profiles remain candidate selection policies, never permission proofs.
 Bare programs require neither inverse tables nor drawable realizations.
 
-**Interpretation representation.** `domains` defines opaque domain and port IDs;
+**Interpretation representation.** `domains` defines opaque domain and port IDs
+and an explicit numeric `choiceSlot` for each domain;
 `resources` defines opaque footprint identities. `pieces` and `placements` contain
 explicit global core indices and domain indices. Piece port labels bind materials;
 placement ports bind resources and opaque attachments. Arrays must cover each
@@ -71,15 +81,18 @@ declared piece and placement once, sorted by their global index. Domain IDs do
 not imply a geometry, and strings such as `R` or `R.clockwise` have no special
 runtime interpretation.
 
-A certificate declares `{id, domain, event, transport, actions, unavailablePlacements}`. Its action
+A certificate declares `{id, domain, request, event, transport, actions, unavailablePlacements}`. Its action
 indices must exist and agree with its piece domain, event, and transport. Every
 supported action must have an unambiguous certificate. Event numbers need not be
 globally unique across domains or transports: the validated completed tuple
 determines active action records. The runtime witness validator, rather than a
-geometric endpoint guess, resolves that context. A future loader must reject
-ambiguous certificates; it must not select the first event-name match.
+geometric endpoint guess, resolves that context. The first adapter additionally
+requires direct-choice selectors, concrete default profiles and unique
+domain/event correspondence; it rejects broader programs for geometry while
+leaving bare-core execution available. It rejects ambiguous certificates.
 
-The manifest does not contain a geometric path. Each selected realization maps
+The manifest does not contain a geometric path. In the proposed general envelope,
+each selected realization maps
 certificate indices to backend `pathId` values through `eventTracks`. This permits
 different realizations of the same exact transport. Bindings must retain moving
 self-loops, ordinary stationary pieces, and component-specific participation.
@@ -90,7 +103,15 @@ stationary/participant/unavailable distinction without adding permission rules.
 Source adapters may retain conveniences for face names and direction suffixes,
 but must lower them into explicit data before export.
 
-**Controller representation.** Each driver names a core piece, ordered stable
+The implemented `artifact-cube-euclidean` backend instead supplies an explicit
+axis/angle track per request and checks every endpoint/port against certificates.
+Its realization identity hashes the exact input payload bytes. This narrow
+backend does not accept the general envelope or resource resolver described below.
+It retains the legacy cube resource/face/port and fused-bandage conventions;
+those backend constraints do not affect the independently loaded abstract core.
+General component/frame bindings are later interpreter migration work.
+
+**Controller representation (proposal).** Each driver names a core piece, ordered stable
 stop IDs, and explicit global-placement-to-stop-index rows. A family references
 driver indices. A route contains source/target stop tuples in family-driver order,
 a request index, the already resolved completion tuple, a stable path ID, and an
@@ -113,7 +134,7 @@ for the completion tuples referenced by controller routes, including idle tuples
 The controller's path identity and a realization's internal path IDs are separate
 namespaces; a backend providing control-layout hints must declare their mapping.
 
-**Realization representation.** The envelope declares a backend ID/version,
+**General realization representation (proposal).** The envelope declares a backend ID/version,
 required capabilities, explicit event tracks, and a content-addressed payload.
 The backend owns the payload schema and its interpretation of assets, frames,
 motion families, pivots, winding, paths, and intrinsic space. Envelope validation
@@ -180,8 +201,8 @@ decoder, but the supplied digest must match that normalized representation.
 [Hash vectors](hash-vectors.json) provide portable reference bytes and SHA-256
 values. The small JavaScript encoder in
 [`tests/architecture/contracts.mjs`](../../tests/architecture/contracts.mjs) is a
-test reference, not a second runtime loader. Phase 3 must implement and check the
-same vectors in shared C++ code before publishing an executable format.
+test reference, not a second runtime loader. The shared C++ artifact loader checks
+the same vectors in `artifact_contract` before publishing an executable handle.
 
 **Limits, errors, ownership, and validation.** Indices are nonnegative exact
 integers below `2^32 - 1`; that value is reserved. Optional indices use null or
@@ -189,8 +210,9 @@ explicit variant fields rather than negative/sentinel wire values. IDs contain
 1–256 UTF-8 bytes, exclude NUL, and are unique within their declared namespace.
 JSON Schema's character-count bounds are supplemented by byte-count validation.
 
-The draft loader budget is at most 64 MiB per envelope, nesting depth 64, and
-256 MiB of retained numeric program data. Backend resources have a separate
+The implemented parser limits each contract/payload to 64 MiB, nesting depth 64,
+and a conservative 256 MiB DOM allocation budget. Existing core limits also bound
+numeric program data. Proposed externally resolved backend resources have a separate
 declared budget, initially at most 256 MiB in total per realization. These are
 additional loader budgets, not requests to expand existing core limits. Enforce
 `core::Program`'s piece, placement, node, reference, finite-set, map, action, request,
@@ -212,9 +234,9 @@ backend does not invalidate an independently loaded core program.
 | `realization.capability` / `realization.payload_mismatch` | Unsupported geometry feature or resource bytes differ from their content hash. |
 | `realization.witness` | A transition does not equal the exact completed abstract witness. |
 
-Future native exceptions and WASM JSON diagnostics should include code, JSON
-pointer source, message, and stage without changing the existing API 7 error
-contract. Validate first, publish an immutable handle second. Failure preserves
+Native exceptions and WASM JSON diagnostics include code, JSON pointer source,
+and message through the existing diagnostic contract; a dedicated stage field
+remains a proposal. Validate first, publish an immutable handle second. Failure preserves
 the live session and current drawing. A retained artifact owns its data; loading
 must not depend on the caller keeping source text or resource buffers alive.
 Frames/animations/drawings share immutable backing storage and can outlive their
@@ -247,13 +269,18 @@ scenarios; API/hash migrations require explicit updates instead of hiding change
 in a new recorder run. This is representative coverage, not all 48 realizations.
 Existing full parity, controller, geometry, and installed-SDK checks remain needed.
 
-Phase 3 must add semantic rejection fixtures beyond today's schema checks:
-predicate cycles and choice-dependent state predicates; bad slices, group tables,
-rectangular spaces and noninjective transports; invalid profiles/defaults and
-inverse tables; certificate/action/event mismatches and ambiguous selection;
-missing resources/paths, wrong endpoints/ports, lost self-loop winding, unknown
-required capabilities, duplicate raw JSON keys, and allocation overflows. Schema
-acceptance or a matching producer hash never substitutes for runtime validation.
+`npm run check:artifacts` adds independent compiler-free native/WASM consumers,
+schema validation, deterministic export checks, legacy source parity and opaque
+identifier checks. The native `artifact_contract` suite adds semantic rejection
+fixtures for predicate cycles, choice-dependent profile predicates, bad slices,
+invalid group tables and rectangular correspondences, noninjective transports,
+invalid profiles/defaults/inverses, certificate/action/event mismatches and
+ambiguous events, missing resources, wrong endpoints, unknown required
+capabilities, duplicate raw JSON keys, and parser depth limits. Self-loop
+participation, full winding, and seekable paths are also checked. Externally resolved paths,
+general controller routes, and broader backend budgets remain acceptance gates
+for the later adapters. Schema acceptance or a matching producer hash never
+substitutes for runtime validation.
 
 To capture a deliberately reviewed new baseline, use
 `npm run check:architecture -- --record`. Ordinary checks never rewrite fixtures.

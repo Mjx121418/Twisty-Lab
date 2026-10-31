@@ -7,6 +7,10 @@ proposes source-free runtime artifacts and explicit contracts between authoring,
 abstract execution, and geometric interpreters.
 Phase 1 provides [draft contracts](docs/contracts/authoring-runtime.md) and a frozen
 native/WASM compatibility baseline, checked with `npm run check:architecture`.
+Phases 2–3 add compiler-independent descriptors and a
+[source-free artifact API](docs/kernel-api.md#source-free-artifact-api-1), with
+separate native/WASM consumers for Cube and Bandage. Run `npm run check:artifacts`
+after `npm run build:kernel` to verify the installed artifact contract.
 
 The [abstract core](docs/core-language.md#compact-format-version-3) supports finite
 group actions on placement collections and shared reference-based twist families.

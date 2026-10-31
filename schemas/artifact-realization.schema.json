@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:twisty:schema:artifact-realization:1",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "id", "kind", "compatibleDefinitionDigest", "compatibleInterpretationDigest", "requiredCapabilities", "explicitCubeTracks"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "$ref": "urn:twisty:schema:artifact-common:1#/definitions/id" },
+    "kind": { "const": "artifact-cube-euclidean" },
+    "compatibleDefinitionDigest": { "$ref": "urn:twisty:schema:artifact-common:1#/definitions/digest" },
+    "compatibleInterpretationDigest": { "$ref": "urn:twisty:schema:artifact-common:1#/definitions/digest" },
+    "requiredCapabilities": { "type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true,
+      "items": { "enum": ["triangle-meshes", "rigid-transforms", "explicit-cube-tracks"] } },
+    "explicitCubeTracks": { "type": "object", "maxProperties": 4096, "additionalProperties": {
+      "type": "object", "additionalProperties": false, "required": ["axis", "angle"],
+      "properties": {
+        "axis": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "number", "minimum": -100, "maximum": 100 } },
+        "angle": { "type": "number", "minimum": -100, "maximum": 100 }
+      }
+    } }
+  }
+}

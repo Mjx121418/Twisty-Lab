@@ -1,0 +1,200 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:twisty:schema:interpretation:1",
+  "description": "Source-free artifact API 1. Structural validation is supplemented by the portable runtime validator.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "contractVersion",
+    "executionDigest",
+    "interpretationDigest",
+    "domains",
+    "resources",
+    "pieces",
+    "placements",
+    "certificates"
+  ],
+  "properties": {
+    "kind": {
+      "const": "twisty-interpretation"
+    },
+    "contractVersion": {
+      "const": 1
+    },
+    "executionDigest": {
+      "$ref": "#/definitions/digest"
+    },
+    "interpretationDigest": {
+      "$ref": "#/definitions/digest"
+    },
+    "resources": {
+      "$ref": "urn:twisty:schema:artifact-common:1#/definitions/ids"
+    },
+    "domains": {
+      "type": "array",
+      "maxItems": 4096,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "choiceSlot",
+          "ports"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/definitions/id"
+          },
+          "ports": {
+            "$ref": "urn:twisty:schema:artifact-common:1#/definitions/ids"
+          },
+          "choiceSlot": {
+            "$ref": "#/definitions/index"
+          }
+        }
+      }
+    },
+    "pieces": {
+      "type": "array",
+      "maxItems": 4096,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "piece",
+          "domain",
+          "portLabels"
+        ],
+        "properties": {
+          "piece": {
+            "$ref": "#/definitions/index"
+          },
+          "domain": {
+            "$ref": "#/definitions/index"
+          },
+          "portLabels": {
+            "type": "array",
+            "maxItems": 4096,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "port",
+                "material"
+              ],
+              "properties": {
+                "port": {
+                  "$ref": "#/definitions/id"
+                },
+                "material": {
+                  "$ref": "#/definitions/id"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "placements": {
+      "type": "array",
+      "maxItems": 1000000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "placement",
+          "domain",
+          "resources",
+          "ports"
+        ],
+        "properties": {
+          "placement": {
+            "$ref": "#/definitions/index"
+          },
+          "domain": {
+            "$ref": "#/definitions/index"
+          },
+          "resources": {
+            "$ref": "urn:twisty:schema:artifact-common:1#/definitions/indices"
+          },
+          "ports": {
+            "type": "array",
+            "maxItems": 4096,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "resource",
+                "attachment"
+              ],
+              "properties": {
+                "id": {
+                  "$ref": "#/definitions/id"
+                },
+                "resource": {
+                  "$ref": "#/definitions/index"
+                },
+                "attachment": {
+                  "$ref": "#/definitions/id"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "certificates": {
+      "type": "array",
+      "maxItems": 1000000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "domain",
+          "request",
+          "event",
+          "transport",
+          "actions",
+          "unavailablePlacements"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/definitions/id"
+          },
+          "domain": {
+            "$ref": "#/definitions/index"
+          },
+          "event": {
+            "$ref": "#/definitions/index"
+          },
+          "transport": {
+            "$ref": "#/definitions/index"
+          },
+          "actions": {
+            "$ref": "urn:twisty:schema:artifact-common:1#/definitions/indices"
+          },
+          "unavailablePlacements": {
+            "$ref": "urn:twisty:schema:artifact-common:1#/definitions/indices"
+          },
+          "request": {
+            "$ref": "#/definitions/index"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "index": {
+      "$ref": "urn:twisty:schema:artifact-common:1#/definitions/index"
+    },
+    "id": {
+      "$ref": "urn:twisty:schema:artifact-common:1#/definitions/id"
+    },
+    "digest": {
+      "$ref": "urn:twisty:schema:artifact-common:1#/definitions/digest"
+    }
+  }
+}

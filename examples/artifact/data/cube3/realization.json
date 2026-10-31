@@ -1,0 +1,110 @@
+{
+  "compatibleDefinitionDigest": "662cd11f25133754db47e7cda3e874314fd7268e694f5ad35bb9586f3fcaf9d7",
+  "compatibleInterpretationDigest": "70bd63b13e8a8fe37fe049a5f09628903903968b738d763ccf1046428b5c47be",
+  "explicitCubeTracks": {
+    "B": {
+      "angle": -1.5707963267948966,
+      "axis": [
+        0,
+        0,
+        -1
+      ]
+    },
+    "B'": {
+      "angle": 1.5707963267948966,
+      "axis": [
+        0,
+        0,
+        -1
+      ]
+    },
+    "D": {
+      "angle": -1.5707963267948966,
+      "axis": [
+        0,
+        -1,
+        0
+      ]
+    },
+    "D'": {
+      "angle": 1.5707963267948966,
+      "axis": [
+        0,
+        -1,
+        0
+      ]
+    },
+    "F": {
+      "angle": -1.5707963267948966,
+      "axis": [
+        0,
+        0,
+        1
+      ]
+    },
+    "F'": {
+      "angle": 1.5707963267948966,
+      "axis": [
+        0,
+        0,
+        1
+      ]
+    },
+    "L": {
+      "angle": -1.5707963267948966,
+      "axis": [
+        -1,
+        0,
+        0
+      ]
+    },
+    "L'": {
+      "angle": 1.5707963267948966,
+      "axis": [
+        -1,
+        0,
+        0
+      ]
+    },
+    "R": {
+      "angle": -1.5707963267948966,
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "R'": {
+      "angle": 1.5707963267948966,
+      "axis": [
+        1,
+        0,
+        0
+      ]
+    },
+    "U": {
+      "angle": -1.5707963267948966,
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "U'": {
+      "angle": 1.5707963267948966,
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "id": "cube3-artifact-euclidean-v1",
+  "kind": "artifact-cube-euclidean",
+  "requiredCapabilities": [
+    "explicit-cube-tracks",
+    "rigid-transforms",
+    "triangle-meshes"
+  ],
+  "schemaVersion": 1
+}

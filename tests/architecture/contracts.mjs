@@ -49,10 +49,10 @@ export async function checkDraftContracts() {
     session: { requestInverses: [0], choiceInverses: [[0, 1]] },
   };
   const interpretation = { kind: 'twisty-interpretation', contractVersion: 1, executionDigest: zero, interpretationDigest: zero,
-    domains: [{ id: 'domain', ports: ['p'] }], resources: ['a', 'b'],
+    domains: [{ id: 'domain', choiceSlot: 0, ports: ['p'] }], resources: ['a', 'b'],
     pieces: [{ piece: 0, domain: 0, portLabels: [{ port: 'p', material: 'red' }] }],
     placements: [0, 1].map(i => ({ placement: i, domain: 0, resources: [i], ports: [{ id: 'p', resource: i, attachment: 'out' }] })),
-    certificates: [{ id: 'turn', domain: 0, event: 0, transport: 0, actions: [0], unavailablePlacements: [] }] };
+    certificates: [{ id: 'turn', domain: 0, request: 0, event: 0, transport: 0, actions: [0], unavailablePlacements: [] }] };
   const controller = { kind: 'twisty-controller', contractVersion: 1, executionDigest: zero, controlDigest: zero,
     movements: [{ slot: 0, value: 1, actions: [0] }],
     drivers: [{ id: 'driver', piece: 0, stops: ['a', 'b'], reader: [{ placement: 0, stop: 0 }, { placement: 1, stop: 1 }] }],

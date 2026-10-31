@@ -1,8 +1,8 @@
 # Architecture review: authoring tools and interpreter contracts
 
-Reviewed against the workspace code on 2026-10-31. This is a proposed design and
-implementation plan; the proposed artifact formats are not yet implemented by
-the runtime.
+Reviewed against the workspace code on 2026-10-31. This document records the
+original architecture review and seven-phase implementation plan. Progress is
+recorded below; the later tables preserve the original review baseline.
 
 Phase 1 now has [draft contracts and acceptance gates](contracts/authoring-runtime.md),
 structural/hash conformance checks, and a frozen native/WASM baseline across seven
@@ -11,10 +11,23 @@ the method and observations. Run `npm run check:architecture` to verify the base
 
 The Phase 2 extraction adds compiler-independent `runtime.hpp` descriptors and
 `Twisty::runtime` completion/discovery services, with controller route and piece
-support queries consuming compiled bindings. The source-free loader remains
-Phase 3. The tables below describe the original review baseline; see the current
+support queries consuming compiled bindings. Phase 3 adds the validated numeric
+artifact loader, source-free sessions, and an explicit interpretation contract
+for a Cube/Bandage Euclidean vertical slice. Native `Twisty::artifact_kernel`
+and the separate WASM artifact entry exclude authoring/source adapters. Global
+placement IDs, execution digests, schema-3 saves and version-2 witnesses are
+independently checked against the legacy path by `npm run check:artifacts`.
+Other interpreter/controller adapters, the dedicated authoring CLI, distribution
+migration, and presentation separation remain later phases. See the current
 [runtime API](kernel-api.md#compiler-independent-runtime-descriptors) for the
 implemented boundary.
+
+Phase 3 verification: 128 native artifact checks, independently installed native
+and isolated WASM artifact consumers, all seven frozen architecture scenarios,
+nine targeted native tests, and the existing installed SDK consumers pass.
+Regeneration reproduces all 146 legacy artifacts unchanged; the current WASM
+accepts all 24 presets and 48 realizations. The new artifact geometry contract
+covers only the Cube/Bandage Euclidean slice. No browser UI changes were made.
 
 The recommended direction is to introduce a dedicated authoring CLI, backed by
 reusable compiler libraries, that emits validated runtime artifacts. Preserve
@@ -375,7 +388,7 @@ checks run sequentially; builds use one or at most two jobs; browser checks use
 one headless worker with display variables unset. No deployment or Dockerfile
 change is needed for this architecture work.
 
-**Review validation and limits.** This review traced build targets, public
+**Original review validation and limits.** The documentation review traced build targets, public
 headers, source loading/lowering, controller compilation, geometry preparation
 and witness validation, schema/SDK declarations, package generation/provenance,
 and installed consumer checks. The targeted native build used one job. All seven
@@ -386,5 +399,5 @@ existing behavior; they do not test the proposed artifact contract. Browser
 checks and the full independent-consumer packaging check were inspected but were
 not executed for this documentation change.
 The review does not establish physical correctness of every puzzle or a measured
-startup/size regression. The review does not implement the proposed runtime
-loader or migrate puzzle artifacts; the Phase 1 checks are linked above.
+startup/size regression. The original review did not implement a runtime loader
+or migrate puzzle artifacts; the current Phase 1–3 status is recorded at the top.

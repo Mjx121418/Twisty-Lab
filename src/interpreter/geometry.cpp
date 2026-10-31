@@ -1,7 +1,9 @@
 #include "geometry_compiler.hpp"
+#include "../artifact_internal.hpp"
 #include <algorithm>
 #include <cmath>
 #include <numbers>
+#include <set>
 
 namespace twisty {
 namespace {
@@ -61,17 +63,32 @@ std::vector<double> state_poses(const GeometryProgram &program, const State &sta
 }
 } // namespace
 
-GeometryDefinition::GeometryDefinition(const std::string &definition, const std::string &realization)
-    : GeometryDefinition(Execution::from_source(definition), realization) {}
 GeometryDefinition::GeometryDefinition(std::shared_ptr<const Execution> execution,
                                        const std::string &realization) {
   if (!execution)
     throw DiagnosticError("realization.definition", "/definition", "Expected an execution definition.");
-  const auto document = Json::parse(realization);
+  const auto document = execution->source_free() ? artifact::detail::parse_geometry_document(realization) : Json::parse(realization);
+  if (execution->source_free()) {
+    artifact::detail::fields(document, {"schemaVersion", "id", "kind", "compatibleDefinitionDigest", "compatibleInterpretationDigest", "requiredCapabilities", "explicitCubeTracks"});
+    artifact::detail::id(document.at("id"));
+    if (execution->interpretation_digest().empty() || document.at("kind") != "artifact-cube-euclidean" ||
+        document.at("compatibleInterpretationDigest") != execution->interpretation_digest())
+      throw DiagnosticError("realization.digest_mismatch", "/compatibleInterpretationDigest", "This artifact realization requires its exact interpretation manifest.");
+    const auto caps = document.at("requiredCapabilities").get<std::vector<std::string>>();
+    if (caps.size() != 3 || std::set<std::string>(caps.begin(), caps.end()) !=
+        std::set<std::string>{"triangle-meshes", "rigid-transforms", "explicit-cube-tracks"})
+      throw DiagnosticError("realization.capability", "/requiredCapabilities", "Artifact cube realizations require the declared three capabilities.");
+  }
+  else if (document.value("kind", "") == "artifact-cube-euclidean")
+    throw DiagnosticError("realization.definition", "/kind", "Artifact geometry requires an artifact execution context.");
+  const auto digest = execution->source_free() ? sha256(realization) : std::string{};
   program_ = document.value("kind", "") == "s3-cell-turning"
                  ? compile_s3(std::move(execution), document)
-                 : GeometryCompiler(std::move(execution), document).compile();
+                 : GeometryCompiler(std::move(execution), document, digest).compile();
 }
+GeometryDefinition::GeometryDefinition(std::shared_ptr<const Execution> execution,
+                                       const std::string &interpretation, const std::string &realization)
+    : GeometryDefinition(execution ? execution->with_interpretation(interpretation) : nullptr, realization) {}
 std::string GeometryDefinition::scene_json() const {
   return program_->scene.dump();
 }
@@ -108,7 +125,7 @@ GeometryAnimation GeometryDefinition::animate(const std::string &input) const {
   const auto transition = Json::parse(input);
   const auto execution = program_->execution;
   const auto definition = execution->definition();
-  if (transition.at("definitionDigest") != definition->digest)
+  if (transition.at(execution->source_free() ? "executionDigest" : "definitionDigest") != definition->digest)
     throw DiagnosticError("realization.digest_mismatch", "/transition",
                           "Transition uses a different definition.");
   auto before = execution->decode(transition.at("beforeState"));
@@ -239,8 +256,6 @@ const std::vector<std::uint32_t> &GeometryDrawing::indices() const {
   return mesh_ ? mesh_->indices : program_->indices;
 }
 
-GeometryInstance::GeometryInstance(const std::string &definition, const std::string &realization)
-    : GeometryInstance(std::make_shared<GeometryDefinition>(definition, realization)) {}
 GeometryInstance::GeometryInstance(std::shared_ptr<const Execution> execution, const std::string &realization)
     : GeometryInstance(std::make_shared<GeometryDefinition>(std::move(execution), realization)) {}
 GeometryInstance::GeometryInstance(std::shared_ptr<const GeometryDefinition> definition)

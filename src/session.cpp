@@ -44,7 +44,6 @@ std::string request_operation(const std::string &request) {
   return parsed.at("operation").get<std::string>();
 }
 } // namespace
-Session::Session(const std::string &source) : Session(Execution::from_source(source)) {}
 Session::Session(std::shared_ptr<const Execution> execution) : execution_(std::move(execution)) {
   if (!execution_)
     throw DiagnosticError("execution.context", "/definition", "A compiled execution context is required.");
@@ -64,7 +63,7 @@ Json Session::snapshot(SnapshotDetail detail) const {
   Json history = Json::array();
   for (const auto &transition : history_)
     history.push_back(transition.operation);
-  Json result{{"definitionDigest", definition_->digest},
+  Json result{{execution_->source_free() ? "executionDigest" : "definitionDigest", definition_->digest},
                           {"puzzleId", definition_->id},
                           {"revision", revision()},
                           {"stateDigest", state_digest(*definition_, state_)},
@@ -238,10 +237,10 @@ Json Session::save() const {
                              {"state", encode_state(*definition_, history_[i].after)},
                              {"stateDigest", state_digest(*definition_, history_[i].after)}});
   }
-  return {{"schemaVersion", 2},
+  return {{"schemaVersion", execution_->source_free() ? 3 : 2},
           {"kind", "session"},
           {"logical",
-           {{"definitionDigest", definition_->digest},
+           {{execution_->source_free() ? "executionDigest" : "definitionDigest", definition_->digest},
             {"originState", encode_state(*definition_, origin_)},
             {"requests", requests},
             {"cursor", cursor_},
@@ -251,13 +250,15 @@ Json Session::save() const {
           {"presentation", Json::object()}};
 }
 Json Session::load(const Json &document) {
-  if (document.at("schemaVersion") != (2) || document.at("kind") != "session")
+  const auto schema = execution_->source_free() ? 3 : 2;
+  const auto digest_key = execution_->source_free() ? "executionDigest" : "definitionDigest";
+  if (document.at("schemaVersion") != schema || document.at("kind") != "session")
     throw DiagnosticError(
         "session.schema", "/",
-        "Only relational session schema 2 is supported; schema-1 legacy histories are unsupported.");
+        execution_->source_free() ? "Artifact sessions require session schema 3." : "Only relational session schema 2 is supported; schema-1 legacy histories are unsupported.");
   const auto &logical = document.at("logical");
-  if (logical.at("definitionDigest") != definition_->digest)
-    throw DiagnosticError("definition.digest_mismatch", "/logical/definitionDigest",
+  if (!logical.contains(digest_key) || logical.at(digest_key) != definition_->digest)
+    throw DiagnosticError(execution_->source_free() ? "artifact.digest_mismatch" : "definition.digest_mismatch", std::string("/logical/") + digest_key,
                           "Saved session uses different puzzle semantics.");
   const auto origin = execution_->decode(logical.at("originState"));
   auto temporary = origin;
@@ -307,6 +308,7 @@ Json Session::load(const Json &document) {
   return {{"status", "Loaded"}, {"snapshot", snapshot(result_detail_)}};
 }
 std::string Session::definition_json() const {
+  if (execution_->source_free()) return execution_->definition_json().dump();
   // Emit the same sorted canonical object as definition_json().dump(), without
   // cloning a large AST just to add its digest to the serialized document.
   std::string result = "{";

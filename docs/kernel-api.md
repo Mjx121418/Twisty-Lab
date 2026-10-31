@@ -48,8 +48,144 @@ existing inspection and definition serialization, preserving their canonical
 bytes and digests. `CompiledPuzzle::source_version` remains the legacy inspection
 encoding tag, not an executable rule. This extraction changes no WASM/TypeScript
 method, API version, puzzle format, session format, or geometry/buffer layout.
-Session/package loading still uses the compiler adapter; a source-free artifact
-loader is a subsequent step. The full WASM module still includes authoring.
+Legacy session/package loading still uses the compiler adapter. The separate
+artifact entry point below loads executable data without authoring dependencies.
+The full WASM module retains authoring APIs.
+
+## Source-free artifact API 1
+
+Artifact API `1` is independent of legacy API `7`, source formats 1–3, and binary
+buffer versions. Query native `artifact::info()` or WASM `artifactInfoJSON()` for
+artifact/interpretation versions, session schema `3`, witness version `2`, and
+supported realization kinds. `kernelInfoJSON()` retains its legacy meanings.
+Native consumers rebuild with matching headers/libraries; WASM declarations and
+the matching module ship together.
+
+The [installed native example](../examples/artifact/main.cpp) links only
+`Twisty::artifact_kernel`, which combines `Twisty::session_runtime` and
+`Twisty::geometry_runtime`. These depend on `Twisty::execution_runtime`,
+`Twisty::artifact`, the catalog, and the numeric runtime/core. Source constructors
+and exporters live in the separately linked `Twisty::execution`, `Twisty::session`,
+`Twisty::geometry`, and `Twisty::language` adapters. The aggregate `Twisty::kernel`
+continues to expose the full legacy API.
+
+```cpp
+#include <twisty/artifact.hpp>
+#include <twisty/session.hpp>
+#include <twisty/geometry.hpp>
+auto execution = twisty::Execution::from_artifact(abstract_text);
+twisty::Session session(execution);
+twisty::GeometryDefinition geometry(execution, interpretation_text, realization_text);
+auto result = session.run("R U R' U'", "transactional", session.revision());
+```
+
+The compiler-free JavaScript entry is `@twisty/kernel/artifact`:
+
+```ts
+import { createArtifactKernel, loadArtifactSession, createArtifactGeometry }
+  from '@twisty/kernel/artifact';
+const module = await createArtifactKernel();
+const session = loadArtifactSession(module, abstractText);
+try {
+  const geometry = createArtifactGeometry(module, session, interpretationText, realizationText);
+  try {
+    const result = JSON.parse(session.runJSON("R U R' U'", 'transactional', session.revision()));
+    // Pass result.transitions to geometry.animate(); release each returned handle.
+  } finally { geometry.delete(); }
+} finally { session.delete(); }
+```
+
+This entry imports only `generated/twisty-artifact.mjs` and its WASM. It exposes
+raw Session/GeometryDefinition handles and factories, including
+`createArtifactSession`, `createArtifactGeometryDefinition`,
+`createSessionFromDefinition`, and `validateArtifactJSON`. It has no source-taking
+Session constructor, Puzzle, controller, compiler, or authoring factory.
+`wasmURL` or `locateFile` can relocate its WASM; `./artifact-wasm` exports the
+module's binary resource. Handles must be released with `.delete()`.
+
+The [abstract artifact schema](../schemas/abstract-artifact.schema.json) stores
+numeric `core::ProgramData`, compact transports, and optional stable bindings and
+session inverse tables. Native `artifact::Artifact` can load a bare numeric core
+program without those optional sections; Session requires both. It owns its
+validated data and exposes `compiled()` as shared immutable storage. Caller text
+can be released. `Execution::definition_json()`/Session `definitionJSON()` return
+the artifact document for these sessions, rather than a source definition.
+
+`executionDigest` is SHA-256 over integer canonical JSON with only its own field
+removed: ASCII property order, significant array order, exact unsigned integers
+below `2^32-1`, UTF-8 strings without normalization, compact JSON without a final
+newline. Native `canonical_json`, `document_digest`, and `seal` implement this
+encoding. Duplicate keys, unknown fields, fractional indices, invalid references,
+and unsupported versions/capabilities reject before a handle is published.
+Text is limited to 64 MiB, depth to 64, and parsing to a conservative 256 MiB DOM
+budget, alongside existing core size/work limits. IDs are unique per namespace,
+1–256 UTF-8 bytes, with no NUL. Empty `requiredCapabilities` is the only supported
+abstract extension set in version 1.
+
+The [interpretation manifest](../schemas/interpretation.schema.json) pins execution
+and has its own integer-canonical `interpretationDigest`. It explicitly binds
+global piece/placement indices to domains, resources, ports, and materials.
+Each domain names its numeric `choiceSlot`. Each certificate names its numeric
+`request`, event, transport, and action indices. The first adapter requires exact
+direct-choice selectors with concrete default profiles, complete action coverage,
+and unambiguous domain/event correspondence. Opaque identifiers never supply
+movement angles or direction. `with_interpretation()` creates a new immutable
+view sharing the program; the abstract session does not acquire geometry.
+
+The implemented backend is
+[`artifact-cube-euclidean`](../schemas/artifact-realization.schema.json), for
+Cube/Bandage port correspondences. It requires both upstream digest pins and
+exactly `triangle-meshes`, `rigid-transforms`, and `explicit-cube-tracks`
+capabilities. Every request has an explicit finite nonzero axis and signed angle
+in radians about the origin; the axis is normalized. Endpoints are checked against
+the certified exact transport and port attachments. Full winding is preserved.
+`sceneJSON()` adds `executionDigest`, `interpretationDigest`, and
+`realizationDigest` (SHA-256 of the exact input realization bytes), and includes
+that content hash in `sceneId`. Whitespace changes realization identity without
+changing abstract identity. This is a narrow backend payload; the general
+realization envelope and other interpreter adapters remain future work.
+
+This first cube backend retains the existing cube resource coordinates, face
+attachments/material labels, numbered ports, and `bandage` domain convention for
+its fused mesh. Arbitrary renaming of these geometric correspondences is outside
+this adapter's contract. Request, profile, choice-slot, local movement and event
+identifiers are independent of these conventions and can be renamed. The broader
+interpreter migration will make geometric component/frame data explicit too.
+
+Source-free state strings use the binding's global placement IDs directly.
+Snapshots/state hashes use `executionDigest`. Saves follow
+[session schema 3](../schemas/session-v3.schema.json); completed transitions follow
+[witness version 2](../schemas/artifact-witness.schema.json), also pinned by
+`executionDigest`. Neither is interchangeable with a schema-2 save or a version-1
+legacy witness. Undo still plans the declared inverse and checks exact restoration;
+reciprocal inverse-table validation alone is not a proof of invertibility.
+Replay, stale-revision checks, lightweight results, and failure atomicity retain
+the existing Session behavior. No automatic migration of old saves is provided.
+
+Geometry uses the existing owned scenes, animations and frames, column-major
+homogeneous R³ matrices, mesh arrays and frame/pose buffer version `1` documented
+below. Animations and frames retain immutable backing storage and can outlive
+the session/geometry handle. WASM typed views remain subject to memory growth;
+copy arrays before retaining them across allocations. Scheduling and rendering
+stay in the host.
+
+Loaders throw native `DiagnosticError` (code/source/message); WASM factory errors
+use the existing exception boundary. `validateArtifactJSON` returns `Valid` with
+execution identity/session availability, or the existing `Invalid` diagnostic
+object. Stable artifact codes include `artifact.unsupported`, `artifact.capability`,
+`artifact.limit`, `artifact.invalid`, `artifact.reference`, and
+`artifact.digest_mismatch`. Manifest structure/correspondence uses
+`interpretation.invalid` or `interpretation.ambiguous`; geometry retains
+`realization.*` errors, including `realization.digest_mismatch` and
+`realization.capability`. Failed geometry construction leaves the session intact.
+
+`twisty_language --cube-artifact` / `--bandaged-artifact` export bundles through
+`language::cube_artifacts(bool)`; `npm run build:artifact-examples` writes the
+checked-in examples. `npm run check:artifacts` reproduces those exports and runs
+independently installed native and isolated WASM consumers with no compiler
+binary or source-loader module. It compares exact logical results and pose arrays
+with the legacy source path and verifies opaque movement IDs. Other puzzle
+families and resolved controller artifacts remain on the legacy path.
 
 ## API 7 correspondence anchors and placement references
 

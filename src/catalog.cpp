@@ -24,7 +24,7 @@ Json encode_state(const Definition &definition, const State &state) {
 }
 std::string state_digest(const Definition &definition, const State &state) {
   return sha256(
-      Json{{"definitionDigest", definition.digest}, {"state", encode_state(definition, state)}}.dump());
+      Json{{definition.source_free ? "executionDigest" : "definitionDigest", definition.digest}, {"state", encode_state(definition, state)}}.dump());
 }
 Json encode_transition(const Definition &definition, const Transition &transition) {
   const auto &operation = definition.operations.at(definition.operation_ids.at(transition.operation));
@@ -38,7 +38,7 @@ Json encode_transition(const Definition &definition, const Transition &transitio
                        {"role", "layer-participant"},
                        {"transport", operation.transport}});
   }
-  return {{"definitionDigest", definition.digest},
+  return {{definition.source_free ? "executionDigest" : "definitionDigest", definition.digest},
           {"beforeStateDigest", state_digest(definition, transition.before)},
           {"afterStateDigest", state_digest(definition, transition.after)},
           {"request", {{"operation", transition.operation}, {"parameters", Json::object()}}},

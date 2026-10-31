@@ -44,25 +44,30 @@ target_compile_features(puzzle_core PUBLIC cxx_std_20)
 target_link_libraries(puzzle_core PUBLIC project_options)
 add_library(puzzle_runtime src/runtime.cpp src/completion.cpp)
 target_link_libraries(puzzle_runtime PUBLIC puzzle_core)
+add_library(puzzle_artifact src/artifact.cpp src/compact.cpp)
+target_link_libraries(puzzle_artifact PUBLIC puzzle_catalog puzzle_runtime)
 add_library(puzzle_language
   src/authoring/compiler.cpp
-  src/authoring/compact.cpp
   src/authoring/compact_cube.cpp
   src/authoring/cube.cpp
   src/authoring/gear.cpp
   src/language_api.cpp)
-target_link_libraries(puzzle_language PUBLIC puzzle_runtime puzzle_symmetry json_headers)
+target_link_libraries(puzzle_language PUBLIC puzzle_artifact puzzle_symmetry json_headers)
 
-add_library(puzzle_execution src/execution.cpp src/controller/catalog.cpp)
-target_link_libraries(puzzle_execution PUBLIC puzzle_catalog puzzle_runtime PRIVATE puzzle_language)
+add_library(puzzle_execution_runtime src/execution.cpp src/interpretation.cpp src/controller/catalog.cpp)
+target_link_libraries(puzzle_execution_runtime PUBLIC puzzle_artifact)
+add_library(puzzle_execution src/authoring/execution.cpp src/authoring/artifact.cpp)
+target_link_libraries(puzzle_execution PUBLIC puzzle_execution_runtime puzzle_language)
 
-add_library(puzzle_session src/session.cpp src/notation.cpp)
-target_link_libraries(puzzle_session PUBLIC puzzle_execution)
+add_library(puzzle_session_runtime src/session.cpp src/notation.cpp)
+target_link_libraries(puzzle_session_runtime PUBLIC puzzle_execution_runtime)
+add_library(puzzle_session src/authoring/session.cpp)
+target_link_libraries(puzzle_session PUBLIC puzzle_session_runtime puzzle_execution)
 
 add_library(puzzle_controller src/controller/controller.cpp)
 target_link_libraries(puzzle_controller PUBLIC puzzle_session)
 
-add_library(puzzle_geometry
+add_library(puzzle_geometry_runtime
   src/interpreter/geometry.cpp
   src/interpreter/s3_geometry.cpp
   src/interpreter/geometry_compiler.cpp
@@ -72,11 +77,17 @@ add_library(puzzle_geometry
   src/interpreter/catalog_spherical_geometry.cpp
   src/interpreter/articulated_geometry.cpp
   src/interpreter/flat_surface_geometry.cpp)
-target_link_libraries(puzzle_geometry PUBLIC puzzle_execution)
+target_link_libraries(puzzle_geometry_runtime PUBLIC puzzle_execution_runtime)
+add_library(puzzle_geometry src/authoring/geometry.cpp)
+target_link_libraries(puzzle_geometry PUBLIC puzzle_geometry_runtime puzzle_execution)
+
+add_library(puzzle_artifact_kernel INTERFACE)
+target_link_libraries(puzzle_artifact_kernel INTERFACE puzzle_session_runtime puzzle_geometry_runtime)
 
 add_library(puzzle_kernel INTERFACE)
 target_link_libraries(puzzle_kernel INTERFACE puzzle_controller puzzle_session puzzle_geometry puzzle_language)
-foreach(component IN ITEMS catalog execution session controller geometry symmetry core runtime language kernel)
+foreach(component IN ITEMS catalog execution session controller geometry symmetry core runtime language kernel
+    artifact execution_runtime session_runtime geometry_runtime artifact_kernel)
   add_library(Twisty::${component} ALIAS puzzle_${component})
   set_target_properties(puzzle_${component} PROPERTIES EXPORT_NAME ${component})
 endforeach()
@@ -93,8 +104,19 @@ if(EMSCRIPTEN)
     -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=33554432
     -sMAXIMUM_MEMORY=536870912 -sSTACK_SIZE=1048576
     --emit-tsd "${CMAKE_SOURCE_DIR}/kernel/generated/twisty.d.mts")
+  add_executable(twisty_artifact_wasm src/bindings.cpp)
+  target_compile_definitions(twisty_artifact_wasm PRIVATE TWISTY_ARTIFACT_ONLY=1)
+  target_link_libraries(twisty_artifact_wasm PRIVATE puzzle_artifact_kernel embind)
+  set_target_properties(twisty_artifact_wasm PROPERTIES OUTPUT_NAME twisty-artifact SUFFIX .mjs
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/kernel/generated")
+  target_link_options(twisty_artifact_wasm PRIVATE --no-entry
+    -sMODULARIZE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,node
+    -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=33554432
+    -sMAXIMUM_MEMORY=536870912 -sSTACK_SIZE=1048576
+    --emit-tsd "${CMAKE_SOURCE_DIR}/kernel/generated/twisty-artifact.d.mts")
 else()
   install(TARGETS puzzle_catalog puzzle_execution puzzle_session puzzle_controller puzzle_geometry puzzle_symmetry puzzle_core puzzle_runtime puzzle_language puzzle_kernel
+    puzzle_artifact puzzle_execution_runtime puzzle_session_runtime puzzle_geometry_runtime puzzle_artifact_kernel
     json_headers project_options EXPORT TwistyKernelTargets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -116,11 +138,17 @@ else()
   add_executable(twisty src/cli.cpp)
   target_link_libraries(twisty PRIVATE puzzle_session)
   add_executable(twisty_language examples/language/main.cpp)
-  target_link_libraries(twisty_language PRIVATE puzzle_language)
+  target_link_libraries(twisty_language PRIVATE puzzle_execution)
   add_executable(melty_solids scripts/melty_solids.cpp)
   target_link_libraries(melty_solids PRIVATE project_options)
   target_compile_options(melty_solids PRIVATE -O2)
   if(BUILD_TESTING)
+    add_executable(artifact_consumer examples/artifact/main.cpp)
+    target_link_libraries(artifact_consumer PRIVATE puzzle_artifact_kernel)
+    add_executable(artifact_tests tests/artifact_tests.cpp)
+    target_link_libraries(artifact_tests PRIVATE puzzle_artifact_kernel)
+    target_compile_definitions(artifact_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+    add_test(NAME artifact_contract COMMAND artifact_tests)
     add_executable(runtime_tests examples/runtime/main.cpp)
     target_link_libraries(runtime_tests PRIVATE puzzle_runtime)
     add_test(NAME runtime_descriptors COMMAND runtime_tests)
@@ -177,6 +205,8 @@ else()
     add_test(NAME runtime_has_no_legacy_backend COMMAND ${Python3_EXECUTABLE}
       ${CMAKE_SOURCE_DIR}/tests/runtime_boundary.py
       $<TARGET_FILE:puzzle_runtime>
+      $<TARGET_FILE:puzzle_artifact> $<TARGET_FILE:puzzle_execution_runtime>
+      $<TARGET_FILE:puzzle_session_runtime> $<TARGET_FILE:puzzle_geometry_runtime>
       $<TARGET_FILE:puzzle_catalog> $<TARGET_FILE:puzzle_execution>
       $<TARGET_FILE:puzzle_session> $<TARGET_FILE:puzzle_geometry>)
     add_test(NAME gear_packages COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/gear_packages.py)

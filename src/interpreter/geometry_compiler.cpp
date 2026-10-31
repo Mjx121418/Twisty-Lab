@@ -1,5 +1,6 @@
 #include "geometry_compiler.hpp"
 #include "twisty/controller.hpp"
+#include "../artifact_internal.hpp"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -90,10 +91,10 @@ GeometryCompiler::GeometryCompiler(std::shared_ptr<const Execution> execution,
                                    const std::string &realization_json)
     : GeometryCompiler(std::move(execution), Json::parse(realization_json)) {}
 GeometryCompiler::GeometryCompiler(std::shared_ptr<const Execution> execution,
-                                   const Json &realization)
+                                   const Json &realization, const std::string &payload_digest)
     : execution_(std::move(execution)), definition_(execution_->definition()) {
   const std::set<std::string> supported{"triangle-meshes", "rigid-transforms", "quotient-surface",
-    "quotient-orbifold", "shared-rotation-tracks", "family-rotation-generators", "transport-path-selectors"};
+    "quotient-orbifold", "shared-rotation-tracks", "family-rotation-generators", "transport-path-selectors", "explicit-cube-tracks"};
   for(const auto &cap:realization.at("requiredCapabilities"))
     if(!supported.contains(cap.get<std::string>()))
       throw DiagnosticError("realization.capability", "/requiredCapabilities", "Unsupported required geometric capability.");
@@ -103,7 +104,7 @@ GeometryCompiler::GeometryCompiler(std::shared_ptr<const Execution> execution,
     throw DiagnosticError("realization.digest_mismatch", "/compatibleDefinitionDigest",
                           "Realization is not compatible with the exact definition.");
   const auto kind = realization.at("kind").get<std::string>();
-  if (kind != "cube-euclidean" && kind != "cube-port-diagram" && kind != "cube-spherical" &&
+  if (kind != "cube-euclidean" && kind != "artifact-cube-euclidean" && kind != "cube-port-diagram" && kind != "cube-spherical" &&
       kind != "polyhedral-euclidean" && kind != "polyhedral-port-diagram" && kind != "polyhedral-spherical" &&
       kind != "articulated-euclidean" && kind != "articulated-port-diagram" &&
       kind != "articulated-spherical" && kind != "flat-quotient")
@@ -114,6 +115,28 @@ GeometryCompiler::GeometryCompiler(std::shared_ptr<const Execution> execution,
   catalog_spherical_ = kind == "polyhedral-spherical";
   flat_surface_ = kind == "flat-quotient";
   articulated_ = kind.starts_with("articulated-") || flat_surface_;
+  if (realization.contains("explicitCubeTracks")) {
+    const auto capabilities = realization.at("requiredCapabilities").get<std::vector<std::string>>();
+    if (std::find(capabilities.begin(), capabilities.end(), "explicit-cube-tracks") == capabilities.end())
+      throw DiagnosticError("realization.capability", "/requiredCapabilities", "Explicit cube tracks require their capability declaration.");
+    if ((kind != "cube-euclidean" && kind != "artifact-cube-euclidean") || !realization.at("explicitCubeTracks").is_object() ||
+        realization.at("explicitCubeTracks").size() != definition_->operations.size())
+      throw DiagnosticError("realization.track", "/explicitCubeTracks", "Explicit cube tracks must cover every operation.");
+    explicit_cube_tracks_ = true;
+    for (const auto &op : definition_->operations) {
+      const auto &track = realization.at("explicitCubeTracks").at(op.id);
+      artifact::detail::fields(track, {"axis", "angle"});
+      if (!track.at("axis").is_array() || track.at("axis").size() != 3 || !track.at("angle").is_number())
+        throw DiagnosticError("realization.track", "/explicitCubeTracks", "Expected an axis and signed angle.");
+      Point axis = track.at("axis").get<Point>(); double norm = 0;
+      for (double x : axis) { if (!std::isfinite(x) || std::abs(x) > 100) throw DiagnosticError("realization.track", "/axis", "Invalid rotation axis."); norm += x*x; }
+      const auto angle = track.at("angle").get<double>();
+      if (norm < 1e-20 || !std::isfinite(angle) || std::abs(angle) > 100)
+        throw DiagnosticError("realization.track", "/angle", "Invalid signed rotation.");
+      for (double &x : axis) x /= std::sqrt(norm);
+      tracks_.push_back({axis, angle});
+    }
+  }
   if (execution_->articulated_events() && !articulated_)
     throw DiagnosticError("realization.unsupported", "/kind",
                           "This binding catalog requires articulated event tracks.");
@@ -121,8 +144,7 @@ GeometryCompiler::GeometryCompiler(std::shared_ptr<const Execution> execution,
     for (const auto &piece : definition_->pieces)
       for (const auto &[_, label] : piece.labels)
         normal(label);
-    for (const auto &operation : definition_->operations)
-      normal(operation.family);
+    if (!explicit_cube_tracks_) for (const auto &operation : definition_->operations) normal(operation.family);
   }
   scene_ = {{"sceneId", realization.at("id").get<std::string>() + ":" + definition_->digest},
             {"realizationId", realization.at("id")},
@@ -132,6 +154,12 @@ GeometryCompiler::GeometryCompiler(std::shared_ptr<const Execution> execution,
             {"visualParts", Json::array()},
             {"labels", Json::array()},
             {"diagram", diagram_}};
+  if (execution_->source_free()) {
+    scene_["executionDigest"] = definition_->digest;
+    scene_["interpretationDigest"] = execution_->interpretation_digest();
+    scene_["realizationDigest"] = payload_digest;
+    scene_["sceneId"] = realization.at("id").get<std::string>() + ":" + payload_digest;
+  }
   if(realization.contains("controlLayout")) {
     const auto ensure=[](bool ok,const std::string &source,const std::string &message) {
       if(!ok) throw DiagnosticError("realization.control_layout",source,message);
@@ -322,8 +350,9 @@ std::shared_ptr<const GeometryProgram> GeometryCompiler::compile() {
   // already do. The evaluator needs no cube attachments or backend switches.
   if (!catalog_ && !articulated_)
     for (const auto &op : definition_->operations) {
-      const auto axis = normal(op.family);
-      const double angle = (op.transport.ends_with(".counterclockwise") ? 1 : -1) * std::numbers::pi / 2;
+      const auto index = definition_->operation_ids.at(op.id);
+      const auto axis = explicit_cube_tracks_ ? V{tracks_[index].axis[0], tracks_[index].axis[1], tracks_[index].axis[2]} : normal(op.family);
+      const double angle = explicit_cube_tracks_ ? tracks_[index].angle : (op.transport.ends_with(".counterclockwise") ? 1 : -1) * std::numbers::pi / 2;
       for (Index d = 0; d < definition_->domains.size(); ++d) {
         const auto &domain = definition_->domains[d];
         for (Index q = 0; q < domain.placements.size(); ++q) {
@@ -374,10 +403,10 @@ std::shared_ptr<const GeometryProgram> GeometryCompiler::compile() {
         for (Index op = 0; op < definition_->operations.size(); ++op) {
           GeometryTrack track;
           const auto &operation = definition_->operations[op];
-          const auto n = catalog_ ? V{tracks_[op].axis[0], tracks_[op].axis[1], tracks_[op].axis[2]}
+          const auto n = catalog_ || explicit_cube_tracks_ ? V{tracks_[op].axis[0], tracks_[op].axis[1], tracks_[op].axis[2]}
                                   : normal(operation.family);
           const auto angle =
-              catalog_ ? tracks_[op].angle
+              catalog_ || explicit_cube_tracks_ ? tracks_[op].angle
                        : (operation.transport.ends_with(".counterclockwise") ? 1 : -1) * std::numbers::pi / 2;
           track.extent_hint = std::abs(angle);
           if (!diagram_)

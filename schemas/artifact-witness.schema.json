@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:twisty:schema:artifact-witness:2",
+  "type": "object", "additionalProperties": false,
+  "required": ["executionDigest", "witnessVersion", "beforeStateDigest", "afterStateDigest", "beforeState", "afterState", "request", "pieceActions", "mechanismChanges"],
+  "properties": {
+    "executionDigest": { "$ref": "urn:twisty:schema:artifact-common:1#/definitions/digest" },
+    "beforeStateDigest": { "$ref": "urn:twisty:schema:artifact-common:1#/definitions/digest" },
+    "afterStateDigest": { "$ref": "urn:twisty:schema:artifact-common:1#/definitions/digest" },
+    "witnessVersion": { "const": 2 },
+    "beforeState": { "$ref": "urn:twisty:schema:state:1" }, "afterState": { "$ref": "urn:twisty:schema:state:1" },
+    "request": { "type": "object", "additionalProperties": false, "required": ["operation", "parameters", "choices"],
+      "properties": {
+        "operation": { "$ref": "urn:twisty:schema:artifact-common:1#/definitions/id" },
+        "parameters": { "type": "object", "maxProperties": 0 },
+        "choices": { "type": "array", "maxItems": 4096, "items": { "$ref": "urn:twisty:schema:artifact-common:1#/definitions/id" } }
+      } },
+    "pieceActions": { "type": "array", "maxItems": 4096, "items": {
+      "type": "object", "additionalProperties": false, "required": ["pieceId", "from", "to", "event", "role", "transport"],
+      "properties": {
+        "pieceId": { "$ref": "urn:twisty:schema:artifact-common:1#/definitions/id" },
+        "from": { "$ref": "urn:twisty:schema:artifact-common:1#/definitions/id" }, "to": { "$ref": "urn:twisty:schema:artifact-common:1#/definitions/id" },
+        "event": { "$ref": "urn:twisty:schema:artifact-common:1#/definitions/id" }, "transport": { "$ref": "urn:twisty:schema:artifact-common:1#/definitions/id" },
+        "role": { "const": "layer-participant" }
+      } } },
+    "mechanismChanges": { "type": "array", "maxItems": 0 }
+  }
+}

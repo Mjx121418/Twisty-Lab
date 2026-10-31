@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <twisty/authoring/compiler.hpp>
+#include <twisty/authoring/artifact.hpp>
 #include <twisty/authoring/cube.hpp>
 #include <twisty/authoring/gear.hpp>
 
@@ -11,6 +12,10 @@ int main(int argc, char **argv) {
     if (argc < 2 || argc > 3)
       throw std::runtime_error(
           "Usage: twisty_language source.pzl.json [--inspect] | --cube-module | --bandaged-module");
+    if (argc == 2 && (std::string(argv[1]) == "--cube-artifact" || std::string(argv[1]) == "--bandaged-artifact")) {
+      std::cout << twisty::language::cube_artifacts_json(std::string(argv[1]) == "--bandaged-artifact") << '\n';
+      return 0;
+    }
     if (argc == 2 &&
         (std::string(argv[1]) == "--cube-module" || std::string(argv[1]) == "--bandaged-module")) {
       std::cout << twisty::language::cube_module_json(std::string(argv[1]) == "--bandaged-module") << '\n';

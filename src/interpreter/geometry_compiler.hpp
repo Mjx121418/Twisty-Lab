@@ -6,7 +6,8 @@ namespace twisty {
 class GeometryCompiler {
 public:
   GeometryCompiler(std::shared_ptr<const Execution>, const std::string &realization_json);
-  GeometryCompiler(std::shared_ptr<const Execution>, const Json &realization);
+  GeometryCompiler(std::shared_ptr<const Execution>, const Json &realization,
+                   const std::string &payload_digest = {});
   std::shared_ptr<const GeometryProgram> compile();
 
 private:
@@ -23,6 +24,7 @@ private:
   Json scene_;
   bool diagram_ = false;
   bool catalog_ = false;
+  bool explicit_cube_tracks_ = false;
   bool spherical_ = false;
   bool catalog_spherical_ = false;
   bool articulated_ = false;

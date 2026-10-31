@@ -80,6 +80,8 @@ class GeometryDefinition {
 public:
   GeometryDefinition(const std::string &definition_json, const std::string &realization_json);
   GeometryDefinition(std::shared_ptr<const Execution>, const std::string &realization_json);
+  GeometryDefinition(std::shared_ptr<const Execution>, const std::string &interpretation_json,
+                     const std::string &realization_json);
   std::string scene_json() const;
   std::string space_json() const;
   const std::vector<float> &positions() const;

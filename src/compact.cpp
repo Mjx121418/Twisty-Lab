@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <set>
 
-namespace twisty::language {
+namespace twisty::runtime {
 namespace {
 using namespace core;
 void fields(const Json &j, std::initializer_list<const char *> allowed) {
@@ -261,4 +261,4 @@ Json write_compact(const core::ProgramData &d, int version) {
   }
   return j;
 }
-} // namespace twisty::language
+} // namespace twisty::runtime

@@ -18,6 +18,7 @@ try {
   assert.ok(headers.includes('catalog.hpp'));
   assert.ok(headers.includes('core.hpp') && headers.includes('completion.hpp'));
   assert.ok(headers.includes('runtime.hpp'));
+  assert.ok(headers.includes('artifact.hpp'));
   assert.ok(!headers.includes('flat_core.hpp') && !headers.includes('compiler.hpp'));
   assert.ok(!headers.some((name) => name.startsWith('relational_')));
   assert.match(await readFile(join(installed, 'include/twisty/core.hpp'), 'utf8'), /namespace twisty::core/);
@@ -25,6 +26,8 @@ try {
   const exported = await readFile(join(installed, 'lib/cmake/TwistyKernel/TwistyKernelTargets.cmake'), 'utf8');
   assert.match(exported, /Twisty::core/);
   assert.match(exported, /Twisty::runtime/);
+  for (const target of ['artifact', 'execution_runtime', 'session_runtime', 'geometry_runtime', 'artifact_kernel'])
+    assert.ok(exported.includes(`Twisty::${target}`));
   assert.match(exported, /Twisty::language/);
   assert.ok(!/Twisty::(?:flat_core|relational|compiler)|legacy_test_reference/.test(exported));
   const consumer = join(temporary, 'consumer');

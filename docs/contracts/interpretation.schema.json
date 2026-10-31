@@ -9,8 +9,8 @@
     "executionDigest": { "$ref": "#/definitions/digest" }, "interpretationDigest": { "$ref": "#/definitions/digest" },
     "resources": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/ids" },
     "domains": { "type": "array", "maxItems": 4096, "items": {
-      "type": "object", "additionalProperties": false, "required": ["id", "ports"],
-      "properties": { "id": { "$ref": "#/definitions/id" }, "ports": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/ids" } }
+      "type": "object", "additionalProperties": false, "required": ["id", "choiceSlot", "ports"],
+      "properties": { "id": { "$ref": "#/definitions/id" }, "choiceSlot": { "$ref": "#/definitions/index" }, "ports": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/ids" } }
     } },
     "pieces": { "type": "array", "maxItems": 4096, "items": {
       "type": "object", "additionalProperties": false, "required": ["piece", "domain", "portLabels"],
@@ -32,9 +32,9 @@
       }
     } },
     "certificates": { "type": "array", "maxItems": 1000000, "items": {
-      "type": "object", "additionalProperties": false, "required": ["id", "domain", "event", "transport", "actions", "unavailablePlacements"],
+      "type": "object", "additionalProperties": false, "required": ["id", "domain", "request", "event", "transport", "actions", "unavailablePlacements"],
       "properties": { "id": { "$ref": "#/definitions/id" }, "domain": { "$ref": "#/definitions/index" },
-        "event": { "$ref": "#/definitions/index" }, "transport": { "$ref": "#/definitions/index" },
+        "request": { "$ref": "#/definitions/index" }, "event": { "$ref": "#/definitions/index" }, "transport": { "$ref": "#/definitions/index" },
         "actions": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/indices" },
         "unavailablePlacements": { "$ref": "urn:twisty:draft:contract-common:1#/definitions/indices" } }
     } }

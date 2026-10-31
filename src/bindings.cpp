@@ -1,5 +1,10 @@
-#include "twisty/authoring/compiler.hpp"
+#include "twisty/artifact.hpp"
+#include "twisty/session.hpp"
+#include "twisty/geometry.hpp"
+#ifndef TWISTY_ARTIFACT_ONLY
+#include "twisty/authoring/artifact.hpp"
 #include "twisty/kernel.hpp"
+#endif
 #include <emscripten/bind.h>
 
 using namespace emscripten;
@@ -20,11 +25,18 @@ template <class T> val transforms(const T &geometry) {
 val isometries(const GeometryFrame &frame) {
   return val(typed_memory_view(frame.isometries().size(), frame.isometries().data()));
 }
+#ifndef TWISTY_ARTIFACT_ONLY
 std::string compile_execution(const std::string &source) {
   return compile_execution_json(source).dump();
 }
 std::string kernel_info_json() {
   return kernel_info().dump();
+}
+#endif
+std::string artifact_info_json() { return artifact::info().dump(); }
+Session *create_artifact_session(const std::string &text) { return new Session(Execution::from_artifact(text)); }
+GeometryDefinition *create_artifact_geometry(const Session &session, const std::string &manifest, const std::string &realization) {
+  return new GeometryDefinition(session.execution(), manifest, realization);
 }
 Geometry *create_geometry(const Session &session, const std::string &realization) {
   return new Geometry(session.execution(), realization);
@@ -38,19 +50,29 @@ Geometry *create_geometry_instance(const GeometryDefinition &definition) {
 Session *create_session_from_definition(const Session &session) {
   return new Session(session.execution());
 }
+#ifndef TWISTY_ARTIFACT_ONLY
 Controller *create_controller(const Session &session) { return new Controller(session.execution()); }
+#endif
 } // namespace
 EMSCRIPTEN_BINDINGS(twisty) {
+  function("artifactInfoJSON", &artifact_info_json);
+  function("validateArtifactJSON", &artifact::validate_json);
+  function("createArtifactSession", &create_artifact_session, return_value_policy::take_ownership());
+  function("createArtifactGeometryDefinition", &create_artifact_geometry, return_value_policy::take_ownership());
+#ifndef TWISTY_ARTIFACT_ONLY
   function("compileExecutionJSON", &compile_execution);
   function("compilePuzzleJSON", &twisty::language::compile_json);
   function("cubeModuleJSON", &twisty::language::cube_module_json);
   function("gearModuleJSON", &twisty::language::gear_module_json);
   function("kernelInfoJSON", &kernel_info_json);
+  function("cubeArtifactBundleJSON", &language::cube_artifacts_json);
+#endif
   function("createGeometry", &create_geometry, return_value_policy::take_ownership());
   function("createGeometryDefinition", &create_geometry_definition, return_value_policy::take_ownership());
   function("createGeometryInstance", &create_geometry_instance, return_value_policy::take_ownership());
   function("createSessionFromDefinition", &create_session_from_definition,
            return_value_policy::take_ownership());
+#ifndef TWISTY_ARTIFACT_ONLY
   function("createController", &create_controller, return_value_policy::take_ownership());
   class_<Controller>("Controller")
       .function("catalogJSON", &Controller::catalog_json)
@@ -63,8 +85,11 @@ EMSCRIPTEN_BINDINGS(twisty) {
       .constructor<std::string>()
       .function("inspectJSON", &twisty::language::Puzzle::inspect_json)
       .function("queryJSON", &twisty::language::Puzzle::query_json);
+#endif
   class_<Session>("Session")
+#ifndef TWISTY_ARTIFACT_ONLY
       .constructor<std::string>()
+#endif
       .function("snapshotJSON", &Session::snapshot_json)
       .function("stateSnapshotJSON", &Session::state_snapshot_json)
       .function("lightweightResults", &Session::lightweight_results)
@@ -82,7 +107,9 @@ EMSCRIPTEN_BINDINGS(twisty) {
       .function("saveWithPresentationJSON", &Session::save_with_presentation_json)
       .function("loadJSON", &Session::load_json);
   class_<Geometry>("Geometry")
+#ifndef TWISTY_ARTIFACT_ONLY
       .constructor<std::string, std::string>()
+#endif
       .function("sceneJSON", &Geometry::scene_json)
       .function("setStateJSON", &Geometry::set_state_json)
       .function("prepareAnimationJSON", &Geometry::prepare_animation_json)
@@ -93,7 +120,9 @@ EMSCRIPTEN_BINDINGS(twisty) {
       .function("indices", &indices<Geometry>)
       .function("transforms", &transforms<Geometry>);
   class_<GeometryDefinition>("GeometryDefinition")
+#ifndef TWISTY_ARTIFACT_ONLY
       .constructor<std::string, std::string>()
+#endif
       .function("sceneJSON", &GeometryDefinition::scene_json)
       .function("spaceJSON", &GeometryDefinition::space_json)
       .function("intrinsicMesh", &GeometryDefinition::intrinsic_mesh)

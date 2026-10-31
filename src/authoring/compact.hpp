@@ -1,7 +1,8 @@
 #pragma once
 #include "twisty/authoring/compiler.hpp"
+#include "../compact.hpp"
 namespace twisty::language {
-void read_compact(const Json &, core::ProgramData &, int version);
-Json write_compact(const core::ProgramData &, int version);
+using runtime::read_compact;
+using runtime::write_compact;
 void compact_cube_source(Json &, const Json &catalog);
 } // namespace twisty::language

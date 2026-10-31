@@ -18,8 +18,8 @@ if (process.argv.includes('--stage-web')) {
   const { version } = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
   await writeFile(new URL('package.json', output), JSON.stringify({
     name: '@twisty/kernel', version, type: 'module',
-    exports: { '.': { types: './index.d.ts', import: './index.js' }, './runtime': './generated/twisty.mjs', './wasm': './generated/twisty.wasm' },
-    files: ['index.js', 'index.d.ts', 'generated', 'examples', 'schemas', 'README.md', 'core-language.md', 'reference-anchors.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'gear-model.md', 'icosahedron-model.md', 'flat-surfaces.md'],
+    exports: { '.': { types: './index.d.ts', import: './index.js' }, './artifact': { types: './artifact.d.ts', import: './artifact.js' }, './runtime': './generated/twisty.mjs', './wasm': './generated/twisty.wasm', './artifact-wasm': './generated/twisty-artifact.wasm' },
+    files: ['index.js', 'index.d.ts', 'artifact.js', 'artifact.d.ts', 'generated', 'examples', 'schemas', 'README.md', 'core-language.md', 'reference-anchors.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'gear-model.md', 'icosahedron-model.md', 'flat-surfaces.md'],
   }, null, 2) + '\n');
   const readme = (await readFile(new URL('../docs/kernel-api.md', import.meta.url), 'utf8'))
     .replaceAll('../schemas/', 'schemas/').replaceAll('../examples/', 'examples/');
@@ -34,9 +34,10 @@ if (process.argv.includes('--stage-web')) {
   await cp(new URL('../examples/canvas/', import.meta.url), new URL('examples/canvas/', output), { recursive: true });
   await cp(new URL('../examples/language/', import.meta.url), new URL('examples/language/', output), { recursive: true });
   await cp(new URL('../examples/runtime/', import.meta.url), new URL('examples/runtime/', output), { recursive: true });
+  await cp(new URL('../examples/artifact/', import.meta.url), new URL('examples/artifact/', output), { recursive: true });
   await mkdir(new URL('schemas/', output));
   await cp(new URL('../schemas/puzzle.schema.json', import.meta.url), new URL('schemas/puzzle.schema.json', output));
-  for (const file of ['puzzle-v2.schema.json', 'puzzle-v3.schema.json', 'compact.schema.json', 'compact-v2.schema.json', 'package.schema.json', 'gear-source.schema.json', 'session-v2.schema.json', 'state.schema.json', 'realization.schema.json'])
+  for (const file of ['puzzle-v2.schema.json', 'puzzle-v3.schema.json', 'compact.schema.json', 'compact-v2.schema.json', 'package.schema.json', 'gear-source.schema.json', 'session-v2.schema.json', 'state.schema.json', 'realization.schema.json', 'abstract-artifact.schema.json', 'artifact-common.schema.json', 'interpretation.schema.json', 'artifact-realization.schema.json', 'artifact-witness.schema.json', 'session-v3.schema.json'])
     await cp(new URL(`../schemas/${file}`, import.meta.url), new URL(`schemas/${file}`, output));
   for (const puzzle of inventory.puzzles) {
     const directory = new URL(`examples/canvas/data/${puzzle.id}/`, output);
