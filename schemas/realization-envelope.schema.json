@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:twisty:schema:realization-envelope:1",
+  "description": "Realization envelope 1; payload bytes are supplied explicitly by the host.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "contractVersion",
+    "id",
+    "interpretationDigest",
+    "realizationDigest",
+    "requiredCapabilities",
+    "backend",
+    "payload",
+    "eventTracks"
+  ],
+  "properties": {
+    "kind": {
+      "const": "twisty-realization"
+    },
+    "contractVersion": {
+      "const": 1
+    },
+    "id": {
+      "$ref": "#/definitions/id"
+    },
+    "interpretationDigest": {
+      "$ref": "#/definitions/digest"
+    },
+    "realizationDigest": {
+      "$ref": "#/definitions/digest"
+    },
+    "requiredCapabilities": {
+      "$ref": "urn:twisty:schema:artifact-common:1#/definitions/capabilities"
+    },
+    "backend": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000
+        }
+      }
+    },
+    "payload": {
+      "$ref": "urn:twisty:schema:artifact-common:1#/definitions/resource"
+    },
+    "eventTracks": {
+      "type": "array",
+      "maxItems": 1000000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "certificate",
+          "pathId"
+        ],
+        "properties": {
+          "certificate": {
+            "$ref": "urn:twisty:schema:artifact-common:1#/definitions/index"
+          },
+          "pathId": {
+            "$ref": "#/definitions/id"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "id": {
+      "$ref": "urn:twisty:schema:artifact-common:1#/definitions/id"
+    },
+    "digest": {
+      "$ref": "urn:twisty:schema:artifact-common:1#/definitions/digest"
+    }
+  }
+}

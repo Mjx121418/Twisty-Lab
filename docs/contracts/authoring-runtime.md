@@ -1,18 +1,18 @@
 # Authoring and interpreter contracts
 
-Status: Phases 1–3, 2026-10-31. Abstract artifact 1 and interpretation 1 are now
-implemented for the source-free Cube/Bandage Euclidean slice. Their public SDK
-schemas are [abstract-artifact](../../schemas/abstract-artifact.schema.json) and
-[interpretation](../../schemas/interpretation.schema.json). The narrow backend
-payload is [artifact-realization](../../schemas/artifact-realization.schema.json),
-with [session schema 3](../../schemas/session-v3.schema.json) and
-[witness 2](../../schemas/artifact-witness.schema.json). Artifact API 1 is separate
-from unchanged legacy kernel API 7; see the exact implemented
-[API/ownership/error contract](../kernel-api.md#source-free-artifact-api-1).
-The resolved controller and general realization envelope below remain proposals;
-their draft schemas are not runtime inputs or SDK exports. The
-[architecture review](../architecture-review-authoring-contract.md) records the
-remaining migration sequence.
+Status: Phases 1–4, 2026-10-31. Abstract artifact 1 and interpretation 1 remain
+supported. [Interpretation 2](../../schemas/interpretation-v2.schema.json),
+[realization envelope 1](../../schemas/realization-envelope.schema.json), and
+[backend payload 1](../../schemas/backend-payload.schema.json) extend the
+source-free path to the existing geometric backends. The
+[abstract schema](../../schemas/abstract-artifact.schema.json) also supports the
+required `grouped-action-records-v1` extension for large numeric programs.
+Artifact API 1 is separate from legacy kernel API 7; see the exact
+[API/ownership/error contract](../kernel-api.md#interpretation-2-and-realization-envelope-1).
+The original drafts below retain design context. Resolved controller artifacts
+and `controlDigest` remain proposals and are not accepted by the runtime.
+The [architecture review](../architecture-review-authoring-contract.md) records
+the remaining migration sequence.
 
 The compiler produces immutable executable data. The abstract runtime validates
 and executes that data. Geometric interpreters validate a separate correspondence
@@ -40,7 +40,7 @@ fields are excluded. All eight compact arrays are explicit, including empty ones
 `requiredCapabilities`, `executionDigest`, and `program`. There is no source AST,
 geometry, producer metadata, or diagnostic storage metric in this object.
 
-The `program` carries predicate version 1, proposed transport encoding version 1,
+The `program` carries predicate version 1, transport encoding version 1,
 piece/placement counts, initial placements, sorted finite sets, predicate nodes,
 child references, invariant/goal roots, action records, request programs, and the
 compact transport payload. Its representation follows `core::ProgramData` rather
@@ -71,6 +71,11 @@ inverse names are not proof of a universally invertible relation. Undo must stil
 plan the recorded inverse tuple and verify restoration of the exact previous
 state. Profiles remain candidate selection policies, never permission proofs.
 Bare programs require neither inverse tables nor drawable realizations.
+Large programs may declare `grouped-action-records-v1` and replace action records
+with ordered `{pieces, map, selectionRoot, event}` groups. Expansion preserves
+record order, selection and participation exactly; every numeric action reference
+still addresses the expanded sequence. The extension is required explicitly, so
+older readers reject it before interpreting a different representation.
 
 **Interpretation representation.** `domains` defines opaque domain and port IDs
 and an explicit numeric `choiceSlot` for each domain;
@@ -90,8 +95,14 @@ geometric endpoint guess, resolves that context. The first adapter additionally
 requires direct-choice selectors, concrete default profiles and unique
 domain/event correspondence; it rejects broader programs for geometry while
 leaving bare-core execution available. It rejects ambiguous certificates.
+Interpretation 2 adds an explicit numeric `choice` to each certificate and resolves
+participation from the completed tuple and certified piece scope. Event names can
+repeat across choices. One certificate is permitted per domain/local choice;
+its representative request must select that choice. Empty action scopes are
+allowed only for virtual domains with no abstract pieces, preserving geometric
+carrier checks without creating abstract participation.
 
-The manifest does not contain a geometric path. In the proposed general envelope,
+The manifest does not contain a geometric path. In the general envelope,
 each selected realization maps
 certificate indices to backend `pathId` values through `eventTracks`. This permits
 different realizations of the same exact transport. Bindings must retain moving
@@ -109,7 +120,8 @@ Its realization identity hashes the exact input payload bytes. This narrow
 backend does not accept the general envelope or resource resolver described below.
 It retains the legacy cube resource/face/port and fused-bandage conventions;
 those backend constraints do not affect the independently loaded abstract core.
-General component/frame bindings are later interpreter migration work.
+The general payload adapter instead supplies an explicit per-piece geometric
+kind and global frame bindings. The original three-argument entry remains compatible.
 
 **Controller representation (proposal).** Each driver names a core piece, ordered stable
 stop IDs, and explicit global-placement-to-stop-index rows. A family references
@@ -134,16 +146,15 @@ for the completion tuples referenced by controller routes, including idle tuples
 The controller's path identity and a realization's internal path IDs are separate
 namespaces; a backend providing control-layout hints must declare their mapping.
 
-**General realization representation (proposal).** The envelope declares a backend ID/version,
+**General realization representation.** The envelope declares a backend ID/version,
 required capabilities, explicit event tracks, and a content-addressed payload.
 The backend owns the payload schema and its interpretation of assets, frames,
 motion families, pivots, winding, paths, and intrinsic space. Envelope validation
-does not make an arbitrary backend payload valid. Existing R³, spherical,
-quotient-surface and S³/SO(4) interpreters need adapters before accepting this
-envelope; static backend registration is sufficient initially.
+does not make an arbitrary backend payload valid. The current R³, spherical, quotient-surface and S³/SO(4) interpreters accept
+this through the explicit payload adapter; backend registration remains static.
 
 The payload reference contains a relative resource path and SHA-256 of its exact
-bytes. The loader receives those bytes through an explicit host resolver; this
+bytes. The loader receives those exact bytes explicitly from the host; this
 contract grants no filesystem or network access. Paths consist of slash-separated
 ASCII file-name segments, exclude `.`/`..`, and have no leading/trailing slash,
 backslash, URI scheme, or empty segment. Verify the content hash before parsing.
@@ -157,8 +168,8 @@ local/world multiplication order, even for equal endpoints. The backend must
 declare intrinsic coordinates, metric, matrix convention, and buffer versions in
 its public descriptor; a 4×4 SO(4) matrix is not a homogeneous R³ matrix.
 
-`controlDigest` is required when the payload references controller layout or
-route identities, and otherwise omitted. Presentation labels/notation/shortcuts
+`controlDigest` remains reserved for a future controller integration. The current
+envelope rejects it and omits driver-layout hints from exported payloads. Presentation labels/notation/shortcuts
 are outside these four artifacts. Initially they remain existing application data;
 a separately versioned presentation document can follow in Phase 7.
 
@@ -278,7 +289,7 @@ invalid profiles/defaults/inverses, certificate/action/event mismatches and
 ambiguous events, missing resources, wrong endpoints, unknown required
 capabilities, duplicate raw JSON keys, and parser depth limits. Self-loop
 participation, full winding, and seekable paths are also checked. Externally resolved paths,
-general controller routes, and broader backend budgets remain acceptance gates
+general controller routes and broader external-resource budgets remain acceptance gates
 for the later adapters. Schema acceptance or a matching producer hash never
 substitutes for runtime validation.
 

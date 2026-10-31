@@ -1,0 +1,1247 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:twisty:schema:artifact-backend:1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "kind",
+    "compatibleDefinitionDigest",
+    "requiredCapabilities"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "kind": {
+      "enum": [
+        "cube-euclidean",
+        "cube-port-diagram",
+        "cube-spherical",
+        "polyhedral-euclidean",
+        "polyhedral-port-diagram",
+        "polyhedral-spherical",
+        "articulated-euclidean",
+        "articulated-port-diagram",
+        "articulated-spherical",
+        "flat-quotient",
+        "s3-cell-turning"
+      ]
+    },
+    "compatibleDefinitionDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "requiredCapabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "triangle-meshes",
+          "rigid-transforms",
+          "quotient-surface",
+          "quotient-orbifold",
+          "shared-rotation-tracks",
+          "family-rotation-generators",
+          "transport-path-selectors",
+          "so4-isometries",
+          "stereographic-projection",
+          "dynamic-drawing-meshes",
+          "s3-octahedral-cells",
+          "s3-octahedral-tangent-cuts",
+          "explicit-cube-tracks"
+        ]
+      }
+    },
+    "models": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/$defs/model"
+      }
+    },
+    "modelByDomain": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "placementFrames": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/frame"
+      }
+    },
+    "operationTracks": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "axis",
+              "fromStop",
+              "toStop"
+            ],
+            "properties": {
+              "axis": {
+                "$ref": "#/$defs/point"
+              },
+              "fromStop": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "toStop": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          {
+            "$ref": "#/$defs/motionBinding"
+          },
+          {
+            "$ref": "#/$defs/s3Track"
+          }
+        ]
+      }
+    },
+    "angularStops": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 128,
+      "uniqueItems": true,
+      "items": {
+        "type": "number",
+        "minimum": 0
+      }
+    },
+    "scale": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "bodyInset": {
+      "type": "number",
+      "minimum": 0,
+      "exclusiveMaximum": 0.5
+    },
+    "stickerInset": {
+      "type": "number",
+      "minimum": 0,
+      "exclusiveMaximum": 0.5
+    },
+    "stickerLift": {
+      "type": "number",
+      "minimum": 0
+    },
+    "fidelity": {
+      "type": "string"
+    },
+    "radius": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 10
+    },
+    "diskAngleDegrees": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 90
+    },
+    "angularSegments": {
+      "type": "integer",
+      "minimum": 16,
+      "maximum": 128,
+      "multipleOf": 4
+    },
+    "radialSegments": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 12
+    },
+    "portInset": {
+      "type": "number",
+      "minimum": 0,
+      "exclusiveMaximum": 0.25
+    },
+    "surfaceLift": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "assets": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 256,
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "vertices",
+          "triangles"
+        ],
+        "properties": {
+          "vertices": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 65536,
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/point"
+                },
+                {
+                  "$ref": "#/$defs/point4"
+                }
+              ]
+            }
+          },
+          "radialNormalTriangles": {
+            "description": "Triangle indices with smooth signed radial normals about the local origin, for any articulated realization kind.",
+            "type": "array",
+            "maxItems": 262144,
+            "uniqueItems": true,
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "triangles": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 262144,
+            "items": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "normals": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 65536,
+            "items": {
+              "$ref": "#/$defs/point4"
+            }
+          }
+        }
+      }
+    },
+    "componentsByDomain": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 32,
+        "items": {
+          "$ref": "#/$defs/component"
+        }
+      }
+    },
+    "flatSurface": {
+      "type": "object",
+      "required": [
+        "topology",
+        "sideLength"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "topology": {
+          "enum": [
+            "torus",
+            "klein-bottle",
+            "pillowcase",
+            "orbifold-333"
+          ]
+        },
+        "chart": {
+          "enum": [
+            "square",
+            "rhombus-60",
+            "pillowcase-square",
+            "orbifold-333-rhombus"
+          ]
+        },
+        "sideLength": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 100
+        },
+        "cutRadius": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "diskCenters": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "rotationTracks": {
+      "type": "object",
+      "maxProperties": 8192,
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "$ref": "#/$defs/rotationStep"
+            }
+          },
+          {
+            "$ref": "#/$defs/motionBinding"
+          }
+        ]
+      }
+    },
+    "operationTrackTables": {
+      "type": "object",
+      "maxProperties": 4096,
+      "additionalProperties": {
+        "$ref": "#/$defs/operationTrackTable"
+      }
+    },
+    "motionFamilies": {
+      "type": "object",
+      "required": [
+        "version",
+        "families"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "families": {
+          "type": "object",
+          "maxProperties": 256,
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "axis",
+              "pivot",
+              "space",
+              "coordinates"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "axis": {
+                "$ref": "#/$defs/point"
+              },
+              "pivot": {
+                "$ref": "#/$defs/point"
+              },
+              "space": {
+                "enum": [
+                  "world",
+                  "local"
+                ]
+              },
+              "coordinates": {
+                "type": "object",
+                "minProperties": 2,
+                "maxProperties": 128,
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": -100,
+                  "maximum": 100
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "controlLayout": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "version",
+            "drivers"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "version": {
+              "const": 1
+            },
+            "drivers": {
+              "type": "object",
+              "maxProperties": 128,
+              "additionalProperties": {
+                "type": "object",
+                "required": [
+                  "angles"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "angles": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 128,
+                    "items": {
+                      "type": "number",
+                      "minimum": 0,
+                      "exclusiveMaximum": 6.283185307179587
+                    }
+                  }
+                }
+              }
+            },
+            "paths": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": -100,
+                  "maximum": 100
+                }
+              }
+            }
+          }
+        },
+        {
+          "$ref": "#/$defs/cellAxes"
+        }
+      ]
+    },
+    "cutDepth": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "exclusiveMaximum": 1
+    },
+    "pieceInset": {
+      "type": "number",
+      "minimum": 0,
+      "exclusiveMaximum": 1
+    },
+    "domains": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 64,
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "placementFrames",
+          "ports"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "activeCoordinates": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "placementFrames": {
+            "type": "object",
+            "maxProperties": 1024,
+            "additionalProperties": {
+              "$ref": "#/$defs/rigidFrame"
+            }
+          },
+          "ports": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 6,
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "cutMembership": {
+            "type": "array",
+            "minItems": 24,
+            "maxItems": 24,
+            "items": {
+              "type": "boolean"
+            }
+          },
+          "colorNormals": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 6,
+            "items": {
+              "$ref": "#/$defs/point4"
+            }
+          },
+          "pieceCenter": {
+            "$ref": "#/$defs/point4"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "activeCoordinates"
+            ]
+          },
+          {
+            "required": [
+              "cutMembership",
+              "colorNormals",
+              "pieceCenter"
+            ]
+          }
+        ]
+      }
+    },
+    "cellShape": {
+      "enum": [
+        "cube",
+        "octahedron"
+      ]
+    },
+    "explicitCubeTracks": {
+      "type": "object",
+      "maxProperties": 4096,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "axis",
+          "angle"
+        ],
+        "properties": {
+          "axis": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "number",
+              "minimum": -100,
+              "maximum": 100
+            }
+          },
+          "angle": {
+            "type": "number",
+            "minimum": -100,
+            "maximum": 100
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "point": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "number"
+      }
+    },
+    "frame": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": {
+        "type": "number"
+      }
+    },
+    "model": {
+      "type": "object",
+      "required": [
+        "vertices",
+        "ports",
+        "symmetries"
+      ],
+      "properties": {
+        "vertices": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/$defs/point"
+          }
+        },
+        "surfaceVertices": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/$defs/point"
+          }
+        },
+        "ports": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 32,
+            "uniqueItems": true,
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "symmetries": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/frame"
+          }
+        }
+      }
+    },
+    "rigidFrame": {
+      "type": "array",
+      "minItems": 16,
+      "maxItems": 16,
+      "items": {
+        "type": "number"
+      }
+    },
+    "rotationStep": {
+      "type": "object",
+      "required": [
+        "axis",
+        "pivot",
+        "angle",
+        "space"
+      ],
+      "properties": {
+        "axis": {
+          "$ref": "#/$defs/point"
+        },
+        "pivot": {
+          "$ref": "#/$defs/point"
+        },
+        "angle": {
+          "type": "number",
+          "minimum": -100,
+          "maximum": 100
+        },
+        "space": {
+          "enum": [
+            "world",
+            "local"
+          ]
+        }
+      }
+    },
+    "component": {
+      "type": "object",
+      "required": [
+        "id",
+        "meshAssetId",
+        "role",
+        "placementFrames",
+        "operationTracks"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "meshAssetId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "enum": [
+            "body",
+            "port"
+          ]
+        },
+        "portId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "placementFrames": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/rigidFrame"
+          }
+        },
+        "symmetries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/rigidFrame"
+          },
+          "maxItems": 32
+        },
+        "operationTracks": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/operationTrackTable"
+            },
+            {
+              "type": "string",
+              "minLength": 1
+            }
+          ]
+        }
+      }
+    },
+    "rotationPath": {
+      "oneOf": [
+        {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/rotationStep"
+          }
+        },
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "$ref": "#/$defs/motionBinding"
+        }
+      ]
+    },
+    "operationTrackTable": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/$defs/rotationPath"
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "kind",
+              "regions"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "transport-regions"
+              },
+              "regions": {
+                "type": "array",
+                "maxItems": 8,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "request",
+                    "path"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "request": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "path": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "motionBinding": {
+      "type": "object",
+      "required": [
+        "family",
+        "from",
+        "to",
+        "winding"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "family": {
+          "type": "string",
+          "minLength": 1
+        },
+        "from": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to": {
+          "type": "string",
+          "minLength": 1
+        },
+        "winding": {
+          "type": "integer",
+          "minimum": -16,
+          "maximum": 16
+        },
+        "rate": {
+          "type": "number",
+          "minimum": -100,
+          "maximum": 100
+        }
+      }
+    },
+    "point4": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "number"
+      }
+    },
+    "s3Track": {
+      "type": "object",
+      "required": [
+        "cell",
+        "planeU",
+        "planeV",
+        "angle"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "cell": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "enum": [
+                -4,
+                -3,
+                -2,
+                -1,
+                1,
+                2,
+                3,
+                4
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "^(?:[XYZW][pm]|H[pm]{4})$"
+            }
+          ]
+        },
+        "planeU": {
+          "$ref": "#/$defs/point4"
+        },
+        "planeV": {
+          "$ref": "#/$defs/point4"
+        },
+        "angle": {
+          "type": "number",
+          "minimum": -3.141592653589793,
+          "maximum": 3.141592653589793
+        }
+      }
+    },
+    "cellAxes": {
+      "type": "object",
+      "required": [
+        "version",
+        "kind",
+        "groups"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "const": 2
+        },
+        "kind": {
+          "const": "cell-axes"
+        },
+        "groups": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 24,
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "label",
+              "center",
+              "categories"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "center": {
+                "$ref": "#/$defs/point4"
+              },
+              "categories": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "kind",
+                    "axes"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "axes": {
+                      "type": "array",
+                      "minItems": 3,
+                      "maxItems": 6,
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "label",
+                          "direction",
+                          "turns"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "direction": {
+                            "$ref": "#/$defs/point4"
+                          },
+                          "turns": {
+                            "type": "array",
+                            "minItems": 1,
+                            "maxItems": 3,
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "operation",
+                                "angleDegrees"
+                              ],
+                              "additionalProperties": false,
+                              "properties": {
+                                "operation": {
+                                  "type": "string"
+                                },
+                                "angleDegrees": {
+                                  "enum": [
+                                    -120,
+                                    -90,
+                                    90,
+                                    120,
+                                    180
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "kind": {
+                      "enum": [
+                        "face",
+                        "edge",
+                        "vertex"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "cube-spherical"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "radius",
+          "diskAngleDegrees",
+          "angularSegments",
+          "radialSegments",
+          "portInset",
+          "surfaceLift"
+        ],
+        "properties": {
+          "diskAngleDegrees": {
+            "minimum": 55,
+            "maximum": 85
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "enum": [
+              "polyhedral-euclidean",
+              "polyhedral-port-diagram",
+              "polyhedral-spherical"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "models",
+          "modelByDomain",
+          "placementFrames",
+          "operationTracks",
+          "angularStops",
+          "scale",
+          "bodyInset",
+          "stickerInset",
+          "stickerLift"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "polyhedral-spherical"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "radius",
+          "diskAngleDegrees",
+          "angularSegments",
+          "radialSegments",
+          "portInset",
+          "surfaceLift"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "enum": [
+              "articulated-euclidean",
+              "articulated-port-diagram",
+              "articulated-spherical"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "assets",
+          "componentsByDomain"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "articulated-spherical"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "radius"
+        ],
+        "properties": {
+          "radius": {
+            "exclusiveMinimum": 0,
+            "maximum": 100
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "flat-quotient"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "flatSurface",
+          "assets",
+          "componentsByDomain"
+        ],
+        "properties": {
+          "requiredCapabilities": {
+            "contains": {
+              "const": "quotient-surface"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "s3-cell-turning"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "assets",
+          "domains",
+          "operationTracks",
+          "cutDepth",
+          "pieceInset",
+          "controlLayout"
+        ],
+        "properties": {
+          "assets": {
+            "additionalProperties": {
+              "required": [
+                "normals"
+              ],
+              "properties": {
+                "vertices": {
+                  "items": {
+                    "$ref": "#/$defs/point4"
+                  }
+                }
+              }
+            }
+          },
+          "operationTracks": {
+            "additionalProperties": {
+              "$ref": "#/$defs/s3Track"
+            }
+          },
+          "controlLayout": {
+            "$ref": "#/$defs/cellAxes"
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "required": [
+                "cellShape"
+              ],
+              "properties": {
+                "cellShape": {
+                  "const": "octahedron"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "cutDepth": {
+                  "exclusiveMinimum": 0.5773502691896258,
+                  "maximum": 0.7071067811865476
+                },
+                "domains": {
+                  "additionalProperties": {
+                    "required": [
+                      "cutMembership",
+                      "colorNormals",
+                      "pieceCenter"
+                    ]
+                  }
+                },
+                "controlLayout": {
+                  "properties": {
+                    "groups": {
+                      "minItems": 24,
+                      "maxItems": 24
+                    }
+                  }
+                },
+                "requiredCapabilities": {
+                  "contains": {
+                    "const": "s3-octahedral-cells"
+                  }
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "requiredCapabilities": {
+                        "contains": {
+                          "const": "s3-octahedral-tangent-cuts"
+                        }
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "cutDepth": {
+                        "const": 0.7071067811865476
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "cutDepth": {
+                        "exclusiveMaximum": 0.7071067811865475
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "else": {
+              "properties": {
+                "cutDepth": {
+                  "exclusiveMaximum": 0.5
+                },
+                "domains": {
+                  "additionalProperties": {
+                    "required": [
+                      "activeCoordinates"
+                    ]
+                  }
+                },
+                "controlLayout": {
+                  "properties": {
+                    "groups": {
+                      "minItems": 8,
+                      "maxItems": 8
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "else": {
+        "properties": {
+          "assets": {
+            "additionalProperties": {
+              "properties": {
+                "vertices": {
+                  "items": {
+                    "$ref": "#/$defs/point"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "description": "Backend geometry payload for source-free interpretation; motion names are explicit foreign keys."
+}

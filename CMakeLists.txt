@@ -68,6 +68,7 @@ add_library(puzzle_controller src/controller/controller.cpp)
 target_link_libraries(puzzle_controller PUBLIC puzzle_session)
 
 add_library(puzzle_geometry_runtime
+  src/interpreter/artifact_realization.cpp
   src/interpreter/geometry.cpp
   src/interpreter/s3_geometry.cpp
   src/interpreter/geometry_compiler.cpp
@@ -80,6 +81,8 @@ add_library(puzzle_geometry_runtime
 target_link_libraries(puzzle_geometry_runtime PUBLIC puzzle_execution_runtime)
 add_library(puzzle_geometry src/authoring/geometry.cpp)
 target_link_libraries(puzzle_geometry PUBLIC puzzle_geometry_runtime puzzle_execution)
+add_library(puzzle_authoring_geometry src/authoring/realization.cpp)
+target_link_libraries(puzzle_authoring_geometry PUBLIC puzzle_execution puzzle_geometry_runtime)
 
 add_library(puzzle_artifact_kernel INTERFACE)
 target_link_libraries(puzzle_artifact_kernel INTERFACE puzzle_session_runtime puzzle_geometry_runtime)
@@ -87,7 +90,7 @@ target_link_libraries(puzzle_artifact_kernel INTERFACE puzzle_session_runtime pu
 add_library(puzzle_kernel INTERFACE)
 target_link_libraries(puzzle_kernel INTERFACE puzzle_controller puzzle_session puzzle_geometry puzzle_language)
 foreach(component IN ITEMS catalog execution session controller geometry symmetry core runtime language kernel
-    artifact execution_runtime session_runtime geometry_runtime artifact_kernel)
+    artifact execution_runtime session_runtime geometry_runtime artifact_kernel authoring_geometry)
   add_library(Twisty::${component} ALIAS puzzle_${component})
   set_target_properties(puzzle_${component} PROPERTIES EXPORT_NAME ${component})
 endforeach()
@@ -116,7 +119,7 @@ if(EMSCRIPTEN)
     --emit-tsd "${CMAKE_SOURCE_DIR}/kernel/generated/twisty-artifact.d.mts")
 else()
   install(TARGETS puzzle_catalog puzzle_execution puzzle_session puzzle_controller puzzle_geometry puzzle_symmetry puzzle_core puzzle_runtime puzzle_language puzzle_kernel
-    puzzle_artifact puzzle_execution_runtime puzzle_session_runtime puzzle_geometry_runtime puzzle_artifact_kernel
+    puzzle_artifact puzzle_execution_runtime puzzle_session_runtime puzzle_geometry_runtime puzzle_artifact_kernel puzzle_authoring_geometry
     json_headers project_options EXPORT TwistyKernelTargets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -139,6 +142,8 @@ else()
   target_link_libraries(twisty PRIVATE puzzle_session)
   add_executable(twisty_language examples/language/main.cpp)
   target_link_libraries(twisty_language PRIVATE puzzle_execution)
+  add_executable(twisty_artifact_export examples/artifact/export.cpp)
+  target_link_libraries(twisty_artifact_export PRIVATE puzzle_authoring_geometry)
   add_executable(melty_solids scripts/melty_solids.cpp)
   target_link_libraries(melty_solids PRIVATE project_options)
   target_compile_options(melty_solids PRIVATE -O2)

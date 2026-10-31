@@ -266,9 +266,17 @@ void GeometryCompiler::build_spherical(const Json &realization) {
   ensure(!definition_->port_catalog, "/catalog/kind", "Spherical cube disks require a cube binding catalog.");
   for (const auto &operation : definition_->operations) {
     std::set<std::string> disk_cells;
-    for (const auto &cell : definition_->cells)
-      if (cell.find(operation.family) != std::string::npos)
-        disk_cells.insert(cell);
+    const auto index = definition_->operation_ids.at(operation.id);
+    const auto axis = explicit_cube_tracks_ ? tracks_[index].axis : face_normal(operation.family);
+    for (const auto &cell : definition_->cells) {
+      if (!explicit_cube_tracks_) {
+        if (cell.find(operation.family) != std::string::npos) disk_cells.insert(cell);
+      } else {
+        Point position{};
+        for (char face : cell) position = add(position, face_normal(std::string(1, face)));
+        if (dot(position, axis) > .5) disk_cells.insert(cell);
+      }
+    }
     ensure(disk_cells.size() == 9 &&
                disk_cells == std::set<std::string>(operation.cells.begin(), operation.cells.end()),
            operation.id, "A spherical turn must select the entire face disk.");
@@ -394,8 +402,9 @@ void GeometryCompiler::build_spherical(const Json &realization) {
       }
       // Validate every participating placement, rather than only the home state.
       for (const auto &operation : definition_->operations) {
-        const auto axis = face_normal(operation.family);
-        const double turn =
+        const auto operation_index = definition_->operation_ids.at(operation.id);
+        const auto axis = explicit_cube_tracks_ ? tracks_[operation_index].axis : face_normal(operation.family);
+        const double turn = explicit_cube_tracks_ ? tracks_[operation_index].angle :
             (operation.transport.ends_with(".counterclockwise") ? 1 : -1) * std::numbers::pi / 2;
         for (Index q = 0; q < domain.placements.size(); ++q) {
           const auto &placement = domain.placements[q];

@@ -428,7 +428,8 @@ void GeometryCompiler::build_articulated(const Json &realization) {
                  op.id + "/" + id + "/" + domain.placements[q].key,
                  "Track endpoint disagrees with the exact transport.");
         }
-        ensure(selected || entries.size() == count, id, "Tracks must name exactly the participating source placements.");
+        ensure(selected || entries.size() == count, id, "Tracks must name exactly the participating source placements for " + op.id +
+          " (expected " + std::to_string(count) + ", got " + std::to_string(entries.size()) + ").");
         component.tracks.push_back(std::move(track));
       }
       const auto index = static_cast<Index>(components_.size());

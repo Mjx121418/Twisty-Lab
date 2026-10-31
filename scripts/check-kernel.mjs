@@ -26,7 +26,7 @@ try {
   const exported = await readFile(join(installed, 'lib/cmake/TwistyKernel/TwistyKernelTargets.cmake'), 'utf8');
   assert.match(exported, /Twisty::core/);
   assert.match(exported, /Twisty::runtime/);
-  for (const target of ['artifact', 'execution_runtime', 'session_runtime', 'geometry_runtime', 'artifact_kernel'])
+  for (const target of ['artifact', 'execution_runtime', 'session_runtime', 'geometry_runtime', 'artifact_kernel', 'authoring_geometry'])
     assert.ok(exported.includes(`Twisty::${target}`));
   assert.match(exported, /Twisty::language/);
   assert.ok(!/Twisty::(?:flat_core|relational|compiler)|legacy_test_reference/.test(exported));

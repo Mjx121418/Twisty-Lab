@@ -119,14 +119,21 @@ encoding. Duplicate keys, unknown fields, fractional indices, invalid references
 and unsupported versions/capabilities reject before a handle is published.
 Text is limited to 64 MiB, depth to 64, and parsing to a conservative 256 MiB DOM
 budget, alongside existing core size/work limits. IDs are unique per namespace,
-1–256 UTF-8 bytes, with no NUL. Empty `requiredCapabilities` is the only supported
-abstract extension set in version 1.
+1–256 UTF-8 bytes, with no NUL. An empty `requiredCapabilities` list selects the original encoding.
+The `grouped-action-records-v1` extension replaces `program.actionRecords` with
+`actionGroups`: each group has ordered `pieces`, `map`, `selectionRoot`, and
+`event`. Expand groups in array order into the same numeric action records.
+Request slices and certificate action indices always address that expanded
+sequence. There is no scope inference or change to the core program. The encoder
+uses groups above 32,768 actions; both encodings remain supported, with distinct
+content identities. Group sizes and expanded action totals are checked before
+allocation. Query `abstractCapabilities` before producing this extension.
 
 The [interpretation manifest](../schemas/interpretation.schema.json) pins execution
 and has its own integer-canonical `interpretationDigest`. It explicitly binds
 global piece/placement indices to domains, resources, ports, and materials.
 Each domain names its numeric `choiceSlot`. Each certificate names its numeric
-`request`, event, transport, and action indices. The first adapter requires exact
+`request`, event, transport, and action indices. Interpretation 1 requires exact
 direct-choice selectors with concrete default profiles, complete action coverage,
 and unambiguous domain/event correspondence. Opaque identifiers never supply
 movement angles or direction. `with_interpretation()` creates a new immutable
@@ -142,15 +149,15 @@ the certified exact transport and port attachments. Full winding is preserved.
 `sceneJSON()` adds `executionDigest`, `interpretationDigest`, and
 `realizationDigest` (SHA-256 of the exact input realization bytes), and includes
 that content hash in `sceneId`. Whitespace changes realization identity without
-changing abstract identity. This is a narrow backend payload; the general
-realization envelope and other interpreter adapters remain future work.
+changing abstract identity. This is the retained narrow payload for the original
+three-argument factory; the envelope path below supports the other backends.
 
 This first cube backend retains the existing cube resource coordinates, face
 attachments/material labels, numbered ports, and `bandage` domain convention for
 its fused mesh. Arbitrary renaming of these geometric correspondences is outside
 this adapter's contract. Request, profile, choice-slot, local movement and event
-identifiers are independent of these conventions and can be renamed. The broader
-interpreter migration will make geometric component/frame data explicit too.
+identifiers are independent of these conventions and can be renamed. The envelope path below makes the geometric piece kind explicit and supports
+independent domain identities.
 
 Source-free state strings use the binding's global placement IDs directly.
 Snapshots/state hashes use `executionDigest`. Saves follow
@@ -184,8 +191,95 @@ object. Stable artifact codes include `artifact.unsupported`, `artifact.capabili
 checked-in examples. `npm run check:artifacts` reproduces those exports and runs
 independently installed native and isolated WASM consumers with no compiler
 binary or source-loader module. It compares exact logical results and pose arrays
-with the legacy source path and verifies opaque movement IDs. Other puzzle
-families and resolved controller artifacts remain on the legacy path.
+with the legacy source path and verifies opaque movement IDs. Reference-application presets and controllers continue on the legacy path;
+the envelope factory below accepts the other geometric families.
+
+## Interpretation 2 and realization envelope 1
+
+The source-free entry also accepts [interpretation contract 2](../schemas/interpretation-v2.schema.json)
+with [realization envelope 1](../schemas/realization-envelope.schema.json) and
+[backend payload 1](../schemas/backend-payload.schema.json). Native construction is
+`GeometryDefinition(execution, interpretationText, envelopeText, payloadText)`;
+WASM exports `createArtifactGeometryWithPayload(session, interpretation, envelope,
+payload)`, with a checked TypeScript helper of the same name in `./artifact`.
+The three-argument Cube/Bandage API and interpretation 1 retain their old meaning.
+These are additive artifact API 1 features; legacy API 7 and binary layouts remain
+unchanged. `artifactInfoJSON()` advertises interpretation, envelope and payload
+versions separately, along with supported backend kinds and capabilities.
+
+Each contract-2 certificate explicitly declares a local numeric `choice` as well
+as domain, event, transport, action scope, and the request whose default profile
+certifies that track. Every expanded action is covered once. Uniform source adapters now derive local
+inverses from explicit default-profile choices, with complete reciprocal bindings;
+request and local move IDs need not match. Selectors must be
+exact singleton membership tests in the domain's explicit `choiceSlot`; the
+certificate's request must select that choice. A local choice has one certificate
+per domain. Domains without abstract pieces may carry empty action certificates
+for geometric carrier frames; these never create abstract actions. Backend default
+request views are assembled from their concrete profile choices. Idle choices
+without actions produce stationary views.
+
+Events may repeat across local choices. Animation resolves the certificate from
+the completed choice tuple and participant's piece scope, then verifies its event
+and transport against the exact witness. It never selects a first matching event
+name or assumes that request and local movement names agree. Native
+`event_operation(completedTransition, actionIndex)` provides this contextual
+lookup. The older piece/event overload remains for legacy and interpretation-1
+contexts. The core still makes every permission and state-validity decision.
+
+The envelope contains backend ID/version, required capabilities, the interpretation
+pin, ordered certificate-to-`pathId` bindings, and a payload resource descriptor
+`{path, sha256}`. `realizationDigest` hashes integer canonical envelope bytes with
+only its own field removed. It covers the upstream interpretation and exact
+payload content hash. Each declared certificate must have one matching path;
+missing, duplicate and inconsistent bindings reject. Unsupported required
+capabilities/backends reject explicitly. Resolved controller documents and
+`controlDigest` are not yet accepted by this envelope implementation.
+
+The host supplies the payload text explicitly. The kernel validates a bounded
+relative path (ASCII filename segments, no URI, absolute path, empty segment,
+`.` or `..`) and verifies SHA-256 of its exact bytes before parsing. It performs
+no file or network lookup. The existing 64 MiB, depth-64 and conservative 256 MiB
+DOM parsing budgets apply independently to envelope and payload, in addition to
+backend mesh/frame/path and core limits. Invalid resource bytes use
+`realization.payload_mismatch`; inconsistent path bindings use
+`realization.reference`. Failed construction leaves the live session unchanged.
+
+The payload declares ordered `requestBindings` (one unique `pathId` per request, opaque geometric `group`,
+selected resource indices), `pieceKinds` in core piece order, and backend-owned
+`geometry`. Frame keys are global placement identities; the retained backend field
+`geometry.compatibleDefinitionDigest` pins the execution digest in this format. Backend track keys and
+transport-region references are explicit path identities, independently bound to
+numeric requests. Cube payloads carry axes and signed angles for every request;
+the `cube-bandage` piece kind explicitly selects fused geometry, independently of
+domain names. Cube spherical validation uses those numeric axes and certified
+resource coverage. S³ validates cell membership and tangent motion using its
+coordinates, independently of operation/group spelling. Family generators retain
+signed winding and world/local multiplication order. Existing quotient and S³
+endpoint, cut, mesh and intrinsic-space validators remain in force.
+
+[Backend geometry schema 1](../schemas/artifact-backend.schema.json) retains the
+existing declarative model, component, mesh, frame, path and space payloads. Fixed
+coordinate/attachment tokens belong to these geometric formats, rather than to
+movement identifiers or display labels. Driver controller-layout hints are omitted
+from these payloads; S³ cell-axis geometry remains validated for its projection
+and guide data. Source-facing application controls continue through the legacy
+entry until resolved controller artifacts are introduced.
+
+`Twisty::authoring_geometry`, declared in `twisty/authoring/realization.hpp`, exports
+`language::realization_artifacts(sourceText, realizationText)`. It returns
+`{abstract, interpretation, realization, payload}`; `payload` is the exact JSON
+text whose bytes are pinned by the envelope. The producer validates the result
+with the source-independent loaders and backend before returning it. The native
+`twisty_artifact_export package.json realization.json` executable is a thin host
+for this library. It is not part of `Twisty::artifact_kernel` or its WASM module.
+The installed native example accepts an additional payload-file argument before
+the algorithm. Its default CMake target links only the artifact kernel; set
+`TWISTY_BUILD_ARTIFACT_EXPORTER=ON` to build the optional installed authoring
+consumer as well. `npm run check:interpretations` exports and independently consumes
+all 48 current realizations; optional puzzle IDs restrict a development run.
+Consumers compare replay, witnesses, mesh assets, poses, seeking and opaque
+movement/domain identities against the legacy source path.
 
 ## API 7 correspondence anchors and placement references
 

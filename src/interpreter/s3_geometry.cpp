@@ -352,7 +352,7 @@ std::shared_ptr<const GeometryProgram> compile_s3(std::shared_ptr<const Executio
                    std::abs(dot(n, v)) <
                1e-8,
            op.id, "Rotation plane must be orthonormal and tangent to the selected cell.");
-    ensure(op.family == name, op.id, "Operation family must identify its cell.");
+    ensure(definition->source_free || op.family == name, op.id, "Operation family must identify its cell.");
     GeometryRotation path{{}, {}, angle, false, std::array<P, 2>{u, v}};
     const auto endpoint = geometry_rotation(path, 1);
     ensure(preserves_cuts(endpoint), op.id, "Cell turn must preserve every cutting ball.");
@@ -419,7 +419,7 @@ std::shared_ptr<const GeometryProgram> compile_s3(std::shared_ptr<const Executio
                  "Missing or repeated turn.");
           const auto op = definition->operation_ids.at(name);
           const auto &path = paths[op];
-          ensure(definition->operations[op].family == id &&
+          ensure((definition->source_free ? dot(cells[op], center) > 1 - 1e-9 : definition->operations[op].family == id) &&
                      std::abs(path.angle - turn.at("angleDegrees").get<double>() * std::numbers::pi / 180) <
                          1e-9 &&
                      std::abs(dot(direction, path.plane->at(0))) +

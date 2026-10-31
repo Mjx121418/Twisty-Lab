@@ -147,7 +147,7 @@ GeometryAnimation GeometryDefinition::animate(const std::string &input) const {
   motion->moving.resize(definition->pieces.size(), false);
   for (Index i = 0; i < planned.transition->actions.size(); ++i) {
     const auto &action = planned.transition->actions[i];
-    const auto track = execution->event_operation(action.piece, planned.transition->events[i]);
+    const auto track = execution->event_operation(*planned.transition, i);
     const auto domain = definition->pieces[action.piece].domain;
     const auto &certified = definition->operations[track];
     if (certified.roles[domain][action.from] != 1 || certified.maps[domain][action.from] != action.to)

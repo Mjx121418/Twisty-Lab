@@ -27,6 +27,8 @@ public:
     return definition_;
   }
   Json definition_json() const;
+  // Numeric artifact encoding; source loading remains in the authoring adapter.
+  Json artifact_json() const;
   State decode(const Json &) const;
   void validate(const State &) const;
   bool is_solved(const State &) const;
@@ -42,14 +44,24 @@ public:
   }
   // Resolves an opaque participation event to a certified interpreter track.
   Index event_operation(Index piece, const std::string &event) const;
+  Index event_operation(const CompletedTransition &, Index action) const;
 
 private:
   friend class Controller;
+  friend class GeometryDefinition;
   Execution(Json source, Json catalog);
   explicit Execution(std::shared_ptr<const artifact::Artifact>);
   void bind_interpretation(const Json &);
   std::shared_ptr<const artifact::Artifact> artifact_;
   std::string interpretation_digest_;
+  Index interpretation_version_ = 0;
+  struct Certificate {
+    Index domain, choice, request, event;
+    std::vector<Index> pieces;
+  };
+  std::vector<Certificate> certificates_;
+  std::vector<Index> interpretation_slots_;
+  std::vector<std::map<Index, Index>> choice_certificates_;
   std::shared_ptr<const Definition> definition_;
   std::shared_ptr<const runtime::CompiledPuzzle> puzzle_;
   std::shared_ptr<const ControlCatalog> controls_;

@@ -37,7 +37,7 @@ if (process.argv.includes('--stage-web')) {
   await cp(new URL('../examples/artifact/', import.meta.url), new URL('examples/artifact/', output), { recursive: true });
   await mkdir(new URL('schemas/', output));
   await cp(new URL('../schemas/puzzle.schema.json', import.meta.url), new URL('schemas/puzzle.schema.json', output));
-  for (const file of ['puzzle-v2.schema.json', 'puzzle-v3.schema.json', 'compact.schema.json', 'compact-v2.schema.json', 'package.schema.json', 'gear-source.schema.json', 'session-v2.schema.json', 'state.schema.json', 'realization.schema.json', 'abstract-artifact.schema.json', 'artifact-common.schema.json', 'interpretation.schema.json', 'artifact-realization.schema.json', 'artifact-witness.schema.json', 'session-v3.schema.json'])
+  for (const file of ['puzzle-v2.schema.json', 'puzzle-v3.schema.json', 'compact.schema.json', 'compact-v2.schema.json', 'package.schema.json', 'gear-source.schema.json', 'session-v2.schema.json', 'state.schema.json', 'realization.schema.json', 'abstract-artifact.schema.json', 'artifact-common.schema.json', 'interpretation.schema.json', 'artifact-realization.schema.json', 'artifact-witness.schema.json', 'session-v3.schema.json', 'interpretation-v2.schema.json', 'realization-envelope.schema.json', 'backend-payload.schema.json', 'artifact-backend.schema.json'])
     await cp(new URL(`../schemas/${file}`, import.meta.url), new URL(`schemas/${file}`, output));
   for (const puzzle of inventory.puzzles) {
     const directory = new URL(`examples/canvas/data/${puzzle.id}/`, output);

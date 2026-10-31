@@ -7,18 +7,19 @@
 
 using namespace twisty;
 std::string read(const char *path) {
-  std::ifstream file(path); if (!file) throw std::runtime_error("Cannot read artifact input.");
+  std::ifstream file(path, std::ios::binary); if (!file) throw std::runtime_error("Cannot read artifact input.");
   std::ostringstream text; text << file.rdbuf(); return text.str();
 }
 int main(int argc, char **argv) {
   try {
-    if (argc != 5) throw std::runtime_error("Expected abstract artifact, interpretation, realization, and algorithm.");
+    if (argc != 5 && argc != 6) throw std::runtime_error("Expected abstract artifact, interpretation, realization, optional payload, and algorithm.");
     const auto abstract = read(argv[1]);
     Session session(Execution::from_artifact(abstract)); session.lightweight_results(true);
     const auto initial = session.snapshot(SnapshotDetail::StateOnly);
-    GeometryDefinition geometry(session.execution(), read(argv[2]), read(argv[3]));
+    auto geometry = argc == 6 ? GeometryDefinition(session.execution(), read(argv[2]), read(argv[3]), read(argv[4]))
+                             : GeometryDefinition(session.execution(), read(argv[2]), read(argv[3]));
     const auto scene = Json::parse(geometry.scene_json());
-    const auto result = session.run(argv[4], "transactional", session.revision());
+    const auto result = session.run(argv[argc - 1], "transactional", session.revision());
     if (result.at("status") != "Committed") throw std::runtime_error(result.dump());
     Json frames = Json::array();
     for (const auto &record : result.at("transitions")) {

@@ -6,6 +6,8 @@ export type { MainModule as ArtifactModule, Session as ArtifactSession,
 export type ArtifactInfo = {
   artifactAPIVersion: 1; artifactVersions: number[]; interpretationVersions: number[];
   sessionSchemaVersions: number[]; witnessVersions: number[]; frameBufferVersion: number;
+  realizationEnvelopeVersions: number[]; backendPayloadVersions: number[];
+  abstractCapabilities: string[];
   realizationKinds: string[]; geometryCapabilities: string[];
 };
 export type ArtifactOptions = {
@@ -28,6 +30,13 @@ export function loadArtifactSession(module: MainModule, artifactText: string) {
 export function createArtifactGeometry(module: MainModule, session: Parameters<MainModule['createArtifactGeometryDefinition']>[0],
                                        interpretationText: string, realizationText: string) {
   const geometry = module.createArtifactGeometryDefinition(session, interpretationText, realizationText);
+  if (!geometry) throw new Error('Artifact geometry factory returned no handle.');
+  return geometry;
+}
+export function createArtifactGeometryWithPayload(module: MainModule,
+  session: Parameters<MainModule['createArtifactGeometryWithPayload']>[0],
+  interpretationText: string, envelopeText: string, payloadText: string) {
+  const geometry = module.createArtifactGeometryWithPayload(session, interpretationText, envelopeText, payloadText);
   if (!geometry) throw new Error('Artifact geometry factory returned no handle.');
   return geometry;
 }

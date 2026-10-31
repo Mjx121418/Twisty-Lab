@@ -29,9 +29,12 @@ std::vector<bool> state_only_roots(const core::ProgramData &d) {
   }
   return types;
 }
-core::ProgramData decode_program(const Json &p) {
+core::ProgramData decode_program(const Json &p, bool grouped) {
   fields(p, {"predicateVersion", "transportVersion", "pieceCount", "placementCount", "initialPlacements",
-    "finiteSets", "predicateNodes", "childReferences", "invariantRoot", "goalRoot", "actionRecords", "requestPrograms", "compact"});
+    "finiteSets", "predicateNodes", "childReferences", "invariantRoot", "goalRoot", "requestPrograms", "compact"},
+    {"actionRecords", "actionGroups"});
+  require(p.contains(grouped ? "actionGroups" : "actionRecords") && !p.contains(grouped ? "actionRecords" : "actionGroups"),
+    "/program", "Action encoding must match the declared grouped-action capability.");
   require(p.at("predicateVersion") == 1 && p.at("transportVersion") == 1, "/program", "Unsupported program encoding.", "artifact.unsupported");
   core::ProgramData d;
   d.piece_count = index(p.at("pieceCount")); d.placement_count = index(p.at("placementCount"));
@@ -55,9 +58,16 @@ core::ProgramData decode_program(const Json &p) {
     }
     d.predicates.push_back(n);
   }
-  for (const auto &a : array(p.at("actionRecords"))) {
-    fields(a, {"piece", "map", "selectionRoot", "event"});
-    d.actions.push_back({index(a.at("piece")), index(a.at("map")), index(a.at("selectionRoot")), index(a.at("event"))});
+  for (const auto &a : array(p.at(grouped ? "actionGroups" : "actionRecords"))) {
+    if (grouped) {
+      fields(a, {"pieces", "map", "selectionRoot", "event"});
+      const auto pieces = indices(a.at("pieces"), 4096);
+      require(!pieces.empty() && pieces.size() <= 1000000 - d.actions.size(), "/program/actionGroups", "Expanded actions exceed the core limit.", "artifact.limit");
+      for (auto piece : pieces) d.actions.push_back({piece, index(a.at("map")), index(a.at("selectionRoot")), index(a.at("event"))});
+    } else {
+      fields(a, {"piece", "map", "selectionRoot", "event"});
+      d.actions.push_back({index(a.at("piece")), index(a.at("map")), index(a.at("selectionRoot")), index(a.at("event"))});
+    }
   }
   for (const auto &r : array(p.at("requestPrograms"), 4096)) {
     fields(r, {"choiceSizes", "firstAction", "actionCount", "relationRoot"});
@@ -115,19 +125,36 @@ runtime::Bindings decode_bindings(const Json &b, const core::Program &program) {
 static Json parse_bounded(const std::string &text, bool integers) {
   require(text.size() <= 64 * 1024 * 1024, "/", "Artifact text exceeds 64 MiB.", "artifact.limit");
   twisty::detail::check_json_depth(text, 64, [] { throw DiagnosticError("artifact.limit", "/", "Contract nesting exceeds 64."); });
-  std::vector<std::set<std::string>> objects;
-  std::size_t budget = 0;
-  try {
-    auto doc = Json::parse(text, [&](int, Json::parse_event_t event, Json &value) {
-      budget += 64;
-      if (value.is_string()) budget += value.get_ref<const std::string &>().size();
+  // A DOM callback makes nlohmann's discard bookkeeping scan broad parent
+  // arrays at each object end. Validate in a linear SAX pass, then build the DOM.
+  struct Validator : nlohmann::json_sax<Json> {
+    std::vector<std::set<std::string>> objects;
+    std::size_t budget = 0;
+    void charge(std::size_t bytes = 0) {
+      budget += 64 + bytes;
       require(budget <= 256 * 1024 * 1024, "/", "Contract DOM allocation budget exceeded.", "artifact.limit");
-      if (event == Json::parse_event_t::object_start) objects.emplace_back();
-      else if (event == Json::parse_event_t::object_end) objects.pop_back();
-      else if (event == Json::parse_event_t::key)
-        require(objects.back().insert(value.get<std::string>()).second, "/", "Duplicate JSON object key.");
-      return true;
-    });
+    }
+    bool null() override { charge(); return true; }
+    bool boolean(bool) override { charge(); return true; }
+    bool number_integer(number_integer_t) override { charge(); return true; }
+    bool number_unsigned(number_unsigned_t) override { charge(); return true; }
+    bool number_float(number_float_t, const string_t &) override { charge(); return true; }
+    bool string(string_t &value) override { charge(value.size()); return true; }
+    bool binary(binary_t &) override { throw DiagnosticError("artifact.invalid", "/", "Binary contract values are unsupported."); }
+    bool start_object(std::size_t) override { charge(); objects.emplace_back(); return true; }
+    bool key(string_t &value) override {
+      charge(value.size()); require(objects.back().insert(value).second, "/", "Duplicate JSON object key."); return true;
+    }
+    bool end_object() override { charge(); objects.pop_back(); return true; }
+    bool start_array(std::size_t) override { charge(); return true; }
+    bool end_array() override { charge(); return true; }
+    bool parse_error(std::size_t, const std::string &, const Json::exception &error) override {
+      throw DiagnosticError("artifact.invalid", "/", error.what());
+    }
+  } validator;
+  try {
+    require(Json::sax_parse(text, &validator), "/", "Invalid contract JSON.");
+    auto doc = Json::parse(text);
     if (integers) normalize(doc);
     return doc;
   } catch (const Json::exception &error) { throw DiagnosticError("artifact.invalid", "/", error.what()); }
@@ -143,16 +170,24 @@ std::string document_digest(const Json &value, const std::string &own) {
   auto body = value; body.erase(own); return sha256(canonical_json(body));
 }
 void seal(Json &value, const std::string &own) { value[own] = document_digest(value, own); }
-Json encode_program(const core::ProgramData &d) {
+Json encode_program(const core::ProgramData &d) { return encode_program(d, false); }
+Json encode_program(const core::ProgramData &d, bool grouped) {
   Json out{{"predicateVersion", 1}, {"transportVersion", 1}, {"pieceCount", d.piece_count},
     {"placementCount", d.placement_count}, {"initialPlacements", d.initial}, {"finiteSets", d.finite_sets},
     {"childReferences", d.child_references}, {"invariantRoot", d.invariant}, {"goalRoot", d.goal},
-    {"predicateNodes", Json::array()}, {"actionRecords", Json::array()}, {"requestPrograms", Json::array()},
+    {"predicateNodes", Json::array()}, {grouped ? "actionGroups" : "actionRecords", Json::array()}, {"requestPrograms", Json::array()},
     {"compact", runtime::write_compact(d, 3)}};
   for (const auto &n : d.predicates) out["predicateNodes"].push_back(n.opcode == core::Opcode::in
     ? Json{{"op", "IN"}, {"bank", n.bank == core::Bank::state ? "state" : "choice"}, {"input", n.input}, {"set", n.set}}
     : Json{{"op", "RANGE"}, {"min", n.lower}, {"max", n.upper}, {"firstChild", n.first_child}, {"childCount", n.child_count}});
-  for (const auto &a : d.actions) out["actionRecords"].push_back({{"piece", a.piece}, {"map", a.map}, {"selectionRoot", a.selection}, {"event", a.event}});
+  if (grouped) {
+    auto &groups = out["actionGroups"];
+    for (const auto &a : d.actions) {
+      if (groups.empty() || groups.back().at("pieces").size() == 4096 || groups.back().at("map") != a.map || groups.back().at("selectionRoot") != a.selection || groups.back().at("event") != a.event)
+        groups.push_back({{"pieces", Json::array()}, {"map", a.map}, {"selectionRoot", a.selection}, {"event", a.event}});
+      groups.back()["pieces"].push_back(a.piece);
+    }
+  } else for (const auto &a : d.actions) out["actionRecords"].push_back({{"piece", a.piece}, {"map", a.map}, {"selectionRoot", a.selection}, {"event", a.event}});
   for (const auto &r : d.requests) out["requestPrograms"].push_back({{"choiceSizes", r.choice_sizes}, {"firstAction", r.first_action}, {"actionCount", r.action_count}, {"relationRoot", r.relation}});
   return out;
 }
@@ -165,8 +200,10 @@ Json encode(const runtime::CompiledPuzzle &p, const std::vector<Index> &ri, cons
     for (const auto &profile : r.profiles) profiles.push_back({{"id", profile.id}, {"choices", profile.choices}, {"whenRoot", profile.when}});
     bindings["requests"].push_back({{"id", r.id}, {"profiles", profiles}, {"defaultProfile", r.default_profile ? Json(*r.default_profile) : Json(nullptr)}});
   }
-  Json out{{"kind", "twisty-abstract-artifact"}, {"artifactVersion", 1}, {"requiredCapabilities", Json::array()},
-    {"program", encode_program(p.program.data())}, {"bindings", bindings},
+  const bool grouped = p.program.data().actions.size() > 32768;
+  Json out{{"kind", "twisty-abstract-artifact"}, {"artifactVersion", 1},
+    {"requiredCapabilities", grouped ? Json{"grouped-action-records-v1"} : Json::array()},
+    {"program", encode_program(p.program.data(), grouped)}, {"bindings", bindings},
     {"session", {{"requestInverses", ri}, {"choiceInverses", ci}}}};
   seal(out, "executionDigest");
   // Exporters pass through the same independent validator as consumers.
@@ -178,9 +215,10 @@ Artifact::Artifact(const std::string &text) {
     document_ = parse_document(text);
     fields(document_, {"kind", "artifactVersion", "requiredCapabilities", "executionDigest", "program"}, {"bindings", "session"});
     require(document_.at("kind") == "twisty-abstract-artifact" && document_.at("artifactVersion") == 1, "/", "Unsupported artifact kind/version.", "artifact.unsupported");
-    require(ids(document_.at("requiredCapabilities"), 64).empty(), "/requiredCapabilities", "Unsupported required artifact extension.", "artifact.capability");
+    const auto capabilities = ids(document_.at("requiredCapabilities"), 64);
+    require(capabilities.empty() || capabilities == std::vector<std::string>{"grouped-action-records-v1"}, "/requiredCapabilities", "Unsupported required artifact extension.", "artifact.capability");
     pin(document_, "executionDigest");
-    core::Program program(decode_program(document_.at("program")));
+    core::Program program(decode_program(document_.at("program"), !capabilities.empty()));
     runtime::Bindings bindings;
     if (document_.contains("bindings")) bindings = decode_bindings(document_.at("bindings"), program);
     if (document_.contains("session")) {
@@ -205,10 +243,18 @@ Artifact::Artifact(const std::string &text) {
   catch (const Json::exception &error) { throw DiagnosticError("artifact.invalid", "/", error.what()); }
 }
 Json info() {
-  return {{"artifactAPIVersion", 1}, {"artifactVersions", {1}}, {"interpretationVersions", {1}},
+  return {{"artifactAPIVersion", 1}, {"artifactVersions", {1}}, {"interpretationVersions", {1, 2}},
+    {"realizationEnvelopeVersions", {1}}, {"backendPayloadVersions", {1}},
+    {"abstractCapabilities", {"grouped-action-records-v1"}},
     {"sessionSchemaVersions", {3}}, {"witnessVersions", {2}}, {"frameBufferVersion", 1},
-    {"realizationKinds", {"artifact-cube-euclidean"}},
-    {"geometryCapabilities", {"uniform-cube-ports", "explicit-cube-tracks"}}};
+    {"realizationKinds", {"artifact-cube-euclidean", "cube-euclidean", "cube-port-diagram", "cube-spherical",
+      "polyhedral-euclidean", "polyhedral-port-diagram", "polyhedral-spherical", "articulated-euclidean",
+      "articulated-port-diagram", "articulated-spherical", "flat-quotient", "s3-cell-turning"}},
+    {"geometryCapabilities", {"uniform-cube-ports", "explicit-cube-tracks", "triangle-meshes", "rigid-transforms",
+      "shared-geometry-definitions", "space-qualified-poses", "seekable-animations", "shared-rotation-tracks",
+      "family-rotation-generators", "transport-path-selectors", "quotient-surface", "quotient-orbifold",
+      "so4-isometries", "stereographic-projection", "dynamic-drawing-meshes", "intrinsic-meshes",
+      "s3-octahedral-cells", "s3-octahedral-tangent-cuts"}}};
 }
 std::string validate_json(const std::string &text) {
   try {

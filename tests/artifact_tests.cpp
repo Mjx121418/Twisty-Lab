@@ -123,6 +123,77 @@ void model(const std::string &name, const std::string &algorithm) {
   reject([&] { GeometryDefinition bad(execution, manifest_text, wrong_realization.dump()); }, "realization.unsupported_transition");
   check(session.snapshot(SnapshotDetail::StateOnly) == before, "Invalid presentation changed live session");
 }
+void envelope_model(const std::string &name) {
+  const auto dir = "examples/artifact/data/" + name + "/";
+  auto doc = Json::parse(read(dir + "abstract.json"));
+  auto manifest = Json::parse(read(dir + "interpretation.json"));
+  const auto old_realization = Json::parse(read(dir + "realization.json"));
+  auto geometry = old_realization;
+  geometry["kind"] = "cube-euclidean"; geometry.erase("compatibleInterpretationDigest");
+  manifest["contractVersion"] = 2;
+  for (auto &c : manifest["certificates"]) {
+    const auto r = c["request"].get<Index>(), d = c["domain"].get<Index>();
+    const auto slot = manifest["domains"][d]["choiceSlot"].get<Index>();
+    const auto &request = doc["bindings"]["requests"][r];
+    c["choice"] = request["profiles"][request["defaultProfile"].get<Index>()]["choices"][slot];
+  }
+  // Event names may repeat across distinct local choices; completed choices
+  // must resolve the correct signed path, including inverse requests.
+  for (auto &a : doc["program"]["actionRecords"]) a["event"] = 0;
+  artifact::seal(doc, "executionDigest");
+  for (auto &c : manifest["certificates"]) c["event"] = 0;
+  manifest["executionDigest"] = doc["executionDigest"];
+  for (Index d = 0; d < manifest["domains"].size(); ++d) manifest["domains"][d]["id"] = "scope-" + std::to_string(d);
+  artifact::seal(manifest, "interpretationDigest");
+  geometry["compatibleDefinitionDigest"] = doc["executionDigest"];
+  Json bindings = Json::array(), kinds = Json::array(), paths = Json::object(), event_tracks = Json::array();
+  for (Index r = 0; r < doc["bindings"]["requests"].size(); ++r) {
+    const auto path = "path-" + std::to_string(r), id = doc["bindings"]["requests"][r]["id"].get<std::string>();
+    bindings.push_back({{"pathId", path}, {"group", "arbitrary"}, {"resources", Json::array()}});
+    paths[path] = geometry["explicitCubeTracks"][id];
+  }
+  geometry["explicitCubeTracks"] = paths;
+  const auto original_manifest = Json::parse(read(dir + "interpretation.json"));
+  for (const auto &piece : original_manifest["pieces"])
+    kinds.push_back(original_manifest["domains"][piece["domain"].get<Index>()]["id"] == "bandage" ? "cube-bandage" : "rigid");
+  for (Index c = 0; c < manifest["certificates"].size(); ++c)
+    event_tracks.push_back({{"certificate", c}, {"pathId", bindings[manifest["certificates"][c]["request"].get<Index>()]["pathId"]}});
+  Json payload{{"payloadVersion", 1}, {"requestBindings", bindings}, {"pieceKinds", kinds}, {"geometry", geometry}};
+  Json envelope{{"kind", "twisty-realization"}, {"contractVersion", 1}, {"id", "explicit-cube"},
+    {"interpretationDigest", manifest["interpretationDigest"]}, {"requiredCapabilities", geometry["requiredCapabilities"]},
+    {"backend", {{"id", "cube-euclidean"}, {"version", 1}}},
+    {"eventTracks", event_tracks}, {"payload", {{"path", "geometry.json"}, {"sha256", sha256(payload.dump())}}}};
+  artifact::seal(envelope, "realizationDigest");
+  auto execution = Execution::from_artifact(doc.dump());
+  Session session(execution); session.lightweight_results(true);
+  GeometryDefinition drawing(execution, manifest.dump(), envelope.dump(), payload.dump());
+  const auto result = session.run(name == "bandaged" ? "U R R' U'" : "R U R' U'", "transactional", session.revision());
+  check(result["status"] == "Committed", "Contextual event algorithm failed");
+  for (const auto &record : result["transitions"]) {
+    auto animation = drawing.animate(record.dump());
+    check(animation.evaluate(0).isometries() == drawing.frame(record["beforeState"].dump()).isometries(), "Contextual source differs");
+    check(animation.evaluate(1).isometries() == drawing.frame(record["afterState"].dump()).isometries(), "Contextual target differs");
+    const auto midpoint = animation.evaluate(.5).isometries(); animation.evaluate(.1);
+    check(animation.evaluate(.5).isometries() == midpoint, "Contextual seek differs");
+    auto forged = record; forged["pieceActions"][0]["event"] = "forged";
+    reject([&] { drawing.animate(forged.dump()); }, "realization.witness");
+  }
+  const auto before = session.state_snapshot_json();
+  auto invalid = [&](auto edit, const std::string &code = {}) {
+    auto e = envelope, p = payload; edit(e, p); e["payload"]["sha256"] = sha256(p.dump()); artifact::seal(e, "realizationDigest");
+    reject([&] { GeometryDefinition bad(execution, manifest.dump(), e.dump(), p.dump()); }, code);
+  };
+  invalid([](Json &e, Json &) { e["backend"]["version"] = 99; }, "realization.unsupported");
+  invalid([](Json &e, Json &) { e["requiredCapabilities"].push_back("unknown"); }, "realization.capability");
+  invalid([](Json &e, Json &) { e["eventTracks"].erase(e["eventTracks"].begin()); });
+  invalid([](Json &e, Json &) { e["eventTracks"][0]["pathId"] = "missing"; }, "realization.reference");
+  invalid([](Json &e, Json &) { e["payload"]["path"] = "../escape.json"; });
+  invalid([](Json &, Json &p) { p["geometry"]["explicitCubeTracks"].begin().value()["angle"] = 0; }, "realization.unsupported_transition");
+  invalid([](Json &, Json &p) { p["geometry"]["explicitCubeTracks"].erase(p["geometry"]["explicitCubeTracks"].begin()); });
+  reject([&] { GeometryDefinition bad(execution, manifest.dump(), envelope.dump(), payload.dump() + " "); }, "realization.payload_mismatch");
+  check(session.state_snapshot_json() == before, "Failed geometric binding changed live session");
+}
+
 } // namespace
 int main() {
   try {
@@ -130,6 +201,7 @@ int main() {
       check(artifact::canonical_json(v.at("value")) == v.at("canonical"), "Portable canonical bytes differ");
       check(sha256(artifact::canonical_json(v.at("value"))) == v.at("sha256"), "Portable canonical SHA-256 differs");
     }
+    reject([] { artifact::parse_document("{\"items\":[{\"x\":0},{\"x\":1,\"x\":2}]}"); }, "artifact.invalid");
     core::ProgramData raw;
     raw.piece_count = 1; raw.placement_count = 2; raw.initial = {0};
     raw.maps = {{{0, 1}, {1, 0}}}; raw.actions = {{0, 0, core::true_ref, 7}};
@@ -139,6 +211,14 @@ int main() {
     artifact::seal(bare, "executionDigest");
     artifact::Artifact numeric(bare.dump());
     check(numeric.compiled()->program.plan(0, raw.initial, {}).transition->after == core::State{1}, "Bare numeric program changed");
+    auto grouped = bare; grouped["requiredCapabilities"] = {"grouped-action-records-v1"};
+    grouped["program"] = artifact::encode_program(raw, true); artifact::seal(grouped, "executionDigest");
+    artifact::Artifact compact_actions(grouped.dump());
+    check(compact_actions.compiled()->program.plan(0, raw.initial, {}).transition->after == core::State{1}, "Grouped action semantics differ");
+    auto malformed_group = grouped; malformed_group["program"]["actionGroups"][0]["pieces"] = Json::array();
+    artifact::seal(malformed_group, "executionDigest"); reject([&] { artifact::Artifact invalid(malformed_group.dump()); });
+    malformed_group = grouped; malformed_group["requiredCapabilities"] = Json::array();
+    artifact::seal(malformed_group, "executionDigest"); reject([&] { artifact::Artifact invalid(malformed_group.dump()); });
     auto bad = bare; bad["program"]["compact"]["maps"][0]["rows"] = {{0, 1}, {1, 1}};
     artifact::seal(bad, "executionDigest"); reject([&] { artifact::Artifact invalid(bad.dump()); });
     bad = bare; bad["program"]["compact"]["groups"] = Json::array({{{"order", 2}, {"products", {0, 1, 1, 1}}, {"inverses", {0, 1}}}});
@@ -150,6 +230,7 @@ int main() {
     bad["program"]["childReferences"] = {2}; artifact::seal(bad, "executionDigest");
     reject([&] { artifact::Artifact invalid(bad.dump()); });
     model("cube3", "R U R' U'"); model("bandaged", "U R R' U'");
+    envelope_model("cube3"); envelope_model("bandaged");
     std::cout << checks << " source-free artifact checks passed.\n";
   } catch (const std::exception &error) { std::cerr << diagnostic_result(error).dump() << '\n'; return 1; }
 }

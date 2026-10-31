@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:twisty:schema:backend-payload:1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "payloadVersion",
+    "requestBindings",
+    "pieceKinds",
+    "geometry"
+  ],
+  "properties": {
+    "payloadVersion": {
+      "const": 1
+    },
+    "requestBindings": {
+      "type": "array",
+      "maxItems": 4096,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "pathId",
+          "group",
+          "resources"
+        ],
+        "properties": {
+          "pathId": {
+            "$ref": "urn:twisty:schema:artifact-common:1#/definitions/id"
+          },
+          "group": {
+            "$ref": "urn:twisty:schema:artifact-common:1#/definitions/id"
+          },
+          "resources": {
+            "$ref": "urn:twisty:schema:artifact-common:1#/definitions/indices"
+          }
+        }
+      }
+    },
+    "pieceKinds": {
+      "type": "array",
+      "maxItems": 4096,
+      "items": {
+        "enum": [
+          "rigid",
+          "cube-bandage"
+        ]
+      }
+    },
+    "geometry": {
+      "$ref": "urn:twisty:schema:artifact-backend:1"
+    }
+  }
+}

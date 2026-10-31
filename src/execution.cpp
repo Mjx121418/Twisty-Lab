@@ -23,6 +23,17 @@ Json Execution::definition_json() const {
   result["definitionDigest"] = definition_->digest;
   return result;
 }
+Json Execution::artifact_json() const {
+  if (source_free()) return artifact_->document();
+  const auto &b = puzzle_->bindings;
+  std::vector<Index> requests;
+  std::vector<std::vector<Index>> choices(b.choice_values.size());
+  for (const auto &op : definition_->operations) requests.push_back(request_ids_.at(op.inverse));
+  for (Index slot = 0; slot < choices.size(); ++slot)
+    for (const auto &value : b.choice_values[slot])
+      choices[slot].push_back(index_of(b.choice_values[slot], inverse_moves_[slot].at(value)));
+  return artifact::encode(*puzzle_, requests, choices);
+}
 std::shared_ptr<const Execution> Execution::from_artifact(const std::string &text) {
   return std::shared_ptr<const Execution>(new Execution(std::make_shared<artifact::Artifact>(text)));
 }
@@ -70,6 +81,20 @@ Index Execution::event_operation(Index piece, const std::string &event) const {
   const auto found = event_operations_.find({definition_->pieces[piece].domain, event});
   ensure(found != event_operations_.end(), "Unknown or incompatible participation event.");
   return found->second;
+}
+Index Execution::event_operation(const CompletedTransition &transition, Index action) const {
+  const auto &a = transition.actions.at(action);
+  if (interpretation_version_ < 2) return event_operation(a.piece, transition.events.at(action));
+  const auto domain = definition_->pieces.at(a.piece).domain;
+  const auto slot = interpretation_slots_.at(domain);
+  const auto choice = index_of(puzzle_->bindings.choice_values.at(slot), transition.choices.at(slot));
+  const auto found = choice_certificates_.at(domain).find(choice);
+  ensure(found != choice_certificates_.at(domain).end(), "Completed choice has no interpreter certificate.");
+  const auto &cert = certificates_.at(found->second);
+  ensure(puzzle_->bindings.events[cert.event] == transition.events.at(action) &&
+         std::binary_search(cert.pieces.begin(), cert.pieces.end(), core_piece_of_display_.at(a.piece)),
+         "Completed participant disagrees with its interpreter certificate.");
+  return cert.request;
 }
 core::State Execution::flatten(const State &state) const {
   if (state.placement_of.size() != definition_->pieces.size() || !state.mechanism.is_object() ||

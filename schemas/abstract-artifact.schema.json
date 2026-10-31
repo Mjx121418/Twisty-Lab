@@ -38,7 +38,6 @@
         "childReferences",
         "invariantRoot",
         "goalRoot",
-        "actionRecords",
         "requestPrograms",
         "compact"
       ],
@@ -236,6 +235,39 @@
               }
             }
           ]
+        },
+        "actionGroups": {
+          "type": "array",
+          "maxItems": 1000000,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "map",
+              "selectionRoot",
+              "event",
+              "pieces"
+            ],
+            "properties": {
+              "map": {
+                "$ref": "#/definitions/index"
+              },
+              "selectionRoot": {
+                "$ref": "#/definitions/index"
+              },
+              "event": {
+                "$ref": "#/definitions/index"
+              },
+              "pieces": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 4096,
+                "items": {
+                  "$ref": "urn:twisty:schema:artifact-common:1#/definitions/index"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -361,5 +393,46 @@
     "id": {
       "$ref": "urn:twisty:schema:artifact-common:1#/definitions/id"
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "requiredCapabilities": {
+            "contains": {
+              "const": "grouped-action-records-v1"
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "program": {
+            "required": [
+              "actionGroups"
+            ],
+            "not": {
+              "required": [
+                "actionRecords"
+              ]
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "program": {
+            "required": [
+              "actionRecords"
+            ],
+            "not": {
+              "required": [
+                "actionGroups"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
 }

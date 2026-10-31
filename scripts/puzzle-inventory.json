@@ -71,7 +71,9 @@
     "scripts/data/melty-b-middle-catalog.json",
     "scripts/data/melty-c-middle-catalog.json",
     "scripts/data/melty-d-middle-catalog.json",
-    "scripts/data/icosahedron-152-witness.json"
+    "scripts/data/icosahedron-152-witness.json",
+    "src/interpreter",
+    "examples/artifact/export.cpp"
   ],
   "puzzles": [
     {

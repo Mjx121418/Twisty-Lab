@@ -9,6 +9,7 @@ std::string canonical_json(const Json &);
 std::string document_digest(const Json &, const std::string &own_digest_field);
 void seal(Json &, const std::string &own_digest_field);
 Json encode_program(const core::ProgramData &);
+Json encode_program(const core::ProgramData &, bool grouped_actions);
 Json encode(const runtime::CompiledPuzzle &, const std::vector<Index> &request_inverses,
             const std::vector<std::vector<Index>> &choice_inverses);
 Json info();

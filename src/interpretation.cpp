@@ -17,9 +17,10 @@ std::shared_ptr<const Execution> Execution::with_interpretation(const std::strin
 void Execution::bind_interpretation(const Json &doc) {
   using namespace artifact::detail;
   fields(doc, {"kind", "contractVersion", "executionDigest", "interpretationDigest", "domains", "resources", "pieces", "placements", "certificates"});
-  require(doc.at("kind") == "twisty-interpretation" && doc.at("contractVersion") == 1, "/", "Unsupported interpretation contract.");
+  require(doc.at("kind") == "twisty-interpretation" && (doc.at("contractVersion") == 1 || doc.at("contractVersion") == 2), "/", "Unsupported interpretation contract.");
   require(doc.at("executionDigest") == definition_->digest, "/executionDigest", "Interpretation pins another executable.", "artifact.digest_mismatch");
   pin(doc, "interpretationDigest");
+  interpretation_version_ = index(doc.at("contractVersion"));
   const auto &b = puzzle_->bindings;
   const auto &data = puzzle_->program.data();
   auto def = std::make_shared<Definition>(*definition_);
@@ -93,11 +94,16 @@ void Execution::bind_interpretation(const Json &doc) {
     view->program = core_program; view->placements = globals[d]; view->local = local; view->map = core::no_index;
     op.maps.push_back({view}); op.roles.push_back({view});
   }
+  interpretation_slots_ = slots;
+  choice_certificates_.resize(slots.size());
+  std::vector<std::map<Index, std::shared_ptr<const OperationTransport>>> choice_views(slots.size());
   std::set<std::string> certificate_ids;
   std::set<std::pair<Index, Index>> request_domains;
   std::vector<bool> covered(data.actions.size(), false);
   for (const auto &cert : array(doc.at("certificates"))) {
-    fields(cert, {"id", "domain", "request", "event", "transport", "actions", "unavailablePlacements"});
+    if (interpretation_version_ == 1)
+      fields(cert, {"id", "domain", "request", "event", "transport", "actions", "unavailablePlacements"});
+    else fields(cert, {"id", "domain", "choice", "request", "event", "transport", "actions", "unavailablePlacements"});
     const auto domain = index(cert.at("domain")), request = index(cert.at("request"));
     const auto event = index(cert.at("event")), map = index(cert.at("transport"));
     require(certificate_ids.insert(id(cert.at("id"))).second && domain < slots.size() && request < b.requests.size() &&
@@ -106,8 +112,12 @@ void Execution::bind_interpretation(const Json &doc) {
     const auto &r = b.requests[request];
     require(r.default_profile.has_value(), "/certificates/request", "A track certificate requires a concrete default profile.");
     const auto choice = r.profiles[*r.default_profile].choices[slots[domain]];
+    if (interpretation_version_ == 2) require(index(cert.at("choice")) == choice, "/certificates/choice", "The track request does not select its certified local choice.");
+    Certificate certificate{domain, choice, request, event, {}};
     const auto actions = indices(cert.at("actions"));
-    require(!actions.empty(), "/certificates/actions", "An empty action certificate cannot identify a track.");
+    require(!actions.empty() || (interpretation_version_ == 2 &&
+      std::none_of(def->pieces.begin(), def->pieces.end(), [&](const auto &p) { return p.domain == domain; })),
+      "/certificates/actions", "Only a virtual domain without pieces may have an empty action certificate.");
     for (auto i : actions) {
       require(i < data.actions.size() && !covered[i], "/certificates/actions", "Unknown or multiply certified action.");
       covered[i] = true;
@@ -115,6 +125,7 @@ void Execution::bind_interpretation(const Json &doc) {
       require(i >= slice.first_action && i - slice.first_action < slice.action_count &&
         a.event == event && a.map == map && def->pieces[a.piece].domain == domain && a.selection >= 2,
         "/certificates/actions", "Certificate disagrees with its action or request scope.");
+      certificate.pieces.push_back(a.piece);
       const auto &selector = data.predicates[a.selection - 2];
       require(selector.opcode == core::Opcode::in && selector.bank == core::Bank::choice &&
         selector.input == slots[domain] && data.finite_sets[selector.set] == std::vector<Index>{choice},
@@ -131,11 +142,30 @@ void Execution::bind_interpretation(const Json &doc) {
     std::sort(view->unavailable.begin(), view->unavailable.end());
     for (auto q : global_of_local_[domain]) if (const auto to = puzzle_->program.transport(map, q))
       require(domain_of[*to] == domain, "/certificates/transport", "Transport leaves its declared domain.");
-    def->operations[request].maps[domain] = {view}; def->operations[request].roles[domain] = {view};
-    require(event_operations_.emplace(std::pair{domain, b.events[event]}, request).second,
-      "/certificates/event", "Uniform event mapping is ambiguous.", "interpretation.ambiguous");
+    std::sort(certificate.pieces.begin(), certificate.pieces.end());
+    require(std::adjacent_find(certificate.pieces.begin(), certificate.pieces.end()) == certificate.pieces.end(),
+      "/certificates/actions", "A local certificate repeats a piece.");
+    require(choice_certificates_[domain].emplace(choice, static_cast<Index>(certificates_.size())).second,
+      "/certificates/choice", "A local choice has ambiguous certificates.", "interpretation.ambiguous");
+    certificates_.push_back(std::move(certificate));
+    choice_views[domain].emplace(choice, view);
+    if (interpretation_version_ == 1) {
+      def->operations[request].maps[domain] = {view}; def->operations[request].roles[domain] = {view};
+      require(event_operations_.emplace(std::pair{domain, b.events[event]}, request).second,
+        "/certificates/event", "Uniform event mapping is ambiguous.", "interpretation.ambiguous");
+    }
   }
   require(std::all_of(covered.begin(), covered.end(), [](bool x) { return x; }), "/certificates", "Every executable action needs a certificate.");
+  if (interpretation_version_ == 2) for (Index request = 0; request < b.requests.size(); ++request) {
+    const auto &r = b.requests[request];
+    require(r.default_profile.has_value(), "/certificates/request", "Backend tracks require concrete default profiles.");
+    const auto &choices = r.profiles[*r.default_profile].choices;
+    for (Index domain = 0; domain < slots.size(); ++domain)
+      if (const auto found = choice_views[domain].find(choices[slots[domain]]); found != choice_views[domain].end()) {
+        def->operations[request].maps[domain] = {found->second};
+        def->operations[request].roles[domain] = {found->second};
+      }
+  }
   interpretation_digest_ = doc.at("interpretationDigest");
   definition_ = std::move(def);
 }

@@ -17,8 +17,8 @@ for a Cube/Bandage Euclidean vertical slice. Native `Twisty::artifact_kernel`
 and the separate WASM artifact entry exclude authoring/source adapters. Global
 placement IDs, execution digests, schema-3 saves and version-2 witnesses are
 independently checked against the legacy path by `npm run check:artifacts`.
-Other interpreter/controller adapters, the dedicated authoring CLI, distribution
-migration, and presentation separation remain later phases. See the current
+At that point, other interpreter/controller adapters, the dedicated authoring CLI,
+distribution migration and presentation separation remained later phases. See the current
 [runtime API](kernel-api.md#compiler-independent-runtime-descriptors) for the
 implemented boundary.
 
@@ -28,6 +28,25 @@ nine targeted native tests, and the existing installed SDK consumers pass.
 Regeneration reproduces all 146 legacy artifacts unchanged; the current WASM
 accepts all 24 presets and 48 realizations. The new artifact geometry contract
 covers only the Cube/Bandage Euclidean slice. No browser UI changes were made.
+
+Phase 4 extends the source-free path with interpretation 2, explicit local-choice
+certificates, realization envelope 1 and content-addressed backend payloads. The
+new authoring adapter lowers all current backend formats without importing source
+compilation into the runtime. A grouped-action extension preserves the expanded
+numeric program while keeping large S³ artifacts within reader budgets. The
+reference application and resolved controller migration remain later work. See
+[current interpreter contracts](kernel-api.md#interpretation-2-and-realization-envelope-1).
+All 48 current realizations pass installed native authoring/runtime and isolated
+WASM consumer checks, including exact replay/witnesses, mesh assets, sampled poses,
+seeking, and independent request/local-choice/event/domain/group identifiers.
+Native source compilation also accepts request IDs independent of local movement
+IDs and derives local inverses from explicit completion profiles. The reader uses
+a linear SAX validation pass for duplicates/budgets before DOM construction,
+avoiding quadratic callback parsing on large action arrays. Final verification
+also passes 184 native artifact checks, nine targeted native tests, all seven
+frozen architecture scenarios, installed SDK consumers, and TypeScript checks.
+All 146 legacy package artifacts reproduce unchanged; only their input provenance
+is refreshed. The current WASM still accepts all 24 presets and 48 realizations.
 
 The recommended direction is to introduce a dedicated authoring CLI, backed by
 reusable compiler libraries, that emits validated runtime artifacts. Preserve

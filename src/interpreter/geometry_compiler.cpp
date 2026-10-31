@@ -119,7 +119,7 @@ GeometryCompiler::GeometryCompiler(std::shared_ptr<const Execution> execution,
     const auto capabilities = realization.at("requiredCapabilities").get<std::vector<std::string>>();
     if (std::find(capabilities.begin(), capabilities.end(), "explicit-cube-tracks") == capabilities.end())
       throw DiagnosticError("realization.capability", "/requiredCapabilities", "Explicit cube tracks require their capability declaration.");
-    if ((kind != "cube-euclidean" && kind != "artifact-cube-euclidean") || !realization.at("explicitCubeTracks").is_object() ||
+    if ((kind != "artifact-cube-euclidean" && !kind.starts_with("cube-")) || !realization.at("explicitCubeTracks").is_object() ||
         realization.at("explicitCubeTracks").size() != definition_->operations.size())
       throw DiagnosticError("realization.track", "/explicitCubeTracks", "Explicit cube tracks must cover every operation.");
     explicit_cube_tracks_ = true;

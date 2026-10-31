@@ -95,6 +95,8 @@ Execution::Execution(Json source, Json catalog)
              catalog.at("version") == 1,
          "Expected a version-1 cube, port, or articulated binding catalog.");
   const auto &bindings = puzzle_->bindings;
+  std::map<std::string, Index> binding_requests;
+  for (Index r = 0; r < bindings.requests.size(); ++r) binding_requests.emplace(bindings.requests[r].id, r);
   ensure(catalog.at("puzzleId").get<std::string>() == bindings.puzzle_id, "Puzzle IDs differ.");
   auto definition = std::make_shared<Definition>();
   definition->id = bindings.puzzle_id;
@@ -179,9 +181,20 @@ Execution::Execution(Json source, Json catalog)
                "Local inverse bindings must be reciprocal.");
         inverses[name] = inverse;
       }
-    } else
-      for (const auto &[op, metadata] : catalog.at("requests").items())
-        inverses[op] = metadata.at("inverse").get<std::string>();
+    } else {
+      for (const auto &[op, metadata] : catalog.at("requests").items()) {
+        const auto &r = bindings.requests.at(binding_requests.at(op));
+        const auto &inverse = bindings.requests.at(binding_requests.at(metadata.at("inverse").get<std::string>()));
+        ensure(r.default_profile && inverse.default_profile, "Inverse binding requires concrete default profiles.");
+        const auto choice = r.profiles[*r.default_profile].choices[d], reversed = inverse.profiles[*inverse.default_profile].choices[d];
+        const auto &value = bindings.choice_values[d][choice], &target = bindings.choice_values[d][reversed];
+        const auto [it, added] = inverses.emplace(value, target);
+        ensure(added || it->second == target, "Requests disagree on a local inverse binding.");
+      }
+      for (const auto &value : bindings.choice_values[d])
+        ensure(inverses.contains(value) && inverses.contains(inverses.at(value)) && inverses.at(inverses.at(value)) == value,
+          "Local inverse bindings must be complete and reciprocal.");
+    }
     std::vector<std::string> expected_pieces;
     for (const auto &p : s.at("pieces"))
       expected_pieces.push_back(p.at("id").get<std::string>());
@@ -250,8 +263,6 @@ Execution::Execution(Json source, Json catalog)
       lookup(placement_ids, q);
     for (Index d = 0; d < source.at("domains").size(); ++d) {
       const auto movement = bindings.choice_values[d].at(choices.at(d));
-      ensure(articulated_events_ || movement == request.id,
-             "Uniform track requires the same named move in every domain.");
       const auto found = domain_moves[d].find(movement);
       ensure(found != domain_moves[d].end(), "Unknown movement binding.");
       const auto *move = found->second;

@@ -77,4 +77,78 @@ Json cube_artifacts(bool bandaged) {
   return {{"abstract", abstract}, {"interpretation", manifest}, {"realization", realization}};
 }
 std::string cube_artifacts_json(bool bandaged) { return cube_artifacts(bandaged).dump(); }
+Json interpretation_artifact(const Execution &execution) {
+  return interpretation_artifact(execution, execution.artifact_json());
+}
+Json interpretation_artifact(const Execution &execution, const Json &abstract) {
+  const auto puzzle = execution.compiled_puzzle(); const auto &b = puzzle->bindings;
+  const auto &def = *execution.definition();
+  Json manifest{{"kind", "twisty-interpretation"}, {"contractVersion", 2}, {"executionDigest", abstract.at("executionDigest")},
+    {"resources", def.cells}, {"domains", Json::array()}, {"pieces", Json::array()},
+    {"placements", Json::array()}, {"certificates", Json::array()}};
+  std::vector<Json> placements(b.placements.size());
+  for (Index d = 0; d < def.domains.size(); ++d) {
+    const auto &domain = def.domains[d]; Json ports = Json::array();
+    for (const auto &[port, _] : domain.placements.front().ports) ports.push_back(port);
+    const auto slot = find(b.choice_slots, domain.id);
+    manifest["domains"].push_back({{"id", domain.id}, {"choiceSlot", slot}, {"ports", ports}});
+    for (const auto &q : domain.placements) {
+      const auto global = find(b.placements, domain.id + "/" + q.key);
+      std::vector<Index> resources; Json bindings = Json::array();
+      for (const auto &cell : q.footprint) resources.push_back(find(def.cells, cell));
+      for (const auto &[id, port] : q.ports) bindings.push_back({{"id", id}, {"resource", find(def.cells, port.first)}, {"attachment", port.second}});
+      placements[global] = {{"placement", global}, {"domain", d}, {"resources", resources}, {"ports", bindings}};
+    }
+    for (Index choice = 1; choice < b.movements[slot].size(); ++choice) {
+      const auto range = b.movements[slot][choice];
+      Index request = 0, event = 0;
+      if (range.action_count) {
+        const auto &first = puzzle->program.data().actions.at(range.first_action); event = first.event;
+        const auto display = std::find_if(def.pieces.begin(), def.pieces.end(), [&](const auto &piece) { return piece.id == b.pieces[first.piece]; });
+        if (execution.articulated_events())
+          request = execution.event_operation(static_cast<Index>(display - def.pieces.begin()), b.events[event]);
+        else {
+          const auto found = std::find_if(b.requests.begin(), b.requests.end(), [&](const auto &r) {
+            return r.default_profile && r.profiles[*r.default_profile].choices[slot] == choice;
+          });
+          if (found == b.requests.end()) throw DiagnosticError("artifact.reference", "/authoring", "No request certifies a local choice.");
+          request = static_cast<Index>(found - b.requests.begin());
+        }
+      } else {
+        const auto &move = def.canonical.at("source").at("domains")[slot].at("moves")[choice - 1];
+        event = find(b.events, move.at("event").get<std::string>());
+        const auto found = std::find_if(b.requests.begin(), b.requests.end(), [&](const auto &r) {
+          return r.default_profile && r.profiles[*r.default_profile].choices[slot] == choice;
+        });
+        if (found == b.requests.end()) throw DiagnosticError("artifact.reference", "/authoring", "No track request for a virtual local choice.");
+        request = static_cast<Index>(found - b.requests.begin());
+      }
+      const auto &r = b.requests.at(request);
+      if (!r.default_profile || r.profiles[*r.default_profile].choices.at(slot) != choice)
+        throw DiagnosticError("artifact.reference", "/authoring/certificates", "Event track does not select its local choice.");
+      std::vector<Index> actions, unavailable;
+      for (Index i = 0; i < range.action_count; ++i) actions.push_back(range.first_action + i);
+      for (Index q = 0; q < domain.placements.size(); ++q)
+        if (def.operations[request].roles[d][q] == 2)
+          unavailable.push_back(find(b.placements, domain.id + "/" + domain.placements[q].key));
+      manifest["certificates"].push_back({{"id", "local-" + std::to_string(d) + "-" + std::to_string(choice)},
+        {"domain", d}, {"choice", choice}, {"request", request}, {"event", event},
+        {"transport", b.move_maps[slot][choice]}, {"actions", actions}, {"unavailablePlacements", unavailable}});
+    }
+  }
+  for (auto &q : placements) manifest["placements"].push_back(std::move(q));
+  for (Index p = 0; p < b.pieces.size(); ++p) {
+    const auto found = std::find_if(def.pieces.begin(), def.pieces.end(), [&](const auto &x) { return x.id == b.pieces[p]; });
+    Json labels = Json::array(); for (const auto &[port, material] : found->labels) labels.push_back({{"port", port}, {"material", material}});
+    manifest["pieces"].push_back({{"piece", p}, {"domain", found->domain}, {"portLabels", labels}});
+  }
+  artifact::seal(manifest, "interpretationDigest");
+  Execution::from_artifact(abstract.dump())->with_interpretation(manifest.dump());
+  return manifest;
+}
+Json execution_artifacts(const std::string &source) {
+  const auto execution = Execution::from_source(source);
+  const auto abstract = execution->artifact_json();
+  return {{"abstract", abstract}, {"interpretation", interpretation_artifact(*execution, abstract)}};
+}
 } // namespace twisty::language

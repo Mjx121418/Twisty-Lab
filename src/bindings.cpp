@@ -38,6 +38,10 @@ Session *create_artifact_session(const std::string &text) { return new Session(E
 GeometryDefinition *create_artifact_geometry(const Session &session, const std::string &manifest, const std::string &realization) {
   return new GeometryDefinition(session.execution(), manifest, realization);
 }
+GeometryDefinition *create_artifact_geometry_with_payload(const Session &session, const std::string &manifest,
+    const std::string &realization, const std::string &payload) {
+  return new GeometryDefinition(session.execution(), manifest, realization, payload);
+}
 Geometry *create_geometry(const Session &session, const std::string &realization) {
   return new Geometry(session.execution(), realization);
 }
@@ -59,6 +63,7 @@ EMSCRIPTEN_BINDINGS(twisty) {
   function("validateArtifactJSON", &artifact::validate_json);
   function("createArtifactSession", &create_artifact_session, return_value_policy::take_ownership());
   function("createArtifactGeometryDefinition", &create_artifact_geometry, return_value_policy::take_ownership());
+  function("createArtifactGeometryWithPayload", &create_artifact_geometry_with_payload, return_value_policy::take_ownership());
 #ifndef TWISTY_ARTIFACT_ONLY
   function("compileExecutionJSON", &compile_execution);
   function("compilePuzzleJSON", &twisty::language::compile_json);

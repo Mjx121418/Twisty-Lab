@@ -11,6 +11,9 @@ Phases 2–3 add compiler-independent descriptors and a
 [source-free artifact API](docs/kernel-api.md#source-free-artifact-api-1), with
 separate native/WASM consumers for Cube and Bandage. Run `npm run check:artifacts`
 after `npm run build:kernel` to verify the installed artifact contract.
+Phase 4 adds [interpretation and realization contracts](docs/kernel-api.md#interpretation-2-and-realization-envelope-1)
+for the remaining geometric backends; `npm run check:interpretations` verifies
+all 48 realizations through compiler-free native and WASM consumers.
 
 The [abstract core](docs/core-language.md#compact-format-version-3) supports finite
 group actions on placement collections and shared reference-based twist families.
