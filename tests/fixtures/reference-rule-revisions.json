@@ -1,0 +1,31 @@
+{
+  "formatVersion": 1,
+  "baselineCommit": "20fcdce262471402a3e95b692d62a62a9c77ef91",
+  "reason": "The accepted cube-orientation revision regenerates Melty solid-conflict and cut-alignment guards. Placement identities and effective movement maps remain unchanged.",
+  "revisions": {
+    "melty-a": {
+      "commit": "5bebd9a8eb7efdf5f823ab6d591d00fb0f97faad",
+      "legacyDefinitionDigest": "8e029f9a920e99c128669bc4a21a858b539b451cf039174645351852c172995c",
+      "packageDigest": "880ef9a9d0b6fb2ac4b2b60f4f5487c4ff794f6038a7cb0c9c0d57a02ed63d54",
+      "definitionDigest": "7a66f48e17172fe192e501d470612bf58b497dc65be2d8121c3b6c7812cd9d15"
+    },
+    "melty-b": {
+      "commit": "5bebd9a8eb7efdf5f823ab6d591d00fb0f97faad",
+      "legacyDefinitionDigest": "2440eb9e84e993d80d45e2535b0e1b836c96051f37c74441e02b239c3ef87339",
+      "packageDigest": "5e85f0a3aa891812a8d43724af2be6751a58199ad0af1f6da58b606e2d8fc409",
+      "definitionDigest": "ddc703141406fc5dbb9e2059abe293ea1e09693d53a5a5db47be144ed9d36b42"
+    },
+    "melty-c": {
+      "commit": "5bebd9a8eb7efdf5f823ab6d591d00fb0f97faad",
+      "legacyDefinitionDigest": "cf2efa80084991e8e304e272ac0e8ec76da184734882cc28930796d588c17e7b",
+      "packageDigest": "2916a9cf0fd7990b1df795fd94c1fb8821f3c1ea7fa95b8fde0d5fef3516bd7f",
+      "definitionDigest": "c67b2f573fa5b2a5730700ec7c2b0fdaf89bbdbe7df9c68bf19c5f91d9ee05c1"
+    },
+    "melty-d": {
+      "commit": "5bebd9a8eb7efdf5f823ab6d591d00fb0f97faad",
+      "legacyDefinitionDigest": "58978dc488ae25b951e13a0a1cd420046389aa4685fda394a1d8fac9d793c34c",
+      "packageDigest": "424389e6af845b43dd0912433da42b90d38314dbbdfd94fc59fc5fec7797db02",
+      "definitionDigest": "d2b08f55cea35fa7c26403a50ea6b5377c5abc3fae68c16b94cf8b467b08f51a"
+    }
+  }
+}

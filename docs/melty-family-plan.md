@@ -46,6 +46,25 @@ fixed cube. Existing placement witnesses and geometric catalog-coverage audits
 are replayed against these new solids; the original research coordinate frame
 does not determine the cube's current orientation.
 
+The orientation revision `5bebd9a8eb7efdf5f823ab6d591d00fb0f97faad`
+regenerated collision/alignment guards and definition pins for all four families.
+The cube stays fixed while the analytic rays rotate, so those authored guards
+can differ from the earlier construction even with unchanged placement IDs and
+effective movement maps. Current source/catalog documents exactly match that
+accepted revision. The separate
+[`reference-rule-revisions.json`](../tests/fixtures/reference-rule-revisions.json)
+records its canonical package hashes and historically published definition pins.
+The original transport oracle remains immutable: tests reproduce its old
+compiler signatures and retain exact transport/identity comparisons, then check
+the revised packages against their explicit historical pins. An unregistered
+rule change or an altered compiled definition still fails.
+
+To audit these references, extract each recorded package from the declared
+commit and run `build/native/reference_parity --record` on that historical file.
+Its `packageDigest` must match the reference, and its `digest` must match both
+the reference and that commit's published `manifest.json` definition pin.
+The ordinary test never refreshes either reference file.
+
 | Family | Catalog placements | Witnessed placements | Witness nodes | Directed requests |
 | --- | ---: | ---: | ---: | ---: |
 | A | 2,320 | 1,466 | 6,818 | 72 |

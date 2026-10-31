@@ -99,11 +99,13 @@ Json snapshot(const Json &bundle) {
 } // namespace
 int main(int argc, char **argv) {
   try {
-    check(argc == 3, "Expected --record PACKAGE or --check ORACLE");
+    check(argc == 3 || argc == 4, "Expected --record PACKAGE or --check ORACLE [RULE_REVISIONS]");
     const auto input = Json::parse(read(argv[2]));
     if (std::string(argv[1]) == "--record") {
+      check(argc == 3, "Expected --record PACKAGE");
       auto out = snapshot(input);
       out["package"] = input;
+      out["packageDigest"] = sha256(input.dump());
       out["digest"] = Execution::from_source(input.dump())->definition()->digest;
       std::cout << out.dump() << '\n';
     } else {
@@ -115,13 +117,40 @@ int main(int argc, char **argv) {
         check(Execution::from_source(old->definition_json().dump())->definition()->digest == input.at("digest"),
               "Old definition did not round trip");
       }
+      // A declared later authoring revision must never hide compiler drift in
+      // the original source. Reproduce every frozen signature first.
+      const auto frozen = snapshot(input.at("package"));
+      for (const auto *key : {"semantics", "maps", "moveMaps", "lookupChecksum"})
+        check(frozen.at(key) == input.at(key), std::string("Frozen ") + key + " changed for " + input.at("name").get<std::string>());
       auto current = Json::parse(read("packages/" + input.at("name").get<std::string>() + "/package.json"));
       const auto actual = snapshot(current);
-      for (const auto *key : {"semantics", "maps", "moveMaps", "lookupChecksum"})
+      for (const auto *key : {"maps", "moveMaps", "lookupChecksum"})
         check(actual.at(key) == input.at(key), std::string("Changed ") + key + " for " + input.at("name").get<std::string>());
+      Json revision_commit = nullptr;
+      auto revisions = Json::object();
+      if (argc == 4) {
+        const auto document = Json::parse(read(argv[3]));
+        check(document.at("formatVersion") == 1 && document.at("revisions").is_object(), "Unsupported rule revisions");
+        revisions = document.at("revisions");
+      }
+      const auto name = input.at("name").get<std::string>();
+      if (revisions.contains(name)) {
+        const auto &revision = revisions.at(name);
+        check(revision.at("legacyDefinitionDigest") == input.at("digest"), "Rule revision has the wrong legacy definition pin");
+        check(revision.at("packageDigest") == sha256(current.dump()), "Revised source/catalog differs from its historical reference");
+        const auto execution = Execution::from_source(current.dump());
+        check(revision.at("definitionDigest") == execution->definition()->digest, "Revised compiled definition differs from its historical pin");
+        // The orientation change preserves identities, choices and transport,
+        // while deliberately regenerating guards against different solids.
+        for (const auto *key : {"pieces", "placements", "events", "choiceSlots", "choiceValues", "initial"})
+          check(actual.at("semantics").at(key) == input.at("semantics").at(key), std::string("Changed ") + key + " across rule revision");
+        revision_commit = revision.at("commit");
+      } else {
+        check(actual.at("semantics") == input.at("semantics"), "Changed semantics for " + name + " without a declared rule revision");
+      }
       std::cout << Json{{"name", input.at("name")}, {"beforeBytes", input.at("storageBytes")},
                         {"afterBytes", actual.at("storageBytes")}, {"beforeLookupNs", input.at("lookupNanoseconds")},
-                        {"afterLookupNs", actual.at("lookupNanoseconds")}}.dump() << '\n';
+                        {"afterLookupNs", actual.at("lookupNanoseconds")}, {"ruleRevision", revision_commit}}.dump() << '\n';
     }
   } catch (const std::exception &e) { std::cerr << e.what() << '\n'; return 1; }
 }

@@ -71,12 +71,17 @@ artifact consumers, 184 artifact checks, TypeScript checks, and both packaging
 commands. All 146 runtime artifact hashes remain unchanged, and reference
 publication preserves package documentation.
 
-The full native suite passes 36 of 37 tests. The pre-existing
-`reference_transport_parity` failure starts at Melty A: the immutable language-2
-oracle and current language-3 package have identical effective transport maps and
-lookup checksums, but different predicate signatures. All current package bytes
-match the preceding commit. The oracle is retained unchanged; resolving that
-older structural comparison is separate from this tool migration.
+The initial full native run passed 36 of 37 tests. Follow-up investigation traced
+`reference_transport_parity` to the accepted Melty cube-orientation revision
+`5bebd9a`, which regenerated collision/alignment guards and definition pins before
+this migration. The language-version difference alone does not explain the
+mismatch. All four current Melty source/catalog documents exactly match that
+historical revision. The test now retains strict original compiler signatures,
+effective transport maps and identities, and checks revised rules against
+separate historical package hashes and compiled definition pins. The immutable
+oracle and production puzzle data remain unchanged. The previously failing test
+now passes all 11 originals; eight policy checks reject undeclared rule changes,
+altered legacy/current pins, changed frozen signatures and transport drift.
 
 The recommended direction is to introduce a dedicated authoring CLI, backed by
 reusable compiler libraries, that emits validated runtime artifacts. Preserve
