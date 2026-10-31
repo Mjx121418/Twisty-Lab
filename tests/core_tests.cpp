@@ -1,4 +1,5 @@
 #include "twisty/completion.hpp"
+#include "twisty/authoring/compiler.hpp"
 #include <iostream>
 #include <map>
 

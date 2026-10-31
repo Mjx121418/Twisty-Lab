@@ -42,18 +42,19 @@ target_include_directories(puzzle_core PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_compile_features(puzzle_core PUBLIC cxx_std_20)
 target_link_libraries(puzzle_core PUBLIC project_options)
+add_library(puzzle_runtime src/runtime.cpp src/completion.cpp)
+target_link_libraries(puzzle_runtime PUBLIC puzzle_core)
 add_library(puzzle_language
   src/authoring/compiler.cpp
   src/authoring/compact.cpp
   src/authoring/compact_cube.cpp
   src/authoring/cube.cpp
   src/authoring/gear.cpp
-  src/completion.cpp
   src/language_api.cpp)
-target_link_libraries(puzzle_language PUBLIC puzzle_core puzzle_symmetry json_headers)
+target_link_libraries(puzzle_language PUBLIC puzzle_runtime puzzle_symmetry json_headers)
 
 add_library(puzzle_execution src/execution.cpp src/controller/catalog.cpp)
-target_link_libraries(puzzle_execution PUBLIC puzzle_catalog puzzle_language)
+target_link_libraries(puzzle_execution PUBLIC puzzle_catalog puzzle_runtime PRIVATE puzzle_language)
 
 add_library(puzzle_session src/session.cpp src/notation.cpp)
 target_link_libraries(puzzle_session PUBLIC puzzle_execution)
@@ -75,7 +76,7 @@ target_link_libraries(puzzle_geometry PUBLIC puzzle_execution)
 
 add_library(puzzle_kernel INTERFACE)
 target_link_libraries(puzzle_kernel INTERFACE puzzle_controller puzzle_session puzzle_geometry puzzle_language)
-foreach(component IN ITEMS catalog execution session controller geometry symmetry core language kernel)
+foreach(component IN ITEMS catalog execution session controller geometry symmetry core runtime language kernel)
   add_library(Twisty::${component} ALIAS puzzle_${component})
   set_target_properties(puzzle_${component} PROPERTIES EXPORT_NAME ${component})
 endforeach()
@@ -93,7 +94,7 @@ if(EMSCRIPTEN)
     -sMAXIMUM_MEMORY=536870912 -sSTACK_SIZE=1048576
     --emit-tsd "${CMAKE_SOURCE_DIR}/kernel/generated/twisty.d.mts")
 else()
-  install(TARGETS puzzle_catalog puzzle_execution puzzle_session puzzle_controller puzzle_geometry puzzle_symmetry puzzle_core puzzle_language puzzle_kernel
+  install(TARGETS puzzle_catalog puzzle_execution puzzle_session puzzle_controller puzzle_geometry puzzle_symmetry puzzle_core puzzle_runtime puzzle_language puzzle_kernel
     json_headers project_options EXPORT TwistyKernelTargets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -120,6 +121,9 @@ else()
   target_link_libraries(melty_solids PRIVATE project_options)
   target_compile_options(melty_solids PRIVATE -O2)
   if(BUILD_TESTING)
+    add_executable(runtime_tests examples/runtime/main.cpp)
+    target_link_libraries(runtime_tests PRIVATE puzzle_runtime)
+    add_test(NAME runtime_descriptors COMMAND runtime_tests)
     add_executable(controller_tests tests/controller_tests.cpp)
     target_link_libraries(controller_tests PRIVATE puzzle_kernel)
     target_compile_definitions(controller_tests PRIVATE PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
@@ -172,6 +176,7 @@ else()
     add_test(NAME orbifold333_packages COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/orbifold333_packages.py)
     add_test(NAME runtime_has_no_legacy_backend COMMAND ${Python3_EXECUTABLE}
       ${CMAKE_SOURCE_DIR}/tests/runtime_boundary.py
+      $<TARGET_FILE:puzzle_runtime>
       $<TARGET_FILE:puzzle_catalog> $<TARGET_FILE:puzzle_execution>
       $<TARGET_FILE:puzzle_session> $<TARGET_FILE:puzzle_geometry>)
     add_test(NAME gear_packages COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/gear_packages.py)

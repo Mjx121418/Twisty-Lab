@@ -7,8 +7,14 @@ the runtime.
 Phase 1 now has [draft contracts and acceptance gates](contracts/authoring-runtime.md),
 structural/hash conformance checks, and a frozen native/WASM baseline across seven
 puzzle families. [Initial measurements](contracts/baseline-measurements.md) record
-the method and observations. Run `npm run check:architecture` to verify the baseline;
-the new artifact loader and runtime separation remain subsequent phases.
+the method and observations. Run `npm run check:architecture` to verify the baseline.
+
+The Phase 2 extraction adds compiler-independent `runtime.hpp` descriptors and
+`Twisty::runtime` completion/discovery services, with controller route and piece
+support queries consuming compiled bindings. The source-free loader remains
+Phase 3. The tables below describe the original review baseline; see the current
+[runtime API](kernel-api.md#compiler-independent-runtime-descriptors) for the
+implemented boundary.
 
 The recommended direction is to introduce a dedicated authoring CLI, backed by
 reusable compiler libraries, that emits validated runtime artifacts. Preserve

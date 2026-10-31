@@ -14,7 +14,12 @@ All predicates lower to `IN` and `RANGE` instructions. Constants are references 
 
 Selections decode the supplied choices. Local requirements and interaction clauses are tested on the original source, transports run simultaneously, and the same invariant is evaluated afresh on the tentative target. Missing transport rows mean no participation. Explicit self-loops retain participation and their opaque events. Multiple writers of a piece reject the tuple, even when their endpoints match. This AST uses one choice per domain and disjoint piece families, so its compiler structurally excludes conflicting local writers; the low-level executor also checks them defensively.
 
-`bind_profile()` and `discover()` are outside the executor:
+`bind_profile()` and `discover()` are outside the executor.
+
+These services live in `Twisty::runtime` and `twisty::runtime`, with the existing
+`language::` names retained as source API aliases. `twisty/completion.hpp` includes
+only compiler-independent runtime descriptors; source compiler calls require
+`twisty/authoring/compiler.hpp`. See the [runtime API](kernel-api.md#compiler-independent-runtime-descriptors).
 
 - Binding selects an explicitly named profile or an author-declared default whose state-only `when` predicate holds. Without either, it requests a choice. It never picks the first profile or claims a profile exhausts the relation. A selected tuple still needs execution permission.
 - Discovery streams candidate tuples under separate candidate and result limits. `complete: false` means the search stopped early. An empty incomplete result proves nothing about the existence of a permitted tuple. `complete: true` means every tuple was checked. This is a small bounded exploration helper, not a general-purpose solver.

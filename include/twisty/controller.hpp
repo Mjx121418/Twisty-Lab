@@ -26,6 +26,8 @@ public:
   };
   static std::shared_ptr<const ControlCatalog> compile(const Definition &, const Json &source,
                                                        const Json &controls);
+  static std::shared_ptr<const ControlCatalog> compile(const Definition &, const runtime::Bindings &,
+                                                       const Json &controls);
   const Json &json() const {
     return wire_;
   }

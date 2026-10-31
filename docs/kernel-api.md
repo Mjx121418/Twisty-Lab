@@ -6,6 +6,51 @@ The current kernel version is `0.7.0`, public API version `7`, and frame-buffer 
 
 The [puzzle language API](core-language.md), advertised as `languageAPIVersion = 3`, exposes the JSON language and domain-free executor through `Twisty::core`, `Twisty::language`, WASM `Puzzle`, and the TypeScript `Puzzle` adapter. Completion selection and bounded discovery are separate from permission checking. The cube/bandage authoring library is exposed as C++ `language::cube_module()`, WASM `cubeModuleJSON()`, and TypeScript `createCubeSource()`; `authoringLibraries` lists the supported models. `Twisty::symmetry` provides the shared standard-C++ finite-group utilities. Every shipped preset, including Bagua and custom Gear masks, uses the same core through an explicit package adapter. The pure program preview remains separate from the persisted definition format. Current session schemas refer to the standalone state schema; the retired finite-definition schema is not shipped.
 
+## Compiler-independent runtime descriptors
+
+`Twisty::runtime` links only `Twisty::core`. Include `twisty/runtime.hpp` for
+`runtime::Profile`, `RequestBinding`, `Bindings`, `MovementBinding`, and
+`CompiledPuzzle`, and `twisty/completion.hpp` for `runtime::bind_profile`,
+`bind_default_profiles`, `discover`, and `rejection_inputs`. These headers and
+the library require neither JSON nor the source compiler or geometric interpreter.
+The [numeric runtime example](../examples/runtime/main.cpp) links this target in
+an independently installed consumer.
+
+Descriptors are owning C++ values, shared as const by an execution context.
+`CompiledPuzzle` owns its validated `core::Program` and symbolic/completion data.
+The compiler emits these descriptors; `language::Profile`, `RequestBinding`,
+`Bindings`, and `CompiledPuzzle` remain aliases, and the `language::` completion
+functions remain available through using declarations. Include
+`twisty/authoring/compiler.hpp` explicitly when calling source compiler functions;
+`completion.hpp` no longer includes it transitively. Rebuild native consumers
+when updating libraries and headers together.
+
+`Bindings::movements[slot][choice]` is a `MovementBinding` naming an action slice
+through `first_action` and `action_count`. It includes an empty idle slice at
+choice zero and preserves the exact per-move piece scope. It is not a dense
+placement table. `runtime::movement_participates(puzzle, slot, choice, piece,
+placement)` takes global core piece/placement indices and checks that scope and
+the exact transport support. A defined self-loop participates. The query is
+structural: it does not evaluate request permission or profile availability.
+Unknown piece/placement indices use `core.input`; missing or out-of-range movement
+bindings use `runtime.binding`. Queries own their results and expose no buffers.
+Compiler-produced bindings have validated program references; manually assembled
+descriptors must preserve those same relationships.
+
+`ControlCatalog::compile(definition, bindings, controls)` resolves route profiles
+from compiled `runtime::Bindings`. The source-taking overload remains a compiler
+adapter. Piece-to-family queries inspect compiled movement/action scopes rather
+than the canonical source AST, including explicit piece subsets and nondefault
+route completions. Only actual dispatch plans test permission.
+
+The movement slices are runtime metadata and are deliberately omitted from
+existing inspection and definition serialization, preserving their canonical
+bytes and digests. `CompiledPuzzle::source_version` remains the legacy inspection
+encoding tag, not an executable rule. This extraction changes no WASM/TypeScript
+method, API version, puzzle format, session format, or geometry/buffer layout.
+Session/package loading still uses the compiler adapter; a source-free artifact
+loader is a subsequent step. The full WASM module still includes authoring.
+
 ## API 7 correspondence anchors and placement references
 
 A `PositionMap` is an injective partial map between two explicit finite spaces:
@@ -245,10 +290,10 @@ cmake --install build/native --prefix /your/kernel/install
 
 This builds the C++ libraries and WASM runtime, and assembles the independent ES-module package in `build/kernel/`. It does not build or start the React/Three.js app. Nothing is published to a registry. Copy the entire `build/kernel/` directory to another project or install that local directory as an npm package. Its runtime has no external JavaScript dependencies. TypeScript declarations include both the convenient adapter and generated low-level bindings.
 
-The native package exports `Twisty::core`, `Twisty::language`, `Twisty::execution`, `Twisty::symmetry`, `Twisty::session`, `Twisty::geometry`, `Twisty::catalog`, and aggregate `Twisty::kernel` targets. A consumer can use:
+The native package exports `Twisty::core`, `Twisty::runtime`, `Twisty::language`, `Twisty::execution`, `Twisty::symmetry`, `Twisty::session`, `Twisty::controller`, `Twisty::geometry`, `Twisty::catalog`, and aggregate `Twisty::kernel` targets. A consumer can use:
 
 ```cmake
-find_package(TwistyKernel 0.5 CONFIG REQUIRED)
+find_package(TwistyKernel 0.7 CONFIG REQUIRED)
 target_link_libraries(my_frontend PRIVATE Twisty::kernel)
 ```
 

@@ -66,28 +66,10 @@ Json Controller::read_families_for_pieces(const State &s, const std::vector<std:
     if (found == definition.pieces.end())
       throw DiagnosticError("controls.piece", "/pieces", "Unknown selected piece: " + id);
     const auto p = static_cast<Index>(found - definition.pieces.begin());
-    Selection selection{found->domain, {}};
-    const auto &source = definition.canonical.at("source").at("domains").at(found->domain);
-    for (const auto &move : source.at("moves")) {
-      if (move.contains("pieces") && !std::any_of(move.at("pieces").begin(), move.at("pieces").end(),
-                                                [&](const auto &piece) { return piece.template get<std::string>() == id; }))
-        continue;
-      // Inspect the chosen local move's support, rather than planning every
-      // target or assuming that the route uses its request's default profile.
-      // The existing view supplies shared program/global placement indices.
-      bool participates = false;
-      if (move.contains("map")) {
-        if (!definition.operations.empty()) {
-          const auto &view = *definition.operations.front().roles[found->domain].view;
-          participates = view.program->transport(move.at("map").get<Index>(),
-                                                  view.placements->at(s.placement_of[p])).has_value();
-        }
-      } else {
-        participates = move.at("transport").contains(definition.domains[found->domain].placements[s.placement_of[p]].key);
-      }
-      if (participates)
-        selection.moves.insert(move.at("id").get<std::string>());
-    }
+    // Compiled action scopes preserve explicit piece subsets and self-loops.
+    // Structural matching remains independent of each route's permission.
+    const auto moves = execution_->participating_moves(s, p);
+    Selection selection{found->domain, {moves.begin(), moves.end()}};
     selected.push_back(std::move(selection));
     pieces.push_back(id);
   }

@@ -4,6 +4,7 @@
 
 namespace twisty {
 class ControlCatalog;
+class Controller;
 // Grouped State/Definition are symbolic presentation and interpreter catalogs.
 // Permission, validity, and goals are evaluated only by the domain-free Program.
 struct CompletedTransition : Transition {
@@ -37,9 +38,10 @@ public:
   Index event_operation(Index piece, const std::string &event) const;
 
 private:
+  friend class Controller;
   Execution(Json source, Json catalog);
   std::shared_ptr<const Definition> definition_;
-  std::shared_ptr<const language::CompiledPuzzle> puzzle_;
+  std::shared_ptr<const runtime::CompiledPuzzle> puzzle_;
   std::shared_ptr<const ControlCatalog> controls_;
   std::vector<std::vector<Index>> global_of_local_;
   std::vector<Index> local_of_global_;
@@ -50,6 +52,8 @@ private:
   std::vector<std::map<std::string, std::string>> inverse_moves_;
   core::State flatten(const State &) const;
   State display(const core::State &) const;
+  // Controller inputs have already passed the public state/session checks.
+  std::vector<std::string> participating_moves(const State &, Index piece) const;
 };
 // Compiles an explicit relational package or Gear module; failures
 // retain the structured compiler diagnostic rather than crossing the ABI.

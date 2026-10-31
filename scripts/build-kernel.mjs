@@ -33,6 +33,7 @@ if (process.argv.includes('--stage-web')) {
   }
   await cp(new URL('../examples/canvas/', import.meta.url), new URL('examples/canvas/', output), { recursive: true });
   await cp(new URL('../examples/language/', import.meta.url), new URL('examples/language/', output), { recursive: true });
+  await cp(new URL('../examples/runtime/', import.meta.url), new URL('examples/runtime/', output), { recursive: true });
   await mkdir(new URL('schemas/', output));
   await cp(new URL('../schemas/puzzle.schema.json', import.meta.url), new URL('schemas/puzzle.schema.json', output));
   for (const file of ['puzzle-v2.schema.json', 'puzzle-v3.schema.json', 'compact.schema.json', 'compact-v2.schema.json', 'package.schema.json', 'gear-source.schema.json', 'session-v2.schema.json', 'state.schema.json', 'realization.schema.json'])

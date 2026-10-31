@@ -17,18 +17,26 @@ try {
   const headers = await readdir(join(installed, 'include/twisty'));
   assert.ok(headers.includes('catalog.hpp'));
   assert.ok(headers.includes('core.hpp') && headers.includes('completion.hpp'));
+  assert.ok(headers.includes('runtime.hpp'));
   assert.ok(!headers.includes('flat_core.hpp') && !headers.includes('compiler.hpp'));
   assert.ok(!headers.some((name) => name.startsWith('relational_')));
   assert.match(await readFile(join(installed, 'include/twisty/core.hpp'), 'utf8'), /namespace twisty::core/);
   assert.match(await readFile(join(installed, 'include/twisty/authoring/compiler.hpp'), 'utf8'), /namespace twisty::language/);
   const exported = await readFile(join(installed, 'lib/cmake/TwistyKernel/TwistyKernelTargets.cmake'), 'utf8');
   assert.match(exported, /Twisty::core/);
+  assert.match(exported, /Twisty::runtime/);
   assert.match(exported, /Twisty::language/);
   assert.ok(!/Twisty::(?:flat_core|relational|compiler)|legacy_test_reference/.test(exported));
   const consumer = join(temporary, 'consumer');
   await cp(new URL('../examples/native/', import.meta.url), consumer, { recursive: true });
   execFileSync('cmake', ['-S', consumer, '-B', join(consumer, 'build'), '-G', 'Ninja', `-DCMAKE_PREFIX_PATH=${installed}`], { stdio: 'inherit' });
   execFileSync('cmake', ['--build', join(consumer, 'build'), '--parallel', '1'], { stdio: 'inherit' });
+  const runtimeConsumer = join(temporary, 'runtime-consumer');
+  await cp(new URL('../examples/runtime/', import.meta.url), runtimeConsumer, { recursive: true });
+  execFileSync('cmake', ['-S', runtimeConsumer, '-B', join(runtimeConsumer, 'build'), '-G', 'Ninja',
+    `-DCMAKE_PREFIX_PATH=${installed}`], { stdio: 'inherit' });
+  execFileSync('cmake', ['--build', join(runtimeConsumer, 'build'), '--parallel', '1'], { stdio: 'inherit' });
+  assert.match(execFileSync(join(runtimeConsumer, 'build/runtime_consumer'), { encoding: 'utf8' }), /Compiler-independent runtime/);
   const javascript = join(temporary, 'javascript');
   const published = new URL('../build/kernel/', import.meta.url);
   const publishedData = join(fileURLToPath(published), 'examples/canvas/data');

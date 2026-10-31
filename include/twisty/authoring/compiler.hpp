@@ -1,32 +1,14 @@
 #pragma once
-#include "../core.hpp"
+#include "twisty/runtime.hpp"
 #include <nlohmann/json.hpp>
 
 namespace twisty::language {
 using Json = nlohmann::json;
-struct Profile {
-  std::string id;
-  core::Choices choices;
-  core::Ref when = core::true_ref;
-};
-struct RequestBinding {
-  std::string id;
-  std::vector<Profile> profiles;
-  std::optional<core::Index> default_profile;
-};
-struct Bindings {
-  std::string puzzle_id;
-  std::vector<std::string> pieces, placements, events, choice_slots;
-  std::vector<std::vector<std::string>> choice_values;
-  std::vector<RequestBinding> requests;
-  std::vector<std::vector<core::Index>> move_maps;
-  std::vector<std::string> collection_names;
-};
-struct CompiledPuzzle {
-  core::Program program;
-  Bindings bindings;
-  int source_version = 1;
-};
+// Source-facing names remain available; their data is owned by the runtime.
+using runtime::Profile;
+using runtime::RequestBinding;
+using runtime::Bindings;
+using runtime::CompiledPuzzle;
 
 // Version 1 of the initial, expanded JSON AST. Text syntax and module expansion
 // will use this compiler in later migration milestones.

@@ -188,7 +188,8 @@ After changing authoring code or data, run `npm run build:puzzles` and review bo
 Authoring sources live in [`src/authoring`](src/authoring): the language compiler, Cube/Gear generators, and finite-group utilities. Geometric interpreter sources live in [`src/interpreter`](src/interpreter). The minimal executor (`core.cpp`), completion helpers, session and execution adapters, serialization, and native/WASM entry points remain directly in `src`. Public authoring headers live under `include/twisty/authoring`; `include/twisty/core.hpp` exposes the executor. API 4 uses the core/language names throughout C++, WASM, and the SDK; see [the naming migration](docs/kernel-api.md#api-4-naming).
 
 - `puzzle_core`: domain-free state, predicates, sparse transports, and explicit-tuple execution.
-- `puzzle_language`: JSON language compiler, completion helpers, and puzzle authoring libraries.
+- `puzzle_runtime`: compiler-independent descriptors, completion, discovery, and structural movement participation; links only the numeric core.
+- `puzzle_language`: JSON language compiler and puzzle authoring libraries, producing runtime descriptors.
 - `puzzle_symmetry`: finite permutation/group/coset utilities.
 - `puzzle_catalog`: symbolic interpreter metadata, wire serialization, diagnostics, and digests.
 - `puzzle_execution`: validated mapping between the core program and symbolic interpreter/session data.

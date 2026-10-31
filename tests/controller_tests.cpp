@@ -111,6 +111,19 @@ int main() {
       check(completion.plan_to(alternate->definition()->initial,
                 {{"family", "mixed"}, {"targets", {{"test", "c"}}}}).at("status") == "Blocked",
             "Structural matching bypassed completion permissions");
+      // This map includes center/U's self-loop, but the declared local move
+      // excludes that piece. A transport alone cannot describe participation.
+      for (auto &domain : cube["source"]["domains"])
+        if (domain.at("id") == "center")
+          for (auto &move : domain["moves"])
+            if (move.at("id") == "U" || move.at("id") == "U'")
+              move["pieces"] = {"center/D"};
+      auto scoped = Execution::from_source(cube.dump());
+      Controller scopes(scoped);
+      check(scopes.families_for_pieces(scoped->definition()->initial, {"center/U"}).at("families").empty(),
+            "Family selection ignored the local move's explicit piece subset");
+      check(scopes.families_for_pieces(scoped->definition()->initial, {"center/F"}).at("families") ==
+                Json::array({"mixed"}), "Piece scoping lost the alternate completion's support");
     }
     auto intent = Json{{"family", "UF"}, {"targets", {{"UF", "d"}}}};
     auto before = s.save();

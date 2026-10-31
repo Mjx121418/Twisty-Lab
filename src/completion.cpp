@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <set>
 
-namespace twisty::language {
+namespace twisty::runtime {
 namespace {
 std::optional<core::Choices> bound(const CompiledPuzzle &puzzle, const Profile &candidate,
                                    std::span<const core::Index> state) {
@@ -121,4 +121,4 @@ std::vector<core::Index> rejection_inputs(const core::Program &program, core::In
   }
   return {inputs.begin(), inputs.end()};
 }
-} // namespace twisty::language
+} // namespace twisty::runtime

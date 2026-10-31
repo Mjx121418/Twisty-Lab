@@ -1,6 +1,7 @@
 #include "authoring/compact.hpp"
 #include "json_input.hpp"
 #include "twisty/completion.hpp"
+#include "twisty/authoring/compiler.hpp"
 #include <algorithm>
 
 namespace twisty::language {

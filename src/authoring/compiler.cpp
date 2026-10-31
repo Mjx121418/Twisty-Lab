@@ -318,6 +318,7 @@ CompiledPuzzle compile_checked(const Json &source) {
     c.bindings.choice_slots.push_back(id);
     c.bindings.choice_values.push_back({"idle"});
     c.bindings.move_maps.push_back({core::no_index});
+    c.bindings.movements.push_back({{0, 0}});
     DomainData catalog;
     for (const auto &q : names(domain.at("placements"))) {
       const auto index = static_cast<Index>(c.bindings.placements.size());
@@ -461,8 +462,10 @@ CompiledPuzzle compile_checked(const Json &source) {
       if (event == c.bindings.events.end())
         c.bindings.events.push_back(event_name);
       const auto event_id = find(c.bindings.events, event_name);
+      const auto first_action = static_cast<Index>(c.data.actions.size());
       for (auto piece : pieces)
         c.data.actions.push_back({piece, map, selected, event_id});
+      c.bindings.movements[d].push_back({first_action, static_cast<Index>(pieces.size())});
       expect(c.data.actions.size() <= 1000000, "Action expansion exceeds the compiler limit");
     }
   }

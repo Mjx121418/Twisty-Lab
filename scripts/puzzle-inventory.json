@@ -36,6 +36,7 @@
     "src/execution.cpp",
     "src/language_api.cpp",
     "src/completion.cpp",
+    "src/runtime.cpp",
     "src/sha256.cpp",
     "src/json_input.hpp",
     "third_party/nlohmann/json.hpp",

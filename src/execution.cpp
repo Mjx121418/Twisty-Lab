@@ -6,6 +6,12 @@
 #include <set>
 
 namespace twisty {
+// Compatibility source adapter. Runtime route resolution uses compiled bindings.
+std::shared_ptr<const ControlCatalog> ControlCatalog::compile(const Definition &definition,
+                                                              const Json &source, const Json &controls) {
+  const auto puzzle = language::compile(source);
+  return compile(definition, puzzle.bindings, controls);
+}
 Json compile_execution_json(const std::string &text) {
   try {
     return {{"status", "Compiled"},
@@ -320,7 +326,7 @@ Execution::Execution(Json source, Json catalog)
   if (catalog.contains("symmetry"))
     definition->canonical["symmetry"] = {{"members", catalog.at("symmetry")}};
   if (catalog.contains("controls"))
-    controls_ = ControlCatalog::compile(*definition, source, catalog.at("controls"));
+    controls_ = ControlCatalog::compile(*definition, bindings, catalog.at("controls"));
   definition->canonical["source"] = std::move(source);
   definition->canonical["catalog"] = std::move(catalog);
   // Versioned canonical bytes cover the executable, completion policy, symbolic
@@ -383,6 +389,16 @@ State Execution::decode(const Json &wire) const {
 bool Execution::is_solved(const State &state) const {
   return puzzle_->program.solved(flatten(state));
 }
+std::vector<std::string> Execution::participating_moves(const State &state, Index piece) const {
+  const auto domain = definition_->pieces.at(piece).domain;
+  const auto placement = global_of_local_.at(domain).at(state.placement_of.at(piece));
+  const auto &values = puzzle_->bindings.choice_values.at(domain);
+  std::vector<std::string> moves;
+  for (Index choice = 1; choice < values.size(); ++choice)
+    if (runtime::movement_participates(*puzzle_, domain, choice, core_piece_of_display_.at(piece), placement))
+      moves.push_back(values[choice]);
+  return moves;
+}
 ExecutionPlan Execution::plan(const State &state, const std::string &operation,
                               const Json &named_choices) const {
   validate(state);
@@ -392,7 +408,7 @@ ExecutionPlan Execution::plan(const State &state, const std::string &operation,
   const auto before = flatten(state);
   std::optional<core::Choices> choices;
   if (named_choices.is_null())
-    choices = language::bind_profile(*puzzle_, request, before);
+    choices = runtime::bind_profile(*puzzle_, request, before);
   else {
     const auto names = named_choices.get<std::vector<std::string>>();
     if (names.size() != puzzle_->bindings.choice_slots.size())
@@ -413,7 +429,7 @@ ExecutionPlan Execution::plan(const State &state, const std::string &operation,
     std::set<std::string> inputs;
     const auto root = puzzle_->program.data().requests[request].relation;
     if (result.rejection == core::Rejection::relation)
-      for (const auto p : language::rejection_inputs(puzzle_->program, request, before, *choices))
+      for (const auto p : runtime::rejection_inputs(puzzle_->program, request, before, *choices))
         inputs.insert(puzzle_->bindings.pieces[p]);
     return {std::nullopt,
             {{"status", "Blocked"},
@@ -452,7 +468,7 @@ Json Execution::encode(const CompletedTransition &transition) const {
 Json Execution::legal(const State &state) const {
   auto requests = Json::array();
   const auto before = flatten(state);
-  const auto candidates = language::bind_default_profiles(*puzzle_, before);
+  const auto candidates = runtime::bind_default_profiles(*puzzle_, before);
   for (Index r = 0; r < candidates.size(); ++r) {
     if (candidates[r] && puzzle_->program.plan(r, before, *candidates[r]).transition) {
       auto choices = Json::array();
@@ -467,7 +483,7 @@ Json Execution::legal(const State &state) const {
 }
 Json Execution::candidates(const State &state) const {
   const auto source = flatten(state);
-  const auto candidates = language::bind_default_profiles(*puzzle_, source);
+  const auto candidates = runtime::bind_default_profiles(*puzzle_, source);
   auto requests = Json::array();
   for (Index r = 0; r < puzzle_->bindings.requests.size(); ++r)
     if (const auto &tuple = candidates[r]) {

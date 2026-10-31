@@ -1,7 +1,7 @@
 #pragma once
-#include "twisty/authoring/compiler.hpp"
+#include "twisty/runtime.hpp"
 
-namespace twisty::language {
+namespace twisty::runtime {
 // Selection policy and search live outside core::Program. A selected profile is
 // still only a candidate; the executor must check it against the relation.
 std::optional<core::Choices> bind_profile(const CompiledPuzzle &puzzle, core::Index request,
@@ -21,4 +21,13 @@ Discovery discover(const core::Program &program, core::Index request, std::span<
 std::vector<core::Index> rejection_inputs(const core::Program &, core::Index request,
                                           std::span<const core::Index> state,
                                           std::span<const core::Index> choices);
+} // namespace twisty::runtime
+
+// Preserve the source API without making runtime consumers include the compiler.
+namespace twisty::language {
+using runtime::bind_profile;
+using runtime::bind_default_profiles;
+using runtime::Discovery;
+using runtime::discover;
+using runtime::rejection_inputs;
 } // namespace twisty::language

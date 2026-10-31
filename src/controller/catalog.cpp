@@ -13,7 +13,8 @@ std::string symbol(const Json &value) {
 }
 } // namespace
 std::shared_ptr<const ControlCatalog> ControlCatalog::compile(const Definition &definition,
-                                                              const Json &source, const Json &wire) {
+                                                              const runtime::Bindings &bindings,
+                                                              const Json &wire) {
   auto result = std::make_shared<ControlCatalog>();
   result->wire_ = wire;
   require(wire.is_object() && wire.at("version") == 1, "Unsupported control catalog version.");
@@ -50,9 +51,9 @@ std::shared_ptr<const ControlCatalog> ControlCatalog::compile(const Definition &
     require(covered == stops, "Every declared stop needs a phase-reader placement.");
     result->drivers_.push_back(std::move(d));
   }
-  std::map<std::string, const Json *> requests;
-  for (const auto &r : source.at("requests"))
-    requests.emplace(r.at("id"), &r);
+  std::map<std::string, const runtime::RequestBinding *> requests;
+  for (const auto &r : bindings.requests)
+    requests.emplace(r.id, &r);
   std::size_t route_count = 0;
   std::map<std::pair<std::string, std::string>, std::shared_ptr<const std::vector<std::string>>> completions;
   for (const auto &entry : wire.at("families")) {
@@ -91,18 +92,19 @@ std::shared_ptr<const ControlCatalog> ControlCatalog::compile(const Definition &
               "Duplicate source/path route.");
       route.preferred = r.value("preferred", false);
       const auto &request = *requests.at(route.request);
-      const auto profile = r.value("profile", request.at("defaultProfile").get<std::string>());
-      const Json *completion = nullptr;
-      for (const auto &p : request.at("profiles"))
-        if (p.at("id") == profile)
+      require(request.default_profile.has_value(), "Route request needs a default completion profile.");
+      const auto profile = r.value("profile", request.profiles.at(*request.default_profile).id);
+      const runtime::Profile *completion = nullptr;
+      for (const auto &p : request.profiles)
+        if (p.id == profile)
           completion = &p;
       require(completion, "Unknown route completion profile.");
       auto &tuple = completions[{route.request, profile}];
       if (!tuple) {
         auto choices = std::make_shared<std::vector<std::string>>();
-        for (const auto &domain : source.at("domains"))
-          choices->push_back(
-              completion->at("choices").at(domain.at("id").get<std::string>()).get<std::string>());
+        require(completion->choices.size() == bindings.choice_slots.size(), "Route completion has wrong arity.");
+        for (Index slot = 0; slot < bindings.choice_slots.size(); ++slot)
+          choices->push_back(bindings.choice_values.at(slot).at(completion->choices[slot]));
         tuple = std::move(choices);
       }
       route.choices = tuple;
