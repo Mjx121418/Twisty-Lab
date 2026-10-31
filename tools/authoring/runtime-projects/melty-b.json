@@ -21,5 +21,10 @@
     ]
   },
   "includeLegacy": false,
-  "output": "../../../runtime-puzzles/melty-b"
+  "output": "../../../runtime-puzzles/melty-b",
+  "presentation": {
+    "version": 1,
+    "defaultAlgorithm": "U U'",
+    "instructions": "Face keys U R F D L B \u00b7 choose each cap independently \u00b7 hover for angles"
+  }
 }

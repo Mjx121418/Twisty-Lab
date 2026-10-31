@@ -1,3 +1,4 @@
+#include "twisty/contracts.hpp"
 #include "twisty/execution.hpp"
 #include "artifact_internal.hpp"
 #include <numeric>
@@ -17,7 +18,7 @@ std::shared_ptr<const Execution> Execution::with_interpretation(const std::strin
 void Execution::bind_interpretation(const Json &doc) {
   using namespace artifact::detail;
   fields(doc, {"kind", "contractVersion", "executionDigest", "interpretationDigest", "domains", "resources", "pieces", "placements", "certificates"});
-  require(doc.at("kind") == "twisty-interpretation" && (doc.at("contractVersion") == 1 || doc.at("contractVersion") == 2), "/", "Unsupported interpretation contract.");
+  require(doc.at("kind") == contracts::interpretation_kind && (doc.at("contractVersion") == contracts::interpretation_legacy_version || doc.at("contractVersion") == contracts::interpretation_version), "/", "Unsupported interpretation contract.");
   require(doc.at("executionDigest") == definition_->digest, "/executionDigest", "Interpretation pins another executable.", "artifact.digest_mismatch");
   pin(doc, "interpretationDigest");
   interpretation_version_ = index(doc.at("contractVersion"));

@@ -1,4 +1,5 @@
 #include "geometry_compiler.hpp"
+#include "backend_registry.hpp"
 #include "../artifact_internal.hpp"
 #include <algorithm>
 #include <cmath>
@@ -82,9 +83,7 @@ GeometryDefinition::GeometryDefinition(std::shared_ptr<const Execution> executio
   else if (document.value("kind", "") == "artifact-cube-euclidean")
     throw DiagnosticError("realization.definition", "/kind", "Artifact geometry requires an artifact execution context.");
   const auto digest = execution->source_free() ? sha256(realization) : std::string{};
-  program_ = document.value("kind", "") == "s3-cell-turning"
-                 ? compile_s3(std::move(execution), document)
-                 : GeometryCompiler(std::move(execution), document, digest).compile();
+  program_ = detail::compile_geometry_backend(std::move(execution), document, digest);
 }
 GeometryDefinition::GeometryDefinition(std::shared_ptr<const Execution> execution,
                                        const std::string &interpretation, const std::string &realization)

@@ -1,3 +1,4 @@
+#include "twisty/contracts.hpp"
 #include "twisty/authoring/artifact.hpp"
 #include "twisty/authoring/cube.hpp"
 #include "twisty/artifact.hpp"
@@ -27,7 +28,7 @@ Json cube_artifacts(bool bandaged) {
     ci.push_back(std::move(inverses));
   }
   auto abstract = artifact::encode(*puzzle, ri, ci);
-  Json manifest{{"kind", "twisty-interpretation"}, {"contractVersion", 1}, {"executionDigest", abstract.at("executionDigest")},
+  Json manifest{{"kind", contracts::interpretation_kind}, {"contractVersion", contracts::interpretation_legacy_version}, {"executionDigest", abstract.at("executionDigest")},
     {"resources", def.cells}, {"domains", Json::array()}, {"pieces", Json::array()},
     {"placements", Json::array()}, {"certificates", Json::array()}};
   std::vector<Json> placements(b.placements.size());
@@ -83,7 +84,7 @@ Json interpretation_artifact(const Execution &execution) {
 Json interpretation_artifact(const Execution &execution, const Json &abstract) {
   const auto puzzle = execution.compiled_puzzle(); const auto &b = puzzle->bindings;
   const auto &def = *execution.definition();
-  Json manifest{{"kind", "twisty-interpretation"}, {"contractVersion", 2}, {"executionDigest", abstract.at("executionDigest")},
+  Json manifest{{"kind", contracts::interpretation_kind}, {"contractVersion", contracts::interpretation_version}, {"executionDigest", abstract.at("executionDigest")},
     {"resources", def.cells}, {"domains", Json::array()}, {"pieces", Json::array()},
     {"placements", Json::array()}, {"certificates", Json::array()}};
   std::vector<Json> placements(b.placements.size());

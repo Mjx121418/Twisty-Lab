@@ -70,7 +70,7 @@ class Project:
         self.path = Path(filename).resolve()
         require(self.path.stat().st_size <= 1024*1024, 'Project manifest exceeds 1 MiB.')
         self.document = read_json(self.path)
-        fields(self.document, ['kind','projectVersion','id','producer'], ['output','includeLegacy'])
+        fields(self.document, ['kind','projectVersion','id','producer'], ['output','includeLegacy','presentation'])
         require(type(self.document.get('includeLegacy',True)) is bool,'includeLegacy must be a boolean.')
         require(self.document['kind']=='twisty-authoring-project' and type(self.document['projectVersion']) is int and self.document['projectVersion']==1, 'Unsupported authoring project kind/version.')
         self.id = identifier(self.document['id'])
@@ -134,7 +134,7 @@ class Project:
             for destination,source in self.producer.get('inputs',{}).items(): inputs['seed:'+destination] = self.input(source)
             for name in self.spec['data']: inputs['tool:data/'+name] = PACKAGE/'data'/name
             # Only the selected reference descriptor enters this project's identity.
-        for name in ('__init__.py','environment.py','project.py','build.py','transaction.py','cli.py','twisty-author'):
+        for name in ('__init__.py','environment.py','project.py','build.py','transaction.py','cli.py','presentation.py','twisty-author'):
             inputs['tool:'+name] = PACKAGE/name
         inputs['tool:project.schema.json'] = PACKAGE/'project.schema.json'
         inputs['tool:models/__init__.py'] = PACKAGE/'models/__init__.py'

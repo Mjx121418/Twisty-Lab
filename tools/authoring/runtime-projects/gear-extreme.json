@@ -21,5 +21,10 @@
     ]
   },
   "includeLegacy": false,
-  "output": "../../../runtime-puzzles/gear-extreme"
+  "output": "../../../runtime-puzzles/gear-extreme",
+  "presentation": {
+    "version": 1,
+    "defaultAlgorithm": "R R'",
+    "instructions": "Face keys U R F D L B \u00b7 Shift for inverse"
+  }
 }

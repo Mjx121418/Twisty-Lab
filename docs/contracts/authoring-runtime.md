@@ -308,3 +308,14 @@ To capture a deliberately reviewed new baseline, use
 Timings and peak RSS are unpinned observations in
 `build/architecture/measurements.json`; they are not performance assertions. See
 the [initial measurement record](baseline-measurements.md) for method and limits.
+
+Phase 7 adds backend discovery to the current native/WASM observation without
+rewriting the Phase-1 oracle. Current native and WASM reports still compare in
+full. When comparing with the original frozen report, a separate gate validates
+registry version 1, registered IDs/versions/spaces, requirement membership, and
+exactly the two newly advertised legacy capabilities (`explicit-cube-tracks`,
+`uniform-cube-ports`). It then compares the original capability ordering and all
+other frozen fields exactly. Unknown capability additions, removed capabilities,
+unsupported backend versions and changes to other API fields remain failures.
+Dedicated negative tests exercise this gate. No rule, witness, state, save or
+geometry expectation is normalized or re-recorded.

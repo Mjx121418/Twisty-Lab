@@ -66,7 +66,9 @@
     "examples/artifact/validate.cpp",
     "src/runtime_api.cpp",
     "src/controller/controller.cpp",
-    "include/twisty/runtime_api.hpp"
+    "include/twisty/runtime_api.hpp",
+    "include/twisty/geometry_backend.hpp",
+    "include/twisty/contracts.hpp"
   ],
   "puzzles": [
     {

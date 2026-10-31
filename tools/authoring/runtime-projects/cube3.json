@@ -21,5 +21,10 @@
     ]
   },
   "includeLegacy": false,
-  "output": "../../../runtime-puzzles/cube3"
+  "output": "../../../runtime-puzzles/cube3",
+  "presentation": {
+    "version": 1,
+    "defaultAlgorithm": "R U R' U'",
+    "instructions": "Face keys U R F D L B \u00b7 Shift for inverse"
+  }
 }

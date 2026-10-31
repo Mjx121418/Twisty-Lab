@@ -13,5 +13,9 @@
     ]
   },
   "includeLegacy": false,
-  "output": "../../../runtime-puzzles/cell24"
+  "output": "../../../runtime-puzzles/cell24",
+  "presentation": {
+    "version": 1,
+    "defaultAlgorithm": "Xp_fXYZ Yp_vX (Xp_fXYZ Yp_vX)'"
+  }
 }

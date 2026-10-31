@@ -22,8 +22,12 @@ if(args.includes('--stage-web')) {
   const {version}=JSON.parse(await readFile(join(root,'package.json'),'utf8'));
   await writeFile(join(output,'package.json'),JSON.stringify({name:'@twisty/runtime',version,type:'module',
     exports:{'.':{types:'./runtime.d.ts',import:'./runtime.js'},'./artifact':{types:'./artifact.d.ts',import:'./artifact.js'},'./raw':'./generated/twisty-artifact.mjs','./wasm':'./generated/twisty-artifact.wasm'},
-    files:['runtime.js','runtime.d.ts','shared.js','shared.d.ts','artifact.js','artifact.d.ts','generated','examples','README.md',...(args.includes('--with-presets')?['data']:[])]},null,2)+'\n');
-  await cp(join(root,'docs/runtime-sdk.md'),join(output,'README.md'));
+    files:['runtime.js','runtime.d.ts','shared.js','shared.d.ts','artifact.js','artifact.d.ts','generated','examples','schemas','README.md','kernel-api.md',...(args.includes('--with-presets')?['data']:[])]},null,2)+'\n');
+  await writeFile(join(output,'README.md'),(await readFile(join(root,'docs/runtime-sdk.md'),'utf8')).replaceAll('docs/kernel-api.md','kernel-api.md'));
+  await cp(join(root,'docs/kernel-api.md'),join(output,'kernel-api.md'));
+  await mkdir(join(output,'schemas'));
+  for(const name of ['abstract-artifact','artifact-common','compact-v2','interpretation-v2','realization-envelope','backend-payload','artifact-backend','control-artifact','presentation-artifact','artifact-witness','session-v3'])
+    await cp(join(root,'schemas',name+'.schema.json'),join(output,'schemas',name+'.schema.json'));
   await cp(join(root,'examples/runtime-canvas'),join(output,'examples/canvas'),{recursive:true});
   if(args.includes('--with-presets')) {
     await checkRuntimeData();const inventory=await readInventory();

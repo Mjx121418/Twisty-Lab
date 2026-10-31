@@ -41,6 +41,54 @@ export type RuntimeBundle = {
 };
 export type RuntimeDocuments = { abstract: string; controls: string; presentation: string };
 export type RuntimeOptions = { wasmURL?: string | URL; locateFile?: (filename: string, directory: string) => string };
+export type GeometryBackendInfo = { registryVersion: 1; capabilities: string[]; backends: {
+  id: string; version: number; envelopeVersions: number[]; payloadVersions: number[];
+  capabilities: string[];
+  /** Intrinsic space ID. Scene/frame descriptors specify its metric and buffer semantics. */
+  space: 'R3' | 'E2' | 'S2' | 'S3';
+}[] };
+export function geometryBackends(module: { geometryBackendInfoJSON(): string }): GeometryBackendInfo {
+  const info = JSON.parse(module.geometryBackendInfoJSON()) as GeometryBackendInfo;
+  if (info.registryVersion !== 1) throw new Error('Unsupported geometry backend registry.');
+  return info;
+}
+export function validateMovementPresentation(definition: Pick<RuntimeDefinition, 'operations' | 'display'>): void {
+  const display = definition.display;
+  if (display === undefined) return;
+  const invalid = (): never => { throw new Error('Invalid movement presentation contract.'); };
+  const bounded = (value: unknown, min: number, max: number): value is string =>
+    typeof value === 'string' && Array.from(value).length >= min && Array.from(value).length <= max;
+  if (!display || display.version !== 1 || !display.operations || Array.isArray(display.operations) || !['moves','destinations','relative','cell-axes'].includes(display.interaction)) invalid();
+  const requests = new Map(definition.operations.map(op => [op.id, op]));
+  const families = new Set(definition.operations.map(op => op.family));
+  if (Object.keys(display.operations).length !== requests.size ||
+      !Array.isArray(display.familyOrder) || display.familyOrder.length !== families.size ||
+      new Set(display.familyOrder).size !== families.size || display.familyOrder.some(id => !families.has(id))) invalid();
+  const aliases = new Set(requests.keys());
+  for (const [id, entry] of Object.entries(display.operations)) {
+    if (!requests.has(id) || !entry || ![entry.label, entry.accessibleLabel].every(s => bounded(s,1,256)) ||
+        !Array.isArray(entry.aliases) || entry.aliases.length > 32 ||
+        (entry.angleDegrees !== undefined && (!Array.isArray(entry.angleDegrees) || !entry.angleDegrees.every(Number.isFinite)))) invalid();
+    for (const alias of entry.aliases) {
+      if (!bounded(alias,1,256) || aliases.has(alias)) invalid();
+      aliases.add(alias);
+    }
+  }
+  if (!display.familyProbes || Object.keys(display.familyProbes).length !== families.size) invalid();
+  for (const [family,id] of Object.entries(display.familyProbes)) if (!families.has(family) || requests.get(id)?.family !== family) invalid();
+  if (!display.keyboard || typeof display.keyboard !== 'object') invalid();
+  for (const candidates of Object.values(display.keyboard))
+    if (!Array.isArray(candidates) || !candidates.length || candidates.some(id => !requests.has(id))) invalid();
+  if (![display.instructions, display.defaultAlgorithm].every(s => bounded(s,0,4096))) invalid();
+}
+/** Resolves one explicit authoring alias. Algorithm syntax still uses request IDs. */
+export function resolveMovementAlias(definition: Pick<RuntimeDefinition, 'operations' | 'display'>, name: string): string {
+  validateMovementPresentation(definition);
+  if (definition.operations.some(op => op.id === name)) return name;
+  const match = Object.entries(definition.display?.operations ?? {}).find(([,entry]) => entry.aliases.includes(name));
+  if (!match) throw new Error('Unknown movement alias: '+name);
+  return match[0];
+}
 export async function createRuntime(options: RuntimeOptions = {}): Promise<MainModule> {
   const module = await createArtifactKernel(options);
   if (JSON.parse(module.artifactInfoJSON()).runtimeAPIVersion !== 1)
@@ -72,6 +120,7 @@ export class RuntimeSession {
       const artifact = JSON.parse(source.abstract) as { executionDigest: string };
       if (presentation.kind !== 'twisty-presentation' || presentation.contractVersion !== 1 || presentation.executionDigest !== artifact.executionDigest)
         throw new Error('Presentation pins another runtime artifact.');
+      validateMovementPresentation(presentation);
       let native: NativeSession | null;
       try { native = module.createRuntimeSession(source.abstract, source.controls); }
       catch(error) {

@@ -1,3 +1,5 @@
+#include "twisty/contracts.hpp"
+#include "../interpreter/backend_contract.hpp"
 #include "twisty/authoring/realization.hpp"
 #include "twisty/authoring/artifact.hpp"
 #include "twisty/artifact.hpp"
@@ -44,9 +46,9 @@ Json realization_artifacts(std::shared_ptr<const Execution> execution, const std
   const auto backend = geometry.at("kind").get<std::string>();
   for (const auto &piece_id : b.pieces) {
     const auto p = std::find_if(def.pieces.begin(), def.pieces.end(), [&](const auto &piece) { return piece.id == piece_id; });
-    kinds.push_back(backend.starts_with("cube-") && p->type == "bandage" ? "cube-bandage" : "rigid");
+    kinds.push_back(twisty::detail::geometry_backend(backend).cube && p->type == "bandage" ? "cube-bandage" : "rigid");
   }
-  if (backend.starts_with("cube-")) {
+  if (twisty::detail::geometry_backend(backend).cube) {
     const std::map<std::string, std::vector<int>> axes{{"U", {0,1,0}}, {"D", {0,-1,0}}, {"R", {1,0,0}}, {"L", {-1,0,0}}, {"F", {0,0,1}}, {"B", {0,0,-1}}};
     Json tracks = Json::object();
     for (const auto &op : def.operations)
@@ -88,16 +90,16 @@ Json realization_artifacts(std::shared_ptr<const Execution> execution, const std
   if (geometry.contains("placementFrames")) geometry["placementFrames"] = rename_keys(std::move(geometry["placementFrames"]), all_placements);
   if (geometry.contains("operationTrackTables")) geometry["operationTrackTables"] = std::move(new_tables);
   detail::remap_realization_requests(geometry, paths);
-  Json payload{{"payloadVersion", 1}, {"requestBindings", bindings}, {"pieceKinds", kinds}, {"geometry", geometry}};
+  Json payload{{"payloadVersion", contracts::backend_payload_version}, {"requestBindings", bindings}, {"pieceKinds", kinds}, {"geometry", geometry}};
   const auto payload_text = payload.dump();
   Json tracks = Json::array();
   for (Index c = 0; c < manifest.at("certificates").size(); ++c) {
     const auto request = manifest.at("certificates")[c].at("request").get<Index>();
     tracks.push_back({{"certificate", c}, {"pathId", bindings[request].at("pathId")}});
   }
-  Json envelope{{"kind", "twisty-realization"}, {"contractVersion", 1}, {"id", geometry.at("id")},
+  Json envelope{{"kind", contracts::realization_kind}, {"contractVersion", contracts::realization_version}, {"id", geometry.at("id")},
     {"interpretationDigest", manifest.at("interpretationDigest")}, {"requiredCapabilities", capabilities},
-    {"backend", {{"id", backend}, {"version", 1}}}, {"payload", {{"path", "geometry.json"}, {"sha256", sha256(payload_text)}}},
+    {"backend", {{"id", backend}, {"version", twisty::detail::geometry_backend(backend).version}}}, {"payload", {{"path", "geometry.json"}, {"sha256", sha256(payload_text)}}},
     {"eventTracks", tracks}};
   artifact::seal(envelope, "realizationDigest");
   GeometryDefinition verified(Execution::from_artifact(abstract.dump()), manifest.dump(), envelope.dump(), payload_text);

@@ -1,4 +1,5 @@
 #include "geometry_compiler.hpp"
+#include "backend_contract.hpp"
 #include "twisty/controller.hpp"
 #include "../artifact_internal.hpp"
 #include <algorithm>
@@ -93,33 +94,27 @@ GeometryCompiler::GeometryCompiler(std::shared_ptr<const Execution> execution,
 GeometryCompiler::GeometryCompiler(std::shared_ptr<const Execution> execution,
                                    const Json &realization, const std::string &payload_digest)
     : execution_(std::move(execution)), definition_(execution_->definition()) {
-  const std::set<std::string> supported{"triangle-meshes", "rigid-transforms", "quotient-surface",
-    "quotient-orbifold", "shared-rotation-tracks", "family-rotation-generators", "transport-path-selectors", "explicit-cube-tracks"};
-  for(const auto &cap:realization.at("requiredCapabilities"))
-    if(!supported.contains(cap.get<std::string>()))
-      throw DiagnosticError("realization.capability", "/requiredCapabilities", "Unsupported required geometric capability.");
   validate_motion_families(realization);
   if (realization.at("schemaVersion") != 1 ||
       realization.at("compatibleDefinitionDigest") != definition_->digest)
     throw DiagnosticError("realization.digest_mismatch", "/compatibleDefinitionDigest",
                           "Realization is not compatible with the exact definition.");
   const auto kind = realization.at("kind").get<std::string>();
-  if (kind != "cube-euclidean" && kind != "artifact-cube-euclidean" && kind != "cube-port-diagram" && kind != "cube-spherical" &&
-      kind != "polyhedral-euclidean" && kind != "polyhedral-port-diagram" && kind != "polyhedral-spherical" &&
-      kind != "articulated-euclidean" && kind != "articulated-port-diagram" &&
-      kind != "articulated-spherical" && kind != "flat-quotient")
-    throw DiagnosticError("realization.unsupported", "/kind", "Unknown realization kind.");
-  diagram_ = kind.ends_with("port-diagram");
-  catalog_ = kind.starts_with("polyhedral-");
-  spherical_ = kind == "cube-spherical";
-  catalog_spherical_ = kind == "polyhedral-spherical";
-  flat_surface_ = kind == "flat-quotient";
-  articulated_ = kind.starts_with("articulated-") || flat_surface_;
+  const auto &backend = detail::geometry_backend(kind);
+  detail::validate_backend_capabilities(backend, realization.at("requiredCapabilities"));
+  if (backend.engine != detail::GeometryEngine::spatial)
+    throw DiagnosticError("realization.unsupported", "/kind", "This backend requires another geometry compiler.");
+  diagram_ = backend.diagram;
+  catalog_ = backend.polyhedral;
+  spherical_ = backend.cube && backend.spherical;
+  catalog_spherical_ = backend.polyhedral && backend.spherical;
+  flat_surface_ = backend.flat;
+  articulated_ = backend.articulated;
   if (realization.contains("explicitCubeTracks")) {
     const auto capabilities = realization.at("requiredCapabilities").get<std::vector<std::string>>();
     if (std::find(capabilities.begin(), capabilities.end(), "explicit-cube-tracks") == capabilities.end())
       throw DiagnosticError("realization.capability", "/requiredCapabilities", "Explicit cube tracks require their capability declaration.");
-    if ((kind != "artifact-cube-euclidean" && !kind.starts_with("cube-")) || !realization.at("explicitCubeTracks").is_object() ||
+    if (!backend.cube || !realization.at("explicitCubeTracks").is_object() ||
         realization.at("explicitCubeTracks").size() != definition_->operations.size())
       throw DiagnosticError("realization.track", "/explicitCubeTracks", "Explicit cube tracks must cover every operation.");
     explicit_cube_tracks_ = true;

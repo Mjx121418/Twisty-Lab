@@ -13,5 +13,9 @@
     ]
   },
   "includeLegacy": false,
-  "output": "../../../runtime-puzzles/tesseract3"
+  "output": "../../../runtime-puzzles/tesseract3",
+  "presentation": {
+    "version": 1,
+    "defaultAlgorithm": "Xp_fY Yp_fZ (Xp_fY Yp_fZ)'"
+  }
 }

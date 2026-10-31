@@ -2,6 +2,7 @@
 #include <twisty/session.hpp>
 #include <twisty/controller.hpp>
 #include <twisty/geometry.hpp>
+#include <twisty/geometry_backend.hpp>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -27,7 +28,7 @@ int main(int argc,char **argv) {
     }
     const auto frame=geometry.frame(session.state_json());
     std::cout<<twisty::Json{{"snapshot",session.snapshot(twisty::SnapshotDetail::StateOnly)},
-      {"result",result},{"controls",controller.catalog()},{"parts",frame.isometries().size()/16},
+      {"result",result},{"backends",twisty::geometry_backend_info()},{"controls",controller.catalog()},{"parts",frame.isometries().size()/16},
       {"save",session.save()},{"poses",poses}}.dump()<<'\n';
   } catch(const std::exception &error) {std::cerr<<twisty::diagnostic_result(error).dump()<<'\n';return 1;}
 }

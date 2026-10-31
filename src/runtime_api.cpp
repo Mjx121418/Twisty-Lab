@@ -1,3 +1,4 @@
+#include "twisty/contracts.hpp"
 #include "twisty/runtime_api.hpp"
 #include "twisty/controller.hpp"
 #include "artifact_internal.hpp"
@@ -13,7 +14,7 @@ std::shared_ptr<const Execution> Execution::with_controls(const std::string &tex
   try {
     auto document = artifact::parse_document(text);
     fields(document, {"kind", "contractVersion", "executionDigest", "controlDigest", "catalog"});
-    require(document.at("kind") == "twisty-controls" && document.at("contractVersion") == 1,
+    require(document.at("kind") == contracts::controls_kind && document.at("contractVersion") == contracts::controls_version,
       "/", "Unsupported controller contract.", "controls.unsupported");
     require(document.at("executionDigest") == definition_->digest, "/executionDigest",
       "Controller pins another executable.", "controls.digest_mismatch");

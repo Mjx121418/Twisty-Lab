@@ -1,10 +1,12 @@
 #include "twisty/artifact.hpp"
+#include "twisty/geometry_backend.hpp"
 #include "twisty/session.hpp"
 #include "twisty/geometry.hpp"
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <numbers>
+#include <set>
 
 using namespace twisty;
 namespace {
@@ -183,6 +185,8 @@ void envelope_model(const std::string &name) {
     auto e = envelope, p = payload; edit(e, p); e["payload"]["sha256"] = sha256(p.dump()); artifact::seal(e, "realizationDigest");
     reject([&] { GeometryDefinition bad(execution, manifest.dump(), e.dump(), p.dump()); }, code);
   };
+  invalid([](Json &e, Json &) { e["backend"]["id"] = "unregistered"; }, "realization.unsupported");
+  invalid([](Json &e, Json &) { e["requiredCapabilities"].push_back("so4-isometries"); }, "realization.capability");
   invalid([](Json &e, Json &) { e["backend"]["version"] = 99; }, "realization.unsupported");
   invalid([](Json &e, Json &) { e["requiredCapabilities"].push_back("unknown"); }, "realization.capability");
   invalid([](Json &e, Json &) { e["eventTracks"].erase(e["eventTracks"].begin()); });
@@ -197,6 +201,15 @@ void envelope_model(const std::string &name) {
 } // namespace
 int main() {
   try {
+    const auto registry = geometry_backend_info();
+    check(registry.at("registryVersion") == 1, "Unknown backend registry version");
+    check(artifact::info().at("geometryBackends") == registry, "Discovery disagrees with artifact API");
+    std::set<std::string> backend_ids;
+    for (const auto &backend : registry.at("backends")) {
+      check(backend_ids.insert(backend.at("id")).second, "Duplicate backend registration");
+      check(backend.at("version") == 1 && !backend.at("capabilities").empty(), "Incomplete backend descriptor");
+    }
+    check(backend_ids.size() == artifact::info().at("realizationKinds").size(), "Incomplete legacy discovery list");
     for (const auto &v : Json::parse(read("docs/contracts/hash-vectors.json"))) {
       check(artifact::canonical_json(v.at("value")) == v.at("canonical"), "Portable canonical bytes differ");
       check(sha256(artifact::canonical_json(v.at("value"))) == v.at("sha256"), "Portable canonical SHA-256 differs");

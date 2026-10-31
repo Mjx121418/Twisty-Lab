@@ -6,6 +6,7 @@ import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { checkDraftContracts } from '../tests/architecture/contracts.mjs';
+import { frozenKernelDiscovery } from '../tests/architecture/backend-discovery.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const args = process.argv.slice(2);
@@ -38,9 +39,10 @@ run('cmake', ['--install', 'build/native', '--prefix', installed]);
 run('cmake', ['-S', 'tests/architecture', '-B', consumer, '-G', 'Ninja', `-DCMAKE_PREFIX_PATH=${installed}`]);
 run('cmake', ['--build', consumer, '--parallel', '1'], { stdio: 'inherit' });
 
-function compare(actual, expected, context) {
+function compare(actual, expected, context, discoveryExtension = false) {
   const { views, ...exact } = actual;
   const { views: expectedViews, ...expectedExact } = expected;
+  if (discoveryExtension && !expectedExact.kernel.geometryBackends) exact.kernel = frozenKernelDiscovery(exact.kernel, expectedExact.kernel);
   assert.deepEqual(exact, expectedExact, `${context}: exact logical/serialization baseline differs`);
   function approximate(a, b, path) {
     if (typeof a === 'number' && typeof b === 'number') {
@@ -78,7 +80,7 @@ for (const scenario of baseline.cases) {
   if (record) {
     scenario.inputSHA256 = inputSHA256;
     scenario.expected = native.observed;
-  } else compare(native.observed, scenario.expected, scenario.id);
+  } else compare(native.observed, scenario.expected, scenario.id, true);
   measurements.push({ id: scenario.id, native: native.metrics, wasm: wasm.metrics });
   console.log(`${scenario.id}: native/WASM definitions, completed witnesses, replay and geometry agree.`);
 }

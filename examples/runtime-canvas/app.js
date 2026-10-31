@@ -1,5 +1,5 @@
-import {createRuntime,RuntimeSession,RuntimeController,GeometryInstance} from '../../runtime.js';
-const module=await createRuntime();
+import {createRuntime,RuntimeSession,RuntimeController,GeometryInstance,geometryBackends} from '../../runtime.js';
+const module=await createRuntime(),backends=geometryBackends(module);
 const canvas=document.querySelector('#view'),context=canvas.getContext('2d'),picker=document.querySelector('#puzzle');
 const read=async path=>{const response=await fetch('../../data/'+path);if(!response.ok)throw Error(`Missing runtime data: ${path}`);return response.text();};
 let session,controller,geometry;
@@ -49,12 +49,17 @@ async function select(){
       'abstract.json','controls.json','presentation.json','interpretation.json',`realizations/${view}/realization.json`,`realizations/${view}/geometry.json`
     ].map(path=>read(id+'/'+path)));
     session=new RuntimeSession(module,{abstract,controls,presentation});controller=new RuntimeController(module,session);
+    const requirements=JSON.parse(envelope),support=backends.backends.find(backend=>
+      backend.id===requirements.backend.id&&backend.version===requirements.backend.version);
+    if(!support?.envelopeVersions.includes(requirements.contractVersion)||
+       !requirements.requiredCapabilities.every(cap=>support.capabilities.includes(cap)))throw Error('Unsupported geometric backend or requirements.');
     geometry=new GeometryInstance(module,session.native,{interpretation,envelope,payload});
     const familyPicker=document.querySelector('#family');familyPicker.replaceChildren();
     for(const family of controller.catalog().families){const option=document.createElement('option');option.value=family.id;option.textContent=family.label??family.id;familyPicker.append(option);}
     document.querySelector('#families').hidden=!familyPicker.options.length;familyPicker.onchange=familyDestinations;
     const buttons=document.querySelector('#moves');buttons.replaceChildren();
-    for(const operation of session.definition.operations){const button=document.createElement('button');button.textContent=operation.id;button.onclick=()=>accept(session.move(operation.id));buttons.append(button);}
+    for(const operation of session.definition.operations){const button=document.createElement('button');button.textContent=session.definition.display?.operations[operation.id]?.label??operation.id;button.setAttribute('aria-label',session.definition.display?.operations[operation.id]?.accessibleLabel??operation.id);button.onclick=()=>accept(session.move(operation.id));buttons.append(button);}
+    document.querySelector('#notation').value=session.definition.display?.defaultAlgorithm??'';
     document.querySelector('#status').textContent='Ready';draw();
   }catch(error){
     geometry?.dispose();geometry=undefined;controller?.dispose();controller=undefined;session?.dispose();session=undefined;

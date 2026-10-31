@@ -72,3 +72,13 @@ it is a warm observation, with filesystem caches uncleared. The process also
 holds copied native/WASM comparison results. These observations do not establish
 a cold-start or throughput improvement over the original baseline. Run
 `npm run check:runtime` to reproduce the method with matching packages.
+
+## Phase 7 registry and presentation check
+
+The 2026-10-31 runtime consumer check uses the same sequential installed-Debug /
+Release-WASM (`-O1`) method. Runtime WASM is 1,587,660 bytes; full compatibility
+WASM is 2,317,557 bytes. This run observed 21.80 ms for module initialization and
+595.9 MiB Node peak RSS across archive inspection, all 24 presets / 48 views,
+label-removal parity and optional source-save conversion. Initialization/load
+measurements remain warm observations; peak RSS is not isolated kernel memory.
+These single runs do not establish a performance improvement over Phase 6.

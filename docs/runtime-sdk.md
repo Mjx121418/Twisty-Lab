@@ -61,3 +61,16 @@ native call. The high-level geometry adapter owns its copied buffers. Matrices
 remain column-major, with 16 float64 intrinsic isometry scalars per visual part;
 drawing transforms remain 16 float32 scalars. Space descriptors determine their
 geometric meaning. Exact payload bytes must match the envelope's SHA-256.
+
+`geometryBackends(module)` discovers registered backend IDs, versions, supported
+requirements and envelope/payload compatibility without an authoring compiler or
+reference UI. Match an envelope's backend ID/version and its required
+capabilities before loading; payload validation remains authoritative.
+
+`session.definition.display` is optional, versioned presentation metadata for
+movement labels, aliases, angles, family ordering, keyboard candidates and
+interaction hints. `resolveMovementAlias(definition, 'right cap')` resolves one
+authored alias to a request ID. Submit that ID with `session.move(id)` and the
+usual revision check. Algorithm strings and saves use request IDs. Changing or
+removing display metadata does not change puzzle behavior. See
+`docs/kernel-api.md` for the exact contract and ownership.

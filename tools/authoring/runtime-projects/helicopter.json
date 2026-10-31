@@ -21,5 +21,10 @@
     ]
   },
   "includeLegacy": false,
-  "output": "../../../runtime-puzzles/helicopter"
+  "output": "../../../runtime-puzzles/helicopter",
+  "presentation": {
+    "version": 1,
+    "defaultAlgorithm": "UF_ab UL_af",
+    "instructions": "Stops a\u2013f \u00b7 buttons follow each grip\u2019s current phase"
+  }
 }

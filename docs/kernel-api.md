@@ -1146,3 +1146,58 @@ with a 0.005 near plane. Fully transparent surfaces are hidden,
 fully opaque ones write depth, and fading surfaces use alpha blending. Picking
 passes through fading surfaces to opaque pieces. This is renderer presentation
 policy, independent of the kernel's geometric buffers and puzzle rules.
+
+### Backend discovery and movement presentation
+
+`twisty::geometry_backend_info()` (include `<twisty/geometry_backend.hpp>`) and
+`geometryBackendInfoJSON()` in both WASM modules return an owned discovery
+object. The runtime TypeScript helper is `geometryBackends(module)`. Its exact
+shape is `{registryVersion:1,capabilities:[...],backends:[{id,version,envelopeVersions,
+payloadVersions,capabilities,space}]}`. All version arrays contain integers;
+`space` is the intrinsic space ID (`R3`, `E2`, `S2` or `S3`), matching the
+scene/frame space descriptor. That descriptor specifies its metric, curvature,
+coordinates and projection. The root capability list is the union
+of backend requirements and shared runtime features. Each backend’s
+`capabilities` lists requirements the
+backend understands; it does not mean every listed capability is mandatory or
+that every combination is valid. Payload validation still checks conditional
+requirements. Empty envelope/payload arrays identify the legacy artifact-cube
+adapter. Discovery performs no compilation and requires no renderer or authoring
+library. `artifact::info().geometryBackends` and the full SDK's
+`kernel_info().geometryBackends` contain this same registry document.
+
+Registry version 1 and individual backend version 1 are separate from envelope
+1, payload 1, API versions and buffer layouts. Unsupported backend IDs/versions
+fail with `realization.unsupported`; unsupported requirements fail
+with `realization.capability`. Duplicate capability identifiers are rejected by
+the strict contract reader. A requirement understood by another backend is
+not sufficient. Validation precedes scene construction and does not mutate the
+execution/session. Native contract identifiers and versions are centralized in
+`<twisty/contracts.hpp>`. Existing wire identities and all buffer versions stay
+unchanged.
+
+The optional `display` member of `twisty-presentation` contract 1 has its own
+`version:1`. See `schemas/presentation-artifact.schema.json`. It contains:
+
+- `operations`: every request ID mapped to `label`, `accessibleLabel`, `aliases`
+  and optional finite `angleDegrees` values (outward display convention).
+- `familyOrder`: each presentation family ID exactly once; `familyProbes` maps
+  every family to a request in that family. `keyboard` maps keys to ordered
+  candidate request IDs. Consumers check legality through the planner.
+- `interaction`: `moves`, `destinations`, `relative` or `cell-axes`, with
+  `instructions` and an example `defaultAlgorithm` using request IDs.
+
+These are presentation hints, never phase guards, transports or event witnesses.
+No display value enters the execution, control, interpretation or realization
+digest. A consumer can remove `display` altogether and execute identical
+requests and saves. On initial load, RuntimeSession validates hints when present before creating
+native owners. `validateMovementPresentation()` also validates them standalone;
+it rejects missing/unknown references, duplicate families, conflicting aliases,
+nonfinite angles and unknown versions. Labels are 1–256 characters; each request
+has at most 32 aliases; help/example strings have at most 4096 characters.
+`resolveMovementAlias(definition,name)` resolves a single explicit alias to a
+request ID, throwing for unknown names. Aliases cannot shadow request IDs or each
+other. Native algorithms, sessions and witnesses continue to serialize IDs;
+labels/aliases are not a replacement algorithm grammar. Metadata is owned by the
+host and borrows no native buffers. Session ownership and error/buffer contracts
+are unchanged.

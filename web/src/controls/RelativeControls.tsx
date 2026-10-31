@@ -1,13 +1,13 @@
 import { useEffect, useId, useMemo, useState } from 'react';
-import { KernelSession, type Realization } from '../kernel';
+import { KernelSession } from '../kernel';
 
 type Props = { session: KernelSession; revision: string; selectedPieces: readonly string[];
   history: readonly string[]; cursor: number;
-  realization?: Realization; busy: boolean; onMove: (operation: string, revision: string) => void; onClearSelection: () => void };
+  busy: boolean; onMove: (operation: string, revision: string) => void; onClearSelection: () => void };
 
 // A freely moving puzzle has no persistent center from which to read an
 // absolute phase. Ask the portable planner about relative turns instead.
-export function RelativeControls({ session, revision, history, cursor, selectedPieces, realization, busy, onMove, onClearSelection }: Props) {
+export function RelativeControls({ session, revision, history, cursor, selectedPieces, busy, onMove, onClearSelection }: Props) {
   const families = useMemo(() => [...new Set(session.definition.operations.map(op => op.family))], [session]);
   const [choice, setChoice] = useState(families[0]);
   const [matches, setMatches] = useState<string[]>(families);
@@ -18,14 +18,14 @@ export function RelativeControls({ session, revision, history, cursor, selectedP
   const selection = JSON.stringify(selectedPieces);
   const family = matches.includes(choice) ? choice : matches.length === 1 ? matches[0] : '';
   const operations = useMemo(() => session.definition.operations.filter(op => op.family === family)
-    .sort((a,b) => angle(a.id)-angle(b.id)), [session, family, realization]);
-  function angle(id: string): number { return relativeTurnAngle(realization,id); }
+    .sort((a,b) => angle(a.id)-angle(b.id)), [session, family]);
+  function angle(id: string): number { return (session.definition.display?.operations[id]?.angleDegrees?.[0] ?? 0)*Math.PI/180; }
   const operationFamilies = useMemo(() => new Map(session.definition.operations.map(op => [op.id,op.family])), [session]);
   // This puzzle has no fixed center driver. Keep a presentation coordinate
   // from the active recorded moves, so undo, redo and restored sessions agree.
   // It never supplies a phase guard or changes the planner's legal requests.
   const currentAngle = useMemo(() => normalizeAngle(history.slice(0,cursor).reduce((sum,id) =>
-    operationFamilies.get(id) === family ? sum+angle(id) : sum,0)), [history, cursor, family, operationFamilies, realization]);
+    operationFamilies.get(id) === family ? sum+angle(id) : sum,0)), [history, cursor, family, operationFamilies]);
   const currentDegrees = (currentAngle*180/Math.PI).toFixed(3);
   const stops = useMemo(() => {
     const nodes: { id: string; angle: number; radius: number; x: number; y: number }[] = [];
@@ -41,7 +41,7 @@ export function RelativeControls({ session, revision, history, cursor, selectedP
       const target = normalizeAngle(currentAngle+stop.angle);
       return { ...stop, angle: target, x: stop.radius*Math.sin(target), y: -stop.radius*Math.cos(target) };
     }).sort((a,b) => a.angle-b.angle);
-  }, [operations, realization, currentAngle]);
+  }, [operations, currentAngle]);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,9 +54,8 @@ export function RelativeControls({ session, revision, history, cursor, selectedP
       if (cancelled || session.native.revision() !== revision) return;
       const current = families[index];
       if (!current) { setMatches(found); setMatching(false); return; }
-      // The ordinary turn has complete transports under icosahedral symmetry.
-      // It tests this cap and supplies the participants for every relative angle.
-      const plan = session.plan({ operation: current, parameters: {} });
+      // The authoring contract identifies the request used to probe this family.
+      const plan = session.plan({ operation: session.definition.display?.familyProbes[current] ?? current, parameters: {} });
       if (plan.status === 'Legal' && plan.transition &&
         selectedPieces.every(piece => plan.transition!.pieceActions.some(action => action.pieceId === piece))) found.push(current);
       timer = setTimeout(() => next(index+1),0);
@@ -152,13 +151,4 @@ function normalizeAngle(angle: number): number {
   const fullTurn = 2*Math.PI;
   const value = (angle%fullTurn+fullTurn)%fullTurn;
   return Math.min(value,fullTurn-value) < 1e-8 ? 0 : value;
-}
-
-// Rotation tracks already carry the authored path angle. Display it in the
-// author's outward-facing convention, opposite to the reflected scene frame.
-export function relativeTurnAngle(realization: Realization | undefined, id: string): number {
-  const track = realization?.rotationTracks?.[id];
-  if (!track || Array.isArray(track)) return 0;
-  const coordinates = realization?.motionFamilies?.families[track.family]?.coordinates;
-  return coordinates ? -(coordinates[track.to]-coordinates[track.from]+track.winding*2*Math.PI) : 0;
 }

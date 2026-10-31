@@ -47,7 +47,7 @@ target_compile_features(puzzle_core PUBLIC cxx_std_20)
 target_link_libraries(puzzle_core PUBLIC project_options)
 add_library(puzzle_runtime src/runtime.cpp src/completion.cpp)
 target_link_libraries(puzzle_runtime PUBLIC puzzle_core)
-add_library(puzzle_artifact src/artifact.cpp src/compact.cpp)
+add_library(puzzle_artifact src/artifact.cpp src/compact.cpp src/interpreter/backend_contract.cpp)
 target_link_libraries(puzzle_artifact PUBLIC puzzle_catalog puzzle_runtime)
 if(TWISTY_BUILD_AUTHORING)
   add_library(puzzle_language
@@ -76,6 +76,7 @@ add_library(puzzle_controller src/controller/controller.cpp)
 target_link_libraries(puzzle_controller PUBLIC puzzle_session_runtime)
 
 add_library(puzzle_geometry_runtime
+  src/interpreter/backend_registry.cpp
   src/interpreter/artifact_realization.cpp
   src/interpreter/geometry.cpp
   src/interpreter/s3_geometry.cpp
@@ -90,7 +91,7 @@ target_link_libraries(puzzle_geometry_runtime PUBLIC puzzle_execution_runtime)
 if(TWISTY_BUILD_AUTHORING)
   add_library(puzzle_geometry src/authoring/geometry.cpp)
   target_link_libraries(puzzle_geometry PUBLIC puzzle_geometry_runtime puzzle_execution)
-  add_library(puzzle_authoring_geometry src/authoring/realization.cpp src/authoring/runtime.cpp)
+  add_library(puzzle_authoring_geometry src/authoring/realization.cpp src/authoring/runtime.cpp src/authoring/presentation.cpp)
   target_link_libraries(puzzle_authoring_geometry PUBLIC puzzle_session puzzle_geometry_runtime)
 endif()
 

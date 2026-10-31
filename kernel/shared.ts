@@ -111,7 +111,19 @@ export type FlatSurface = {
 export type HitBinding = {
   status: string; pieceId?: string; portId?: string; operationCandidates?: Request[];
 };
+export type MovementPresentation = {
+  version: 1;
+  operations: Record<string, { label: string; accessibleLabel: string; aliases: string[]; angleDegrees?: number[] }>;
+  familyOrder: string[];
+  familyProbes: Record<string, string>;
+  keyboard: Record<string, string[]>;
+  interaction: 'moves' | 'destinations' | 'relative' | 'cell-axes';
+  instructions: string;
+  defaultAlgorithm: string;
+};
 export type CompiledDefinition = {
+  /** Optional authoring output. Never used to determine legality or identity. */
+  display?: MovementPresentation;
   kind: 'relational-definition'; formatVersion: 1 | 2 | 3; puzzleId: string; definitionDigest: string;
   ruleModule: 'relational@1';
   pieceTypes: { id: string; placementDomainId: string; localPorts: string[] }[];

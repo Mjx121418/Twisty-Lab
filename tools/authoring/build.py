@@ -9,6 +9,7 @@ import tempfile
 from .environment import PACKAGE
 from .project import AuthoringError, fields, read_json, require, sha_file
 from .transaction import lock, publish
+from .presentation import apply_presentation
 
 RECEIPT = 'build-manifest.json'
 
@@ -168,6 +169,7 @@ def build(project, output, configured, rebuild=False):
             bundle=run_json([tools['twisty_artifact_export'],'--runtime-bundle',legacy/'package.json',views_file])
             fields(bundle,['abstract','interpretation','controls','presentation','views'])
             require(len(bundle['views'])==len(views),'Runtime exporter changed the view inventory.','authoring.native')
+            apply_presentation(bundle,project.document.get('presentation'))
             common=(bundle['abstract'],bundle['interpretation']);realizations=[]
             for name in ('abstract','interpretation','controls','presentation'): write_json(candidate/(name+'.json'),bundle[name])
             for (key,_),view in zip(views,bundle['views']):

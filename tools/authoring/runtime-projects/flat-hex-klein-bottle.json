@@ -13,5 +13,9 @@
     ]
   },
   "includeLegacy": false,
-  "output": "../../../runtime-puzzles/flat-hex-klein-bottle"
+  "output": "../../../runtime-puzzles/flat-hex-klein-bottle",
+  "presentation": {
+    "version": 1,
+    "defaultAlgorithm": "A B A' B'"
+  }
 }

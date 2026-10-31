@@ -13,5 +13,9 @@
     ]
   },
   "includeLegacy": false,
-  "output": "../../../runtime-puzzles/flat-hex-torus"
+  "output": "../../../runtime-puzzles/flat-hex-torus",
+  "presentation": {
+    "version": 1,
+    "defaultAlgorithm": "A B A' B'"
+  }
 }

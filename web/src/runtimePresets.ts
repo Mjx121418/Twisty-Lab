@@ -1,7 +1,7 @@
 import { runtimeViews, type Realization, type RuntimeBundle, type RuntimeDocuments } from '../../kernel/runtime';
 export type Preset = {
   id: string; label: string; dataId?: string; source: RuntimeDocuments | undefined; realizations: Realization[];
-  spherical?: Realization; surface?: boolean; turnAnglesDegrees?: Record<string, number>; cameraScale?: number;
+  spherical?: Realization; surface?: boolean; cameraScale?: number;
   euclideanLabel?: string; stereographic?: boolean; gearedEdges?: string[]; legacySource?: string;
 };
 const assets = import.meta.glob<string>('../../runtime-puzzles/**/*.json', { query: '?url', import: 'default', eager: true });
@@ -16,10 +16,6 @@ async function read(path: string): Promise<string> {
 export function installBundle(preset: Preset, bundle: RuntimeBundle): void {
   const views = runtimeViews(bundle);
   preset.realizations = views.filter(view => !view.kind.endsWith('-spherical'));
-  if(preset.turnAnglesDegrees) {
-    const layout=views[0].controlLayout;
-    if(layout?.version===1) preset.turnAnglesDegrees=Object.fromEntries(Object.entries(layout.paths??{}).map(([id,angles])=>[id,Object.values(angles)[0]*180/Math.PI]));
-  }
   preset.spherical = views.find(view => view.kind.endsWith('-spherical'));
   if (preset.surface) {
     const model = preset.realizations[0];
@@ -51,7 +47,7 @@ export const presets:Preset[]=[
   item('cube3','3 × 3 cube'),
   item('bandaged-uf-ufr','Bandaged cube · UF + UFR',{dataId:'bandaged'}),
   item('helicopter','Helicopter Cube · jumbling'),item('bagua','Bagua Cube'),
-  ...['a','b','c','d'].map(letter=>item('melty-'+letter,`Melty ${letter.toUpperCase()} · 85° axes`,{cameraScale:2/3,turnAnglesDegrees:{}})),
+  ...['a','b','c','d'].map(letter=>item('melty-'+letter,`Melty ${letter.toUpperCase()} · 85° axes`,{cameraScale:2/3})),
   item('cell24','S³ 24-cell · 672 pieces',{stereographic:true}),
   item('cell24-192','S³ 24-cell · 192 movable pieces · 45°',{stereographic:true}),
   item('tesseract3','S³ 8-cell · 3 × 3 × 3 × 3',{stereographic:true}),

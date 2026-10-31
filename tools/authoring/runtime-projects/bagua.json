@@ -21,5 +21,10 @@
     ]
   },
   "includeLegacy": false,
-  "output": "../../../runtime-puzzles/bagua"
+  "output": "../../../runtime-puzzles/bagua",
+  "presentation": {
+    "version": 1,
+    "defaultAlgorithm": "U+ R' L' D2 R L U-",
+    "instructions": "+ / \u2212: 45\u00b0 \u00b7 face keys: 90\u00b0 \u00b7 Shift for inverse"
+  }
 }

@@ -1,6 +1,7 @@
+#include "twisty/contracts.hpp"
 #include "artifact_realization.hpp"
 #include "../artifact_internal.hpp"
-#include "geometry_compiler.hpp"
+#include "backend_registry.hpp"
 #include <cctype>
 
 namespace twisty::detail {
@@ -42,7 +43,7 @@ GeometryDefinition::GeometryDefinition(std::shared_ptr<const Execution> executio
   auto interpreted = execution->with_interpretation(interpretation_text);
   const auto envelope = artifact::parse_document(envelope_text);
   fields(envelope, {"kind", "contractVersion", "id", "interpretationDigest", "realizationDigest", "requiredCapabilities", "backend", "payload", "eventTracks"});
-  require(envelope.at("kind") == "twisty-realization" && envelope.at("contractVersion") == 1,
+  require(envelope.at("kind") == contracts::realization_kind && envelope.at("contractVersion") == contracts::realization_version,
     "/", "Unsupported realization envelope.", "realization.unsupported");
   id(envelope.at("id"));
   require(envelope.at("interpretationDigest") == interpreted->interpretation_digest(),
@@ -50,16 +51,11 @@ GeometryDefinition::GeometryDefinition(std::shared_ptr<const Execution> executio
   pin(envelope, "realizationDigest");
   fields(envelope.at("backend"), {"id", "version"});
   const auto backend = id(envelope.at("backend").at("id"));
-  const std::set<std::string> backends{"cube-euclidean", "cube-port-diagram", "cube-spherical",
-    "polyhedral-euclidean", "polyhedral-port-diagram", "polyhedral-spherical", "articulated-euclidean",
-    "articulated-port-diagram", "articulated-spherical", "flat-quotient", "s3-cell-turning"};
-  require(backends.contains(backend) && envelope.at("backend").at("version") == 1,
+  const auto &descriptor = detail::geometry_backend(backend);
+  require(descriptor.envelope && envelope.at("backend").at("version") == descriptor.version,
     "/backend", "Unsupported geometric backend/version.", "realization.unsupported");
-  const auto capabilities = ids(envelope.at("requiredCapabilities"), 64);
-  const std::set<std::string> supported{"triangle-meshes", "rigid-transforms", "quotient-surface", "quotient-orbifold",
-    "shared-rotation-tracks", "family-rotation-generators", "transport-path-selectors", "explicit-cube-tracks",
-    "so4-isometries", "stereographic-projection", "dynamic-drawing-meshes", "s3-octahedral-cells", "s3-octahedral-tangent-cuts"};
-  for (const auto &cap : capabilities) require(supported.contains(cap), "/requiredCapabilities", "Unsupported geometric capability.", "realization.capability");
+  ids(envelope.at("requiredCapabilities"), 64);
+  detail::validate_backend_capabilities(descriptor, envelope.at("requiredCapabilities"));
   const auto &resource = envelope.at("payload"); fields(resource, {"path", "sha256"});
   require(resource.at("path").is_string(), "/payload/path", "Expected a relative payload resource path.");
   const auto path = resource.at("path").get<std::string>();
@@ -77,7 +73,7 @@ GeometryDefinition::GeometryDefinition(std::shared_ptr<const Execution> executio
   require(resource.at("sha256") == sha256(payload_text), "/payload/sha256", "Payload bytes do not match their content hash.", "realization.payload_mismatch");
   auto payload = parse_geometry_document(payload_text);
   fields(payload, {"payloadVersion", "requestBindings", "pieceKinds", "geometry"});
-  require(payload.at("payloadVersion") == 1, "/payloadVersion", "Unsupported backend payload version.", "realization.unsupported");
+  require(payload.at("payloadVersion") == contracts::backend_payload_version, "/payloadVersion", "Unsupported backend payload version.", "realization.unsupported");
   auto context = std::shared_ptr<Execution>(new Execution(*interpreted));
   auto definition = std::make_shared<Definition>(*interpreted->definition());
   const auto &requests = array(payload.at("requestBindings"), 4096);
@@ -108,7 +104,7 @@ GeometryDefinition::GeometryDefinition(std::shared_ptr<const Execution> executio
   require(kinds.size() == definition->pieces.size(), "/pieceKinds", "Expected one geometric kind per core piece.");
   for (Index p = 0; p < kinds.size(); ++p) {
     require(kinds[p] == "rigid" || kinds[p] == "cube-bandage", "/pieceKinds", "Unknown geometric piece kind.");
-    require(kinds[p] == "rigid" || backend.starts_with("cube-"), "/pieceKinds", "A compound cube kind requires a cube backend.");
+    require(kinds[p] == "rigid" || descriptor.cube, "/pieceKinds", "A compound cube kind requires a cube backend.");
     definition->pieces[p].type = kinds[p] == "cube-bandage" ? "bandage" : "rigid";
   }
   auto geometry = std::move(payload.at("geometry"));
@@ -119,20 +115,13 @@ GeometryDefinition::GeometryDefinition(std::shared_ptr<const Execution> executio
      "flatSurface", "cellShape", "cutDepth", "domains", "pieceInset"});
   require(geometry.at("kind") == backend && geometry.at("requiredCapabilities") == envelope.at("requiredCapabilities"),
     "/geometry", "Backend kind/capabilities differ from the envelope.");
-  if (backend.starts_with("cube-")) require(geometry.contains("explicitCubeTracks"), "/explicitCubeTracks", "Cube artifact paths require explicit axes and signed angles.");
+  if (descriptor.cube) require(geometry.contains("explicitCubeTracks"), "/explicitCubeTracks", "Cube artifact paths require explicit axes and signed angles.");
   require(!geometry.contains("controlLayout") || geometry.at("controlLayout").at("version") == 2,
     "/controlLayout", "Controller routes require a separate resolved controller contract.", "realization.capability");
   detail::remap_realization_requests(geometry, names);
-  definition->port_catalog = !backend.starts_with("cube-");
+  definition->port_catalog = !descriptor.cube;
   context->definition_ = std::move(definition);
   const auto digest = envelope.at("realizationDigest").get<std::string>();
-  if (backend == "s3-cell-turning") {
-    auto program = std::make_shared<GeometryProgram>(*compile_s3(context, geometry));
-    program->scene["executionDigest"] = context->definition()->digest;
-    program->scene["interpretationDigest"] = context->interpretation_digest();
-    program->scene["realizationDigest"] = digest;
-    program->scene["sceneId"] = envelope.at("id").get<std::string>() + ":" + digest;
-    program_ = std::move(program);
-  } else program_ = GeometryCompiler(context, geometry, digest).compile();
+  program_ = detail::compile_geometry_backend(context, geometry, digest);
 }
 } // namespace twisty

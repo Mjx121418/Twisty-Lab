@@ -17,5 +17,10 @@
     ]
   },
   "includeLegacy": false,
-  "output": "../../../runtime-puzzles/icosahedron-152"
+  "output": "../../../runtime-puzzles/icosahedron-152",
+  "presentation": {
+    "version": 1,
+    "defaultAlgorithm": "A_j O_j (A_j O_j)'",
+    "instructions": "20 face axes \u00b7 ordinary turns: 120\u00b0 \u00b7 select pieces to choose an axis"
+  }
 }

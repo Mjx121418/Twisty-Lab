@@ -1,0 +1,132 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:twisty:schema:presentation:1",
+  "description": "Optional movement display metadata is versioned independently of executable and geometric contracts. Unknown request/family references and alias collisions also require semantic validation.",
+  "type": "object",
+  "required": [
+    "kind",
+    "contractVersion",
+    "executionDigest",
+    "operations"
+  ],
+  "properties": {
+    "kind": {
+      "const": "twisty-presentation"
+    },
+    "contractVersion": {
+      "const": 1
+    },
+    "executionDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "operations": {
+      "type": "array"
+    },
+    "display": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "operations",
+        "familyOrder",
+        "familyProbes",
+        "keyboard",
+        "interaction",
+        "instructions",
+        "defaultAlgorithm"
+      ],
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "operations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "label",
+              "accessibleLabel",
+              "aliases"
+            ],
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "accessibleLabel": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "aliases": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256
+                },
+                "maxItems": 32
+              },
+              "angleDegrees": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "familyOrder": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        "familyProbes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        "keyboard": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "minItems": 1
+          }
+        },
+        "interaction": {
+          "enum": [
+            "moves",
+            "destinations",
+            "relative",
+            "cell-axes"
+          ]
+        },
+        "instructions": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "defaultAlgorithm": {
+          "type": "string",
+          "maxLength": 4096
+        }
+      }
+    }
+  }
+}

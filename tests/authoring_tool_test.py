@@ -75,6 +75,25 @@ class AuthoringConsumer(unittest.TestCase):
         self.command('check')
         self.assertFalse(self.command('build')['built'])
 
+    def test_labels_do_not_change_semantic_contracts(self):
+        self.document['includeLegacy']=False;self.save()
+        self.command('build')
+        before=file_hashes(self.output)
+        self.document['presentation']={'version':1,'operations':{'R':{'label':'Right cap','accessibleLabel':'Turn right cap','aliases':['right cap']}}}
+        self.save();self.command('build')
+        after=file_hashes(self.output)
+        self.assertEqual({k:v for k,v in before.items() if k!='presentation.json'},
+                         {k:v for k,v in after.items() if k!='presentation.json'})
+        self.assertNotEqual(before['presentation.json'],after['presentation.json'])
+        display=json.loads((self.output/'presentation.json').read_text())['display']
+        self.assertEqual(display['operations']['R']['label'],'Right cap')
+        self.command('validate')
+        published=file_hashes(self.output)
+        for override in ({'missing':{'label':'Unknown'}},{'R':{'aliases':['U']}}, {'R':{'aliases':['same']},'U':{'aliases':['same']}}):
+            self.document['presentation']={'version':1,'operations':override};self.save()
+            self.command('build',success=False)
+            self.assertEqual(published,file_hashes(self.output))
+
     def test_export_and_validation_failures_preserve_published_tree(self):
         self.command('build');before=file_hashes(self.output)
         receipt=(self.output/'build-manifest.json').read_bytes()

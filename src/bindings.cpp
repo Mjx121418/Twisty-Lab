@@ -1,3 +1,4 @@
+#include "twisty/geometry_backend.hpp"
 #include "twisty/artifact.hpp"
 #include "twisty/session.hpp"
 #include "twisty/geometry.hpp"
@@ -62,6 +63,7 @@ Controller *create_controller(const Session &session) { return new Controller(se
 } // namespace
 EMSCRIPTEN_BINDINGS(twisty) {
   function("artifactInfoJSON", &artifact_info_json);
+  function("geometryBackendInfoJSON", optional_override([] { return geometry_backend_info().dump(); }));
   function("validateArtifactJSON", &artifact::validate_json);
   function("createArtifactSession", &create_artifact_session, return_value_policy::take_ownership());
   function("createRuntimeSession", &create_runtime_session, return_value_policy::take_ownership());

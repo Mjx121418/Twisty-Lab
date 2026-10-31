@@ -13,5 +13,9 @@
     ]
   },
   "includeLegacy": false,
-  "output": "../../../runtime-puzzles/flat-pillowcase-6"
+  "output": "../../../runtime-puzzles/flat-pillowcase-6",
+  "presentation": {
+    "version": 1,
+    "defaultAlgorithm": "A B A' B'"
+  }
 }

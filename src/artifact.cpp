@@ -1,3 +1,5 @@
+#include "twisty/contracts.hpp"
+#include "interpreter/backend_contract.hpp"
 #include "artifact_internal.hpp"
 #include "compact.hpp"
 #include "json_input.hpp"
@@ -221,7 +223,7 @@ Json encode(const runtime::CompiledPuzzle &p, const std::vector<Index> &ri, cons
     bindings["requests"].push_back({{"id", r.id}, {"profiles", profiles}, {"defaultProfile", r.default_profile ? Json(*r.default_profile) : Json(nullptr)}});
   }
   const bool grouped = p.program.data().actions.size() > 32768;
-  Json out{{"kind", "twisty-abstract-artifact"}, {"artifactVersion", 1},
+  Json out{{"kind", contracts::abstract_kind}, {"artifactVersion", contracts::abstract_version},
     {"requiredCapabilities", grouped ? Json{"grouped-action-records-v1"} : Json::array()},
     {"program", encode_program(p.program.data(), grouped)}, {"bindings", bindings},
     {"session", {{"requestInverses", ri}, {"choiceInverses", ci}}}};
@@ -234,7 +236,7 @@ Artifact::Artifact(const std::string &text) {
   try {
     document_ = parse_document(text);
     fields(document_, {"kind", "artifactVersion", "requiredCapabilities", "executionDigest", "program"}, {"bindings", "session"});
-    require(document_.at("kind") == "twisty-abstract-artifact" && document_.at("artifactVersion") == 1, "/", "Unsupported artifact kind/version.", "artifact.unsupported");
+    require(document_.at("kind") == contracts::abstract_kind && document_.at("artifactVersion") == contracts::abstract_version, "/", "Unsupported artifact kind/version.", "artifact.unsupported");
     const auto capabilities = ids(document_.at("requiredCapabilities"), 64);
     require(capabilities.empty() || capabilities == std::vector<std::string>{"grouped-action-records-v1"}, "/requiredCapabilities", "Unsupported required artifact extension.", "artifact.capability");
     pin(document_, "executionDigest");
@@ -263,18 +265,15 @@ Artifact::Artifact(const std::string &text) {
   catch (const Json::exception &error) { throw DiagnosticError("artifact.invalid", "/", error.what()); }
 }
 Json info() {
-  return {{"artifactAPIVersion", 1}, {"runtimeAPIVersion", 1}, {"controlContractVersions", {1}}, {"artifactVersions", {1}}, {"interpretationVersions", {1, 2}},
-    {"realizationEnvelopeVersions", {1}}, {"backendPayloadVersions", {1}},
+  return {{"artifactAPIVersion", 1}, {"runtimeAPIVersion", 1}, {"controlContractVersions", {contracts::controls_version}}, {"artifactVersions", {contracts::abstract_version}}, {"interpretationVersions", {contracts::interpretation_legacy_version, contracts::interpretation_version}},
+    {"realizationEnvelopeVersions", {contracts::realization_version}}, {"backendPayloadVersions", {contracts::backend_payload_version}},
+    {"presentationContractVersions", {contracts::presentation_version}},
+    {"movementPresentationVersions", {contracts::movement_presentation_version}},
     {"abstractCapabilities", {"grouped-action-records-v1"}},
     {"sessionSchemaVersions", {3}}, {"witnessVersions", {2}}, {"frameBufferVersion", 1},
-    {"realizationKinds", {"artifact-cube-euclidean", "cube-euclidean", "cube-port-diagram", "cube-spherical",
-      "polyhedral-euclidean", "polyhedral-port-diagram", "polyhedral-spherical", "articulated-euclidean",
-      "articulated-port-diagram", "articulated-spherical", "flat-quotient", "s3-cell-turning"}},
-    {"geometryCapabilities", {"uniform-cube-ports", "explicit-cube-tracks", "triangle-meshes", "rigid-transforms",
-      "shared-geometry-definitions", "space-qualified-poses", "seekable-animations", "shared-rotation-tracks",
-      "family-rotation-generators", "transport-path-selectors", "quotient-surface", "quotient-orbifold",
-      "so4-isometries", "stereographic-projection", "dynamic-drawing-meshes", "intrinsic-meshes",
-      "s3-octahedral-cells", "s3-octahedral-tangent-cuts"}}};
+    {"realizationKinds", twisty::detail::geometry_backend_kinds()},
+    {"geometryBackends", geometry_backend_info()},
+    {"geometryCapabilities", geometry_backend_info().at("capabilities")}};
 }
 std::string validate_json(const std::string &text) {
   try {

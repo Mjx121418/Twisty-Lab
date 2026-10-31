@@ -1,3 +1,4 @@
+#include "twisty/contracts.hpp"
 #include "twisty/authoring/runtime.hpp"
 #include "twisty/authoring/artifact.hpp"
 #include "twisty/authoring/realization.hpp"
@@ -6,6 +7,7 @@
 #include "twisty/runtime_api.hpp"
 #include "twisty/session.hpp"
 #include <algorithm>
+#include "presentation.hpp"
 
 namespace twisty::language {
 Json runtime_artifacts(const std::string &source, const std::string &realizations_text) {
@@ -40,11 +42,11 @@ Json runtime_artifacts(const std::string &source, const std::string &realization
       route["profile"] = request->profiles.at(*request->default_profile).id;
     }
   }
-  Json controls{{"kind", "twisty-controls"}, {"contractVersion", 1},
+  Json controls{{"kind", contracts::controls_kind}, {"contractVersion", contracts::controls_version},
     {"executionDigest", abstract.at("executionDigest")}, {"catalog", catalog}};
   artifact::seal(controls, "controlDigest");
   runtime_execution(abstract.dump(), controls.dump());
-  Json presentation{{"kind", "twisty-presentation"}, {"contractVersion", 1},
+  Json presentation{{"kind", contracts::presentation_kind}, {"contractVersion", contracts::presentation_version},
     {"executionDigest", abstract.at("executionDigest")}, {"legacyDefinitionDigest", definition.digest}};
   for (const auto *key : {"puzzleId", "pieceTypes", "placementDomains", "pieces", "operations", "cells", "symmetry"})
     if (canonical.contains(key)) presentation[key] = canonical.at(key);
@@ -69,6 +71,7 @@ Json runtime_artifacts(const std::string &source, const std::string &realization
     hint["compatibleDefinitionDigest"] = abstract.at("executionDigest");
     result["views"].push_back({{"realization", bundle.at("realization")}, {"payload", bundle.at("payload")}, {"presentation", hint}});
   }
+  result["presentation"]["display"] = movement_presentation(canonical, catalog, realizations);
   return result;
 }
 std::string runtime_artifacts_json(const std::string &source, const std::string &realizations) {

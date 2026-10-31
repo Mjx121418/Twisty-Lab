@@ -2,7 +2,8 @@
 
 Reviewed against the workspace code on 2026-10-31. This document records the
 original architecture review and seven-phase implementation plan. Progress is
-recorded below; the later tables preserve the original review baseline.
+recorded below; all seven phases are now implemented. The later tables preserve
+the original review baseline.
 
 Phase 1 now has [draft contracts and acceptance gates](contracts/authoring-runtime.md),
 structural/hash conformance checks, and a frozen native/WASM baseline across seven
@@ -95,7 +96,7 @@ legacy source API continues to save schema 2. Independent installed native, Node
 and Canvas examples consume the same execution/controller/interpreter contracts.
 Runtime API 1 is additive; artifact API 1, legacy API 7 and buffer versions remain
 separate. See [runtime distribution and ownership](kernel-api.md#runtime-distribution-api-1).
-Backend registration and remaining capability/presentation cleanup are Phase 7.
+Backend registration and remaining capability/presentation cleanup follow in Phase 7 below.
 
 Phase 6 verification passes 149 unit tests, 83 browser tests across all 20
 specifications (fresh single-worker batches), seven targeted native checks,
@@ -116,6 +117,62 @@ All 146 legacy artifacts remain byte-identical. The runtime corpus contains
 [Distribution observations](contracts/baseline-measurements.md#phase-6-distribution-check)
 record sizes and the measurement method without claiming a cold-start gain.
 GitHub Pages remains manually triggered through `workflow_dispatch`.
+
+Phase 7 centralizes built-in backend descriptors, versions, geometric traits and
+accepted capability requirements in `src/interpreter/backend_contract.cpp`.
+Metadata is linked below the interpreter so compiler-free consumers can discover
+support without introducing a dependency cycle. The interpreter registry binds
+those descriptors to validation and compiler callbacks; both source adapters
+and realization-envelope loading use it. Shared motion validation and geometry
+preparation use descriptor traits rather than backend-name prefixes/suffixes.
+The public native/WASM discovery document has registry version 1. Contract wire
+identifiers live in `include/twisty/contracts.hpp`; API/buffer and puzzle/digest
+versions retain their separate meanings.
+
+Movement presentation version 1 is an optional extension of presentation
+contract 1. The native authoring adapter lowers labels, accessible names, angles,
+family order, probe requests, keyboard candidates and interaction modes once.
+Project files can override labels/aliases, ordering and explanatory/example text
+through the dedicated authoring tool. The reference UI reads those explicit
+references and hints instead of classifying puzzle IDs or parsing movement names
+for these behaviors. The custom Gear authoring adapter supplies its own legal
+example algorithm. Camera/rendering choices and the preset catalog remain
+application concerns; numeric legality and revision checks remain in the kernel.
+An independent Canvas client also discovers backends and consumes display hints.
+
+To add a backend, add a versioned descriptor and its validation/compiler callback
+in the interpreter implementation, then extend the corresponding payload schema
+and independent consumer cases. Shared spatial compilers can reuse existing
+traits. A new compilation engine supplies its own callback. This is an internal
+built-in registry, without a dynamic plugin ABI. No abstract executor change is
+required. To add a presentation label, edit a project's presentation override;
+request IDs, saved history and all semantic documents retain their identities.
+The existing 48-view corpus and immutable architecture scenarios are reused for
+conformance, with new negative controls for registry support, opaque presentation
+references and alias collisions. See [public discovery/presentation contracts](kernel-api.md#backend-discovery-and-movement-presentation).
+
+Phase 7 verification passes 154 full-suite unit cases plus three additional
+unit regressions for the discovery compatibility gate, 52 browser checks across
+11 specifications in fresh single-worker batches, seven targeted native
+regressions, 215 artifact checks, seven frozen architecture scenarios and eight
+detached authoring-tool checks. The complete compatibility SDK and independent
+runtime Native/Node/TypeScript consumers pass all 24 presets and 48 views; the
+48-view interpreter conformance run also passes its opaque-identifier variants.
+Browser smoke checks exercise all 24 presets in the reference app and both
+standalone clients. Relabeling/removing display metadata preserves execution,
+witnesses and saved history; invalid aliases/references are rejected.
+
+All 146 legacy artifacts and 216 runtime semantic documents/view hints remain
+byte-identical. Only the 24 common presentations gain the optional display
+extension; their receipts and global input provenance are refreshed. Frozen
+fixtures are unchanged. The architecture comparator explicitly validates the
+new discovery fields and the two newly advertised legacy capabilities before
+comparing the old kernel metadata; all rules, states, witnesses, saves and
+geometry observations remain strict. Runtime/legacy API and buffer versions
+remain unchanged, with separate version-1 discovery and display contracts.
+[Phase 7 observations](contracts/baseline-measurements.md#phase-7-registry-and-presentation-check)
+record the measurement method and limits. These checks complete the original
+seven-phase acceptance plan.
 
 The recommended direction is to introduce a dedicated authoring CLI, backed by
 reusable compiler libraries, that emits validated runtime artifacts. Preserve

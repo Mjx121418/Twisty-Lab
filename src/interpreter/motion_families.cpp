@@ -1,3 +1,4 @@
+#include "backend_contract.hpp"
 #include "geometry_program.hpp"
 #include <cmath>
 #include <numbers>
@@ -41,7 +42,7 @@ void validate_motion_families(const Json &r) {
       const auto x = angle.get<double>();
       require(std::isfinite(x) && std::abs(x) <= 100);
     }
-    if (r.at("kind").get<std::string>().ends_with("spherical"))
+    if (detail::geometry_backend(r.at("kind").get<std::string>()).spherical)
       require(p == GeometryPoint{0, 0, 0});
   }
 }

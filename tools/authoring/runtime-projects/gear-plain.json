@@ -21,5 +21,10 @@
     ]
   },
   "includeLegacy": false,
-  "output": "../../../runtime-puzzles/gear-plain"
+  "output": "../../../runtime-puzzles/gear-plain",
+  "presentation": {
+    "version": 1,
+    "defaultAlgorithm": "Rq Uq Rq' Uq'",
+    "instructions": "Face keys U R F D L B \u00b7 Shift for inverse"
+  }
 }

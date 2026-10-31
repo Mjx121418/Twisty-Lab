@@ -136,3 +136,30 @@ stages the complete runtime inventory and publishes the global receipt last.
 Normal web and SDK builds check freshness and never regenerate puzzle data.
 The application fetches only compiled preset data; source import, old-save
 conversion and custom Gear authoring load the optional authoring WASM module.
+
+### Presentation overrides
+
+A project may add `presentation` with `version: 1` and optional `operations`,
+`familyOrder`, `instructions`, and `defaultAlgorithm` overrides. Operation keys
+are existing request IDs; values may override `label`, `accessibleLabel`, and
+`aliases`. For example:
+
+```json
+"presentation": {
+  "version": 1,
+  "operations": {
+    "R": {"label": "Right cap", "accessibleLabel": "Turn right cap", "aliases": ["right cap"]}
+  }
+}
+```
+
+Overrides are applied to the native export's presentation metadata in the
+staging directory and validated before publication. Unknown IDs, colliding
+aliases, invalid labels and incomplete family ordering abort the build and
+preserve previously published output. They affect the project receipt and
+`presentation.json`; all executable, controller, correspondence, realization and
+payload bytes remain unchanged. Labels may be translated or replaced without
+changing request identities. Native authoring exports include generic display
+hints even without overrides; reference project files supply their example
+algorithms and explanatory text. Geometry-derived display angles are lowered by
+the native authoring adapter, rather than reconstructed from names by the UI.

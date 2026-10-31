@@ -6,7 +6,7 @@ import { presets, loadPreset, installBundle, gearEdges, type Preset } from './ru
 import { CellControls } from './controls/CellControls';
 import type { S3FadeSettings } from './s3Fade';
 import { FamilyControls } from './controls/FamilyControls';
-import { RelativeControls, relativeTurnAngle } from './controls/RelativeControls';
+import { RelativeControls } from './controls/RelativeControls';
 import { RenderView } from './renderer';
 import { SurfaceView } from './surfaceRenderer';
 import { pieceDestinations, type PieceDestination } from './destinations';
@@ -81,9 +81,8 @@ export function App() {
   const viewDefinitions = useMemo(() => activePreset ? availableViews(activePreset) : [], [activePreset]);
   const orderedViews = viewSelection.order.flatMap(id => viewDefinitions.filter(view => view.id === id));
   const displayedViews = orderedViews.filter(view => viewSelection.visible.includes(view.id));
-  const rhombus = ['rhombus-60','orbifold-333-rhombus'].includes(activePreset?.realizations[0].flatSurface?.chart??'');
 
-  function relativeSession(session: KernelSession): boolean { return ['icosahedron-152-v1', 'tesseract3-v1', 'cell24-v1', 'cell24-192-v1'].includes(session.definition.puzzleId); }
+  function relativeSession(session: KernelSession): boolean { return ['relative','cell-axes'].includes(session.definition.display?.interaction ?? 'moves'); }
   function readSnapshot(session: KernelSession): Snapshot {
     return (controller.current || relativeSession(session)) && !advanced.current ? { ...session.stateSnapshot(), legalRequests: [], candidateRequests: [] } : session.snapshot();
   }
@@ -112,7 +111,6 @@ export function App() {
     replaceController(runtime, next);
     const initial = readSnapshot(next);
     if (authored) setCustomGear(authored);
-    const selectedPreset = authored ?? presets.find(preset => preset.source === source);
     kernel.current?.dispose(); kernel.current = next;
     commands.current = [];
     cameraCache.current = new Map();
@@ -122,10 +120,7 @@ export function App() {
     setViewSelection(current => current.order.length === available.length && current.order.every(id => available.includes(id)) ? current : defaultViews(available));
     setSourceId(id); setSnapshot(initial); setVisualDigest(initial.stateDigest);
     setSelected([]); setEvidence(undefined); setLastScramble(''); setVisualError('');
-    setAlgorithm(initial.puzzleId.startsWith('cell24') ? "Xp_fXYZ Yp_vX (Xp_fXYZ Yp_vX)'" : initial.puzzleId === 'tesseract3-v1' ? "Xp_fY Yp_fZ (Xp_fY Yp_fZ)'" : initial.puzzleId === 'flat-333-6-v1' ? "A D A' D'" : initial.puzzleId.startsWith('flat-') ? "A B A' B'" : initial.puzzleId === 'helicopter-experimental-v1' ? 'UF_ab UL_af' :
-      initial.puzzleId === 'bagua-experimental-v1' ? "U+ R' L' D2 R L U-" : initial.puzzleId.startsWith('icosahedron-') ? "A_j O_j (A_j O_j)'" : initial.puzzleId.startsWith('melty-') ? "U U'" :
-      selectedPreset?.gearedEdges ? (selectedPreset.gearedEdges.length === 0 ? "Rq Uq Rq' Uq'" :
-        next.plan({operation:'R',parameters:{}}).status === 'Legal' ? "R R'" : "Rq Rq'") : "R U R' U'");
+    setAlgorithm(next.definition.display?.defaultAlgorithm ?? '');
     setGeneration((value) => value + 1);
   }
 
@@ -323,15 +318,18 @@ export function App() {
         setSelected([]);
       } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
         event.preventDefault(); enqueue(() => event.shiftKey ? kernel.current!.redo() : kernel.current!.undo());
-      } else if (!event.ctrlKey && !event.metaKey && !event.altKey && /^[urfdlabce]$/i.test(event.key)) {
-        event.preventDefault();
-        const face = event.key.toUpperCase(), inverse = event.shiftKey;
-        if (kernel.current?.definition.operations.some((move) => move.id === face)) enqueue(() => {
-          const session = kernel.current!;
-          const candidates = session.definition.operations.filter((move) => move.id === face || move.id === `${face}q`);
-          const base = candidates.find((move) => session.plan({ operation: inverse ? move.inverse : move.id, parameters: {} }).status === 'Legal') ?? candidates.find((move) => move.id === face)!;
-          return session.move(inverse ? base.inverse : base.id);
-        });
+      } else if (!event.ctrlKey && !event.metaKey && !event.altKey) {
+        const key = event.key.toUpperCase(), inverse = event.shiftKey;
+        const ids = kernel.current?.definition.display?.keyboard[key];
+        if (ids?.length) {
+          event.preventDefault();
+          enqueue(() => {
+            const session = kernel.current!;
+            const candidates = ids.map(id => session.definition.operations.find(op => op.id === id)!);
+            const base = candidates.find(move => session.plan({ operation: inverse ? move.inverse : move.id, parameters: {} }).status === 'Legal') ?? candidates[0];
+            return session.move(inverse ? base.inverse : base.id);
+          });
+        }
       }
     };
     const dismissViews = (event: PointerEvent): void => {
@@ -423,15 +421,12 @@ export function App() {
   // Choose requests for the displayed source phase; core legalRequests remains
   // the authority for legality, including blockers on these same requests.
   const candidates = snapshot?.candidateRequests && new Set(snapshot.candidateRequests.map((request) => request.operation));
-  const melty = activePreset?.turnAnglesDegrees;
-  const icosahedron = activePreset?.id.startsWith('icosahedron-');
+  const display = definition?.display;
   const cellLayout = activePreset?.realizations[0]?.controlLayout;
   const s3 = cellLayout?.version === 2;
-  const relative = activePreset?.id === 'icosahedron-152' || s3;
-  const phaseRequests = definition?.operations.filter((operation) => candidates?.has(operation.id));
-  const families = Array.from(new Set(definition?.operations.map((operation) => operation.family) ?? []));
-  const faceOrder = activePreset?.surface ? ['A', 'B', 'C', 'D'] : icosahedron ? Array.from({ length: 20 }, (_, i) => String.fromCharCode(65+i)) : ['U', 'R', 'F', 'D', 'L', 'B'];
-  families.sort((a, b) => (faceOrder.includes(a) ? faceOrder.indexOf(a) : 6) - (faceOrder.includes(b) ? faceOrder.indexOf(b) : 6) || a.localeCompare(b));
+  const relative = display?.interaction === 'relative' || display?.interaction === 'cell-axes';
+  const phaseRequests = definition?.operations.filter(operation => candidates?.has(operation.id));
+  const families = display?.familyOrder ?? Array.from(new Set(definition?.operations.map(operation => operation.family) ?? []));
   const selectedPiece = definition?.pieces.find((piece) => piece.id === selected[0]);
   const selectedDomain = definition?.pieceTypes.find((type) => type.id === selectedPiece?.type)?.placementDomainId;
   const selectedPlacement = selectedPiece && snapshot ? definition?.placementDomains.find((domain) => domain.id === selectedDomain)?.placements.find((q) => q.key === snapshot.state.placementOf[selectedPiece.id]) : undefined;
@@ -512,13 +507,13 @@ export function App() {
           </div>
 
           <section className="commands">
-            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{s3 ? `${cellLayout.groups.length} ${cellLayout.groups.length === 24 ? 'octahedral' : 'cubic'} cells · face, edge and vertex axes` : activePreset?.surface ? `Face keys ${Object.keys(activePreset.realizations[0].flatSurface?.diskCenters??{}).join(' ')} · ${rhombus ? 60 : 90}° turns · Shift for inverse` : icosahedron ? '20 face axes · ordinary turns: 120° · select pieces to choose an axis' : snapshot?.puzzleId === 'helicopter-experimental-v1' ? 'Stops a–f · buttons follow each grip’s current phase' : snapshot?.puzzleId === 'bagua-experimental-v1' ? '+ / −: 45° · face keys: 90° · Shift for inverse' : melty ? 'Face keys U R F D L B · choose each cap independently · hover for angles' : 'Face keys U R F D L B · Shift for inverse'}</span></div>
+            <div className="section-heading"><h2>Move the puzzle</h2><span className="subtle">{display?.instructions}</span></div>
             {controller.current && snapshot && <FamilyControls key={generation} controller={controller.current} revision={snapshot.revision}
               layout={cellLayout?.version === 1 ? cellLayout : undefined} busy={busy} onTurn={turnTo}
               selectedPieces={selected} onClearSelection={() => setSelected([])} onRemovePiece={choosePiece} />}
             {relative && !s3 && kernel.current && snapshot && <RelativeControls key={generation} session={kernel.current} revision={snapshot.revision}
               history={snapshot.history} cursor={snapshot.cursor}
-              realization={activePreset?.realizations[0]} busy={busy} selectedPieces={selected} onClearSelection={() => setSelected([])}
+              busy={busy} selectedPieces={selected} onClearSelection={() => setSelected([])}
               onMove={(operation, revision) => {
                 const session = kernel.current!;
                 enqueue(() => session === kernel.current ? session.move(operation, revision) : { status: 'StaleRevision' });
@@ -541,11 +536,9 @@ export function App() {
               if (kernel.current) setSnapshot(readSnapshot(kernel.current));
             }}><summary>Advanced movement list</summary>
             <div className="moves">{families.map((family) => <div className={`move-pair ${(phaseRequests?.filter((op) => op.family === family).length ?? 0) > 2 ? 'many-moves' : ''}`} key={family}>{phaseRequests?.filter((operation) => operation.family === family).map((operation) => {
-              const inverse = operation.id === `${family}'` || operation.id === `${family}_inv`;
-              const half = operation.id === `${family}_half`;
-              const angle = melty ? operation.id.split('+').map(id => `${melty[id].toFixed(3)}°`).join(' / ') : icosahedron ?
-                `${(relativeTurnAngle(activePreset?.realizations[0],operation.id)*180/Math.PI).toFixed(3)}°` : undefined;
-              return <button key={operation.id} title={angle} aria-label={`Move ${inverse ? `${family} inverse` : half ? `${family} half turn` : operation.id}`} className={!legal.has(operation.id) ? 'may-block' : ''} disabled={!snapshot} onClick={() => enqueue(() => kernel.current!.move(operation.id))}>{inverse ? '′' : half ? `${family}2` : operation.id}</button>;
+              const hint = display?.operations[operation.id];
+              const angle = hint?.angleDegrees?.map(angle => `${angle.toFixed(3)}°`).join(' / ');
+              return <button key={operation.id} title={angle} aria-label={`Move ${hint?.accessibleLabel ?? operation.id}`} className={!legal.has(operation.id) ? 'may-block' : ''} disabled={!snapshot} onClick={() => enqueue(() => kernel.current!.move(operation.id))}>{hint?.label ?? operation.id}</button>;
             })}</div>)}
             </div></details>
               <div className="history-controls"><button disabled={!snapshot?.canUndo} onClick={() => enqueue(() => kernel.current!.undo())}>↶ Undo</button><button disabled={!snapshot?.canRedo} onClick={() => enqueue(() => kernel.current!.redo())}>↷ Redo</button><button disabled={!snapshot || busy} onClick={resetPuzzle}>Reset puzzle</button></div>

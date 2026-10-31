@@ -3,6 +3,7 @@
 #include "twisty/authoring/gear.hpp"
 #include "twisty/completion.hpp"
 #include "twisty/geometry.hpp"
+#include "twisty/geometry_backend.hpp"
 #include "twisty/session.hpp"
 #include "twisty/controller.hpp"
 
@@ -30,15 +31,12 @@ inline Json kernel_info() {
           {"catalogKinds",
            {"relational-cube-bindings", "relational-port-bindings", "relational-articulated-bindings"}},
           {"ruleModules", {"relational@1"}},
-          {"realizationKinds",
-           {"cube-euclidean", "cube-port-diagram", "cube-spherical", "polyhedral-euclidean",
-            "polyhedral-port-diagram", "polyhedral-spherical", "articulated-euclidean",
-            "articulated-port-diagram", "articulated-spherical", "flat-quotient", "s3-cell-turning"}},
-          {"geometryCapabilities",
-           {"triangle-meshes", "rigid-transforms", "quotient-surface", "quotient-orbifold",
-            "shared-geometry-definitions", "shared-rotation-tracks", "space-qualified-poses",
-            "family-rotation-generators", "transport-path-selectors",
-            "seekable-animations", "so4-isometries", "stereographic-projection", "dynamic-drawing-meshes",
-            "intrinsic-meshes", "s3-octahedral-cells", "s3-octahedral-tangent-cuts"}}};
+          {"realizationKinds", [] { Json kinds = Json::array();
+            const auto discovery = geometry_backend_info();
+            for (const auto &backend : discovery.at("backends"))
+              if (!backend.at("envelopeVersions").empty()) kinds.push_back(backend.at("id"));
+            return kinds; }()},
+          {"geometryBackends", geometry_backend_info()},
+          {"geometryCapabilities", geometry_backend_info().at("capabilities")}};
 }
 } // namespace twisty

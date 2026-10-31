@@ -1,3 +1,4 @@
+#include "backend_contract.hpp"
 #include "geometry_compiler.hpp"
 #include <algorithm>
 #include <cmath>
@@ -94,7 +95,7 @@ Frame rotation(Point n, Point pivot, double angle) {
 
 void GeometryCompiler::build_articulated(const Json &realization) {
   ensure(definition_->port_catalog, "/catalog/kind", "Articulated models require a port binding catalog.");
-  const bool spherical = realization.at("kind") == "articulated-spherical";
+  const bool spherical = detail::geometry_backend(realization.at("kind").get<std::string>()).spherical;
   const double radius = spherical ? realization.at("radius").get<double>() : 0;
   const auto &capabilities = realization.at("requiredCapabilities");
   const bool shared_tracks =
