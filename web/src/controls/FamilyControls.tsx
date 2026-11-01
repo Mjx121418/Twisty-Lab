@@ -49,7 +49,7 @@ function FamilyStops({ controller, revision, layout, busy, onTurn, familyId }: P
   const drivers = family.drivers.map(id => catalog.drivers.find(d => d.id === id)!);
   const positions = useMemo(() => Object.fromEntries(catalog.drivers.map(driver => {
     const nodes: { angle: number; radius: number; x: number; y: number }[] = [];
-    driver.stops.forEach((stop, index) => {
+    driver.stops.forEach((_stop, index) => {
       const angle = layout?.drivers[driver.id]?.angles[index] ?? index * 2 * Math.PI / driver.stops.length;
       const candidates = [104, 62, 126, 82].map(radius => ({ angle, radius, x: radius * Math.sin(angle), y: -radius * Math.cos(angle) }));
       const spacing = (p: typeof candidates[number]) => Math.min(...nodes.map(q => Math.hypot(p.x-q.x,p.y-q.y)), Infinity);

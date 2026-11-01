@@ -174,6 +174,36 @@ remain unchanged, with separate version-1 discovery and display contracts.
 record the measurement method and limits. These checks complete the original
 seven-phase acceptance plan.
 
+The subsequent cleanup shares the TypeScript session/controller adapters between
+the two distributions while retaining their distinct wire types and constructors.
+Authoring exports encode one abstract/correspondence context per bundle and can
+reuse a live source session; custom Gear construction now compiles once. Each
+view still passes through independent interpreter validation. The two Icosahedron
+producers share spherical geometry and catalog helpers, with their model-specific
+rules and cut thresholds retained separately.
+
+Python authoring and TypeScript presentation validation consume one set of
+positive/negative contract vectors. Acceptance checks now validate production
+wire schemas rather than executing the historical Phase-1 draft schemas. The
+aggregate check runs the native artifact suite once, inventory realization schema
+validation has one owner, and combined SDK builds reuse TypeScript output.
+Standalone authoring packages exclude repository-only orchestration/projects;
+unused web authoring helpers are removed. These changes preserve the abstract
+core/interpreter boundary and the independent native/WASM distributions.
+
+Cleanup verification passes 187 unit tests, strict TypeScript unused-symbol
+checks, 45 current wire-schema/hash checks, seven frozen architecture scenarios,
+215 native artifact checks and nine detached authoring-tool checks. Both SDK
+packaging paths and independent native/Node/TypeScript consumers pass; runtime
+parity covers all 24 puzzles and 48 views. All 48 interpreter conformance cases
+also pass their opaque-identifier variants. Eleven targeted native regressions
+pass, including both Icosahedron authoring suites and the historical transport
+oracle. Thirty-three browser checks pass across seven specifications in fresh
+single-worker batches, including every preset in the reference application and
+both standalone clients. Full regeneration preserves all 146 legacy artifact
+hashes and all 240 runtime content hashes; only build receipts and input
+provenance change. Frozen fixtures and wire/buffer versions remain unchanged.
+
 The recommended direction is to introduce a dedicated authoring CLI, backed by
 reusable compiler libraries, that emits validated runtime artifacts. Preserve
 the numeric abstract executor and the geometric interpreters as separate

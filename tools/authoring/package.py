@@ -26,7 +26,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix='.authoring-sdk-',dir=output.parent) as temporary:
         candidate=Path(temporary)/'candidate';candidate.mkdir()
         destination=candidate/'tools/authoring'
-        shutil.copytree(PACKAGE,destination,ignore=shutil.ignore_patterns('__pycache__','projects','reference-build.mjs'))
+        shutil.copytree(PACKAGE,destination,ignore=shutil.ignore_patterns('__pycache__','projects','runtime-projects','reference-build.mjs','runtime-build.mjs','runtime-data.mjs','legacy.py','compat.py'))
         shutil.copyfile(source_root/'tools/__init__.py',candidate/'tools/__init__.py')
         (candidate/'bin').mkdir()
         for name in TOOL_NAMES: shutil.copy2(args.tools_dir/name,candidate/'bin'/name)

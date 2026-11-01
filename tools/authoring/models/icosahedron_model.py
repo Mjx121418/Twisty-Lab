@@ -1,4 +1,5 @@
 """Finite one-piece relaxation with the twenty persistent center frames."""
+from .icosahedron_common import SphericalPiece, Placed, apply, transpose
 from collections import deque
 import math
 
@@ -6,7 +7,6 @@ from .icosahedron_geometry import AXES, TAU, Arrangement, add, sub, scale, dot, 
 ALPHA = math.acos((3*math.sqrt(5)-1)/8)
 IDENTITY = ((1.,0.,0.),(0.,1.,0.),(0.,0.,1.))
 
-def apply(r,p): return tuple(dot(row,p) for row in r)
 def compose(a,b): return tuple(tuple(sum(a[i][k]*b[k][j] for k in range(3)) for j in range(3)) for i in range(3))
 def rotation(axis,theta):
     columns = [add(add(scale(math.cos(theta),p),scale(math.sin(theta),cross(axis,p))),scale((1-math.cos(theta))*dot(axis,p),axis)) for p in IDENTITY]
@@ -22,7 +22,6 @@ DELTAS = [next(math.remainder(b-a, TAU) for a in STOPS for b in STOPS if abs(mat
 A = Arrangement(RADIUS)
 
 
-def transpose(r): return tuple(zip(*r))
 def key(r): return tuple(round(x, 7) for row in r for x in row)
 
 
@@ -44,77 +43,9 @@ def symmetries():
 GROUP = symmetries()
 
 
-class Piece:
+class Piece(SphericalPiece):
     def __init__(self, face):
-        self.face = face
-        self.mask = face['mask']
-        self.arcs = []
-        self.vertices = []
-        samples = []
-        for half in face['boundary']:
-            edge = A.edges[half//2]
-            n = A.axes[edge['circle']]
-            x,y = A.frames[edge['circle']]
-            start, end = A.vertices[edge['start']], A.vertices[edge['end']]
-            self.arcs.append((n, start, end, edge['dt'], edge['t'], x, y))
-            self.vertices.extend([start, end])
-            for i in range(8):
-                t = edge['t']+edge['dt']*i/8
-                samples.append(add(scale(H,n),scale(A.s,add(scale(math.cos(t),x),scale(math.sin(t),y)))))
-        self.center = unit(tuple(sum(v[i] for v in samples) for i in range(3)))
-        assert self.contains_local(self.center)
-        self.cap_cos = self.extrema_local(self.center)[0]
-
-    def contains_local(self, p, strict=False):
-        return all((dot(n,p)-H)*(1 if self.mask & (1<<i) else -1) > (1e-8 if strict else -1e-9)
-                   for i,n in enumerate(AXES))
-
-    def extrema_local(self, d):
-        values = [dot(d,p) for p in self.vertices]
-        for n,start,end,dt,t,x,y in self.arcs:
-            phi = math.atan2(dot(d,y),dot(d,x))
-            for q in (phi,phi+math.pi):
-                if (q-t) % TAU <= dt+1e-9:
-                    values.append(H*dot(n,d)+A.s*(math.cos(q)*dot(d,x)+math.sin(q)*dot(d,y)))
-        if self.contains_local(d):values.append(1.)
-        if self.contains_local(scale(-1,d)):values.append(-1.)
-        return min(values),max(values)
-
-    def role(self, r, axis):
-        low,high = self.extrema_local(apply(transpose(r),axis))
-        return 1 if low >= H-1e-8 else 0 if high <= H+1e-8 else 2
-
-    def placed(self, r):
-        return Placed(self,r)
-
-
-class Placed:
-    def __init__(self,piece,r):
-        self.piece,self.r,self.inv = piece,r,transpose(r)
-        self.center = apply(r,piece.center)
-        self.vertices = [apply(r,p) for p in piece.vertices]
-        self.arcs = [(apply(r,n),apply(r,a),apply(r,b),dt) for n,a,b,dt,*_ in piece.arcs]
-
-    def contains(self,p):return self.piece.contains_local(apply(self.inv,p),True)
-
-    def overlaps(self,other):
-        radius = math.acos(self.piece.cap_cos)+math.acos(other.piece.cap_cos)
-        if dot(self.center,other.center) < math.cos(radius)-1e-9:return False
-        if self.contains(other.center) or other.contains(self.center):return True
-        if any(other.contains(v) for v in self.vertices) or any(self.contains(v) for v in other.vertices):return True
-        for a,astart,aend,adt in self.arcs:
-            for b,bstart,bend,bdt in other.arcs:
-                cosine = dot(a,b)
-                if abs(cosine) > 1-1e-9:continue
-                p = scale(H/(1+cosine),add(a,b))
-                distance = 1-dot(p,p)
-                if distance <= 1e-10:continue
-                offset = scale(math.sqrt(distance),unit(cross(a,b)))
-                for q in (add(p,offset),sub(p,offset)):
-                    aa = math.atan2(dot(a,cross(astart,q)),dot(astart,q)-H*H) % TAU
-                    bb = math.atan2(dot(b,cross(bstart,q)),dot(bstart,q)-H*H) % TAU
-                    if 1e-7<aa<adt-1e-7 and 1e-7<bb<bdt-1e-7:return True
-        return False
+        super().__init__(face, A, H)
 
 
 PIECES = [Piece(f) for f in A.faces]

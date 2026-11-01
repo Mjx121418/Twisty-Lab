@@ -101,9 +101,9 @@ it('validates the experimental relational AST and compiles the example', async (
 
 });
 
-it('validates every shipped realization, state, fixture, and generated save', async () => {
+it('validates every shipped state, fixture, and generated save', async () => {
   const ajv = new Ajv({ allErrors: true, strict: false });
-  for (const name of ['state', 'realization', 'fixture']) {
+  for (const name of ['state', 'fixture']) {
     ajv.addSchema(JSON.parse(readFileSync(`schemas/${name}.schema.json`, 'utf8')));
   }
   ajv.addSchema(JSON.parse(readFileSync('schemas/session-v2.schema.json', 'utf8')));
@@ -114,9 +114,6 @@ it('validates every shipped realization, state, fixture, and generated save', as
   const module = await createModule();
   const inventory = JSON.parse(readFileSync('scripts/puzzle-inventory.json', 'utf8'));
   for (const puzzle of inventory.puzzles) {
-    for (const file of puzzle.realizations) {
-      check('urn:twisty:schema:realization:1', JSON.parse(readFileSync(`packages/${puzzle.id}/${file}`, 'utf8')));
-    }
     const session = new module.Session(readFileSync(`packages/${puzzle.id}/package.json`, 'utf8'));
     try {
       check('urn:twisty:schema:state:1', JSON.parse(session.stateJSON()));

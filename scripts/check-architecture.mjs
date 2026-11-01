@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
-import { checkDraftContracts } from '../tests/architecture/contracts.mjs';
+import { checkWireContracts } from '../tests/architecture/contracts.mjs';
 import { frozenKernelDiscovery } from '../tests/architecture/backend-discovery.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -23,7 +23,7 @@ const build = join(root, 'build/architecture');
 const installed = join(build, 'installed');
 const consumer = join(build, 'consumer');
 await mkdir(build, { recursive: true });
-console.log(`${await checkDraftContracts()} draft structure/hash conformance checks passed.`);
+console.log(`${await checkWireContracts()} current wire-schema/hash conformance checks passed.`);
 // Leave enough room for application/tools under the workspace's 4 GiB budget.
 async function checkMemory() {
   try {

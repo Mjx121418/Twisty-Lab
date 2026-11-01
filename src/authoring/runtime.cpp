@@ -8,11 +8,15 @@
 #include "twisty/session.hpp"
 #include <algorithm>
 #include "presentation.hpp"
+#include "realization_internal.hpp"
 
 namespace twisty::language {
 Json runtime_artifacts(const std::string &source, const std::string &realizations_text) {
-  const auto execution = Execution::from_source(source);
-  const auto abstract = execution->artifact_json();
+  return runtime_artifacts(Execution::from_source(source), realizations_text);
+}
+Json runtime_artifacts(std::shared_ptr<const Execution> execution, const std::string &realizations_text) {
+  RealizationExport prepared(execution);
+  const auto &abstract = prepared.abstract();
   const auto &definition = *execution->definition();
   const auto &canonical = definition.canonical;
   auto catalog = execution->controls() ? execution->controls()->json()
@@ -45,7 +49,7 @@ Json runtime_artifacts(const std::string &source, const std::string &realization
   Json controls{{"kind", contracts::controls_kind}, {"contractVersion", contracts::controls_version},
     {"executionDigest", abstract.at("executionDigest")}, {"catalog", catalog}};
   artifact::seal(controls, "controlDigest");
-  runtime_execution(abstract.dump(), controls.dump());
+  prepared.runtime()->with_controls(controls.dump());
   Json presentation{{"kind", contracts::presentation_kind}, {"contractVersion", contracts::presentation_version},
     {"executionDigest", abstract.at("executionDigest")}, {"legacyDefinitionDigest", definition.digest}};
   for (const auto *key : {"puzzleId", "pieceTypes", "placementDomains", "pieces", "operations", "cells", "symmetry"})
@@ -58,13 +62,11 @@ Json runtime_artifacts(const std::string &source, const std::string &realization
     piece["homePlacement"] = type->at("placementDomainId").get<std::string>() + "/" + piece.at("homePlacement").get<std::string>();
   }
   Json result{{"abstract", abstract}, {"controls", controls}, {"presentation", presentation},
-    {"interpretation", interpretation_artifact(*execution, abstract)}, {"views", Json::array()}};
+    {"interpretation", prepared.interpretation()}, {"views", Json::array()}};
   const auto realizations = Json::parse(realizations_text);
   if (!realizations.is_array() || realizations.size() > 64) throw DiagnosticError("authoring.realizations", "/", "Expected at most 64 views.");
   for (const auto &geometry : realizations) {
-    const auto bundle = realization_artifacts(execution, geometry.dump());
-    if (bundle.at("abstract") != abstract || bundle.at("interpretation") != result.at("interpretation"))
-      throw DiagnosticError("authoring.context", "/", "Views disagree on execution/correspondence.");
+    const auto bundle = prepared.view(geometry.dump());
     Json hint = Json::object();
     for (const auto *key : {"schemaVersion", "id", "kind", "requiredCapabilities", "controlLayout", "operationTracks", "rotationTracks", "motionFamilies", "cutDepth", "radius", "flatSurface"})
       if (geometry.contains(key)) hint[key] = geometry.at(key);
@@ -73,6 +75,10 @@ Json runtime_artifacts(const std::string &source, const std::string &realization
   }
   result["presentation"]["display"] = movement_presentation(canonical, catalog, realizations);
   return result;
+}
+std::string runtime_artifacts_from_session_json(const Session &session, const std::string &realizations) {
+  try { return runtime_artifacts(session.execution(), realizations).dump(); }
+  catch (const std::exception &error) { return diagnostic_result(error).dump(); }
 }
 std::string runtime_artifacts_json(const std::string &source, const std::string &realizations) {
   try { return runtime_artifacts(source, realizations).dump(); }

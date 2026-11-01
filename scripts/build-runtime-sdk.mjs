@@ -7,22 +7,26 @@ import { checkRuntimeData } from '../tools/authoring/runtime-data.mjs';
 import { readInventory } from './puzzle-data.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const args=process.argv.slice(2);
-if(args.some(arg=>!['--with-presets','--stage-web'].includes(arg)))throw new Error('Usage: build-runtime-sdk.mjs [--with-presets] [--stage-web]');
+if(args.some(arg=>!['--with-presets','--stage-web','--from-kernel'].includes(arg)))throw new Error('Usage: build-runtime-sdk.mjs [--with-presets] [--stage-web] [--from-kernel]');
 if(args.includes('--stage-web')) {
   await rm(join(root,'dist/runtime'),{recursive:true,force:true});
   await cp(join(root,'build/runtime-sdk'),join(root,'dist/runtime'),{recursive:true});
 } else {
   const output=join(root,'build/runtime-sdk');
-  execFileSync('node_modules/.bin/tsc',['-p','tsconfig.runtime.json'],{cwd:root,stdio:'inherit'});
+  const compiled=join(root,args.includes('--from-kernel')?'build/kernel':'build/runtime-code');
+  if(args.includes('--from-kernel')) {
+    const complete=JSON.parse(await readFile(join(compiled,'package.json'),'utf8'));
+    if(complete.name!=='@twisty/kernel')throw new Error('--from-kernel requires a freshly built complete SDK.');
+  } else execFileSync('node_modules/.bin/tsc',['-p','tsconfig.runtime.json'],{cwd:root,stdio:'inherit'});
   await rm(output,{recursive:true,force:true});await mkdir(join(output,'generated'),{recursive:true});
-  for(const name of ['runtime.js','runtime.d.ts','artifact.js','artifact.d.ts','shared.js','shared.d.ts'])
-    await cp(join(root,'build/runtime-code',name),join(output,name));
+  for(const name of ['runtime.js','runtime.d.ts','artifact.js','artifact.d.ts','shared.js','shared.d.ts','adapters.js','adapters.d.ts'])
+    await cp(join(compiled,name),join(output,name));
   for(const name of ['twisty-artifact.mjs','twisty-artifact.wasm','twisty-artifact.d.mts'])
     await cp(join(root,'kernel/generated',name),join(output,'generated',name));
   const {version}=JSON.parse(await readFile(join(root,'package.json'),'utf8'));
   await writeFile(join(output,'package.json'),JSON.stringify({name:'@twisty/runtime',version,type:'module',
     exports:{'.':{types:'./runtime.d.ts',import:'./runtime.js'},'./artifact':{types:'./artifact.d.ts',import:'./artifact.js'},'./raw':'./generated/twisty-artifact.mjs','./wasm':'./generated/twisty-artifact.wasm'},
-    files:['runtime.js','runtime.d.ts','shared.js','shared.d.ts','artifact.js','artifact.d.ts','generated','examples','schemas','README.md','kernel-api.md',...(args.includes('--with-presets')?['data']:[])]},null,2)+'\n');
+    files:['runtime.js','runtime.d.ts','shared.js','shared.d.ts','adapters.js','adapters.d.ts','artifact.js','artifact.d.ts','generated','examples','schemas','README.md','kernel-api.md',...(args.includes('--with-presets')?['data']:[])]},null,2)+'\n');
   await writeFile(join(output,'README.md'),(await readFile(join(root,'docs/runtime-sdk.md'),'utf8')).replaceAll('docs/kernel-api.md','kernel-api.md'));
   await cp(join(root,'docs/kernel-api.md'),join(output,'kernel-api.md'));
   await mkdir(join(output,'schemas'));

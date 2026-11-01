@@ -78,7 +78,7 @@ function consume(module:Awaited<ReturnType<typeof createRuntime>>,documents:Runt
   const start=performance.now();
   const {createRuntime,RuntimeSession,RuntimeController,GeometryInstance,geometryBackends,resolveMovementAlias}=await import(pathToFileURL(join(javascript,'runtime.js')));
   const module=await createRuntime();const initializationMs=performance.now()-start;
-  for(const absent of ['Puzzle','compilePuzzleJSON','compileExecutionJSON','cubeModuleJSON','gearModuleJSON','cubeSourceJSON','gearSourceJSON','runtimeArtifactsJSON','migrateSourceSessionJSON'])
+  for(const absent of ['Puzzle','compilePuzzleJSON','compileExecutionJSON','cubeModuleJSON','gearModuleJSON','cubeSourceJSON','gearSourceJSON','runtimeArtifactsJSON','runtimeArtifactsFromSessionJSON','migrateSourceSessionJSON'])
     assert.equal(typeof module[absent],'undefined',`${absent} leaked into runtime WASM`);
   assert.throws(()=>new module.Session('{}'),'Source constructor leaked into runtime WASM');
   assert.equal(JSON.parse(module.artifactInfoJSON()).runtimeAPIVersion,1);

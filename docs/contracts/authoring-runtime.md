@@ -319,3 +319,12 @@ other frozen fields exactly. Unknown capability additions, removed capabilities,
 unsupported backend versions and changes to other API fields remain failures.
 Dedicated negative tests exercise this gate. No rule, witness, state, save or
 geometry expectation is normalized or re-recorded.
+
+The cleanup after Phase 7 replaces the draft shape checks in the acceptance
+command with production schemas under `schemas/`, using both legacy and current
+wire examples. The Phase-1 draft schema files remain historical design records.
+The independent canonical encoder, hash vectors and frozen native/WASM baseline
+are retained. In the aggregate `npm run check`, the artifact native test is owned
+by `check:artifacts`; standalone `test:native` still includes it. Inventory-wide
+realization schema validation is owned by `check:puzzles`; schema unit tests keep
+their state/save checks and focused negative cases.

@@ -1,4 +1,4 @@
-// Draft structure and canonical-byte conformance only; this is not a loader.
+// Current wire-schema and independent canonical-byte conformance; not a runtime loader.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -28,65 +28,55 @@ export function canonicalIntegerJSON(value) {
   return JSON.stringify(normalize(value));
 }
 
-export async function checkDraftContracts() {
+export async function checkWireContracts() {
   const read = file => readFile(new URL(`../../${file}`, import.meta.url), 'utf8').then(JSON.parse);
   const ajv = new Ajv({ strict: false, allErrors: true });
-  ajv.addSchema(await read('schemas/compact-v2.schema.json'));
-  for (const name of ['common', 'abstract-artifact', 'interpretation', 'controller', 'realization'])
-    ajv.addSchema(await read(`docs/contracts/${name}.schema.json`));
-  const zero = '0'.repeat(64);
-  const abstract = {
-    kind: 'twisty-abstract-artifact', artifactVersion: 1, requiredCapabilities: [], executionDigest: zero,
-    program: { predicateVersion: 1, transportVersion: 1, pieceCount: 1, placementCount: 2,
-      initialPlacements: [0], finiteSets: [[1]], predicateNodes: [{ op: 'IN', bank: 'choice', input: 0, set: 0 }], childReferences: [], invariantRoot: 1, goalRoot: 1,
-      actionRecords: [{ piece: 0, map: 0, selectionRoot: 2, event: 0 }],
-      requestPrograms: [{ choiceSizes: [2], firstAction: 0, actionCount: 1, relationRoot: 1 }],
-      compact: { groups: [], actions: [], collections: [], spaces: [], positionMaps: [], bindings: [], families: [],
-        maps: [{ kind: 'explicit', rows: [[0, 1], [1, 0]] }] } },
-    bindings: { puzzleId: 'toggle', pieces: ['piece'], placements: ['a', 'b'], events: ['turn'],
-      choiceSlots: ['slot'], choiceValues: [['idle', 'turn']], requests: [{ id: 'turn', defaultProfile: 0,
-        profiles: [{ id: 'default', choices: [1], whenRoot: 1 }] }] },
-    session: { requestInverses: [0], choiceInverses: [[0, 1]] },
+  for (const name of ['compact-v2','artifact-common','abstract-artifact','interpretation','interpretation-v2',
+    'control-artifact','presentation-artifact','realization-envelope','artifact-backend','backend-payload','artifact-realization'])
+    ajv.addSchema(await read(`schemas/${name}.schema.json`));
+  const runtime = 'runtime-puzzles/cube3/';
+  const view = runtime+'realizations/cube-euclidean/';
+  const samples = {
+    abstract: ['abstract-artifact:1', await read('examples/artifact/data/cube3/abstract.json')],
+    grouped: ['abstract-artifact:1', await read(runtime+'abstract.json')],
+    interpretation: ['interpretation:1', await read('examples/artifact/data/cube3/interpretation.json')],
+    correspondence: ['interpretation:2', await read(runtime+'interpretation.json')],
+    controls: ['controls:1', await read('runtime-puzzles/helicopter/controls.json')],
+    presentation: ['presentation:1', await read(runtime+'presentation.json')],
+    realization: ['realization-envelope:1', await read(view+'realization.json')],
+    payload: ['backend-payload:1', await read(view+'geometry.json')],
+    legacy: ['artifact-realization:1', await read('examples/artifact/data/cube3/realization.json')],
   };
-  const interpretation = { kind: 'twisty-interpretation', contractVersion: 1, executionDigest: zero, interpretationDigest: zero,
-    domains: [{ id: 'domain', choiceSlot: 0, ports: ['p'] }], resources: ['a', 'b'],
-    pieces: [{ piece: 0, domain: 0, portLabels: [{ port: 'p', material: 'red' }] }],
-    placements: [0, 1].map(i => ({ placement: i, domain: 0, resources: [i], ports: [{ id: 'p', resource: i, attachment: 'out' }] })),
-    certificates: [{ id: 'turn', domain: 0, request: 0, event: 0, transport: 0, actions: [0], unavailablePlacements: [] }] };
-  const controller = { kind: 'twisty-controller', contractVersion: 1, executionDigest: zero, controlDigest: zero,
-    movements: [{ slot: 0, value: 1, actions: [0] }],
-    drivers: [{ id: 'driver', piece: 0, stops: ['a', 'b'], reader: [{ placement: 0, stop: 0 }, { placement: 1, stop: 1 }] }],
-    families: [{ id: 'family', drivers: [0], routes: [0, 1].map(i => ({ from: [i], to: [1 - i], request: 0, choices: [1], pathId: 'toggle', preferred: true })) }] };
-  const realization = { kind: 'twisty-realization', contractVersion: 1, id: 'view', interpretationDigest: zero, realizationDigest: zero,
-    requiredCapabilities: [], backend: { id: 'test-only', version: 1 }, payload: { path: 'assets/view.json', sha256: zero },
-    eventTracks: [{ certificate: 0, pathId: 'toggle' }] };
-  const examples = { 'abstract-artifact': abstract, interpretation, controller, realization };
   let checks = 0;
   function validate(name, value, expected = true) {
-    const validator = ajv.getSchema(`urn:twisty:draft:${name}:1`);
-    assert.ok(validator, name);
-    assert.equal(validator(value), expected, `${name}: ${ajv.errorsText(validator.errors)}`);
+    const validator = ajv.getSchema(`urn:twisty:schema:${samples[name][0]}`);
+    assert.ok(validator,name);
+    assert.equal(validator(value),expected,`${name}: ${ajv.errorsText(validator.errors)}`);
     ++checks;
   }
-  for (const [name, value] of Object.entries(examples)) validate(name, value);
-  const bare = structuredClone(abstract); delete bare.bindings; delete bare.session;
-  validate('abstract-artifact', bare); // A core program requires no inverse or geometry.
-  const mutate = (name, edit) => { const value = structuredClone(examples[name]); edit(value); validate(name, value, false); };
-  mutate('abstract-artifact', v => { v.source = {}; });
-  mutate('abstract-artifact', v => { v.program.coordinates = []; });
-  mutate('abstract-artifact', v => { v.program.actionRecords[0].event = 0.5; });
-  mutate('abstract-artifact', v => { v.program.actionRecords[0].map = 4294967295; });
-  mutate('abstract-artifact', v => { v.program.initialPlacements = [-1]; });
-  mutate('abstract-artifact', v => { delete v.bindings; });
-  mutate('abstract-artifact', v => { v.artifactVersion = 2; });
-  mutate('abstract-artifact', v => { v.program.compact.collections = [{ id: 'source-only', action: 0, placements: [0] }]; });
-  mutate('interpretation', v => { v.certificates[0].axis = [0, 1, 0]; });
-  mutate('controller', v => { v.families[0].routes[0].angle = 1; });
-  mutate('controller', v => { v.drivers[0].stops = ['a', 'a']; });
-  mutate('realization', v => { v.requiredCapabilities = ['x', 'x']; });
-  mutate('realization', v => { v.interpretationDigest = 'bad'; });
-  for (const path of ['../view.json', '/view.json', 'a/../view.json', 'a/./view.json', 'a//view.json', 'C:\\view.json', 'https://example/view.json', 'a/'])
-    mutate('realization', v => { v.payload.path = path; });
+  for (const [name,[,value]] of Object.entries(samples)) validate(name,value);
+  const bare = structuredClone(samples.abstract[1]); delete bare.bindings; delete bare.session;
+  validate('abstract',bare);
+  const mutate = (name,edit) => { const value=structuredClone(samples[name][1]);edit(value);validate(name,value,false); };
+  mutate('abstract',v=>{v.source={};});
+  mutate('abstract',v=>{v.program.coordinates=[];});
+  mutate('abstract',v=>{v.program.actionRecords[0].event=0.5;});
+  mutate('abstract',v=>{v.program.actionRecords[0].map=4294967295;});
+  mutate('abstract',v=>{v.program.initialPlacements[0]=-1;});
+  mutate('abstract',v=>{delete v.bindings;});
+  mutate('abstract',v=>{v.artifactVersion=2;});
+  mutate('abstract',v=>{v.program.compact.collections=[{id:'source-only',action:0,placements:[0]}];});
+  mutate('interpretation',v=>{v.certificates[0].axis=[0,1,0];});
+  mutate('controls',v=>{v.kind='twisty-controller';});
+  mutate('controls',v=>{delete v.catalog;});
+  mutate('controls',v=>{v.catalog.families[0].routes[0].angle=1;});
+  mutate('controls',v=>{v.catalog.drivers[0].stops=['a','a'];});
+  mutate('presentation',v=>{v.display.version=2;});
+  mutate('presentation',v=>{v.display.operations.R.label=0;});
+  mutate('realization',v=>{v.requiredCapabilities=['x','x'];});
+  mutate('realization',v=>{v.interpretationDigest='bad';});
+  for(const path of ['../view.json','/view.json','a/../view.json','a/./view.json','a//view.json','C:\\view.json','https://example/view.json','a/'])
+    mutate('realization',v=>{v.payload.path=path;});
   const vectors = await read('docs/contracts/hash-vectors.json');
   for (const vector of vectors) {
     const canonical = canonicalIntegerJSON(vector.value);
@@ -100,4 +90,4 @@ export async function checkDraftContracts() {
   return checks;
 }
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url)
-  console.log(`${await checkDraftContracts()} draft structure/hash conformance checks passed (no runtime loader).`);
+  console.log(`${await checkWireContracts()} current wire-schema/hash conformance checks passed (no runtime loader).`);

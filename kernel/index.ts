@@ -1,7 +1,8 @@
+import { SessionAdapter, ControllerAdapter } from './adapters.js';
 import createModule, { type MainModule } from './generated/twisty.mjs';
 export type { MainModule } from './generated/twisty.mjs';
-import { type CompiledDefinition, type Snapshot, type StateSnapshot, type Request, type Result,
-  type ControlCatalog, type ControlResult, type FamilySelection, type TurnIntent } from './shared.js';
+import { type CompiledDefinition, type Snapshot, type StateSnapshot, type Result,
+  type ControlResult, type FamilySelection } from './shared.js';
 export * from './shared.js';
 
 
@@ -157,94 +158,40 @@ export class Puzzle {
   dispose(): void { this.native.delete(); }
 }
 
-export class KernelSession {
-  readonly native: InstanceType<MainModule['Session']>;
+export class KernelSession extends SessionAdapter<InstanceType<MainModule['Session']>, Snapshot, StateSnapshot, Result> {
   readonly definition: CompiledDefinition;
   readonly definitionText: string;
-
   private readonly module: MainModule;
   constructor(module: MainModule, source: string | KernelSession) {
-    this.module = module;
+    let native: InstanceType<MainModule['Session']>, definitionText: string, definition: CompiledDefinition;
     if (source instanceof KernelSession) {
       if (source.module !== module) throw new Error('A shared definition must belong to the same kernel runtime.');
       const shared = module.createSessionFromDefinition(source.native);
       if (!shared) throw new Error('Cannot create a session from the shared definition.');
-      this.native = shared;
-      this.definitionText = source.definitionText;
-      this.definition = source.definition;
-      return;
+      native = shared; definitionText = source.definitionText; definition = source.definition;
+    } else {
+      try { native = new module.Session(source); }
+      catch (error: unknown) {
+        const result = JSON.parse(module.compileExecutionJSON(source)) as Result;
+        throw new Error(result.diagnostics?.map(d => `${d.source}: ${d.message}`).join('\n') ?? String(error));
+      }
+      definitionText = native.definitionJSON(); definition = JSON.parse(definitionText) as CompiledDefinition;
     }
-    try {
-      this.native = new module.Session(source);
-    } catch (error: unknown) {
-      // Recover structured diagnostics only for an invalid import; valid sources
-      // compile once in Session, preserving exact native serialization.
-      const result = JSON.parse(module.compileExecutionJSON(source)) as Result;
-      throw new Error(result.diagnostics?.map((d) => `${d.source}: ${d.message}`).join('\n') ?? String(error));
-    }
-    this.definitionText = this.native.definitionJSON();
-    this.definition = JSON.parse(this.definitionText) as CompiledDefinition;
+    super(native);
+    this.module = module; this.definitionText = definitionText; this.definition = definition;
   }
-
-  snapshot(): Snapshot { return JSON.parse(this.native.snapshotJSON()) as Snapshot; }
-  stateSnapshot(): StateSnapshot { return JSON.parse(this.native.stateSnapshotJSON()) as StateSnapshot; }
-  lightweightResults(enabled = true): void { this.native.lightweightResults(enabled); }
-  stateText(): string { return this.native.stateJSON(); }
-  plan(request: Request, stateText = this.stateText()): Result {
-    return JSON.parse(this.native.planJSON(JSON.stringify(request), stateText)) as Result;
-  }
-  validateState(stateText: string): Result {
-    return JSON.parse(this.native.validateStateJSON(stateText)) as Result;
-  }
-  execute(request: Request, expectedRevision = this.native.revision()): Result {
-    return JSON.parse(this.native.executeJSON(JSON.stringify(request), expectedRevision)) as Result;
-  }
-  move(operation: string, expectedRevision = this.native.revision()): Result {
-    return this.execute({ operation, parameters: {} }, expectedRevision);
-  }
-  run(notation: string, policy: string, expectedRevision = this.native.revision()): Result {
-    return JSON.parse(this.native.runJSON(notation, policy, expectedRevision)) as Result;
-  }
-  undo(expectedRevision = this.native.revision()): Result { return JSON.parse(this.native.undoJSON(expectedRevision)) as Result; }
-  redo(expectedRevision = this.native.revision()): Result { return JSON.parse(this.native.redoJSON(expectedRevision)) as Result; }
-  scramble(seed: number, length: number, expectedRevision = this.native.revision()): Result {
-    return JSON.parse(this.native.scrambleJSON(seed, length, expectedRevision)) as Result;
-  }
-  load(document: string): Result { return JSON.parse(this.native.loadJSON(document)) as Result; }
-  save(presentation: unknown = {}): string {
-    return this.native.saveWithPresentationJSON(JSON.stringify(presentation));
-  }
-  dispose(): void { this.native.delete(); }
 }
 
-/** Optional presentation helper. Uses the explicit frame/animation/projection API;
- * no camera, clock, easing, abstract mutation, or renderer dependency. */
-export class KernelController {
-  readonly native: NonNullable<ReturnType<MainModule['createController']>>;
-  readonly controls: ControlCatalog;
-  constructor(module: MainModule, private readonly session: KernelSession) {
+export class KernelController extends ControllerAdapter<InstanceType<MainModule['Session']>,
+  NonNullable<ReturnType<MainModule['createController']>>, ControlResult, FamilySelection> {
+  constructor(module: MainModule, session: KernelSession) {
     const native = module.createController(session.native);
     if (!native) throw new Error('Cannot create controller.');
-    this.native = native;
-    this.controls = JSON.parse(native.catalogJSON()) as ControlCatalog;
+    super(native, session);
   }
-  catalog(): ControlCatalog { return this.controls; }
-  familyState(family: string): ControlResult {
-    return JSON.parse(this.native.familyStateJSON(this.session.native, family)) as ControlResult;
-  }
-  familiesForPieces(pieces: readonly string[]): FamilySelection {
+  override familiesForPieces(pieces: readonly string[]): FamilySelection {
     if (typeof this.native.familiesForPiecesJSON !== 'function')
       return { status: 'Unavailable', reasonCode: 'controls.piece_selection_unsupported' };
-    return JSON.parse(this.native.familiesForPiecesJSON(this.session.native, JSON.stringify(pieces))) as FamilySelection;
+    return super.familiesForPieces(pieces);
   }
-  destinations(family: string, offset = 0, limit = 16): ControlResult {
-    return JSON.parse(this.native.destinationsJSON(this.session.native, family, offset, limit)) as ControlResult;
-  }
-  planTo(intent: TurnIntent, expectedRevision = this.session.native.revision()): ControlResult {
-    return JSON.parse(this.native.planToJSON(this.session.native, JSON.stringify(intent), expectedRevision)) as ControlResult;
-  }
-  turnTo(intent: TurnIntent, expectedRevision = this.session.native.revision()): ControlResult {
-    return JSON.parse(this.native.turnToJSON(this.session.native, JSON.stringify(intent), expectedRevision)) as ControlResult;
-  }
-  dispose(): void { this.native.delete(); }
 }

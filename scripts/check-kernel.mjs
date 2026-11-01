@@ -57,6 +57,7 @@ try {
   }
   for (const id of schemaIDs) assert.ok(schemas.getSchema(id), `Packaged schema cannot resolve: ${id}`);
   const { createKernel, KernelSession, KernelController, GeometryInstance, copyIntrinsicMeshes, Puzzle, createCubeSource, createGearSource } = await import(pathToFileURL(join(javascript, 'index.js')).href);
+  const { compileRuntimeBundle } = await import(pathToFileURL(join(javascript, 'authoring.js')).href);
   const module = await createKernel();
   const info = JSON.parse(module.kernelInfoJSON());
   const manifest = JSON.parse(await readFile(join(javascript, 'package.json'), 'utf8'));
@@ -134,6 +135,25 @@ try {
       const catalog = JSON.parse(await readFile(join(data, 'bindings.json'), 'utf8'));
       assert.deepEqual(createCubeSource(module, bandaged), { source, catalog });
       assert.deepEqual(JSON.parse(execFileSync(executable, [bandaged ? '--bandaged-module' : '--cube-module'], { encoding: 'utf8' })), { source, catalog });
+      if (!bandaged) {
+        const authoring = new KernelSession(module, await readFile(join(data, 'package.json'), 'utf8'));
+        try {
+          assert.equal(authoring.move('R').status, 'Committed');
+          const before = authoring.save();
+          const views = await Promise.all(['cube-euclidean', 'cube-spherical'].map(async id =>
+            JSON.parse(await readFile(join(data, `${id}.json`), 'utf8'))));
+          const bundle = compileRuntimeBundle(module, authoring.native, views);
+          assert.equal(authoring.save(), before);
+          assert.equal(bundle.views.length, 2);
+          const runtime = module.createRuntimeSession(JSON.stringify(bundle.abstract), JSON.stringify(bundle.controls));
+          assert.ok(runtime);
+          try {
+            assert.equal(runtime.revision(), '0');
+            assert.equal(JSON.parse(runtime.executeJSON(JSON.stringify({ operation: 'U', parameters: {} }), '0')).status, 'Committed');
+          } finally { runtime.delete(); }
+          console.log('Packaged authoring exports reuse a live source context without transferring its history.');
+        } finally { authoring.dispose(); }
+      }
       const cube = new Puzzle(module, JSON.stringify(source));
       try {
         const initial = cube.preview.program.initialPlacements;

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Author the closed 110-piece spherical/conical icosahedron package."""
+from .icosahedron_common import add_domain, components
 from ..environment import workspace_root, native_tool
 import argparse
 from copy import deepcopy
@@ -51,20 +52,9 @@ def module(model,ids,ports):
     predicates=source['predicates'];invariant=[]
     for kind in model.kinds:
         pieces=members[kind]
-        source['domains'].append(dict(id=kind,placements=['p'+str(q) for q in range(len(model.poses[kind]))],
-            pieces=[dict(id=p['id'],initial='p'+str(p['home'])) for p in pieces],moves=[]))
-        catalog['domains'].append(dict(id=kind,pieces=[p['id'] for p in pieces],localPorts=ports[kind],
-            placements=[kind+'/p'+str(q) for q in range(len(model.poses[kind]))]))
-        for p in pieces:
-            labels={}
-            for port in ports[kind]:
-                n=AXES[int(port)]
-                transformed=tuple(sum(p['frame'][i][j]*n[j] for j in range(3)) for i in range(3))
-                labels[port]=color(max(range(20),key=lambda i:dot(AXES[i],transformed)))
-            catalog['pieces'][p['id']]=dict(domain=kind,home=kind+'/p'+str(p['home']),portLabels=labels)
+        add_domain(source,catalog,model,kind,pieces,ports[kind],color)
         for q in range(len(model.poses[kind])):
-            path=kind+'/p'+str(q);resource=location(kind,model.location_of[kind][q])
-            catalog['placements'][path]=dict(resources=[resource],ports={port:dict(cell=resource,attachment=path+'/'+port) for port in ports[kind]})
+            path=kind+'/p'+str(q)
             predicates['occupied/'+path]={'occupiedBy':dict(placement=path,pieces=[p['id'] for p in pieces])}
         for i,qs in enumerate(model.locations[kind]):
             resource=location(kind,i);catalog['resources'].append(resource)
@@ -135,18 +125,8 @@ def realizations(model,ids,digest,meshes):
             paths={name:{LABELS[i]:DELTAS[d]} for (i,d),name in ids.items()}))
     result={}
     for spherical in (False,True):
-        data=deepcopy(common);data['assets']={};data['componentsByDomain']={}
-        for kind in model.kinds:
-            body,ports=meshes[spherical][kind]
-            frames={'p'+str(q):frame(r) for q,r in enumerate(model.poses[kind])}
-            components=[]
-            for port,asset in [('body',body),*ports.items()]:
-                name=kind+'/'+port;data['assets'][name]=asset
-                component=dict(id=port,role='body' if port=='body' else 'port',meshAssetId=name,
-                    placementFrames=frames,operationTracks='turns')
-                if port!='body':component['portId']=port
-                components.append(component)
-            data['componentsByDomain'][kind]=components
+        data=deepcopy(common)
+        data['assets'],data['componentsByDomain']=components(model,meshes[spherical],frame)
         suffix='spherical' if spherical else 'euclidean'
         data.update(id=ID+'-'+suffix+'-v1',kind='articulated-'+suffix,
                     fidelity='spherical-110-piece-disk-arrangement' if spherical else 'regular-icosahedron-with-conical-cuts')

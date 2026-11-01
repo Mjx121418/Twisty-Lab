@@ -74,3 +74,10 @@ authored alias to a request ID. Submit that ID with `session.move(id)` and the
 usual revision check. Algorithm strings and saves use request IDs. Changing or
 removing display metadata does not change puzzle behavior. See
 `docs/kernel-api.md` for the exact contract and ownership.
+
+The complete and runtime distributions share host-side session/controller
+adapters, with no WASM factory value import in those adapters. Constructors and
+wire types remain separate, including legacy schema-2 and runtime schema-3 saves.
+For a combined repository build, `build-runtime-sdk.mjs --from-kernel` reuses the
+freshly compiled modules from `build/kernel`. Standalone runtime packaging still
+compiles its own minimal TypeScript project by default.

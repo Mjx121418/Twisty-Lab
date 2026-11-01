@@ -1,12 +1,15 @@
 // Optional compatibility/authoring entry; applications load it explicitly.
 import { createKernel, type MainModule } from './index.js';
 import type { RuntimeBundle } from './runtime.js';
+import type { Session } from './generated/twisty.mjs';
 export { Puzzle, createCubeSource, createGearSource, type PuzzleSource, type PuzzlePackage, type GearSource } from './index.js';
 export { createKernel as createAuthoringKernel } from './index.js';
 export type AuthoringOptions = { wasmURL?: string | URL; locateFile?: (filename: string, directory: string) => string };
 export async function createAuthoring(options: AuthoringOptions = {}): Promise<MainModule> { return createKernel(options); }
-export function compileRuntimeBundle(module: MainModule, source: string, realizations: readonly unknown[] = []): RuntimeBundle {
-  const result = JSON.parse(module.runtimeArtifactsJSON(source, JSON.stringify(realizations))) as RuntimeBundle & { status?: string; diagnostics?: { message: string }[] };
+export function compileRuntimeBundle(module: MainModule, source: string | Session, realizations: readonly unknown[] = []): RuntimeBundle {
+  const views = JSON.stringify(realizations);
+  const text = typeof source === 'string' ? module.runtimeArtifactsJSON(source, views) : module.runtimeArtifactsFromSessionJSON(source, views);
+  const result = JSON.parse(text) as RuntimeBundle & { status?: string; diagnostics?: { message: string }[] };
   if (result.status === 'Invalid') throw new Error(result.diagnostics?.map(d => d.message).join('\n') ?? 'Cannot compile runtime package.');
   return result;
 }

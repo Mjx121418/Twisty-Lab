@@ -1201,3 +1201,21 @@ other. Native algorithms, sessions and witnesses continue to serialize IDs;
 labels/aliases are not a replacement algorithm grammar. Metadata is owned by the
 host and borrows no native buffers. Session ownership and error/buffer contracts
 are unchanged.
+
+### Reusing an authoring execution
+
+The authoring C++ overload `language::runtime_artifacts(shared_ptr<const Execution>,
+realizationsJSON)` reuses a source-compiled immutable definition. The full WASM
+module exposes `runtimeArtifactsFromSessionJSON(session, realizationsJSON)`;
+`compileRuntimeBundle(module, session.native, views)` selects it in the authoring
+TypeScript entry. The existing string-source call remains supported.
+
+The session must be a live handle from the same module. The call is synchronous,
+leaves its state/history unchanged, and exports the definition's initial program
+rather than its current session state. The returned bundle owns its JSON and
+payload strings; the source session may be released after the call. An artifact
+execution is rejected with `authoring.execution`. Every realization still must
+pin the exact source definition, and every exported payload is validated by the
+interpreter. Shared abstract/correspondence encoding and artifact loading occur
+once per bundle. This additive authoring API changes no wire or buffer versions
+and is absent from the compiler-free module.

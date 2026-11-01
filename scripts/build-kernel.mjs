@@ -19,7 +19,7 @@ if (process.argv.includes('--stage-web')) {
   await writeFile(new URL('package.json', output), JSON.stringify({
     name: '@twisty/kernel', version, type: 'module',
     exports: { '.': { types: './index.d.ts', import: './index.js' }, './artifact': { types: './artifact.d.ts', import: './artifact.js' }, './execution': { types: './runtime.d.ts', import: './runtime.js' }, './authoring': { types: './authoring.d.ts', import: './authoring.js' }, './runtime': './generated/twisty.mjs', './wasm': './generated/twisty.wasm', './artifact-wasm': './generated/twisty-artifact.wasm' },
-    files: ['runtime.js', 'runtime.d.ts', 'shared.js', 'shared.d.ts', 'authoring.js', 'authoring.d.ts', 'index.js', 'index.d.ts', 'artifact.js', 'artifact.d.ts', 'generated', 'examples', 'schemas', 'README.md', 'core-language.md', 'reference-anchors.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'gear-model.md', 'icosahedron-model.md', 'flat-surfaces.md', 'authoring-tool.md', 'runtime-sdk.md'],
+    files: ['runtime.js', 'runtime.d.ts', 'shared.js', 'shared.d.ts', 'adapters.js', 'adapters.d.ts', 'authoring.js', 'authoring.d.ts', 'index.js', 'index.d.ts', 'artifact.js', 'artifact.d.ts', 'generated', 'examples', 'schemas', 'README.md', 'core-language.md', 'reference-anchors.md', 'spherical-cube.md', 'spherical-helicopter.md', 'spherical-bagua.md', 'bagua-model.md', 'gear-model.md', 'icosahedron-model.md', 'flat-surfaces.md', 'authoring-tool.md', 'runtime-sdk.md'],
   }, null, 2) + '\n');
   const readme = (await readFile(new URL('../docs/kernel-api.md', import.meta.url), 'utf8'))
     .replaceAll('../schemas/', 'schemas/').replaceAll('../examples/', 'examples/');

@@ -78,6 +78,7 @@ EMSCRIPTEN_BINDINGS(twisty) {
   function("kernelInfoJSON", &kernel_info_json);
   function("cubeArtifactBundleJSON", &language::cube_artifacts_json);
   function("runtimeArtifactsJSON", &language::runtime_artifacts_json);
+  function("runtimeArtifactsFromSessionJSON", &language::runtime_artifacts_from_session_json);
   function("migrateSourceSessionJSON", &language::migrate_runtime_session_json);
 #endif
   function("createGeometry", &create_geometry, return_value_policy::take_ownership());

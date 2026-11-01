@@ -1,0 +1,514 @@
+{
+  "base": {
+    "operations": [
+      {
+        "id": "request-17",
+        "inverse": "request-29",
+        "family": "group-8",
+        "transport": "map-3"
+      },
+      {
+        "id": "request-29",
+        "inverse": "request-17",
+        "family": "group-8",
+        "transport": "map-4"
+      }
+    ],
+    "display": {
+      "version": 1,
+      "operations": {
+        "request-17": {
+          "label": "Right cap",
+          "accessibleLabel": "Turn right cap",
+          "aliases": [
+            "right"
+          ]
+        },
+        "request-29": {
+          "label": "Reverse",
+          "accessibleLabel": "Reverse right cap",
+          "aliases": [
+            "reverse"
+          ]
+        }
+      },
+      "familyOrder": [
+        "group-8"
+      ],
+      "familyProbes": {
+        "group-8": "request-17"
+      },
+      "keyboard": {
+        "R": [
+          "request-17"
+        ]
+      },
+      "interaction": "relative",
+      "instructions": "Choose an axis.",
+      "defaultAlgorithm": "request-17 request-29"
+    }
+  },
+  "cases": [
+    {
+      "name": "opaque identifiers",
+      "valid": true,
+      "patch": []
+    },
+    {
+      "name": "display optional",
+      "valid": true,
+      "patch": [
+        {
+          "path": [
+            "display"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "null display",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display"
+          ],
+          "value": null
+        }
+      ]
+    },
+    {
+      "name": "future version",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "version"
+          ],
+          "value": 2
+        }
+      ]
+    },
+    {
+      "name": "boolean version",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "version"
+          ],
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "unknown interaction",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "interaction"
+          ],
+          "value": "unknown"
+        }
+      ]
+    },
+    {
+      "name": "unknown probe",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "familyProbes",
+            "group-8"
+          ],
+          "value": "missing"
+        }
+      ]
+    },
+    {
+      "name": "missing probe",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "familyProbes",
+            "group-8"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "probe array",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "familyProbes"
+          ],
+          "value": []
+        }
+      ]
+    },
+    {
+      "name": "unknown keyboard request",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "keyboard",
+            "R"
+          ],
+          "value": [
+            "missing"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "empty keyboard candidates",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "keyboard",
+            "R"
+          ],
+          "value": []
+        }
+      ]
+    },
+    {
+      "name": "keyboard array",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "keyboard"
+          ],
+          "value": []
+        }
+      ]
+    },
+    {
+      "name": "missing operation",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "operations",
+            "request-17"
+          ],
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "operation table array",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "operations"
+          ],
+          "value": []
+        }
+      ]
+    },
+    {
+      "name": "duplicate family order",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "familyOrder"
+          ],
+          "value": [
+            "group-8",
+            "group-8"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "unknown family",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "familyOrder"
+          ],
+          "value": [
+            "missing"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "alias shadows request",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "operations",
+            "request-17",
+            "aliases"
+          ],
+          "value": [
+            "request-29"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "alias collision",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "operations",
+            "request-17",
+            "aliases"
+          ],
+          "value": [
+            "reverse"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "repeated alias",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "operations",
+            "request-17",
+            "aliases"
+          ],
+          "value": [
+            "right",
+            "right"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "too many aliases",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "operations",
+            "request-17",
+            "aliases"
+          ],
+          "value": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17",
+            "18",
+            "19",
+            "20",
+            "21",
+            "22",
+            "23",
+            "24",
+            "25",
+            "26",
+            "27",
+            "28",
+            "29",
+            "30",
+            "31",
+            "32"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "empty label",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "operations",
+            "request-17",
+            "label"
+          ],
+          "value": ""
+        }
+      ]
+    },
+    {
+      "name": "unicode boundary",
+      "valid": true,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "operations",
+            "request-17",
+            "label"
+          ],
+          "value": "🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩"
+        }
+      ]
+    },
+    {
+      "name": "unicode overflow",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "operations",
+            "request-17",
+            "label"
+          ],
+          "value": "🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩🧩"
+        }
+      ]
+    },
+    {
+      "name": "angle array",
+      "valid": true,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "operations",
+            "request-17",
+            "angleDegrees"
+          ],
+          "value": [
+            120,
+            -45
+          ]
+        }
+      ]
+    },
+    {
+      "name": "boolean angle",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "operations",
+            "request-17",
+            "angleDegrees"
+          ],
+          "value": [
+            true
+          ]
+        }
+      ]
+    },
+    {
+      "name": "null angle",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "operations",
+            "request-17",
+            "angleDegrees"
+          ],
+          "value": null
+        }
+      ]
+    },
+    {
+      "name": "unknown display field",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "extra"
+          ],
+          "value": 0
+        }
+      ]
+    },
+    {
+      "name": "unknown operation field",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "operations",
+            "request-17",
+            "extra"
+          ],
+          "value": 0
+        }
+      ]
+    },
+    {
+      "name": "long help",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "display",
+            "instructions"
+          ],
+          "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        }
+      ]
+    },
+    {
+      "name": "duplicate operation identity",
+      "valid": false,
+      "patch": [
+        {
+          "path": [
+            "operations",
+            1,
+            "id"
+          ],
+          "value": "request-17"
+        }
+      ]
+    }
+  ]
+}

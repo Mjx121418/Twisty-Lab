@@ -163,3 +163,10 @@ changing request identities. Native authoring exports include generic display
 hints even without overrides; reference project files supply their example
 algorithms and explanatory text. Geometry-derived display angles are lowered by
 the native authoring adapter, rather than reconstructed from names by the UI.
+
+Presentation validation uses the same positive and negative JSON vectors as the
+runtime SDK (`tests/contracts/presentation.json`). Versions, interaction modes,
+family probes and keyboard references are checked in addition to override text
+and aliases. The standalone package includes portable project authoring, model
+producers, bundled data and native tools; repository inventory orchestration and
+reference runtime projects remain in the source repository.

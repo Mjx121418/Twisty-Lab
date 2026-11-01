@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { resolveMovementAlias, validateMovementPresentation, type MovementPresentation } from '../../kernel/runtime';
 
@@ -27,28 +28,15 @@ describe('movement presentation contract', () => {
     expect(()=>validateMovementPresentation({operations})).not.toThrow();
     expect(resolveMovementAlias({operations},'request-17')).toBe('request-17');
   });
-  it('counts Unicode labels in characters, matching authoring and JSON Schema', () => {
-    const definition=fixture();
-    definition.display.operations['request-17'].label='◇'.repeat(256);
-    expect(()=>validateMovementPresentation(definition)).not.toThrow();
-    definition.display.operations['request-17'].label='🧩'.repeat(256);
-    expect(()=>validateMovementPresentation(definition)).not.toThrow();
-    definition.display.operations['request-17'].label+='🧩';
-    expect(()=>validateMovementPresentation(definition)).toThrow();
-  });
-  it('rejects aliases that collide with requests or other aliases', () => {
-    const definition=fixture();
-    definition.display.operations['request-17'].aliases=['request-29'];
-    expect(()=>validateMovementPresentation(definition)).toThrow();
-    definition.display.operations['request-17'].aliases=['reverse'];
-    expect(()=>validateMovementPresentation(definition)).toThrow();
-  });
-  it('rejects unknown probe and keyboard request references', () => {
-    const definition=fixture();
-    definition.display.familyProbes['group-8']='missing';
-    expect(()=>validateMovementPresentation(definition)).toThrow();
-    definition.display.familyProbes['group-8']='request-17';
-    definition.display.keyboard.R=['missing'];
-    expect(()=>validateMovementPresentation(definition)).toThrow();
+  const vectors=JSON.parse(readFileSync('tests/contracts/presentation.json','utf8'));
+  it.each(vectors.cases)('shares Python conformance: $name', vector => {
+    const definition=structuredClone(vectors.base);
+    for(const patch of vector.patch) {
+      const parent=patch.path.slice(0,-1).reduce((value: any,key: string | number)=>value[key],definition);
+      const key=patch.path.at(-1);
+      if(patch.remove)delete parent[key];else parent[key]=patch.value;
+    }
+    if(vector.valid)expect(()=>validateMovementPresentation(definition)).not.toThrow();
+    else expect(()=>validateMovementPresentation(definition)).toThrow();
   });
 });

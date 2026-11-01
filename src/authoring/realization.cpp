@@ -1,4 +1,5 @@
 #include "twisty/contracts.hpp"
+#include "realization_internal.hpp"
 #include "../interpreter/backend_contract.hpp"
 #include "twisty/authoring/realization.hpp"
 #include "twisty/authoring/artifact.hpp"
@@ -25,10 +26,22 @@ Json realization_artifacts(const std::string &source, const std::string &realiza
   return realization_artifacts(Execution::from_source(source), realization);
 }
 Json realization_artifacts(std::shared_ptr<const Execution> execution, const std::string &realization) {
-  if (!execution || execution->source_free()) throw DiagnosticError("authoring.execution", "/", "A source-compiled authoring context is required.");
-  const auto &def = *execution->definition(); const auto puzzle = execution->compiled_puzzle();
+  RealizationExport prepared(std::move(execution));
+  auto result = prepared.view(realization);
+  result["abstract"] = prepared.abstract();
+  result["interpretation"] = prepared.interpretation();
+  return result;
+}
+RealizationExport::RealizationExport(std::shared_ptr<const Execution> execution) : execution_(std::move(execution)) {
+  if (!execution_ || execution_->source_free()) throw DiagnosticError("authoring.execution", "/", "A source-compiled authoring context is required.");
+  abstract_ = execution_->artifact_json();
+  interpretation_ = interpretation_artifact(*execution_, abstract_);
+  runtime_ = Execution::from_artifact(abstract_.dump());
+}
+Json RealizationExport::view(const std::string &realization) const {
+  const auto &def = *execution_->definition(); const auto puzzle = execution_->compiled_puzzle();
   const auto &b = puzzle->bindings;
-  auto abstract = execution->artifact_json(); auto manifest = interpretation_artifact(*execution, abstract);
+  const auto &abstract = abstract_, &manifest = interpretation_;
   auto geometry = Json::parse(realization);
   if (geometry.at("compatibleDefinitionDigest") != def.digest)
     throw DiagnosticError("realization.digest_mismatch", "/compatibleDefinitionDigest", "Authoring realization pins another source definition.");
@@ -44,11 +57,12 @@ Json realization_artifacts(std::shared_ptr<const Execution> execution, const std
     bindings.push_back({{"pathId", path}, {"group", groups.at(op.family)}, {"resources", resources}});
   }
   const auto backend = geometry.at("kind").get<std::string>();
+  const auto &descriptor = twisty::detail::geometry_backend(backend);
   for (const auto &piece_id : b.pieces) {
     const auto p = std::find_if(def.pieces.begin(), def.pieces.end(), [&](const auto &piece) { return piece.id == piece_id; });
-    kinds.push_back(twisty::detail::geometry_backend(backend).cube && p->type == "bandage" ? "cube-bandage" : "rigid");
+    kinds.push_back(descriptor.cube && p->type == "bandage" ? "cube-bandage" : "rigid");
   }
-  if (twisty::detail::geometry_backend(backend).cube) {
+  if (descriptor.cube) {
     const std::map<std::string, std::vector<int>> axes{{"U", {0,1,0}}, {"D", {0,-1,0}}, {"R", {1,0,0}}, {"L", {-1,0,0}}, {"F", {0,0,1}}, {"B", {0,0,-1}}};
     Json tracks = Json::object();
     for (const auto &op : def.operations)
@@ -99,10 +113,10 @@ Json realization_artifacts(std::shared_ptr<const Execution> execution, const std
   }
   Json envelope{{"kind", contracts::realization_kind}, {"contractVersion", contracts::realization_version}, {"id", geometry.at("id")},
     {"interpretationDigest", manifest.at("interpretationDigest")}, {"requiredCapabilities", capabilities},
-    {"backend", {{"id", backend}, {"version", twisty::detail::geometry_backend(backend).version}}}, {"payload", {{"path", "geometry.json"}, {"sha256", sha256(payload_text)}}},
+    {"backend", {{"id", backend}, {"version", descriptor.version}}}, {"payload", {{"path", "geometry.json"}, {"sha256", sha256(payload_text)}}},
     {"eventTracks", tracks}};
   artifact::seal(envelope, "realizationDigest");
-  GeometryDefinition verified(Execution::from_artifact(abstract.dump()), manifest.dump(), envelope.dump(), payload_text);
-  return {{"abstract", abstract}, {"interpretation", manifest}, {"realization", envelope}, {"payload", payload_text}};
+  GeometryDefinition verified(runtime_, manifest.dump(), envelope.dump(), payload_text);
+  return {{"realization", envelope}, {"payload", payload_text}};
 }
 } // namespace twisty::language

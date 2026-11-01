@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Independent authoring consumer, provenance and publication boundary checks."""
 import json
+import copy
 import os
 from pathlib import Path
 import shutil
@@ -13,9 +14,28 @@ from unittest.mock import patch
 sys.dont_write_bytecode=True
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
+from tools.authoring.presentation import validate_movement_presentation
+from tools.authoring.project import AuthoringError
 from tools.authoring.build import file_hashes
 from tools.authoring.legacy import publication_entries
 from tools.authoring.transaction import publish
+
+
+class PresentationContract(unittest.TestCase):
+    def test_shared_sdk_vectors(self):
+        vectors=json.loads((ROOT/'tests/contracts/presentation.json').read_text())
+        for case in vectors['cases']:
+            with self.subTest(case=case['name']):
+                document=copy.deepcopy(vectors['base'])
+                for change in case['patch']:
+                    parent=document
+                    for key in change['path'][:-1]: parent=parent[key]
+                    key=change['path'][-1]
+                    if change.get('remove'): del parent[key]
+                    else: parent[key]=change['value']
+                if case['valid']: validate_movement_presentation(document)
+                else:
+                    with self.assertRaises(AuthoringError): validate_movement_presentation(document)
 
 
 class AuthoringConsumer(unittest.TestCase):
@@ -59,6 +79,8 @@ class AuthoringConsumer(unittest.TestCase):
         self.assertFalse((self.output/'legacy').exists())
         self.assertTrue((self.output/'controls.json').is_file())
         self.assertTrue((self.output/'presentation.json').is_file())
+        for name in ('projects','runtime-projects','reference-build.mjs','runtime-build.mjs','runtime-data.mjs','legacy.py','compat.py'):
+            self.assertFalse((self.host/'tools/authoring'/name).exists(),name)
         before=file_hashes(self.output);receipt=(self.output/'build-manifest.json').read_bytes()
         snapshot={str(path):path.stat().st_mtime_ns for path in self.host.rglob('*')}
         for command in ('inspect','check','validate'): self.command(command)

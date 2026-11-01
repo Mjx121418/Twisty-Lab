@@ -1,10 +1,11 @@
+import { SessionAdapter, ControllerAdapter } from './adapters.js';
 // Portable execution/controller/geometry SDK. Imports only compiler-free WASM.
 import { createArtifactKernel } from './artifact.js';
 import { GeometryInstance as SharedGeometryInstance } from './shared.js';
 import type { MainModule, Session as NativeSession } from './generated/twisty-artifact.mjs';
 import type { CompiledDefinition, Snapshot as LegacySnapshot, Transition as LegacyTransition,
-  Result as LegacyResult, Request, StateSnapshot as LegacyStateSnapshot, ControlCatalog,
-  ControlResult as LegacyControlResult, FamilySelection as LegacyFamilySelection, TurnIntent, Realization, SceneDescriptor as LegacySceneDescriptor } from './shared.js';
+  Result as LegacyResult, StateSnapshot as LegacyStateSnapshot,
+  ControlResult as LegacyControlResult, FamilySelection as LegacyFamilySelection, Realization, SceneDescriptor as LegacySceneDescriptor } from './shared.js';
 export * from './shared.js';
 export type { MainModule };
 export type SceneDescriptor = Omit<LegacySceneDescriptor, 'definitionDigest' | 'executionDigest' | 'interpretationDigest' | 'realizationDigest'> & {
@@ -58,15 +59,21 @@ export function validateMovementPresentation(definition: Pick<RuntimeDefinition,
   const invalid = (): never => { throw new Error('Invalid movement presentation contract.'); };
   const bounded = (value: unknown, min: number, max: number): value is string =>
     typeof value === 'string' && Array.from(value).length >= min && Array.from(value).length <= max;
-  if (!display || display.version !== 1 || !display.operations || Array.isArray(display.operations) || !['moves','destinations','relative','cell-axes'].includes(display.interaction)) invalid();
+  const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
+  const fields = (value: unknown, required: string[], optional: string[] = []): boolean => record(value) &&
+    required.every(key => Object.hasOwn(value,key)) && Object.keys(value).every(key => required.includes(key) || optional.includes(key));
+  if (!fields(display,['version','operations','familyOrder','familyProbes','keyboard','interaction','instructions','defaultAlgorithm']) ||
+      display.version !== 1 || !record(display.operations) || !['moves','destinations','relative','cell-axes'].includes(display.interaction)) invalid();
+  if (!Array.isArray(definition.operations) || !definition.operations.every(op => record(op) && bounded(op.id,1,256) && bounded(op.family,1,256))) invalid();
   const requests = new Map(definition.operations.map(op => [op.id, op]));
   const families = new Set(definition.operations.map(op => op.family));
-  if (Object.keys(display.operations).length !== requests.size ||
+  if (requests.size !== definition.operations.length || Object.keys(display.operations).length !== requests.size ||
       !Array.isArray(display.familyOrder) || display.familyOrder.length !== families.size ||
       new Set(display.familyOrder).size !== families.size || display.familyOrder.some(id => !families.has(id))) invalid();
   const aliases = new Set(requests.keys());
   for (const [id, entry] of Object.entries(display.operations)) {
-    if (!requests.has(id) || !entry || ![entry.label, entry.accessibleLabel].every(s => bounded(s,1,256)) ||
+    if (!requests.has(id) || !fields(entry,['label','accessibleLabel','aliases'],['angleDegrees']) ||
+        ![entry.label, entry.accessibleLabel].every(s => bounded(s,1,256)) ||
         !Array.isArray(entry.aliases) || entry.aliases.length > 32 ||
         (entry.angleDegrees !== undefined && (!Array.isArray(entry.angleDegrees) || !entry.angleDegrees.every(Number.isFinite)))) invalid();
     for (const alias of entry.aliases) {
@@ -74,9 +81,9 @@ export function validateMovementPresentation(definition: Pick<RuntimeDefinition,
       aliases.add(alias);
     }
   }
-  if (!display.familyProbes || Object.keys(display.familyProbes).length !== families.size) invalid();
+  if (!record(display.familyProbes) || Object.keys(display.familyProbes).length !== families.size) invalid();
   for (const [family,id] of Object.entries(display.familyProbes)) if (!families.has(family) || requests.get(id)?.family !== family) invalid();
-  if (!display.keyboard || typeof display.keyboard !== 'object') invalid();
+  if (!record(display.keyboard)) invalid();
   for (const candidates of Object.values(display.keyboard))
     if (!Array.isArray(candidates) || !candidates.length || candidates.some(id => !requests.has(id))) invalid();
   if (![display.instructions, display.defaultAlgorithm].every(s => bounded(s,0,4096))) invalid();
@@ -104,63 +111,42 @@ export function runtimeViews(bundle: RuntimeBundle): Realization[] {
     interpretation, envelope: JSON.stringify(view.realization), payload: view.payload,
   } }));
 }
-export class RuntimeSession {
-  readonly native: NativeSession;
+export class RuntimeSession extends SessionAdapter<NativeSession, Snapshot, StateSnapshot, Result> {
   readonly definition: RuntimeDefinition;
   readonly definitionText: string;
   readonly documents: RuntimeDocuments;
-  constructor(private readonly module: MainModule, source: RuntimeDocuments | RuntimeSession) {
+  private readonly module: MainModule;
+  constructor(module: MainModule, source: RuntimeDocuments | RuntimeSession) {
+    let native: NativeSession, definition: RuntimeDefinition, documents: RuntimeDocuments;
     if (source instanceof RuntimeSession) {
       if (source.module !== module) throw new Error('A shared definition must belong to the same runtime.');
-      const native = module.createSessionFromDefinition(source.native);
-      if (!native) throw new Error('Cannot share runtime definition.');
-      this.native = native; this.definition = source.definition; this.definitionText = source.definitionText; this.documents = source.documents;
+      const shared = module.createSessionFromDefinition(source.native);
+      if (!shared) throw new Error('Cannot share runtime definition.');
+      native = shared; definition = source.definition; documents = source.documents;
     } else {
-      const presentation = JSON.parse(source.presentation) as RuntimeDefinition;
+      definition = JSON.parse(source.presentation) as RuntimeDefinition;
       const artifact = JSON.parse(source.abstract) as { executionDigest: string };
-      if (presentation.kind !== 'twisty-presentation' || presentation.contractVersion !== 1 || presentation.executionDigest !== artifact.executionDigest)
+      if (definition.kind !== 'twisty-presentation' || definition.contractVersion !== 1 || definition.executionDigest !== artifact.executionDigest)
         throw new Error('Presentation pins another runtime artifact.');
-      validateMovementPresentation(presentation);
-      let native: NativeSession | null;
-      try { native = module.createRuntimeSession(source.abstract, source.controls); }
+      validateMovementPresentation(definition);
+      let created: NativeSession | null;
+      try { created = module.createRuntimeSession(source.abstract, source.controls); }
       catch(error) {
         const diagnostics = JSON.parse(module.validateRuntimeJSON(source.abstract,source.controls));
         throw new Error(diagnostics.diagnostics?.map((d:{message:string})=>d.message).join('\n') ?? String(error));
       }
-      if (!native) throw new Error('Cannot create runtime session.');
-      this.native = native; this.definition = presentation; this.definitionText = source.abstract; this.documents = source;
+      if (!created) throw new Error('Cannot create runtime session.');
+      native = created; documents = source;
     }
+    super(native);
+    this.module = module; this.definition = definition; this.documents = documents; this.definitionText = documents.abstract;
   }
-  snapshot(): Snapshot { return JSON.parse(this.native.snapshotJSON()) as Snapshot; }
-  stateSnapshot(): StateSnapshot { return JSON.parse(this.native.stateSnapshotJSON()) as StateSnapshot; }
-  lightweightResults(enabled = true): void { this.native.lightweightResults(enabled); }
-  stateText(): string { return this.native.stateJSON(); }
-  plan(request: Request, stateText = this.stateText()): Result { return JSON.parse(this.native.planJSON(JSON.stringify(request), stateText)) as Result; }
-  validateState(text: string): Result { return JSON.parse(this.native.validateStateJSON(text)) as Result; }
-  execute(request: Request, revision = this.native.revision()): Result { return JSON.parse(this.native.executeJSON(JSON.stringify(request), revision)) as Result; }
-  move(operation: string, revision = this.native.revision()): Result { return this.execute({ operation, parameters: {} }, revision); }
-  run(notation: string, policy: string, revision = this.native.revision()): Result { return JSON.parse(this.native.runJSON(notation, policy, revision)) as Result; }
-  undo(revision = this.native.revision()): Result { return JSON.parse(this.native.undoJSON(revision)) as Result; }
-  redo(revision = this.native.revision()): Result { return JSON.parse(this.native.redoJSON(revision)) as Result; }
-  scramble(seed: number, length: number, revision = this.native.revision()): Result { return JSON.parse(this.native.scrambleJSON(seed, length, revision)) as Result; }
-  load(text: string): Result { return JSON.parse(this.native.loadJSON(text)) as Result; }
-  save(presentation: unknown = {}): string { return this.native.saveWithPresentationJSON(JSON.stringify(presentation)); }
-  dispose(): void { this.native.delete(); }
 }
-export class RuntimeController {
-  readonly native: NonNullable<ReturnType<MainModule['createController']>>;
-  readonly controls: ControlCatalog;
-  constructor(module: MainModule, private readonly session: RuntimeSession) {
+export class RuntimeController extends ControllerAdapter<NativeSession,
+  NonNullable<ReturnType<MainModule['createController']>>, ControlResult, FamilySelection> {
+  constructor(module: MainModule, session: RuntimeSession) {
     const native = module.createController(session.native);
     if (!native) throw new Error('Cannot create runtime controller.');
-    this.native = native;
-    this.controls = JSON.parse(native.catalogJSON()) as ControlCatalog;
+    super(native, session);
   }
-  catalog(): ControlCatalog { return this.controls; }
-  familyState(family: string): ControlResult { return JSON.parse(this.native.familyStateJSON(this.session.native, family)) as ControlResult; }
-  familiesForPieces(pieces: readonly string[]): FamilySelection { return JSON.parse(this.native.familiesForPiecesJSON(this.session.native, JSON.stringify(pieces))) as FamilySelection; }
-  destinations(family: string, offset = 0, limit = 16): ControlResult { return JSON.parse(this.native.destinationsJSON(this.session.native, family, offset, limit)) as ControlResult; }
-  planTo(intent: TurnIntent, revision = this.session.native.revision()): ControlResult { return JSON.parse(this.native.planToJSON(this.session.native, JSON.stringify(intent), revision)) as ControlResult; }
-  turnTo(intent: TurnIntent, revision = this.session.native.revision()): ControlResult { return JSON.parse(this.native.turnToJSON(this.session.native, JSON.stringify(intent), revision)) as ControlResult; }
-  dispose(): void { this.native.delete(); }
 }
