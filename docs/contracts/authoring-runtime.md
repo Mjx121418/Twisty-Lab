@@ -1,7 +1,7 @@
 # Authoring and interpreter contracts
 
-Status: Phases 1–6, 2026-10-31. Abstract artifact 1 and interpretation 1 remain
-supported. [Interpretation 2](../../schemas/interpretation-v2.schema.json),
+Status: all seven phases implemented, 2026-11-01. Abstract artifact 1 and
+interpretation 1 remain supported. [Interpretation 2](../../schemas/interpretation-v2.schema.json),
 [realization envelope 1](../../schemas/realization-envelope.schema.json), and
 [backend payload 1](../../schemas/backend-payload.schema.json) extend the
 source-free path to the existing geometric backends. The
@@ -9,27 +9,36 @@ source-free path to the existing geometric backends. The
 required `grouped-action-records-v1` extension for large numeric programs.
 Artifact API 1 is separate from legacy kernel API 7; see the exact
 [API/ownership/error contract](../kernel-api.md#interpretation-2-and-realization-envelope-1).
-The original drafts below retain design context. Phase 6 implements the
+The original drafts below retain design context. The implemented
 [resolved controller contract 1](../../schemas/control-artifact.schema.json)
-and `controlDigest`; its numeric reader records and explicit profiles supersede
+uses `controlDigest`; its numeric reader records and explicit profiles supersede
 the draft controller wire shape below. See [runtime distribution API 1](../kernel-api.md#runtime-distribution-api-1).
 The [architecture review](../architecture-review-authoring-contract.md) records
-the remaining migration sequence.
+the completed migration, cleanup and verification results.
 
 The [authoring CLI](../authoring-tool.md) implements project contract 1 and build
 receipt 1, with explicit native hosts, staged generation, source-free export and
 native realization validation. Its separate tool package and detached consumer
 checks exercise reproducibility, bounded dependencies, read-only checks and
 publication failure handling. These host-side versions do not change any kernel
-API, puzzle schema or buffer contract. Phase 6 adds runtime-only distributions, optional authoring SDK entry points
-and compiled reference presets. Backend/presentation cleanup remains Phase 7.
+API, puzzle schema or buffer contract. Runtime-only distributions, optional
+authoring SDK entry points and compiled reference presets are implemented.
+Phase 7 adds built-in backend registration/discovery and optional movement display
+metadata. See the [discovery and presentation contract](../kernel-api.md#backend-discovery-and-movement-presentation)
+and [production presentation schema](../../schemas/presentation-artifact.schema.json).
 
 The compiler produces immutable executable data. The abstract runtime validates
 and executes that data. Geometric interpreters validate a separate correspondence
 manifest and realization, then consume exact states and completed transitions.
 Only the abstract executor decides permission, validity, and solvedness. Geometry
 must remain outside its dependencies. The native/WASM compiler remains separately
-usable when the authoring CLI is introduced.
+usable alongside the authoring CLI.
+
+**Historical design notes.** The draft schema table and proposals below record
+the original plan. Some wire shapes were superseded during implementation;
+current consumers use the production schemas under `schemas/` and the exact
+[public API contract](../kernel-api.md). Acceptance checks validate those production
+schemas while preserving the original frozen behavior fixtures.
 
 | Draft schema | Data owner and identity |
 | --- | --- |
@@ -161,7 +170,8 @@ required capabilities, explicit event tracks, and a content-addressed payload.
 The backend owns the payload schema and its interpretation of assets, frames,
 motion families, pivots, winding, paths, and intrinsic space. Envelope validation
 does not make an arbitrary backend payload valid. The current R³, spherical, quotient-surface and S³/SO(4) interpreters accept
-this through the explicit payload adapter; backend registration remains static.
+this through the explicit payload adapter. The built-in registry advertises
+backend IDs, versions and capabilities without a dynamic plugin ABI.
 
 The payload reference contains a relative resource path and SHA-256 of its exact
 bytes. The loader receives those exact bytes explicitly from the host; this
@@ -178,10 +188,11 @@ local/world multiplication order, even for equal endpoints. The backend must
 declare intrinsic coordinates, metric, matrix convention, and buffer versions in
 its public descriptor; a 4×4 SO(4) matrix is not a homogeneous R³ matrix.
 
-`controlDigest` remains reserved for a future controller integration. The current
-envelope rejects it and omits driver-layout hints from exported payloads. Presentation labels/notation/shortcuts
-are outside these four artifacts. Initially they remain existing application data;
-a separately versioned presentation document can follow in Phase 7.
+On the realization envelope, `controlDigest` remains reserved and is rejected;
+the separate implemented controller document owns its own `controlDigest`.
+The envelope omits driver-layout hints from exported payloads. Presentation
+labels, aliases and shortcuts live in the separate presentation document and
+optional version-1 display metadata, outside executable and geometric contracts.
 
 **Canonical bytes and identities.** These four envelopes contain only objects,
 arrays, Unicode strings, booleans, nulls, and unsigned integer-valued numbers.

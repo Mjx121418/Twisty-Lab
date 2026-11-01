@@ -173,6 +173,24 @@ class AuthoringConsumer(unittest.TestCase):
             self.assertTrue(self.command('build')['built'])
         finally: model.write_bytes(original)
 
+    def test_icosahedron_152_does_not_initialize_the_110_model(self):
+        self.document.update(id='icosahedron-152',producer={'type':'preset','model':'icosahedron-152'})
+        self.save()
+        inputs=self.command('inspect')['inputs']
+        for name in ('icosahedron_common','icosahedron_rotations','icosahedron_mesh_common'):
+            self.assertIn('tool:models/'+name+'.py',inputs)
+        forbidden=('icosahedron_model','icosahedron_packages','icosahedron_meshes')
+        for name in forbidden:
+            self.assertNotIn('tool:models/'+name+'.py',inputs)
+        probe='''import sys
+from tools.authoring.models import icosahedron_152_packages
+for name in ('icosahedron_model','icosahedron_packages','icosahedron_meshes'):
+    assert 'tools.authoring.models.'+name not in sys.modules, name
+'''
+        result=subprocess.run([sys.executable,'-B','-c',probe],cwd=self.host,env=self.environment,
+                              text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+
     def test_invalid_manifest_and_symlink_destination(self):
         self.document['projectVersion']=True;self.save();self.command('inspect',success=False)
         self.document['projectVersion']=1;self.save()

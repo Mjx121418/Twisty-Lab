@@ -2,14 +2,14 @@
 
 The planar exterior is a geometric realization; rules remain spherical.
 """
-from .icosahedron_common import SphericalPiece, Placed, apply, transpose
+# Explicit aliases retain names exposed by the legacy scripts/ entry point.
+from .icosahedron_common import SphericalPiece, Placed as Placed
 from ..environment import data_file
 import json
 import math
-from pathlib import Path
 
-from .icosahedron_geometry import AXES, TAU, Arrangement, add, sub, scale, dot, cross, norm, unit
-from .icosahedron_model import ALPHA, IDENTITY, GROUP, LABELS, STOPS, DELTAS, compose, rotation, key, canonical
+from .icosahedron_geometry import AXES, Arrangement
+from .icosahedron_rotations import GROUP, LABELS, STOPS, DELTAS, TAU, apply, compose, rotation, key, canonical, transpose as transpose
 
 H = 1/math.sqrt(3)
 RADIUS = math.acos(H)

@@ -204,6 +204,19 @@ both standalone clients. Full regeneration preserves all 146 legacy artifact
 hashes and all 240 runtime content hashes; only build receipts and input
 provenance change. Frozen fixtures and wire/buffer versions remain unchanged.
 
+The final follow-up separates shared Icosahedron rotations, export helpers and
+mesh primitives from the 110-piece model. The 152-piece producer no longer imports
+or initializes the 110-piece model, producer or meshes; detached dependency and
+import checks guard this boundary. Legacy helper entry points remain available
+through explicit reexports. Unused imports are removed, presentation behavior
+tests clone the shared contract base, and the contract overview records all seven
+phases as complete while marking the original draft shapes as historical.
+Follow-up verification passes five Icosahedron model tests, ten detached
+authoring-tool checks and 32 presentation tests. Native generation and current
+WASM validation accept all 24 puzzles and 48 realizations. Every legacy artifact
+hash and every runtime file hash, including project receipts, remains unchanged;
+only the two global input-provenance manifests are refreshed.
+
 The recommended direction is to introduce a dedicated authoring CLI, backed by
 reusable compiler libraries, that emits validated runtime artifacts. Preserve
 the numeric abstract executor and the geometric interpreters as separate
@@ -575,4 +588,4 @@ checks and the full independent-consumer packaging check were inspected but were
 not executed for this documentation change.
 The review does not establish physical correctness of every puzzle or a measured
 startup/size regression. The original review did not implement a runtime loader
-or migrate puzzle artifacts; the current Phase 1–6 status is recorded at the top.
+or migrate puzzle artifacts; the current implementation status is recorded at the top.

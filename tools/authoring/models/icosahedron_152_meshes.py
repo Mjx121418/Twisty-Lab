@@ -3,7 +3,7 @@ from itertools import combinations
 import math
 
 from .icosahedron_geometry import AXES, add, sub, scale, dot, cross, norm, unit
-from .icosahedron_meshes import DISPLAY_RADIUS, INSET, mesh, region
+from .icosahedron_mesh_common import DISPLAY_RADIUS, INSET, mesh, region
 from .icosahedron_152_model import H
 
 PHI = (1+math.sqrt(5))/2

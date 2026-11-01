@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Author the closed 110-piece spherical/conical icosahedron package."""
-from .icosahedron_common import add_domain, components
+from .icosahedron_common import add_domain, components, names, color, frame
 from ..environment import workspace_root, native_tool
 import argparse
 from copy import deepcopy
@@ -10,8 +10,9 @@ from pathlib import Path
 import subprocess
 import tempfile
 
-from .icosahedron_geometry import AXES, dot
-from .icosahedron_model import Model, LABELS, ALPHA, STOPS, DELTAS, TAU, compose, rotation
+from .icosahedron_geometry import AXES
+from .icosahedron_model import Model
+from .icosahedron_rotations import LABELS, STOPS, DELTAS, TAU, compose, rotation
 from .icosahedron_meshes import assets, DISPLAY_RADIUS
 
 ROOT = workspace_root()
@@ -21,28 +22,6 @@ ID='icosahedron-110'
 def ref(name):return {'ref':name}
 def at(piece,kind,qs):return {'at':dict(piece=piece,placements=[kind+'/p'+str(q) for q in sorted(qs)])}
 def location(kind,i):return 'location/'+kind+'/'+str(i)
-
-
-def names(model):
-    result={}
-    for axis in range(20):
-        extra=0
-        for d,delta in enumerate(DELTAS):
-            if delta<0:continue
-            suffix='' if abs(delta-TAU/3)<1e-8 else '_j' if abs(delta-ALPHA)<1e-8 else '_'+chr(ord('a')+extra)
-            if suffix not in ('','_j'):extra+=1
-            result[axis,d]=LABELS[axis]+suffix
-            inverse=next(i for i,t in enumerate(DELTAS) if abs(t+delta)<1e-8)
-            result[axis,inverse]=result[axis,d]+'_inv'
-    return result
-
-
-def color(index):
-    # Distinct, stable face colors, carried by ordinary opaque port labels.
-    palette=['#f3eeee','#e97070','#7bd7ae','#efd16d','#81aef1','#d494da','#eaa675','#7ad1d7',
-             '#b8d874','#9b9bea','#e18eac','#8ec7a6','#e0b96f','#90bde1','#c3a3dc','#b3cf8e',
-             '#e5a090','#80c6c0','#d0bded','#d9cc8c']
-    return palette[index]
 
 
 def module(model,ids,ports):
@@ -101,13 +80,6 @@ def module(model,ids,ports):
     phases={LABELS[axis]:dict(count=9,pairs={ids[axis,d]:model.pairs[d] for d in range(len(DELTAS))}) for axis in range(20)}
     stats=compress(source,catalog,phases)
     return source,catalog,stats
-
-
-def frame(r):
-    # Reflect the author's z-up coordinates to the application's y-up frame.
-    order=(0,2,1)
-    q=[[r[i][j] for j in order] for i in order]
-    return [value for col in range(3) for value in (*[q[row][col] for row in range(3)],0.)]+[0.,0.,0.,1.]
 
 
 def realizations(model,ids,digest,meshes):

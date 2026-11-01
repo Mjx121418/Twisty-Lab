@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Author the 152-piece spherical/planar icosahedron package."""
-from .icosahedron_common import add_domain, components
+from .icosahedron_common import add_domain, components, names, color, frame
 from ..environment import workspace_root, native_tool
 import argparse
 from copy import deepcopy
@@ -10,9 +10,9 @@ from pathlib import Path
 import subprocess
 import tempfile
 
-from .icosahedron_geometry import AXES, dot
-from .icosahedron_152_model import Model, LABELS, STOPS, DELTAS, TAU
-from .icosahedron_packages import names, color, frame
+from .icosahedron_geometry import AXES
+from .icosahedron_152_model import Model
+from .icosahedron_rotations import LABELS, STOPS, DELTAS, TAU
 from .icosahedron_152_meshes import assets, DISPLAY_RADIUS, INRADIUS, CUT_OFFSET
 
 ROOT = workspace_root()
